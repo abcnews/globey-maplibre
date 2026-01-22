@@ -1,0 +1,46 @@
+{
+  "name": "interactive-globey-maplibre",
+  "version": "1.0.0-pre",
+  "description": "A project generated from aunty's svelte project template.",
+  "license": "MIT",
+  "private": true,
+  "contributors": [
+    "Ash Kyd <kyd.ashley@abc.net.au>"
+  ],
+  "aunty": {
+    "type": "svelte",
+    "build": {
+      "includedDependencies": [
+        "@abcnews/svelte-scrollyteller",
+        "@abcnews/components-builder",
+        "@abcnews/components-storylab"
+      ],
+      "entry": [
+        "index"
+      ]
+    }
+  },
+  "scripts": {
+    "start": "aunty serve",
+    "dev": "aunty serve",
+    "test": "aunty test"
+  },
+  "devDependencies": {
+    "@abcnews/aunty": "^16.0.1",
+    "@testing-library/svelte": "^5.3.1",
+    "@types/jest": "^30.0.0",
+    "@types/webpack-env": "^1.18.8"
+  },
+  "dependencies": {
+    "@abcnews/alternating-case-to-object": "^3.2.0",
+    "@abcnews/base-36-text": "^1.0.1",
+    "@abcnews/components-builder": "^0.0.12",
+    "@abcnews/components-storylab": "^0.0.2",
+    "@abcnews/env-utils": "^6.0.0",
+    "@abcnews/mount-utils": "^3.0.0",
+    "@abcnews/svelte-scrollyteller": "^3.0.0",
+    "compression-streams-polyfill": "^0.1.7",
+    "latlon-geohash": "^2.0.0",
+    "svelte": "^5.47.1"
+  }
+}
