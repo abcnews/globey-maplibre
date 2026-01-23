@@ -10,7 +10,9 @@
   let map = $state<maplibregl.Map>();
 
   onMount(async () => {
-    options = await decodeFragment(window.location.hash.slice(1));
+    const urlOptions = await decodeFragment(window.location.hash.slice(1));
+    console.log({ urlOptions });
+    options = urlOptions;
   });
 
   $effect(() => {
@@ -31,7 +33,7 @@
     }
     map.on('moveend', e => {
       // Only update options if the move was triggered by user interaction
-      if (!e.originalEvent) {
+      if (!e.originalEvent || !options) {
         return;
       }
 
@@ -44,12 +46,14 @@
 
 {#snippet Viz()}
   <div class="frame">
-    <CustomGlobe interactive={true} {options} {onLoad} />
+    {#if options.coords}
+      <CustomGlobe interactive={true} {options} {onLoad} />
+    {/if}
   </div>
 {/snippet}
 
 {#snippet Sidebar()}
-  {#if map}
+  {#if map && options}
     <PropCoord {map} />
   {/if}
   <UpdateChecker />

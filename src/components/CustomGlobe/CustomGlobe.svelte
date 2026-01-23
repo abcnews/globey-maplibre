@@ -16,6 +16,7 @@
 <MapLibreLoader
   rootElStyle="width:100%;height:100vh"
   onLoad={async ({ rootNode, maplibregl }) => {
+    rootNode.style.opacity = '0';
     const map = new maplibregl.Map({
       zoom: 3,
       minZoom: 2,
@@ -25,8 +26,8 @@
       doubleClickZoom: false,
       style: mapStyle(),
       container: rootNode,
-      interactive,
-      center: [133.28, -28.15]
+      interactive: !!interactive,
+      center: options.coords
     });
     // if (!bounds.isEmpty()) {
     //   map.fitBounds(bounds, {
@@ -38,6 +39,8 @@
       type: 'globe' // Set projection to globe
     });
     onLoad?.(map);
+
+    rootNode.style.opacity = '1';
     return map;
   }}
 >
