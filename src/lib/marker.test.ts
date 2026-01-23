@@ -83,14 +83,14 @@ describe('marker', () => {
       assert.strictEqual(decoded.z, 10.123);
     });
 
-    it('should handle negative z values by clamping to 0', async () => {
+    it('should handle negative z values', async () => {
       const input = {
-        z: -1.23
+        z: -1.23456
       };
       const fragment = await encodeFragment(input);
       const decoded = await decodeFragment(fragment);
 
-      assert.strictEqual(decoded.z, 0);
+      assert.ok(Math.abs(decoded.z! - input.z) < 0.00001);
     });
 
     it('should handle z=0', async () => {
@@ -110,7 +110,7 @@ describe('marker', () => {
       const fragment = await encodeFragment(input);
       const decoded = await decodeFragment(fragment);
 
-      assert.strictEqual(decoded.z, 0.049);
+      assert.ok(Math.abs(decoded.z! - input.z) < 0.00001);
     });
 
     it('should round-trip bounds', async () => {

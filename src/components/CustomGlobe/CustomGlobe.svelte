@@ -10,7 +10,6 @@
     options: DecodedObject;
   };
   let { interactive, onLoad, options, children }: Props = $props();
-  $effect(() => console.log('tlc', options.coords));
 </script>
 
 <MapLibreLoader

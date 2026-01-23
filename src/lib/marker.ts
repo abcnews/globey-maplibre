@@ -80,8 +80,8 @@ export const markerSchema = {
     key: 'z',
     type: 'custom',
     codec: {
-      encode: (z: number) => (typeof z === 'number' ? Math.round(Math.max(0, z) * 1000) : undefined),
-      decode: (z: any) => (z !== undefined && z !== null ? Math.max(0, Number(z)) / 1000 : 200)
+      encode: (z: number) => (typeof z === 'number' ? Math.round(Math.max(0, z) * 100000) : undefined),
+      decode: (z: any) => (z !== undefined && z !== null ? Math.max(0, Number(z)) / 100000 : 200)
     },
     defaultValue: 200
   },
