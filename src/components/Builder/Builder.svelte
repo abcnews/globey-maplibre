@@ -4,6 +4,7 @@
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import type { maplibregl } from '../mapLibre/index';
+  import { options as optionsStore } from './store';
   import PropCoord from './PropCoord.svelte';
 
   let options = $state<DecodedObject>({});
@@ -13,6 +14,10 @@
     const urlOptions = await decodeFragment(window.location.hash.slice(1));
     console.log({ urlOptions });
     options = urlOptions;
+  });
+
+  $effect(() => {
+    $optionsStore = options;
   });
 
   $effect(() => {
@@ -54,7 +59,7 @@
 
 {#snippet Sidebar()}
   {#if map && options}
-    <PropCoord {map} />
+    <PropCoord {map} onchange={coords => (options.coords = coords)} />
   {/if}
   <UpdateChecker />
 {/snippet}

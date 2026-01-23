@@ -13,6 +13,7 @@ export interface Label {
 
 export interface DecodedObject {
   z?: number;
+  /** coordinate in [longitude, latutude] */
   coords?: [number, number];
   labels?: Label[];
   legend?: any[];
