@@ -83,6 +83,36 @@ describe('marker', () => {
       assert.strictEqual(decoded.z, 10.123);
     });
 
+    it('should handle negative z values by clamping to 0', async () => {
+      const input = {
+        z: -1.23
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.z, 0);
+    });
+
+    it('should handle z=0', async () => {
+      const input = {
+        z: 0
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.z, 0);
+    });
+
+    it('should handle small z values', async () => {
+      const input = {
+        z: 0.049
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.z, 0.049);
+    });
+
     it('should round-trip bounds', async () => {
       const input = {
         bounds: [

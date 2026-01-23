@@ -80,8 +80,8 @@ export const markerSchema = {
     key: 'z',
     type: 'custom',
     codec: {
-      encode: (z: number) => (typeof z === 'number' ? Math.round(z * 1000) : undefined),
-      decode: (z: any) => (z ? Number(z) / 1000 : 200)
+      encode: (z: number) => (typeof z === 'number' ? Math.round(Math.max(0, z) * 1000) : undefined),
+      decode: (z: any) => (z !== undefined && z !== null ? Math.max(0, Number(z)) / 1000 : 200)
     },
     defaultValue: 200
   },
@@ -134,7 +134,7 @@ export async function encodeFragment({ coords, bounds, z, labels, legend, ...ext
     ...encoded,
     ...extraProps
   };
-  console.log('encoding', objectToEncode, arguments[0]);
+
   return stringify(objectToEncode);
 }
 
