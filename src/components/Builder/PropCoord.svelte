@@ -1,7 +1,7 @@
 <script lang="ts">
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
-  let { map }: { map: maplibregl.Map } = $props();
+  let { map, onchange }: { map: maplibregl.Map } = $props();
 
   $effect(() => {
     if (!map) {
@@ -22,9 +22,15 @@
       };
     });
   });
+
+  function onsubmit(e) {
+    // sync value back
+  }
 </script>
 
-<fieldset>
-  <legend>Coord</legend>
-  <input type="text" style:width="100%" value={$options?.coord?.join(',')} />
-</fieldset>
+<form {onsubmit}>
+  <fieldset>
+    <legend>Coord</legend>
+    <input type="text" style:width="100%" value={$options?.coords?.map(coord => coord.toFixed(6)).join(',')} />
+  </fieldset>
+</form>

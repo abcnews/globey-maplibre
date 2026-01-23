@@ -18,7 +18,7 @@
   onLoad={async ({ rootNode, maplibregl }) => {
     rootNode.style.opacity = '0';
     const map = new maplibregl.Map({
-      zoom: 3,
+      zoom: options.z || 3,
       minZoom: 2,
       maxZoom: 13,
       attributionControl: false,
