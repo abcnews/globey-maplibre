@@ -6,6 +6,7 @@
   import type { maplibregl } from '../mapLibre/index';
   import { options as optionsStore } from './store';
   import PropCoord from './PropCoord.svelte';
+  import PropBounds from './PropBounds.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -60,6 +61,7 @@
 {#snippet Sidebar()}
   {#if map && options}
     <PropCoord {map} onchange={coords => (options.coords = coords)} />
+    <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
   {/if}
   <UpdateChecker />
 {/snippet}

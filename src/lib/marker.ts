@@ -15,6 +15,7 @@ export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
   coords?: [number, number];
+  bounds?: [number, number][];
   labels?: Label[];
   legend?: any[];
 }
@@ -22,6 +23,7 @@ export interface DecodedObject {
 export interface DecodeProps {
   z?: string | number;
   geohash?: string;
+  b?: string;
   labels?: string | string[];
   legend?: string;
 }
@@ -40,6 +42,25 @@ export const geohashCodec = {
 };
 
 /**
+ * Custom codec for multiple Geohashes (bounds)
+ * Encodes [[lon, lat], ...] to a concatenated geohash string
+ */
+export const boundsCodec = {
+  encode: (bounds: [number, number][]) =>
+    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], 7)).join('') : undefined,
+  decode: (hash: string) => {
+    if (!hash) return [];
+    const points: [number, number][] = [];
+    for (let i = 0; i < hash.length; i += 7) {
+      const part = hash.slice(i, i + 7);
+      const { lat, lon } = Geohash.decode(part);
+      points.push([Number(lon), Number(lat)]);
+    }
+    return points;
+  }
+};
+
+/**
  * Schema for marker data
  */
 export const markerSchema = {
@@ -48,6 +69,12 @@ export const markerSchema = {
     type: 'custom',
     codec: geohashCodec,
     defaultValue: [0, 0]
+  },
+  bounds: {
+    key: 'b',
+    type: 'custom',
+    codec: boundsCodec,
+    defaultValue: []
   },
   z: {
     key: 'z',
@@ -100,14 +127,14 @@ export const markerSchema = {
 /**
  * Encode globey props into a hash string for the url or fragment
  */
-export async function encodeFragment({ coords, z, labels, legend, ...extraProps }: DecodedObject) {
-  const encoded = await encodeSchema({ data: { coords, z, labels, legend }, schema: markerSchema });
+export async function encodeFragment({ coords, bounds, z, labels, legend, ...extraProps }: DecodedObject) {
+  const encoded = await encodeSchema({ data: { coords, bounds, z, labels, legend }, schema: markerSchema });
 
   const objectToEncode = {
     ...encoded,
     ...extraProps
   };
-
+  console.log('encoding', objectToEncode, arguments[0]);
   return stringify(objectToEncode);
 }
 
@@ -118,7 +145,7 @@ export async function decodeObject(props: DecodeProps, isLive = false): Promise<
   const normalisedProps = props || {};
   const decoded = await decodeSchema({ data: normalisedProps, schema: markerSchema });
 
-  const { z: _z, geohash: _geohash, labels: _labels, legend: _legend, ...extraProps } = normalisedProps;
+  const { z: _z, geohash: _geohash, b: _b, labels: _labels, legend: _legend, ...extraProps } = normalisedProps;
 
   const decodedObject: DecodedObject = {
     ...decoded,

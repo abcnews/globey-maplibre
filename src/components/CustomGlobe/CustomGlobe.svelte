@@ -29,11 +29,7 @@
       interactive: !!interactive,
       center: options.coords
     });
-    // if (!bounds.isEmpty()) {
-    //   map.fitBounds(bounds, {
-    //     maxZoom: MAX_ZOOM
-    //   });
-    // }
+
     await Promise.all([new Promise(resolve => map.on('load', resolve))]);
     map.setProjection({
       type: 'globe' // Set projection to globe
@@ -44,7 +40,7 @@
     return map;
   }}
 >
-  <PanZoomHandler coords={options.coords} z={options.z} />
+  <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
   <MapLabelHandler />
   {@render children?.()}
 </MapLibreLoader>

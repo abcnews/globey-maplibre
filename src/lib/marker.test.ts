@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { geohashCodec, markerSchema, encodeFragment, decodeFragment } from './marker.ts';
+import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker.ts';
 
 describe('marker', () => {
   describe('geohashCodec', () => {
@@ -28,9 +28,41 @@ describe('marker', () => {
     });
   });
 
+  describe('boundsCodec', () => {
+    it('should encode multiple coordinates to a concatenated geohash', () => {
+      const bounds: [number, number][] = [
+        [10, -10],
+        [20, -20]
+      ];
+      const encoded = boundsCodec.encode(bounds);
+      const expected = Geohash.encode(-10, 10, 7) + Geohash.encode(-20, 20, 7);
+      assert.strictEqual(encoded, expected);
+    });
+
+    it('should decode a concatenated geohash to multiple coordinates', () => {
+      const bounds: [number, number][] = [
+        [10, -10],
+        [20, -20]
+      ];
+      const hash = Geohash.encode(-10, 10, 7) + Geohash.encode(-20, 20, 7);
+      const decoded = boundsCodec.decode(hash);
+
+      assert.strictEqual(decoded.length, 2);
+      assert.ok(Math.abs(decoded[0][0] - bounds[0][0]) < 0.01);
+      assert.ok(Math.abs(decoded[0][1] - bounds[0][1]) < 0.01);
+      assert.ok(Math.abs(decoded[1][0] - bounds[1][0]) < 0.01);
+      assert.ok(Math.abs(decoded[1][1] - bounds[1][1]) < 0.01);
+    });
+
+    it('should return empty array for empty hash', () => {
+      assert.deepStrictEqual(boundsCodec.decode(''), []);
+    });
+  });
+
   describe('markerSchema', () => {
     it('should have the expected keys', () => {
       assert.ok(markerSchema.coords);
+      assert.ok(markerSchema.bounds);
       assert.ok(markerSchema.z);
       assert.ok(markerSchema.labels);
       assert.ok(markerSchema.legend);
@@ -49,6 +81,21 @@ describe('marker', () => {
       assert.ok(Math.abs(decoded.coords![0] - input.coords[0]) < 0.01);
       assert.ok(Math.abs(decoded.coords![1] - input.coords[1]) < 0.01);
       assert.strictEqual(decoded.z, 10.123);
+    });
+
+    it('should round-trip bounds', async () => {
+      const input = {
+        bounds: [
+          [151.2093, -33.8688],
+          [153.0251, -27.4698]
+        ] as [number, number][]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.bounds?.length, 2);
+      assert.ok(Math.abs(decoded.bounds![0][0] - input.bounds[0][0]) < 0.01);
+      assert.ok(Math.abs(decoded.bounds![1][1] - input.bounds[1][1]) < 0.01);
     });
 
     it('should handle multiple labels', async () => {
