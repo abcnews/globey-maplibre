@@ -6,7 +6,7 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 
 const MARKER_NAME = 'globey';
 
-whenOdysseyLoaded.then(() => {
+whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts(MARKER_NAME);
   mounts.forEach(appMountEl => {
     const id = appMountEl.id.match(/\d+$/)?.[0];
@@ -37,6 +37,17 @@ whenOdysseyLoaded.then(() => {
       appMountEl.innerHTML = `<p style="border:1px solid red;padding:1rem;">${errorMessage}</p>`;
     }
   });
+
+  const [builderMountEl] = selectMounts('interactivemapbuilder');
+
+  if (builderMountEl) {
+    const builderModule = await import('./components/Builder/Builder.svelte');
+
+    mount(builderModule.default, {
+      target: builderMountEl,
+      props: {}
+    });
+  }
 });
 
 if (process.env.NODE_ENV === 'development') {

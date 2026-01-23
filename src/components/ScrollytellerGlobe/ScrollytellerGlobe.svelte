@@ -30,28 +30,19 @@
   });
 </script>
 
-<div class="scrolly-wrapper">
-  {#if options}
-    <Scrollyteller {panels} onMarker={setConfig} discardSlot={true}>
-      <div class="container">
-        {#if loading}
-          <div class="loading"></div>
-        {/if}
-        <pre>Custom glob with:
-{JSON.stringify(options, null, 2)}
-</pre>
-      </div>
-    </Scrollyteller>
-  {/if}
-</div>
+{#if options}
+  <Scrollyteller {panels} onMarker={setConfig} discardSlot={true} layout={{ resizeInteractive: false }}>
+    <div class="container">
+      {#if loading}
+        <div class="loading"></div>
+      {/if}
+      <CustomGlobe {options} />
+    </div>
+  </Scrollyteller>
+{/if}
 
 <style type="scss">
   :global(#webpack-dev-server-client-overlay) {
     display: none !important;
-  }
-  pre {
-    max-width: 80vw;
-    overflow: auto;
-    max-height: 80vh;
   }
 </style>

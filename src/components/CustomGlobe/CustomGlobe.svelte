@@ -1,23 +1,47 @@
-<script>
-  import { MapLibreLoader, STYLE_BRIGHT } from '@abcnews/components-storylab/mapLibre';
-  let { onClick, geojson, locations } = $props();
-  let isOpen = $state(false);
+<script lang="ts">
+  import PanZoomHandler from './features/PanZoomHandler.svelte';
+  import MapLabelHandler from './features/MapLabelHandler.svelte';
+  import type { DecodedObject } from '../../lib/marker';
+  import mapStyle from './mapStyle/mapStyle';
+  import { MapLibreLoader } from '../mapLibre/index';
+  type Props = {
+    interactive: Boolean;
+    onLoad?: (map: maplibre.Map) => void;
+    options: DecodedObject;
+  };
+  let { interactive, onLoad, options, children }: Props = $props();
+  $effect(() => console.log('tlc', options.coords));
 </script>
 
 <MapLibreLoader
-  rootElStyle="width:100%;height:100%"
+  rootElStyle="width:100%;height:100vh"
   onLoad={async ({ rootNode, maplibregl }) => {
-    return new maplibregl.Map({
-      zoom: 1,
+    const map = new maplibregl.Map({
+      zoom: 3,
       minZoom: 2,
       maxZoom: 13,
       attributionControl: false,
       dragRotate: false,
       doubleClickZoom: false,
-      style: STYLE_BRIGHT,
+      style: mapStyle(),
       container: rootNode,
-      interactive: true,
+      interactive,
       center: [133.28, -28.15]
     });
+    // if (!bounds.isEmpty()) {
+    //   map.fitBounds(bounds, {
+    //     maxZoom: MAX_ZOOM
+    //   });
+    // }
+    await Promise.all([new Promise(resolve => map.on('load', resolve))]);
+    map.setProjection({
+      type: 'globe' // Set projection to globe
+    });
+    onLoad?.(map);
+    return map;
   }}
-></MapLibreLoader>
+>
+  <PanZoomHandler coords={options.coords} z={options.z} />
+  <MapLabelHandler />
+  {@render children?.()}
+</MapLibreLoader>
