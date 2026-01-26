@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BuilderStyleRoot, BuilderFrame, UpdateChecker } from '@abcnews/components-builder';
+  import { BuilderStyleRoot, BuilderFrame, UpdateChecker, MarkerAdmin } from '@abcnews/components-builder';
   import { onMount } from 'svelte';
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
@@ -10,12 +10,6 @@
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
-
-  onMount(async () => {
-    const urlOptions = await decodeFragment(window.location.hash.slice(1));
-    console.log({ urlOptions });
-    options = urlOptions;
-  });
 
   $effect(() => {
     $optionsStore = options;
@@ -30,9 +24,12 @@
     });
   });
 
-  function onLoad(loadedMap) {
-    map = loadedMap;
+  async function updateHash() {
+    const urlOptions = await decodeFragment(window.location.hash.slice(1));
+    options = urlOptions;
   }
+  onMount(updateHash);
+
   $effect(() => {
     if (!map) {
       return;
@@ -50,10 +47,12 @@
   });
 </script>
 
+<svelte:window onhashchange={updateHash} />
+
 {#snippet Viz()}
   <div class="frame">
     {#if options.coords}
-      <CustomGlobe interactive={true} {options} {onLoad} />
+      <CustomGlobe interactive={true} {options} onLoad={loadedMap => (map = loadedMap)} />
     {/if}
   </div>
 {/snippet}
@@ -62,6 +61,7 @@
   {#if map && options}
     <PropCoord {map} onchange={coords => (options.coords = coords)} />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
+    <MarkerAdmin />
   {/if}
   <UpdateChecker />
 {/snippet}

@@ -2,8 +2,9 @@
   import type { maplibregl } from '../../mapLibre/index';
   import { getContext } from 'svelte';
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const { coords, bounds } = $props();
+  const { coords, bounds, z } = $props();
 
+  // Zoom to coord
   $effect(() => {
     if (!mapRoot.map || !coords || bounds?.length) {
       return;
@@ -11,10 +12,12 @@
     mapRoot.map.flyTo({
       center: coords,
       essential: true,
-      duration: 2000
+      duration: 2000,
+      zoom: z
     });
   });
 
+  // Fit to bounds
   $effect(() => {
     const _coords = coords;
     if (!mapRoot.map || !bounds?.length) {
