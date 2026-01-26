@@ -116,9 +116,14 @@
   }
 
   function clearPoints() {
+    const center = map?.getCenter();
+    const zoom = map?.getZoom();
+
     points = [];
     $options = {
       ...$options,
+      coords: center ? [center.lng, center.lat] : $options.coords,
+      z: zoom ?? $options.z,
       bounds: []
     };
     onchange?.([]);

@@ -13,6 +13,8 @@
   let inputValue = $state('');
   let inputElement: HTMLInputElement | undefined = $state();
 
+  const hasBounds = $derived(($options?.bounds?.length ?? 0) > 0);
+
   // Sync store -> input
   $effect(() => {
     const coords = $options?.coords;
@@ -28,7 +30,7 @@
 
   // Sync map -> store
   $effect(() => {
-    if (!map) {
+    if (!map || hasBounds) {
       return;
     }
 
@@ -144,10 +146,14 @@
 </script>
 
 <form {onsubmit}>
-  <fieldset>
+  <fieldset disabled={hasBounds}>
     <legend>Coord</legend>
     <small style:display="block" style:margin-bottom="0.5rem">
-      Paste a Google Maps link or coordinates (lat, lng)
+      {#if hasBounds}
+        Coordinates/zoom are disabled because map bounds are set. You can only use one or the other.
+      {:else}
+        Paste a Google Maps link or coordinates (lat, lng)
+      {/if}
     </small>
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
 
