@@ -2,7 +2,6 @@
   import PanZoomHandler from './features/PanZoomHandler.svelte';
   import MapLabelHandler from './features/MapLabelHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
-  import MapStyleHandler from './features/MapStyleHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
