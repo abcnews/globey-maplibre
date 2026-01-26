@@ -2,6 +2,7 @@
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
   import type { Label } from '../../lib/marker';
+  import GeoSearch from './GeoSearch.svelte';
 
   let { map, onchange } = $props<{ map: maplibregl.Map; onchange?: (labels: Label[]) => void }>();
   let isPicking = $state(false);
@@ -75,6 +76,18 @@
     <button type="button" onclick={() => (isPicking = !isPicking)}>
       {isPicking ? 'Stop Adding' : 'Add Labels'}
     </button>
+    <GeoSearch
+      onselect={val => {
+        const newLabel: Label = {
+          name: val.name,
+          coords: val.coords,
+          style: 'level4', // Default to city level for search results
+          number: 0,
+          pointless: false
+        };
+        updateStore([...labels, newLabel]);
+      }}
+    />
   </div>
 
   {#if isPicking}

@@ -46,6 +46,7 @@
     "latlon-geohash": "^2.0.0",
     "maplibre-gl": "^5.16.0",
     "svelte": "^5.47.1",
+    "svelte-bootstrap-icons": "^3.3.0",
     "throttle-debounce": "^5.0.2"
   }
 }
