@@ -1,6 +1,7 @@
 <script lang="ts">
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
+  import { safeFitBounds } from './utils';
 
   let {
     map,
@@ -103,7 +104,7 @@
           [Math.max(...lngs), Math.max(...lats)]
         ];
 
-        map.fitBounds(bounds, { padding: 50 });
+        safeFitBounds(map, bounds, { padding: 50 });
 
         $options = {
           ...$options,

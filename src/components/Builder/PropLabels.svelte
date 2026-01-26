@@ -4,6 +4,7 @@
   import type { Label } from '../../lib/marker';
   import GeoSearch from './GeoSearch.svelte';
   import { Trash, GeoAlt } from 'svelte-bootstrap-icons';
+  import { safeFlyTo } from './utils';
 
   let { map, onchange } = $props<{ map: maplibregl.Map; onchange?: (labels: Label[]) => void }>();
   let isPicking = $state(false);
@@ -73,7 +74,7 @@
 
   function zoomToLabel(label: Label) {
     if (!map) return;
-    map.flyTo({
+    safeFlyTo(map, {
       center: label.coords,
       padding: 50
     });

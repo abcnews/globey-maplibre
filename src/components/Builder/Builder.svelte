@@ -37,7 +37,8 @@
     }
     map.on('moveend', e => {
       // Only update options if the move was triggered by user interaction
-      if (!e.originalEvent || !options) {
+      // Cast to any because builderInitiated is a custom property we added
+      if (!e.originalEvent && !(e as any).builderInitiated) {
         return;
       }
 
