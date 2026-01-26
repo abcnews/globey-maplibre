@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onMount, setContext, untrack } from "svelte";
-  import { loadMapLibre } from "../utils.ts";
-  import type { maplibregl } from "../maplibre.d.ts";
-  import type { Snippet } from "svelte";
+  import { onMount, setContext, untrack } from 'svelte';
+  import { loadMapLibre } from '../utils.ts';
+  import type { maplibregl } from '../maplibre.d.ts';
+  import type { Snippet } from 'svelte';
   type Props = {
     rootElStyle?: string;
     onLoad: ({}: {
@@ -12,15 +12,11 @@
     onTeardown?: () => void | Promise<void>;
     children?: Snippet;
   };
-  const {
-    rootElStyle = "width:100%;height:100%;",
-    onLoad,
-    children,
-  }: Props = $props();
+  const { rootElStyle = 'width:100%;height:100%;', onLoad, children }: Props = $props();
   let rootNode = $state<HTMLDivElement>();
-  let status = $state<"loading" | "loaded">("loading");
+  let status = $state<'loading' | 'loaded'>('loading');
   let mapInstance = $state<{ map: maplibregl.Map | void }>({ map: undefined });
-  setContext("mapInstance", mapInstance);
+  setContext('mapInstance', mapInstance);
 
   onMount(async () => {
     if (!rootNode) {
@@ -29,14 +25,14 @@
     await loadMapLibre();
     const newMapInstance = await onLoad({
       rootNode,
-      maplibregl: window.maplibregl,
+      maplibregl: window.maplibregl
     });
     mapInstance.map = newMapInstance;
-    status = "loaded";
+    status = 'loaded';
   });
 </script>
 
-<div class="maplibre" bind:this={rootNode} style={rootElStyle}>
+<div class="maplibre maplibre--{status}" bind:this={rootNode} style={rootElStyle}>
   {@render children?.()}
 </div>
 
@@ -44,5 +40,11 @@
   .maplibre {
     width: 100%;
     height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .maplibre--loaded {
+    opacity: 1;
   }
 </style>

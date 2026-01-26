@@ -18,6 +18,7 @@ export interface DecodedObject {
   bounds?: [number, number][];
   labels?: Label[];
   legend?: any[];
+  base?: string;
 }
 
 export interface DecodeProps {
@@ -142,6 +143,12 @@ export const markerSchema = {
       decode: (string: string) => (string ? JSON.parse(decode(string)) : undefined)
     },
     defaultValue: []
+  },
+  base: {
+    key: 'base',
+    type: 'enum',
+    values: ['street', 'countries'],
+    defaultValue: 'street'
   }
 };
 
