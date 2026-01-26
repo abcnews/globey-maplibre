@@ -84,7 +84,7 @@ export const markerSchema = {
       encode: (z: number) => (typeof z === 'number' ? Math.round(Math.max(0, z) * 100000) : undefined),
       decode: (z: any) => (z !== undefined && z !== null ? Math.max(0, Number(z)) / 100000 : 200)
     },
-    defaultValue: 200
+    defaultValue: 2
   },
   labels: {
     key: 'labels',

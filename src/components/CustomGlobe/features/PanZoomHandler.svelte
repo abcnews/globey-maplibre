@@ -1,8 +1,18 @@
 <script lang="ts">
   import type { maplibregl } from '../../mapLibre/index';
+  import { disableMapAnimation } from '../../../lib/stores';
   import { getContext } from 'svelte';
+
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const { coords, bounds, z } = $props();
+
+  let isFirstRun = $state(true);
+
+  let animationDuration = $derived.by(() => {
+    if (isFirstRun) return 0;
+    if ($disableMapAnimation) return 0;
+    return 2000;
+  });
 
   // Zoom to coord
   $effect(() => {
@@ -12,9 +22,10 @@
     mapRoot.map.flyTo({
       center: coords,
       essential: true,
-      duration: 2000,
+      duration: animationDuration,
       zoom: z
     });
+    isFirstRun = false;
   });
 
   // Fit to bounds
@@ -33,7 +44,8 @@
     mapRoot.map.fitBounds(mapBounds, {
       padding: 50,
       essential: true,
-      duration: 2000
+      duration: animationDuration
     });
+    isFirstRun = false;
   });
 </script>

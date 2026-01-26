@@ -2,12 +2,14 @@
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
 
+  import { disableMapAnimation } from '../../lib/stores';
+
   let {
     map,
     onchange
   }: {
     map: maplibregl.Map;
-    onchange?: (coords: [number, number]) => void;
+    onchange?: (coords: [number, number], z?: number) => void;
   } = $props();
 
   let inputValue = $state('');
@@ -47,7 +49,7 @@
         coords: newCoords,
         z: e.target.getZoom()
       };
-      onchange?.(newCoords);
+      onchange?.(newCoords, e.target.getZoom());
     };
 
     map.on('moveend', handler);
@@ -94,19 +96,21 @@
    * Update store, map, and call onchange
    */
   function update(coords: [number, number], z?: number) {
+    // Disable animation for this update
+    $disableMapAnimation = true;
+
+    const newZ = z ?? $options.z;
     $options = {
       ...$options,
       coords,
-      z: z ?? $options.z
+      z: newZ
     };
-    onchange?.(coords);
+    onchange?.(coords, newZ);
 
-    if (map) {
-      map.setCenter(coords);
-      if (z !== undefined) {
-        map.setZoom(z);
-      }
-    }
+    // Re-enable animation in the next tick
+    setTimeout(() => {
+      $disableMapAnimation = false;
+    }, 0);
   }
 
   function onsubmit(e: SubmitEvent) {
@@ -174,6 +178,8 @@
           aria-valuemin={-1}
           aria-valuemax={13}
           aria-valuenow={$options?.z ?? 3}
+          onmousedown={() => ($disableMapAnimation = true)}
+          onmouseup={() => ($disableMapAnimation = false)}
         />
         <span class="value">{$options?.z?.toFixed(1) ?? '3.0'}</span>
 
@@ -189,6 +195,8 @@
           aria-valuemin={-180}
           aria-valuemax={180}
           aria-valuenow={$options?.coords?.[0] ?? 0}
+          onmousedown={() => ($disableMapAnimation = true)}
+          onmouseup={() => ($disableMapAnimation = false)}
         />
         <span class="value">{$options?.coords?.[0]?.toFixed(1) ?? '0.0'}</span>
 
@@ -204,6 +212,8 @@
           aria-valuemin={-90}
           aria-valuemax={90}
           aria-valuenow={$options?.coords?.[1] ?? 0}
+          onmousedown={() => ($disableMapAnimation = true)}
+          onmouseup={() => ($disableMapAnimation = false)}
         />
         <span class="value">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
       </div>

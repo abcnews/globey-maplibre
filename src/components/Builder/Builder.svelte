@@ -62,7 +62,13 @@
 
 {#snippet Sidebar()}
   {#if map && options}
-    <PropCoord {map} onchange={coords => (options.coords = coords)} />
+    <PropCoord
+      {map}
+      onchange={(coords, z) => {
+        options.coords = coords;
+        if (z !== undefined) options.z = z;
+      }}
+    />
     <PropBase {map} />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
