@@ -18,7 +18,7 @@
     rootNode.style.opacity = '0';
     const map = new maplibregl.Map({
       zoom: options.z || 3,
-      minZoom: 2,
+      minZoom: -1,
       maxZoom: 13,
       attributionControl: false,
       dragRotate: false,

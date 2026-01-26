@@ -131,6 +131,16 @@
       inputElement?.blur();
     }
   }
+
+  function updateLng(lng: number) {
+    const currentLat = map?.getCenter().lat ?? $options.coords?.[1] ?? 0;
+    update([lng, currentLat]);
+  }
+
+  function updateLat(lat: number) {
+    const currentLng = map?.getCenter().lng ?? $options.coords?.[0] ?? 0;
+    update([currentLng, lat]);
+  }
 </script>
 
 <form {onsubmit}>
@@ -140,5 +150,57 @@
       Paste a Google Maps link or coordinates (lat, lng)
     </small>
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
+
+    <details style:margin-top="1rem">
+      <summary style:cursor="pointer" style:margin-bottom="0.5rem" style:font-size="0.9rem" style:opacity="0.8"
+        >Advanced</summary
+      >
+      <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-top="0.5rem">
+        <label for="zoom-slider" style:flex-shrink="0">Zoom:</label>
+        <input
+          id="zoom-slider"
+          type="range"
+          min="-1"
+          max="13"
+          step="0.1"
+          value={$options?.z ?? 3}
+          oninput={e => update($options.coords!, parseFloat(e.currentTarget.value))}
+          style:flex-grow="1"
+        />
+        <span style:width="3ch" style:text-align="right">{$options?.z?.toFixed(1) ?? '3.0'}</span>
+      </div>
+
+      <!-- Longitude -->
+      <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-bottom="0.5rem">
+        <label for="lng-slider" style:flex-shrink="0" style:width="3ch">Lng:</label>
+        <input
+          id="lng-slider"
+          type="range"
+          min="-180"
+          max="180"
+          step="0.1"
+          value={$options?.coords?.[0] ?? 0}
+          oninput={e => updateLng(parseFloat(e.currentTarget.value))}
+          style:flex-grow="1"
+        />
+        <span style:width="5ch" style:text-align="right">{$options?.coords?.[0]?.toFixed(1) ?? '0.0'}</span>
+      </div>
+
+      <!-- Latitude -->
+      <div style:display="flex" style:align-items="center" style:gap="0.5rem">
+        <label for="lat-slider" style:flex-shrink="0" style:width="3ch">Lat:</label>
+        <input
+          id="lat-slider"
+          type="range"
+          min="-90"
+          max="90"
+          step="0.1"
+          value={$options?.coords?.[1] ?? 0}
+          oninput={e => updateLat(parseFloat(e.currentTarget.value))}
+          style:flex-grow="1"
+        />
+        <span style:width="5ch" style:text-align="right">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
+      </div>
+    </details>
   </fieldset>
 </form>
