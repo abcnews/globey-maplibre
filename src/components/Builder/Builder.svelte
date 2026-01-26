@@ -7,6 +7,7 @@
   import { options as optionsStore } from './store';
   import PropCoord from './PropCoord.svelte';
   import PropBounds from './PropBounds.svelte';
+  import PropLabels from './PropLabels.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -61,6 +62,7 @@
   {#if map && options}
     <PropCoord {map} onchange={coords => (options.coords = coords)} />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
+    <PropLabels {map} onchange={labels => (options.labels = labels)} />
     <MarkerAdmin />
   {/if}
   <UpdateChecker />

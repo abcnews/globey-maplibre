@@ -92,20 +92,41 @@ export const markerSchema = {
       encode: (labels: Label[]) =>
         labels?.map(({ coords, name, style, number, pointless }) => {
           const hash = Geohash.encode(coords[1], coords[0], 7);
-          const json = JSON.stringify([hash, name, style, number || 0, Number(pointless || 0)]);
-          return encode(json);
+          const styles = ['country', 'level3', 'level4', 'water'];
+          const styleIndex = styles.indexOf(style);
+          const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
+          
+          // Compact format: hash,name,style,number,pointless
+          // We use a custom delimiter derived from control characters or filtered pipes if name is safe.
+          // But JSON array is robust. To be compact, we can just use the array.
+          // Base36 encoding the stringified array is what was happening.
+          // To be MORE compact, we could use a custom separator if names don't contain it.
+          // Let's stick to the current array approach but ensure style is minimized (int).
+          
+          const data = [hash, name, s, number || 0, Number(pointless || 0)];
+           // Remove trailing zeros/defaults to save space?
+           // e.g. if pointless is 0, remove it. if number is 0, remove it.
+           // [hash, name, s] if others are 0.
+           while (data.length > 3 && data[data.length - 1] === 0) {
+             data.pop();
+           }
+          return encode(JSON.stringify(data));
         }),
       decode: (encodedLabels: string | string[]) => {
         if (!encodedLabels) return [];
         const normalised = Array.isArray(encodedLabels) ? encodedLabels : [encodedLabels];
         return (normalised as string[]).map(string => {
           const decodedJSON = decode(string);
-          const [encodedCoords, name, style, number, pointless] =
+          const [encodedCoords, name, styleOrInt, number = 0, pointless = 0] =
             decodedJSON.slice(0, 1) === '['
               ? // Current labels are [coords,name,style,number] array
                 JSON.parse(decodedJSON)
               : // legacy labels were fixed length
                 [string.slice(0, 7), decode(string.slice(7))];
+          
+          const styles = ['country', 'level3', 'level4', 'water'];
+          const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
+          
           const { lat, lon } = Geohash.decode(encodedCoords);
           return { name, coords: [Number(lon), Number(lat)], style, number, pointless: Boolean(pointless) };
         });

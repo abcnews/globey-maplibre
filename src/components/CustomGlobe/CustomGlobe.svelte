@@ -1,6 +1,7 @@
 <script lang="ts">
   import PanZoomHandler from './features/PanZoomHandler.svelte';
   import MapLabelHandler from './features/MapLabelHandler.svelte';
+  import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/mapStyle';
   import { MapLibreLoader } from '../mapLibre/index';
@@ -41,5 +42,6 @@
 >
   <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
   <MapLabelHandler />
+  <MapCustomLabelHandler labels={options.labels} />
   {@render children?.()}
 </MapLibreLoader>
