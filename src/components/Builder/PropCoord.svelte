@@ -161,8 +161,8 @@
       <summary style:cursor="pointer" style:margin-bottom="0.5rem" style:font-size="0.9rem" style:opacity="0.8"
         >Advanced</summary
       >
-      <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-top="0.5rem">
-        <label for="zoom-slider" style:flex-shrink="0">Zoom:</label>
+      <div class="coord-grid">
+        <label for="zoom-slider">Zoom</label>
         <input
           id="zoom-slider"
           type="range"
@@ -171,14 +171,13 @@
           step="0.1"
           value={$options?.z ?? 3}
           oninput={e => update($options.coords!, parseFloat(e.currentTarget.value))}
-          style:flex-grow="1"
+          aria-valuemin={-1}
+          aria-valuemax={13}
+          aria-valuenow={$options?.z ?? 3}
         />
-        <span style:width="3ch" style:text-align="right">{$options?.z?.toFixed(1) ?? '3.0'}</span>
-      </div>
+        <span class="value">{$options?.z?.toFixed(1) ?? '3.0'}</span>
 
-      <!-- Longitude -->
-      <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-bottom="0.5rem">
-        <label for="lng-slider" style:flex-shrink="0" style:width="3ch">Lng:</label>
+        <label for="lng-slider">Lng</label>
         <input
           id="lng-slider"
           type="range"
@@ -187,14 +186,13 @@
           step="0.1"
           value={$options?.coords?.[0] ?? 0}
           oninput={e => updateLng(parseFloat(e.currentTarget.value))}
-          style:flex-grow="1"
+          aria-valuemin={-180}
+          aria-valuemax={180}
+          aria-valuenow={$options?.coords?.[0] ?? 0}
         />
-        <span style:width="5ch" style:text-align="right">{$options?.coords?.[0]?.toFixed(1) ?? '0.0'}</span>
-      </div>
+        <span class="value">{$options?.coords?.[0]?.toFixed(1) ?? '0.0'}</span>
 
-      <!-- Latitude -->
-      <div style:display="flex" style:align-items="center" style:gap="0.5rem">
-        <label for="lat-slider" style:flex-shrink="0" style:width="3ch">Lat:</label>
+        <label for="lat-slider">Lat</label>
         <input
           id="lat-slider"
           type="range"
@@ -203,10 +201,45 @@
           step="0.1"
           value={$options?.coords?.[1] ?? 0}
           oninput={e => updateLat(parseFloat(e.currentTarget.value))}
-          style:flex-grow="1"
+          aria-valuemin={-90}
+          aria-valuemax={90}
+          aria-valuenow={$options?.coords?.[1] ?? 0}
         />
-        <span style:width="5ch" style:text-align="right">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
+        <span class="value">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
       </div>
     </details>
   </fieldset>
 </form>
+
+<style>
+  .coord-grid {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.5rem;
+  }
+
+  .coord-grid label {
+    font-size: 0.9rem;
+    color: #666;
+  }
+
+  .coord-grid input[type='range'] {
+    width: 100%;
+  }
+
+  .coord-grid .value {
+    font-family: monospace;
+    font-size: 0.9rem;
+    width: 5ch;
+    text-align: right;
+  }
+
+  details > summary {
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+  }
+</style>
