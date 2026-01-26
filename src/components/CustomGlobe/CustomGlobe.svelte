@@ -3,8 +3,9 @@
   import MapLabelHandler from './features/MapLabelHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
-  import mapStyle from './mapStyle/mapStyle';
+  import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
+  import countriesNaturalEarth from './mapStyle/countriesNaturalEarth';
   type Props = {
     interactive: Boolean;
     onLoad?: (map: maplibre.Map) => void;
@@ -24,7 +25,7 @@
       attributionControl: false,
       dragRotate: false,
       doubleClickZoom: false,
-      style: mapStyle(),
+      style: countriesNaturalEarth,
       container: rootNode,
       interactive: !!interactive,
       center: options.coords
@@ -34,6 +35,7 @@
     map.setProjection({
       type: 'globe' // Set projection to globe
     });
+
     onLoad?.(map);
 
     rootNode.style.opacity = '1';
