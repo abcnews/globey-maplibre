@@ -117,7 +117,7 @@
   });
 </script>
 
-<button type="button" onclick={openModal} title="Find a place" aria-label="Find a place">
+<button class="btn-icon" type="button" onclick={openModal} title="Find a place" aria-label="Find a place">
   <Search />
 </button>
 

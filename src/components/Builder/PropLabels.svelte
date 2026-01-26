@@ -3,6 +3,7 @@
   import type { maplibregl } from '../mapLibre/index';
   import type { Label } from '../../lib/marker';
   import GeoSearch from './GeoSearch.svelte';
+  import { Trash, GeoAlt } from 'svelte-bootstrap-icons';
 
   let { map, onchange } = $props<{ map: maplibregl.Map; onchange?: (labels: Label[]) => void }>();
   let isPicking = $state(false);
@@ -39,6 +40,7 @@
       pointless: false
     };
     updateStore([...labels, newLabel]);
+    isPicking = false;
   }
 
   $effect(() => {
@@ -68,13 +70,21 @@
     const newLabels = labels.filter((_, i) => i !== index);
     updateStore(newLabels);
   }
+
+  function zoomToLabel(label: Label) {
+    if (!map) return;
+    map.flyTo({
+      center: label.coords,
+      padding: 50
+    });
+  }
 </script>
 
 <fieldset>
   <legend>Custom Labels</legend>
   <div style:display="flex" style:gap="0.5rem" style:align-items="center" style:margin-bottom="0.5rem">
-    <button type="button" onclick={() => (isPicking = !isPicking)}>
-      {isPicking ? 'Stop Adding' : 'Add Labels'}
+    <button onclick={() => (isPicking = !isPicking)} aria-pressed={isPicking}>
+      {isPicking ? 'Cancel' : 'Add Label'}
     </button>
     <GeoSearch
       onselect={val => {
@@ -88,6 +98,16 @@
         updateStore([...labels, newLabel]);
       }}
     />
+    <button
+      class="btn-icon"
+      aria-label="Delete all labels"
+      onclick={() => {
+        isPicking = false;
+        $options.labels = [];
+      }}
+    >
+      <Trash />
+    </button>
   </div>
 
   {#if isPicking}
@@ -117,7 +137,16 @@
             title="Hide Point"
           />
         </div>
-        <button type="button" class="remove-btn" onclick={() => removeLabel(i)} aria-label="Remove label">×</button>
+        <button
+          type="button"
+          class="btn-icon"
+          onclick={() => zoomToLabel(label)}
+          aria-label="Zoom to label"
+          title="Zoom to label"
+        >
+          <GeoAlt />
+        </button>
+        <button type="button" class="btn-icon" onclick={() => removeLabel(i)} aria-label="Remove label">×</button>
       </div>
     {/each}
   </div>
@@ -133,16 +162,12 @@
   }
   .label-item {
     display: grid;
-    grid-template-columns: 1fr auto auto auto;
+    grid-template-columns: 1fr auto auto auto auto;
     gap: 0.5rem;
     align-items: center;
   }
   input {
     width: 100%;
     min-width: 0;
-  }
-  .remove-btn {
-    padding: 0 0.5rem;
-    color: red;
   }
 </style>
