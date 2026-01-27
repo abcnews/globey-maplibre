@@ -11,18 +11,22 @@
     highlightCountries?: Country[];
   } = $props();
 
-  let primaryCountries = $derived(highlightCountries.filter(c => c.style === 'primary').map(c => c.code));
-  let secondaryCountries = $derived(highlightCountries.filter(c => c.style === 'secondary').map(c => c.code));
+  const sourceId = 'natural-earth-countries';
+  const layerId = 'countries-highlight';
 
+  let matchArgs = $derived(highlightCountries.flatMap(c => [c.code, c.style === 'secondary' ? '#8ad1e8' : '#b9a0ce']));
+
+  let fillColorExpression = $derived([
+    'match',
+    ['get', 'iso_a2'],
+    ...matchArgs,
+    'rgba(0,0,0,0)' // Default color
+  ]);
+
+  // Effect 1: Lifecycle (depends only on map)
   $effect(() => {
-    if (!mapRoot.map) {
-      return;
-    }
-
+    if (!mapRoot.map) return;
     const map = mapRoot.map;
-    const sourceId = 'natural-earth-countries';
-    const primaryLayerId = 'countries-highlight-primary';
-    const secondaryLayerId = 'countries-highlight-secondary';
 
     // Add source if it doesn't exist
     if (!map.getSource(sourceId)) {
@@ -30,31 +34,32 @@
       map.addSource(sourceId, naturalEarthStyle.sources.composite);
     }
 
-    // Helper to add/update layer
-    const updateLayer = (id: string, color: string, codes: string[]) => {
-      if (!map.getLayer(id)) {
-        map.addLayer({
-          id: id,
-          type: 'fill',
-          source: sourceId,
-          'source-layer': 'world',
-          paint: {
-            'fill-color': color,
-            'fill-opacity': 0.5
-          },
-          filter: ['in', 'iso_a2', ...codes]
-        });
-      } else {
-        map.setFilter(id, ['in', 'iso_a2', ...codes]);
-      }
-    };
-
-    updateLayer(primaryLayerId, '#b9a0ce', primaryCountries); // Purple
-    updateLayer(secondaryLayerId, '#8ad1e8', secondaryCountries); // Blue
+    if (!map.getLayer(layerId)) {
+      map.addLayer({
+        id: layerId,
+        type: 'fill',
+        source: sourceId,
+        'source-layer': 'world',
+        paint: {
+          'fill-color': 'rgba(0,0,0,0)', // Start transparent
+          'fill-opacity': 0.5,
+          'fill-color-transition': { duration: 250 }
+        }
+      });
+    }
 
     return () => {
-      if (map.getLayer(primaryLayerId)) map.removeLayer(primaryLayerId);
-      if (map.getLayer(secondaryLayerId)) map.removeLayer(secondaryLayerId);
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
     };
+  });
+
+  // Effect 2: Update Style (depends on expression)
+  $effect(() => {
+    if (!mapRoot.map) return;
+    const map = mapRoot.map;
+
+    if (map.getLayer(layerId)) {
+      map.setPaintProperty(layerId, 'fill-color', fillColorExpression);
+    }
   });
 </script>
