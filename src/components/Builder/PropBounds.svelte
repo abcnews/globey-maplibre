@@ -133,6 +133,10 @@
 
 <fieldset>
   <legend>Bounds</legend>
+  <small
+    >Set the zoom of the map by picking the locations you want to be shown. This zooms to fit the contents regardless of
+    screen size.</small
+  >
   <div style:display="flex" style:gap="0.5rem" style:align-items="center">
     <button type="button" onclick={togglePicking}>
       {isPicking ? 'Finish Picking' : 'Pick Bounds'}

@@ -83,6 +83,7 @@
 
 <fieldset>
   <legend>Custom Labels</legend>
+  <small>Search for a location, or click to add a label.</small>
   <div style:display="flex" style:gap="0.5rem" style:align-items="center" style:margin-bottom="0.5rem">
     <button onclick={() => (isPicking = !isPicking)} aria-pressed={isPicking}>
       {isPicking ? 'Cancel' : 'Add Label'}
