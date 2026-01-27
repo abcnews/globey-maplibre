@@ -79,6 +79,10 @@
       onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
     />
     <MarkerAdmin />
+    <fieldset>
+      <legend>Marker debug</legend>
+      <pre>{JSON.stringify(options, null, 2)}</pre>
+    </fieldset>
   {/if}
   <UpdateChecker />
 {/snippet}

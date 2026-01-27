@@ -51,6 +51,7 @@
       }
     }
     updateSelected(newCountries);
+    onWindowClick();
   }
 
   function getCountryStyle(iso_a2?: string): 'primary' | 'secondary' | null {
