@@ -100,9 +100,6 @@
 <svelte:window onclick={onWindowClick} />
 
 {#if contextMenu.isOpen && contextMenu.iso_a2}
-  <!-- The ContextMenu component likely takes 'position' or similar, but checking components-builder docs/usage usually helps. 
-       The lint said "Object literal may only specify known properties, and 'x' does not exist... type '{ position?: any[]... }'"
-       So we try position={[x, y]} -->
   <ContextMenu position={[contextMenu.x, contextMenu.y]}>
     <div class="section" style="white-space:pre-wrap;">
       <strong>{contextMenu.name}</strong>
