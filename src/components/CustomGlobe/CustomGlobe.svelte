@@ -2,7 +2,7 @@
   import PanZoomHandler from './features/PanZoomHandler.svelte';
   import MapLabelHandler from './features/MapLabelHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
-  import HighlightCountriesHandler from './features/HighlightCountriesHandler.svelte';
+  import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
@@ -53,5 +53,4 @@
 {/key}
 
 <style>
-  /* Ensure map canvas is visible */
 </style>
