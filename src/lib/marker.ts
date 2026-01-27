@@ -21,7 +21,7 @@ export interface DecodedObject {
   /** coordinate in [longitude, latutude] */
   coords?: [number, number];
   bounds?: [number, number][];
-  countries?: Country[];
+  highlightCountries?: Country[];
   labels?: Label[];
   legend?: any[];
   base?: string;
@@ -114,7 +114,7 @@ export const markerSchema = {
     codec: boundsCodec,
     defaultValue: []
   },
-  countries: {
+  highlightCountries: {
     key: 'c',
     type: 'custom',
     codec: countriesCodec,
@@ -191,7 +191,6 @@ export const markerSchema = {
  */
 export async function encodeFragment(data: DecodedObject) {
   const encoded = await encodeSchema({ data: data, schema: markerSchema });
-
   return stringify(encoded);
 }
 
@@ -201,9 +200,6 @@ export async function encodeFragment(data: DecodedObject) {
 export async function decodeObject(props: DecodeProps, isLive = false): Promise<DecodedObject> {
   const normalisedProps = props || {};
   const decoded = await decodeSchema({ data: normalisedProps, schema: markerSchema });
-
-
-
   return decoded as DecodedObject;
 }
 
