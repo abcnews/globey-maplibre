@@ -8,6 +8,7 @@
   import PropCoord from './PropCoord.svelte';
   import PropBounds from './PropBounds.svelte';
   import PropLabels from './PropLabels.svelte';
+  import PropCountries from './PropCountries.svelte';
   import PropBase from './PropBase.svelte';
 
   let options = $state<DecodedObject>({});
@@ -72,6 +73,7 @@
     <PropBase {map} />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
+    <PropCountries {map} onchange={countries => (options.countries = countries)} />
     <MarkerAdmin />
   {/if}
   <UpdateChecker />

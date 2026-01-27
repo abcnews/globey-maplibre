@@ -11,11 +11,17 @@ export interface Label {
   pointless: boolean;
 }
 
+export interface Country {
+  code: string;
+  style: 'primary' | 'secondary';
+}
+
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
   coords?: [number, number];
   bounds?: [number, number][];
+  countries?: Country[];
   labels?: Label[];
   legend?: any[];
   base?: string;
@@ -27,6 +33,7 @@ export interface DecodeProps {
   b?: string;
   labels?: string | string[];
   legend?: string;
+  c?: string;
 }
 
 /**
@@ -62,6 +69,36 @@ export const boundsCodec = {
 };
 
 /**
+ * Custom codec for country codes
+ * Encodes ["AU", "US"] to "AUUS"
+ */
+export const countriesCodec = {
+  encode: (countries: Country[]) =>
+    countries
+      ? countries
+          .map(c => {
+            const styleChar = c.style === 'secondary' ? 's' : 'p';
+            return c.code.toLowerCase() + styleChar;
+          })
+          .join('')
+      : undefined,
+  decode: (hash: string) => {
+    if (!hash) return [];
+    
+    return (hash.match(/.{3}/g) || []).reduce<Country[]>((countries, part) => {
+      const code = part.slice(0, 2).toUpperCase();
+      const styleChar = part.slice(2, 3);
+      countries.push({
+        code,
+        style: styleChar === 's' ? 'secondary' : 'primary'
+      });
+      return countries;
+    }, []);
+  }
+};
+
+
+/**
  * Schema for marker data
  */
 export const markerSchema = {
@@ -75,6 +112,12 @@ export const markerSchema = {
     key: 'b',
     type: 'custom',
     codec: boundsCodec,
+    defaultValue: []
+  },
+  countries: {
+    key: 'c',
+    type: 'custom',
+    codec: countriesCodec,
     defaultValue: []
   },
   z: {
@@ -135,15 +178,6 @@ export const markerSchema = {
     },
     defaultValue: []
   },
-  legend: {
-    key: 'legend',
-    type: 'custom',
-    codec: {
-      encode: (data: any) => encode(JSON.stringify(data || [])),
-      decode: (string: string) => (string ? JSON.parse(decode(string)) : undefined)
-    },
-    defaultValue: []
-  },
   base: {
     key: 'base',
     type: 'enum',
@@ -155,15 +189,10 @@ export const markerSchema = {
 /**
  * Encode globey props into a hash string for the url or fragment
  */
-export async function encodeFragment({ coords, bounds, z, labels, legend, ...extraProps }: DecodedObject) {
-  const encoded = await encodeSchema({ data: { coords, bounds, z, labels, legend }, schema: markerSchema });
+export async function encodeFragment(data: DecodedObject) {
+  const encoded = await encodeSchema({ data: data, schema: markerSchema });
 
-  const objectToEncode = {
-    ...encoded,
-    ...extraProps
-  };
-
-  return stringify(objectToEncode);
+  return stringify(encoded);
 }
 
 /**
@@ -173,14 +202,9 @@ export async function decodeObject(props: DecodeProps, isLive = false): Promise<
   const normalisedProps = props || {};
   const decoded = await decodeSchema({ data: normalisedProps, schema: markerSchema });
 
-  const { z: _z, geohash: _geohash, b: _b, labels: _labels, legend: _legend, ...extraProps } = normalisedProps;
 
-  const decodedObject: DecodedObject = {
-    ...decoded,
-    ...extraProps
-  };
 
-  return decodedObject;
+  return decoded as DecodedObject;
 }
 
 /**

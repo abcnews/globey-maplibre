@@ -2,6 +2,7 @@
   import PanZoomHandler from './features/PanZoomHandler.svelte';
   import MapLabelHandler from './features/MapLabelHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
+  import CountriesHandler from './features/CountriesHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
@@ -46,6 +47,7 @@
     <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
     <MapLabelHandler />
     <MapCustomLabelHandler labels={options.labels} />
+    <CountriesHandler countries={options.countries} />
     {@render children?.()}
   </MapLibreLoader>
 {/key}
