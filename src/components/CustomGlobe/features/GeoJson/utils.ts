@@ -22,7 +22,7 @@ export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'str
         return ['coalesce', ['get', 'stroke'], '#555555'];
     }
     if (context === 'marker') {
-        return ['coalesce', ['get', 'marker-color'], '#7e7e7e'];
+        return ['coalesce', ['get', 'marker-color'], ['get', 'stroke'], ['get', 'fill'], ['get', 'fill-color'], '#7e7e7e'];
     }
     return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#555555'];
   }
@@ -62,6 +62,27 @@ export function getStrokeWidthExpression(config: GeoJsonConfig): any {
         return ['coalesce', ['get', 'stroke-width'], 2];
     }
     return 2;
+}
+
+export function getCircleRadiusExpression(config: GeoJsonConfig): any {
+    if (config.colorMode === 'simple') {
+        return [
+            'match',
+            ['get', 'marker-size'],
+            'small', 4,
+            'large', 9,
+            ['coalesce', ['to-number', ['get', 'marker-size']], 6]
+        ];
+    }
+    return 6;
+}
+
+export function getCircleOpacityExpression(config: GeoJsonConfig): any {
+    const baseOpacity = getOpacityExpression(config);
+    if (config.colorMode === 'simple') {
+        return ['*', baseOpacity, ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 1.0]];
+    }
+    return baseOpacity;
 }
 
 export function getFillOpacityExpression(config: GeoJsonConfig): any {

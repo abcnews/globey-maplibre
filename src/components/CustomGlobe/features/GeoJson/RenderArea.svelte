@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type { maplibregl } from '../../../mapLibre/index';
+  import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import {
     getColorExpression,
@@ -13,83 +13,100 @@
 
   let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
-  const layerId = `${sourceId}-fill`;
-  const outlineLayerId = `${sourceId}-outline`;
+  const layerId = $derived(`${sourceId}-fill`);
+  const outlineLayerId = $derived(`${sourceId}-outline`);
 
   $effect(() => {
-    if (!mapRoot.map || !data) return;
     const map = mapRoot.map;
+    const sid = sourceId;
+    const lid = layerId;
+    const olid = outlineLayerId;
 
-    // Initialize Source & Layers
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: data
-      });
+    if (!map || !data) return;
 
-      // Main Fill Layer
-      map.addLayer({
-        id: layerId,
-        type: 'fill',
-        source: sourceId,
-        paint: {
-          'fill-color': getColorExpression(config, 'fill'),
-          'fill-opacity': getFillOpacityExpression(config),
-          'fill-color-transition': { duration: 300 },
-          'fill-opacity-transition': { duration: 300 }
+    untrack(() => {
+      // Initialize Source
+      if (!map.getSource(sid)) {
+        map.addSource(sid, {
+          type: 'geojson',
+          data: data
+        });
+      }
+
+      // Initialize Layers
+      if (map.getSource(sid)) {
+        if (!map.getLayer(lid)) {
+          map.addLayer({
+            id: lid,
+            type: 'fill',
+            source: sid,
+            paint: {
+              'fill-color': getColorExpression(config, 'fill'),
+              'fill-opacity': getFillOpacityExpression(config),
+              'fill-color-transition': { duration: 300 },
+              'fill-opacity-transition': { duration: 300 }
+            }
+          });
         }
-      });
 
-      // Outline Layer (for stroke-width support)
-      map.addLayer({
-        id: outlineLayerId,
-        type: 'line',
-        source: sourceId,
-        paint: {
-          'line-color': getColorExpression(config, 'stroke'),
-          'line-width': getStrokeWidthExpression(config),
-          'line-opacity': getStrokeOpacityExpression(config),
-          'line-width-transition': { duration: 300 },
-          'line-color-transition': { duration: 300 },
-          'line-opacity-transition': { duration: 300 }
+        if (!map.getLayer(olid)) {
+          map.addLayer({
+            id: olid,
+            type: 'line',
+            source: sid,
+            paint: {
+              'line-color': getColorExpression(config, 'stroke'),
+              'line-width': getStrokeWidthExpression(config),
+              'line-opacity': getStrokeOpacityExpression(config),
+              'line-width-transition': { duration: 300 },
+              'line-color-transition': { duration: 300 },
+              'line-opacity-transition': { duration: 300 }
+            }
+          });
         }
-      });
-    }
+      }
+    });
 
     return () => {
-      // NOTE: We only remove layers if the URL changes (handled by Loader unmounting this component)
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-      if (map.getLayer(outlineLayerId)) map.removeLayer(outlineLayerId);
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      untrack(() => {
+        if (map.getLayer(lid)) map.removeLayer(lid);
+        if (map.getLayer(olid)) map.removeLayer(olid);
+        if (map.getSource(sid)) map.removeSource(sid);
+      });
     };
   });
 
   // Update Data
   $effect(() => {
     const map = mapRoot.map;
-    if (map && map.getSource(sourceId) && data) {
-      (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(data);
+    const sid = sourceId;
+    if (map && map.getSource(sid) && data) {
+      (map.getSource(sid) as maplibregl.GeoJSONSource).setData(data);
     }
   });
 
   // Update Styles
   $effect(() => {
     const map = mapRoot.map;
-    if (map && map.getLayer(layerId)) {
-      map.setPaintProperty(layerId, 'fill-color', getColorExpression(config, 'fill'));
-      map.setPaintProperty(layerId, 'fill-opacity', getFillOpacityExpression(config));
+    const lid = layerId;
+    const olid = outlineLayerId;
+
+    if (map && map.getLayer(lid)) {
+      map.setPaintProperty(lid, 'fill-color', getColorExpression(config, 'fill'));
+      map.setPaintProperty(lid, 'fill-opacity', getFillOpacityExpression(config));
     }
-    if (map && map.getLayer(outlineLayerId)) {
-      map.setPaintProperty(outlineLayerId, 'line-color', getColorExpression(config, 'stroke'));
-      map.setPaintProperty(outlineLayerId, 'line-width', getStrokeWidthExpression(config));
-      map.setPaintProperty(outlineLayerId, 'line-opacity', getStrokeOpacityExpression(config));
+    if (map && map.getLayer(olid)) {
+      map.setPaintProperty(olid, 'line-color', getColorExpression(config, 'stroke'));
+      map.setPaintProperty(olid, 'line-width', getStrokeWidthExpression(config));
+      map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
     }
   });
 
   // Popups
   $effect(() => {
     const map = mapRoot.map;
-    if (!map || !map.getLayer(layerId)) return;
+    const lid = layerId;
+    if (!map || !map.getLayer(lid)) return;
 
     const popup = new maplibregl.Popup({
       closeButton: false,
@@ -112,15 +129,15 @@
       }
     };
 
-    map.on('click', layerId, handleEvent);
-    map.on('mouseenter', layerId, () => (map.getCanvas().style.cursor = 'pointer'));
-    map.on('mouseleave', layerId, () => {
+    map.on('click', lid, handleEvent);
+    map.on('mouseenter', lid, () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseleave', lid, () => {
       map.getCanvas().style.cursor = '';
       popup.remove();
     });
 
     return () => {
-      map.off('click', layerId, handleEvent);
+      map.off('click', lid, handleEvent);
       popup.remove();
     };
   });

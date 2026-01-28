@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type { maplibregl } from '../../../mapLibre/index';
+  import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { getColorExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
 
@@ -8,66 +8,79 @@
 
   let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
-  const layerId = `${sourceId}-line`;
+  const layerId = $derived(`${sourceId}-line`);
 
   $effect(() => {
-    if (!mapRoot.map || !data) return;
     const map = mapRoot.map;
+    const sid = sourceId;
+    const lid = layerId;
 
-    // Initialize Source & Layer
-    if (!map.getSource(sourceId)) {
-      map.addSource(sourceId, {
-        type: 'geojson',
-        data: data
-      });
+    if (!map || !data) return;
 
-      map.addLayer({
-        id: layerId,
-        type: 'line',
-        source: sourceId,
-        layout: {
-          'line-cap': 'round',
-          'line-join': 'round'
-        },
-        paint: {
-          'line-color': getColorExpression(config, 'stroke'),
-          'line-opacity': getStrokeOpacityExpression(config),
-          'line-width': getStrokeWidthExpression(config),
-          'line-color-transition': { duration: 300 },
-          'line-opacity-transition': { duration: 300 },
-          'line-width-transition': { duration: 300 }
-        }
-      });
-    }
+    untrack(() => {
+      // Initialize Source
+      if (!map.getSource(sid)) {
+        map.addSource(sid, {
+          type: 'geojson',
+          data: data
+        });
+      }
+
+      // Initialize Layer
+      if (map.getSource(sid) && !map.getLayer(lid)) {
+        map.addLayer({
+          id: lid,
+          type: 'line',
+          source: sid,
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round'
+          },
+          paint: {
+            'line-color': getColorExpression(config, 'stroke'),
+            'line-opacity': getStrokeOpacityExpression(config),
+            'line-width': getStrokeWidthExpression(config),
+            'line-color-transition': { duration: 300 },
+            'line-opacity-transition': { duration: 300 },
+            'line-width-transition': { duration: 300 }
+          }
+        });
+      }
+    });
 
     return () => {
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      untrack(() => {
+        if (map.getLayer(lid)) map.removeLayer(lid);
+        if (map.getSource(sid)) map.removeSource(sid);
+      });
     };
   });
 
   // Update Data
   $effect(() => {
     const map = mapRoot.map;
-    if (map && map.getSource(sourceId) && data) {
-      (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(data);
+    const sid = sourceId;
+    if (map && map.getSource(sid) && data) {
+      (map.getSource(sid) as maplibregl.GeoJSONSource).setData(data);
     }
   });
 
   // Update Styles
   $effect(() => {
     const map = mapRoot.map;
-    if (map && map.getLayer(layerId)) {
-      map.setPaintProperty(layerId, 'line-color', getColorExpression(config, 'stroke'));
-      map.setPaintProperty(layerId, 'line-opacity', getStrokeOpacityExpression(config));
-      map.setPaintProperty(layerId, 'line-width', getStrokeWidthExpression(config));
+    const lid = layerId;
+    if (map && map.getLayer(lid)) {
+      map.setPaintProperty(lid, 'line-color', getColorExpression(config, 'stroke'));
+      map.setPaintProperty(lid, 'line-opacity', getStrokeOpacityExpression(config));
+      map.setPaintProperty(lid, 'line-width', getStrokeWidthExpression(config));
     }
   });
 
   // Popups
   $effect(() => {
     const map = mapRoot.map;
-    if (!map || !map.getLayer(layerId)) return;
+    const lid = layerId;
+    if (!map || !map.getLayer(lid)) return;
 
     const popup = new maplibregl.Popup({
       closeButton: false,
@@ -90,15 +103,15 @@
       }
     };
 
-    map.on('click', layerId, handleEvent);
-    map.on('mouseenter', layerId, () => (map.getCanvas().style.cursor = 'pointer'));
-    map.on('mouseleave', layerId, () => {
+    map.on('click', lid, handleEvent);
+    map.on('mouseenter', lid, () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseleave', lid, () => {
       map.getCanvas().style.cursor = '';
       popup.remove();
     });
 
     return () => {
-      map.off('click', layerId, handleEvent);
+      map.off('click', lid, handleEvent);
       popup.remove();
     };
   });
