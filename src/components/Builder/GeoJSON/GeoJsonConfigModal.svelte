@@ -1,7 +1,9 @@
 <script lang="ts">
-  import { Modal, Typeahead } from '@abcnews/components-builder';
-  import type { GeoJsonConfig } from '../../lib/marker';
+  import { Modal } from '@abcnews/components-builder';
+  import type { GeoJsonConfig } from '../../../lib/marker';
   import * as topojson from 'topojson-client';
+  import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
+  import PropGeoJsonColour from './PropGeoJsonColour.svelte';
 
   let {
     config: initialConfig,
@@ -14,17 +16,20 @@
   }>();
 
   let config = $state<GeoJsonConfig>({ ...initialConfig });
-  let loading = $state(false);
-  let error = $state<string | undefined>();
+  let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(initialConfig.url ? 'loading' : 'no-data');
+  let errorMessage = $state<string | undefined>();
   let properties = $state<string[]>([]);
   let featureCount = $state(0);
   let rawFeatures = $state<any[]>([]);
   let lastUrl = '';
 
   async function fetchAndParse(url: string) {
-    if (!url) return;
-    loading = true;
-    error = undefined;
+    if (!url) {
+      status = 'no-data';
+      return;
+    }
+    status = 'loading';
+    errorMessage = undefined;
     try {
       const res = await fetch(url);
       if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
@@ -54,13 +59,13 @@
       properties = Array.from(propsSet).sort();
       featureCount = count;
       rawFeatures = features;
+      status = 'loaded';
     } catch (e: any) {
-      error = e.message;
+      errorMessage = e.message;
       properties = [];
       featureCount = 0;
       rawFeatures = [];
-    } finally {
-      loading = false;
+      status = 'error';
     }
   }
 
@@ -68,6 +73,8 @@
     if (config.url && config.url !== lastUrl) {
       lastUrl = config.url;
       fetchAndParse(config.url);
+    } else if (!config.url) {
+      status = 'no-data';
     }
   });
 
@@ -78,18 +85,11 @@
         set.add(String(f.properties[prop]));
       }
     });
-    return Array.from(set).sort().slice(0, 100);
+    return Array.from(set).sort();
   }
 
-  let filterOptions = $derived(
-    config.filter?.prop ? getUniqueValues(config.filter.prop).map(v => ({ label: v, value: v })) : []
-  );
-
   $effect(() => {
-    // Ensure nested objects exist based on mode/type
-    if (config.colorMode === 'override' || config.colorMode === 'scale') {
-      if (!config.colorConfig) config.colorConfig = { min: 0, max: 100, minColor: '#ffffff', maxColor: '#ff0000' };
-    }
+    // Ensure nested objects exist based on type
     if (config.type === 'spikes') {
       if (!config.spike) config.spike = { scalar: 1, heightProp: '' };
     }
@@ -100,140 +100,48 @@
   <button onclick={() => onsave(config)}>Save</button>
   <button onclick={onclose}>Cancel</button>
 {/snippet}
+
 <Modal onClose={onclose} title="Edit GeoJSON" {footerChildren}>
-  <small>Paste a GeoJSON URL</small>
-  <div class="field" style="min-width: 500px;">
+  <fieldset style="min-width: 500px;">
+    <legend
+      >Data source
+      {#if status === 'loaded'}
+        (<small class="stat">{featureCount} features</small>)
+      {/if}</legend
+    >
     <label for="gj-url">URL</label>
     <input id="gj-url" type="text" bind:value={config.url} placeholder="https://example.com/data.json" />
-  </div>
 
-  {#if loading}
-    <div>Loading metadata...</div>
-  {:else if error}
-    <div style="color:red">{error}</div>
-  {:else if config.url}
-    <div class="stat">{featureCount} features found</div>
+    {#if status === 'loading'}
+      <div>Loading metadata...</div>
+    {/if}
+    {#if status === 'error'}
+      <div style="color:var(--builder-color-danger, red)">{errorMessage}</div>
+    {/if}
+  </fieldset>
 
-    <div class="field">
-      <label for="gj-type">Type</label>
-      <select id="gj-type" bind:value={config.type}>
-        <option value="areas">Areas</option>
-        <option value="lines">Lines</option>
-        <option value="points">Points</option>
-        <option value="spikes">Spikes</option>
-      </select>
-    </div>
-
-    <!-- Filter UI -->
+  {#if status === 'loaded'}
     <fieldset>
-      <legend>Filter</legend>
-      <div class="field">
-        <label for="gj-filter-prop">Property</label>
-        <select
-          id="gj-filter-prop"
-          value={config.filter?.prop || ''}
-          onchange={e => {
-            const val = e.currentTarget.value;
-            if (val) {
-              const allValues = getUniqueValues(val);
-              config.filter = { prop: val, values: allValues };
-            } else {
-              delete config.filter;
-            }
-          }}
-        >
-          <option value="">(None)</option>
-          {#each properties as p}
-            <option value={p}>{p}</option>
-          {/each}
-        </select>
+      <legend>Geometry Type</legend>
+      <div style:display="flex" style:gap="1rem">
+        {#each ['areas', 'lines', 'points', 'spikes'] as type}
+          <label
+            style:display="flex"
+            style:align-items="center"
+            style:gap="0.5rem"
+            style:cursor="pointer"
+            style:text-transform="capitalize"
+          >
+            <input type="radio" name="gj-type" value={type} bind:group={config.type} />
+            {type}
+          </label>
+        {/each}
       </div>
-
-      {#if config.filter?.prop}
-        <div class="field">
-          <label>Values ({config.filter.values.length} shown)</label>
-          <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-            <button class="small" onclick={() => (config.filter!.values = filterOptions.map(o => o.value))}
-              >Show All</button
-            >
-            <button class="small" onclick={() => (config.filter!.values = [])}>Hide All</button>
-          </div>
-          <Typeahead
-            values={filterOptions}
-            value={config.filter.values}
-            onChange={vals => (config.filter!.values = vals)}
-          />
-        </div>
-      {/if}
     </fieldset>
 
-    <!-- Color Mode UI -->
-    <fieldset>
-      <legend>Color</legend>
-      <div class="field">
-        <label for="gj-color-mode">Mode</label>
-        <select id="gj-color-mode" bind:value={config.colorMode}>
-          <option value="simple">Simple Style</option>
-          <option value="scale">Color Scale</option>
-          <option value="class">Class Based</option>
-          <option value="override">Override</option>
-        </select>
-      </div>
+    <PropGeoJsonFilter bind:config {properties} {getUniqueValues} />
 
-      {#if config.colorMode === 'simple'}
-        <small>Uses <code>marker-color</code>, <code>fill</code>, <code>stroke</code> properties from GeoJSON.</small>
-      {:else if config.colorMode === 'override'}
-        <div class="field">
-          <label for="gj-color-override">Color</label>
-          {#if config.colorConfig}
-            <input id="gj-color-override" type="color" bind:value={config.colorConfig.override} />
-          {/if}
-        </div>
-      {:else if config.colorMode === 'scale'}
-        <div class="field">
-          <label for="gj-color-prop">Property</label>
-          <select id="gj-color-prop" bind:value={config.colorProp}>
-            <option value="">(Select)</option>
-            {#each properties as p}
-              <option value={p}>{p}</option>
-            {/each}
-          </select>
-        </div>
-        {#if config.colorConfig}
-          <!-- Initialized by effect -->
-          <div class="field-row">
-            <div class="field">
-              <label>Min</label>
-              <input type="number" bind:value={config.colorConfig!.min} />
-            </div>
-            <div class="field">
-              <label>Color</label>
-              <input type="color" bind:value={config.colorConfig!.minColor} />
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field">
-              <label>Max</label>
-              <input type="number" bind:value={config.colorConfig!.max} />
-            </div>
-            <div class="field">
-              <label>Color</label>
-              <input type="color" bind:value={config.colorConfig!.maxColor} />
-            </div>
-          </div>
-        {/if}
-      {:else if config.colorMode === 'class'}
-        <div class="field">
-          <label for="gj-class-prop">Property</label>
-          <select id="gj-class-prop" bind:value={config.colorProp}>
-            <option value="class">class</option>
-            {#each properties as p}
-              <option value={p}>{p}</option>
-            {/each}
-          </select>
-        </div>
-      {/if}
-    </fieldset>
+    <PropGeoJsonColour bind:config {properties} features={rawFeatures} />
 
     {#if config.type === 'spikes'}
       <fieldset>
@@ -248,7 +156,6 @@
           </select>
         </div>
         {#if config.spike}
-          <!-- Initialized by effect -->
           <div class="field">
             <label for="gj-spike-scalar">Scalar</label>
             <input id="gj-spike-scalar" type="number" step="0.1" bind:value={config.spike!.scalar} />
@@ -258,27 +165,3 @@
     {/if}
   {/if}
 </Modal>
-
-<style>
-  .field {
-    margin-bottom: 0.5rem;
-  }
-  .field label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 0.2rem;
-  }
-  input,
-  select {
-    width: 100%;
-    box-sizing: border-box;
-  }
-  .field-row {
-    display: flex;
-    gap: 0.5rem;
-  }
-  button.small {
-    padding: 2px 6px;
-    font-size: 0.8em;
-  }
-</style>
