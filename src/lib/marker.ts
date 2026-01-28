@@ -16,6 +16,23 @@ export interface Country {
   style: 'primary' | 'secondary';
 }
 
+export interface GeoJsonConfig {
+  url: string;
+  type: 'areas' | 'lines' | 'points' | 'spikes';
+  colorMode: 'scale' | 'simple' | 'class' | 'override';
+  colorProp?: string;
+  colorConfig?: {
+    min?: number;
+    max?: number;
+    minColor?: string;
+    maxColor?: string;
+    scale?: { [key: string]: string };
+    override?: string;
+  };
+  filter?: { prop: string; values: string[] };
+  spike?: { heightProp: string; scalar: number };
+}
+
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
@@ -25,6 +42,7 @@ export interface DecodedObject {
   labels?: Label[];
   legend?: any[];
   base?: string;
+  geoJson?: GeoJsonConfig[];
 }
 
 export interface DecodeProps {
@@ -34,6 +52,7 @@ export interface DecodeProps {
   labels?: string | string[];
   legend?: string;
   c?: string;
+  gj?: string;
 }
 
 /**
@@ -99,9 +118,84 @@ export const countriesCodec = {
 
 
 /**
+ * Custom codec for GeoJSON config
+ * Flattens config to compact array
+ */
+export const geoJsonCodec = {
+  encode: (configs: GeoJsonConfig[]) => {
+    if (!configs || configs.length === 0) return undefined;
+    
+    // Config[] -> Array<CompactArray>
+    const condensed = configs.map(config => {
+        const types = ['areas', 'lines', 'points', 'spikes'];
+        const modes = ['scale', 'simple', 'class', 'override'];
+
+        // [url, type, mode, colorProp, ...]
+        const arr: any[] = [
+        config.url,
+        types.indexOf(config.type),
+        modes.indexOf(config.colorMode)
+        ];
+
+        if (config.colorProp) arr[3] = config.colorProp;
+
+        // Condense Configs
+        if (config.colorConfig || config.filter || config.spike) {
+        const extras: any = {};
+        if (config.colorConfig) extras.cc = config.colorConfig;
+        if (config.filter) extras.f = config.filter;
+        if (config.spike) extras.s = config.spike;
+        arr[4] = extras;
+        }
+        return arr;
+    });
+
+    return encode(JSON.stringify(condensed));
+  },
+  decode: (hash: string) => {
+    if (!hash) return [];
+    try {
+      const outerArr = JSON.parse(decode(hash));
+      if (!Array.isArray(outerArr)) return [];
+
+      const types = ['areas', 'lines', 'points', 'spikes'] as const;
+      const modes = ['scale', 'simple', 'class', 'override'] as const;
+
+      return outerArr.map((arr: any) => {
+          if (!Array.isArray(arr)) return null;
+          const [url, typeIdx, modeIdx, colorProp, extras] = arr;
+
+          const config: GeoJsonConfig = {
+            url,
+            type: types[typeIdx] || 'areas',
+            colorMode: modes[modeIdx] || 'scale'
+          };
+
+          if (colorProp) config.colorProp = colorProp;
+
+          if (extras) {
+            if (extras.cc) config.colorConfig = extras.cc;
+            if (extras.f) config.filter = extras.f;
+            if (extras.s) config.spike = extras.s;
+          }
+          return config;
+      }).filter(Boolean) as GeoJsonConfig[];
+    } catch (e) {
+      return [];
+    }
+  }
+};
+
+/**
  * Schema for marker data
  */
 export const markerSchema = {
+  geoJson: {
+    key: 'gj',
+    type: 'custom',
+    codec: geoJsonCodec,
+    defaultValue: []
+  },
   coords: {
     key: 'geohash',
     type: 'custom',

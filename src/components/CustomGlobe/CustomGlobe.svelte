@@ -3,6 +3,7 @@
   import MapLabelHandler from './features/MapLabelHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
+  import GeoJsonHandler from './features/GeoJson/GeoJsonHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
@@ -48,6 +49,7 @@
     <MapLabelHandler />
     <MapCustomLabelHandler labels={options.labels} />
     <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
+    <GeoJsonHandler config={options.geoJson} />
     {@render children?.()}
   </MapLibreLoader>
 {/key}

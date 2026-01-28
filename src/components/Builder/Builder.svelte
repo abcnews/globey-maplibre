@@ -10,6 +10,7 @@
   import PropLabels from './PropLabels.svelte';
   import PropHighlightCountries from './PropHighlightCountries.svelte';
   import PropBase from './PropBase.svelte';
+  import PropGeoJSON from './PropGeoJSON.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -78,6 +79,7 @@
       highlightCountries={options.highlightCountries}
       onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
     />
+    <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
     <MarkerAdmin />
     <fieldset>
       <legend>Marker debug</legend>
