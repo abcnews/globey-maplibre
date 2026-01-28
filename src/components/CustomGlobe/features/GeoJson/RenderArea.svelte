@@ -11,17 +11,16 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let { data, config } = $props<{ data: any; config: GeoJsonConfig }>();
+  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
-  const sourceId = `geojson-area-source-${Math.random().toString(36).substring(2, 9)}`;
-  const layerId = `geojson-area-layer-${sourceId}`;
-  const outlineLayerId = `${layerId}-outline`;
+  const layerId = `${sourceId}-fill`;
+  const outlineLayerId = `${sourceId}-outline`;
 
   $effect(() => {
-    if (!mapRoot.map) return;
+    if (!mapRoot.map || !data) return;
     const map = mapRoot.map;
 
-    // Initialize Source & Layer
+    // Initialize Source & Layers
     if (!map.getSource(sourceId)) {
       map.addSource(sourceId, {
         type: 'geojson',
@@ -58,6 +57,7 @@
     }
 
     return () => {
+      // NOTE: We only remove layers if the URL changes (handled by Loader unmounting this component)
       if (map.getLayer(layerId)) map.removeLayer(layerId);
       if (map.getLayer(outlineLayerId)) map.removeLayer(outlineLayerId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
@@ -84,5 +84,44 @@
       map.setPaintProperty(outlineLayerId, 'line-width', getStrokeWidthExpression(config));
       map.setPaintProperty(outlineLayerId, 'line-opacity', getStrokeOpacityExpression(config));
     }
+  });
+
+  // Popups
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map || !map.getLayer(layerId)) return;
+
+    const popup = new maplibregl.Popup({
+      closeButton: false,
+      closeOnClick: true
+    });
+
+    const handleEvent = (e: any) => {
+      const feature = e.features?.[0];
+      if (!feature) return;
+
+      const title = feature.properties?.title;
+      const description = feature.properties?.description;
+
+      if (title || description) {
+        let content = '';
+        if (title) content += `<strong>${title}</strong><br>`;
+        if (description) content += description;
+
+        popup.setLngLat(e.lngLat).setHTML(content).addTo(map);
+      }
+    };
+
+    map.on('click', layerId, handleEvent);
+    map.on('mouseenter', layerId, () => (map.getCanvas().style.cursor = 'pointer'));
+    map.on('mouseleave', layerId, () => {
+      map.getCanvas().style.cursor = '';
+      popup.remove();
+    });
+
+    return () => {
+      map.off('click', layerId, handleEvent);
+      popup.remove();
+    };
   });
 </script>

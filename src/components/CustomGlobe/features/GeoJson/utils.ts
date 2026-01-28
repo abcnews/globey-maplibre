@@ -1,5 +1,17 @@
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
+export function generateId(url: string): string {
+  if (!url) return 'none';
+  // Simple hash for stable IDs
+  let hash = 0;
+  for (let i = 0; i < url.length; i++) {
+    const char = url.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return `gj-${Math.abs(hash).toString(36)}`;
+}
+
 export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'stroke' | 'marker'): any {
   if (config.colorMode === 'override') {
     return config.colorConfig?.override || '#ff0000';
@@ -138,14 +150,31 @@ export function evaluateColor(config: GeoJsonConfig, feature: any): string {
 }
 
 export function evaluateOpacity(config: GeoJsonConfig, feature: any): number {
+    const props = feature.properties || {};
+    let opacity = 1;
+
     if (config.filter?.prop && config.filter.values) {
-        const val = String(feature.properties?.[config.filter.prop]);
-        // Filter values are the allowed list?
+        const val = String(props[config.filter.prop]);
         if (!config.filter.values.includes(val)) {
-            return 0;
+            opacity = 0;
         }
     }
-    return 1;
+
+    if (opacity > 0 && config.colorMode === 'simple') {
+        const simpleOpacity = props['stroke-opacity'] ?? props['fill-opacity'] ?? props['opacity'] ?? 1;
+        opacity *= Number(simpleOpacity);
+    }
+
+    return opacity;
+}
+
+export function evaluateSymbol(config: GeoJsonConfig, feature: any): string {
+    if (config.colorMode !== 'simple') return '';
+    const symbol = feature.properties?.['marker-symbol'];
+    if (!symbol) return '';
+    // Spec says: "a single digit 0-9 or an ID from the Maki icon set"
+    // For now we just return the string and RenderPoint can decide how to show it
+    return String(symbol);
 }
 
 export function evaluateHeight(config: GeoJsonConfig, feature: any): number {

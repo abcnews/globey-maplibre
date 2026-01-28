@@ -5,6 +5,6 @@
   let { config = [] } = $props<{ config?: GeoJsonConfig[] }>();
 </script>
 
-{#each config as item (item.url + item.type + item.colorMode)}
+{#each config as item (item.url)}
   <GeoJsonLayerLoader config={item} />
 {/each}

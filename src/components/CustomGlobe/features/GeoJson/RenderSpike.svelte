@@ -7,9 +7,9 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let { data, config } = $props<{ data: any; config: GeoJsonConfig }>();
+  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
-  const layerId = `geojson-spike-layer-${Math.random().toString(36).substring(2, 9)}`;
+  const layerId = `${sourceId}-spike`;
   let layer: SpikeLayer | undefined;
 
   // Animation state

@@ -6,7 +6,7 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let { data, config } = $props<{ data: any; config: GeoJsonConfig }>();
+  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
   let features = $derived(data?.features || []);
 </script>

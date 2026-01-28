@@ -2,11 +2,13 @@
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
   import * as topojson from 'topojson-client';
+  import { generateId } from './utils';
 
   let { config } = $props<{ config: GeoJsonConfig }>();
 
   let data = $state<any>(null);
   let lastUrl = '';
+  let sourceId = $derived(generateId(config.url));
 
   async function fetchAndParse(url: string) {
     if (!url) return;
@@ -41,5 +43,5 @@
 </script>
 
 {#if data}
-  <GeoJsonRenderer {data} {config} />
+  <GeoJsonRenderer {data} {config} {sourceId} />
 {/if}
