@@ -1,3 +1,5 @@
 # interactive-globey-maplibre
 
-A project generated from [aunty](https://github.com/abcnews/aunty)'s `svelte` project template.
+A MapLibre globe scrollyteller and builder
+
+This is a work-in-progress as of 2026-01-28
