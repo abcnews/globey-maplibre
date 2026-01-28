@@ -1,9 +1,17 @@
 {
   "name": "interactive-globey-maplibre",
   "version": "1.0.0-pre",
-  "description": "A project generated from aunty's svelte project template.",
+  "description": "A MapLibre globe scrollyteller and builder",
   "license": "MIT",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/abcnews/interactive-globey-maplibre.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abcnews/interactive-globey-maplibre/issues"
+  },
+  "homepage": "https://github.com/abcnews/interactive-globey-maplibre#readme",
   "contributors": [
     "Ash Kyd <kyd.ashley@abc.net.au>"
   ],
