@@ -10,7 +10,7 @@
   import PropLabels from './PropLabels.svelte';
   import PropHighlightCountries from './PropHighlightCountries.svelte';
   import PropBase from './PropBase.svelte';
-  import PropGeoJSON from './PropGeoJSON.svelte';
+  import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();

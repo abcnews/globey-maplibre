@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { maplibregl } from '../mapLibre/index';
-  import type { GeoJsonConfig } from '../../lib/marker';
+  import type { maplibregl } from '../../mapLibre/index';
+  import type { GeoJsonConfig } from '../../../lib/marker';
   import GeoJsonConfigModal from './GeoJsonConfigModal.svelte';
+  import { Pencil, Trash } from 'svelte-bootstrap-icons';
 
   let {
     map,
@@ -62,8 +63,8 @@
             <span class="url" title={config.url}>{config.url}</span>
           </div>
           <div class="actions">
-            <button class="small" onclick={() => openEdit(i)}>Edit</button>
-            <button class="small danger" onclick={() => removeConfig(i)}>DEL</button>
+            <button class="btn-icon" aria-label="Edit" onclick={() => openEdit(i)}><Pencil /></button>
+            <button class="btn-icon" aria-label="Delete" onclick={() => removeConfig(i)}><Trash /></button>
           </div>
         </li>
       {/each}
@@ -120,12 +121,20 @@
     display: flex;
     gap: 0.2rem;
   }
-  button.small {
-    padding: 2px 5px;
-    font-size: 0.8em;
+  .btn-icon {
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #555;
   }
-  button.danger {
-    color: red;
+  .btn-icon:hover {
+    color: #000;
+    background-color: #eee;
+    border-radius: 3px;
   }
   .add-btn {
     width: 100%;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Modal } from '@abcnews/components-builder';
+  import { Modal, Typeahead } from '@abcnews/components-builder';
   import type { GeoJsonConfig } from '../../lib/marker';
   import * as topojson from 'topojson-client';
 
@@ -81,7 +81,19 @@
     return Array.from(set).sort().slice(0, 100);
   }
 
-  let filterValues = $derived(config.filter?.prop ? getUniqueValues(config.filter.prop) : []);
+  let filterOptions = $derived(
+    config.filter?.prop ? getUniqueValues(config.filter.prop).map(v => ({ label: v, value: v })) : []
+  );
+
+  $effect(() => {
+    // Ensure nested objects exist based on mode/type
+    if (config.colorMode === 'override' || config.colorMode === 'scale') {
+      if (!config.colorConfig) config.colorConfig = { min: 0, max: 100, minColor: '#ffffff', maxColor: '#ff0000' };
+    }
+    if (config.type === 'spikes') {
+      if (!config.spike) config.spike = { scalar: 1, heightProp: '' };
+    }
+  });
 </script>
 
 {#snippet footerChildren()}
@@ -89,6 +101,7 @@
   <button onclick={onclose}>Cancel</button>
 {/snippet}
 <Modal onClose={onclose} title="Edit GeoJSON" {footerChildren}>
+  <small>Paste a GeoJSON URL</small>
   <div class="field" style="min-width: 500px;">
     <label for="gj-url">URL</label>
     <input id="gj-url" type="text" bind:value={config.url} placeholder="https://example.com/data.json" />
@@ -122,7 +135,8 @@
           onchange={e => {
             const val = e.currentTarget.value;
             if (val) {
-              config.filter = { prop: val, values: [] };
+              const allValues = getUniqueValues(val);
+              config.filter = { prop: val, values: allValues };
             } else {
               delete config.filter;
             }
@@ -137,27 +151,18 @@
 
       {#if config.filter?.prop}
         <div class="field">
-          <label>Values ({config.filter.values.length} hidden)</label>
-          <div class="scroll-list">
-            {#each filterValues as val}
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={!config.filter!.values.includes(val)}
-                  onchange={e => {
-                    const checked = e.currentTarget.checked;
-                    const current = config.filter!.values;
-                    if (!checked) {
-                      config.filter!.values = [...current, val];
-                    } else {
-                      config.filter!.values = current.filter(v => v !== val);
-                    }
-                  }}
-                />
-                {val}
-              </label>
-            {/each}
+          <label>Values ({config.filter.values.length} shown)</label>
+          <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+            <button class="small" onclick={() => (config.filter!.values = filterOptions.map(o => o.value))}
+              >Show All</button
+            >
+            <button class="small" onclick={() => (config.filter!.values = [])}>Hide All</button>
           </div>
+          <Typeahead
+            values={filterOptions}
+            value={config.filter.values}
+            onChange={vals => (config.filter!.values = vals)}
+          />
         </div>
       {/if}
     </fieldset>
@@ -180,10 +185,9 @@
       {:else if config.colorMode === 'override'}
         <div class="field">
           <label for="gj-color-override">Color</label>
-          {#if !config.colorConfig}
-            {(config.colorConfig = {})}
+          {#if config.colorConfig}
+            <input id="gj-color-override" type="color" bind:value={config.colorConfig.override} />
           {/if}
-          <input id="gj-color-override" type="color" bind:value={config.colorConfig!.override} />
         </div>
       {:else if config.colorMode === 'scale'}
         <div class="field">
@@ -195,29 +199,29 @@
             {/each}
           </select>
         </div>
-        {#if !config.colorConfig}
-          {(config.colorConfig = { min: 0, max: 100, minColor: '#ffffff', maxColor: '#ff0000' })}
+        {#if config.colorConfig}
+          <!-- Initialized by effect -->
+          <div class="field-row">
+            <div class="field">
+              <label>Min</label>
+              <input type="number" bind:value={config.colorConfig!.min} />
+            </div>
+            <div class="field">
+              <label>Color</label>
+              <input type="color" bind:value={config.colorConfig!.minColor} />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Max</label>
+              <input type="number" bind:value={config.colorConfig!.max} />
+            </div>
+            <div class="field">
+              <label>Color</label>
+              <input type="color" bind:value={config.colorConfig!.maxColor} />
+            </div>
+          </div>
         {/if}
-        <div class="field-row">
-          <div class="field">
-            <label>Min</label>
-            <input type="number" bind:value={config.colorConfig!.min} />
-          </div>
-          <div class="field">
-            <label>Color</label>
-            <input type="color" bind:value={config.colorConfig!.minColor} />
-          </div>
-        </div>
-        <div class="field-row">
-          <div class="field">
-            <label>Max</label>
-            <input type="number" bind:value={config.colorConfig!.max} />
-          </div>
-          <div class="field">
-            <label>Color</label>
-            <input type="color" bind:value={config.colorConfig!.maxColor} />
-          </div>
-        </div>
       {:else if config.colorMode === 'class'}
         <div class="field">
           <label for="gj-class-prop">Property</label>
@@ -243,25 +247,19 @@
             {/each}
           </select>
         </div>
-        {#if !config.spike}
-          {(config.spike = { scalar: 1 })}
+        {#if config.spike}
+          <!-- Initialized by effect -->
+          <div class="field">
+            <label for="gj-spike-scalar">Scalar</label>
+            <input id="gj-spike-scalar" type="number" step="0.1" bind:value={config.spike!.scalar} />
+          </div>
         {/if}
-        <div class="field">
-          <label for="gj-spike-scalar">Scalar</label>
-          <input id="gj-spike-scalar" type="number" step="0.1" bind:value={config.spike!.scalar} />
-        </div>
       </fieldset>
     {/if}
   {/if}
 </Modal>
 
 <style>
-  .modal-content {
-    padding: 1rem;
-    background: white;
-    max-width: 500px;
-    margin: 0 auto;
-  }
   .field {
     margin-bottom: 0.5rem;
   }
@@ -279,22 +277,8 @@
     display: flex;
     gap: 0.5rem;
   }
-  .actions {
-    margin-top: 1rem;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: flex-end;
-  }
-  .scroll-list {
-    max-height: 150px;
-    overflow-y: auto;
-    border: 1px solid #ccc;
-    padding: 0.5rem;
-  }
-  .checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: normal;
+  button.small {
+    padding: 2px 6px;
+    font-size: 0.8em;
   }
 </style>

@@ -2,7 +2,7 @@
   import { getContext, untrack } from 'svelte';
   import type { maplibregl } from '../../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColorExpression, getOpacityExpression } from './utils';
+  import { getColorExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -31,11 +31,12 @@
           'line-join': 'round'
         },
         paint: {
-          'line-color': getColorExpression(config, 'line'),
-          'line-opacity': getOpacityExpression(config),
-          'line-width': 2,
+          'line-color': getColorExpression(config, 'stroke'),
+          'line-opacity': getStrokeOpacityExpression(config),
+          'line-width': getStrokeWidthExpression(config),
           'line-color-transition': { duration: 300 },
-          'line-opacity-transition': { duration: 300 }
+          'line-opacity-transition': { duration: 300 },
+          'line-width-transition': { duration: 300 }
         }
       });
     }
@@ -58,8 +59,9 @@
   $effect(() => {
     const map = mapRoot.map;
     if (map && map.getLayer(layerId)) {
-      map.setPaintProperty(layerId, 'line-color', getColorExpression(config, 'line'));
-      map.setPaintProperty(layerId, 'line-opacity', getOpacityExpression(config));
+      map.setPaintProperty(layerId, 'line-color', getColorExpression(config, 'stroke'));
+      map.setPaintProperty(layerId, 'line-opacity', getStrokeOpacityExpression(config));
+      map.setPaintProperty(layerId, 'line-width', getStrokeWidthExpression(config));
     }
   });
 </script>

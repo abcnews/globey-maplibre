@@ -29,20 +29,30 @@
   // Reactivity for style
   let color = $derived(evaluateColor(config, feature));
   let opacity = $derived(evaluateOpacity(config, feature));
+  let size = $derived.by(() => {
+    if (config.colorMode !== 'simple') return 12;
+    const s = feature.properties?.['marker-size'];
+    if (s === 'small') return 8;
+    if (s === 'large') return 18;
+    if (typeof s === 'number') return s;
+    return 12; // medium / default
+  });
 </script>
 
-<div bind:this={element} class="custom-point-marker" style:--color={color} style:opacity></div>
+<div bind:this={element} class="custom-point-marker" style:--color={color} style:--size="{size}px" style:opacity></div>
 
 <style>
   .custom-point-marker {
-    width: 12px;
-    height: 12px;
+    width: var(--size);
+    height: var(--size);
     background-color: var(--color);
-    border: 1px solid rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
     border-radius: 50%;
     transition:
       opacity 0.3s ease,
-      background-color 0.3s ease;
+      background-color 0.3s ease,
+      width 0.3s ease,
+      height 0.3s ease;
     cursor: pointer;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }

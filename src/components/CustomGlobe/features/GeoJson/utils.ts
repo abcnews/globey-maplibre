@@ -1,12 +1,18 @@
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
-export function getColorExpression(config: GeoJsonConfig, type: 'fill' | 'line' | 'circle'): any {
+export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'stroke' | 'marker'): any {
   if (config.colorMode === 'override') {
     return config.colorConfig?.override || '#ff0000';
   }
   
   if (config.colorMode === 'simple') {
-    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], ['get', 'marker-color'], '#888888'];
+    if (context === 'stroke') {
+        return ['coalesce', ['get', 'stroke'], '#555555'];
+    }
+    if (context === 'marker') {
+        return ['coalesce', ['get', 'marker-color'], '#7e7e7e'];
+    }
+    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#555555'];
   }
 
   if (config.colorMode === 'scale' && config.colorProp) {
@@ -39,11 +45,34 @@ export function getColorExpression(config: GeoJsonConfig, type: 'fill' | 'line' 
   return '#888888';
 }
 
+export function getStrokeWidthExpression(config: GeoJsonConfig): any {
+    if (config.colorMode === 'simple') {
+        return ['coalesce', ['get', 'stroke-width'], 2];
+    }
+    return 2;
+}
+
+export function getFillOpacityExpression(config: GeoJsonConfig): any {
+    const baseOpacity = getOpacityExpression(config);
+    if (config.colorMode === 'simple') {
+        return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
+    }
+    return baseOpacity === 1 ? 0.5 : baseOpacity; // Default to 0.5 for areas unless filtered
+}
+
+export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
+    const baseOpacity = getOpacityExpression(config);
+    if (config.colorMode === 'simple') {
+        return ['*', baseOpacity, ['coalesce', ['get', 'stroke-opacity'], 1.0]];
+    }
+    return baseOpacity;
+}
+
 export function getOpacityExpression(config: GeoJsonConfig): any {
     if (config.filter?.prop && config.filter.values) {
         return [
             'case',
-            ['in', ['get', config.filter.prop], ['literal', config.filter.values]],
+            ['in', ['to-string', ['get', config.filter.prop]], ['literal', config.filter.values]],
             1,
             0
         ];
@@ -77,7 +106,7 @@ export function evaluateColor(config: GeoJsonConfig, feature: any): string {
     }
     
     if (config.colorMode === 'simple') {
-        return props['marker-color'] || props['fill'] || props['fill-color'] || '#888888';
+        return props['marker-color'] || props['stroke'] || props['fill'] || props['fill-color'] || '#888888';
     }
 
     if (config.colorMode === 'scale' && config.colorProp) {
