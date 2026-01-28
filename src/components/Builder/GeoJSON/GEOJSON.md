@@ -17,7 +17,7 @@ The globe supports these visualisation types:
 * Spikes - Draw spikes at the location of your GeoJSON features (e.g. megawattage of solar farms at a point)
 
 ### Filtering
-You can show and hide features in your GeoJSON file by filtering them out. The builder lets you show and hide elements in your GeoJSON by picking a property to filter by, and choosing which values to show. 
+The builder lets you show and hide elements in your GeoJSON by picking a property to filter by, and choosing which values to show. 
 
 For instance if your GeoJSON features all have a "type" property, you can filter them by type:
 

@@ -2,7 +2,9 @@
   import type { maplibregl } from '../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../lib/marker';
   import GeoJsonConfigModal from './GeoJsonConfigModal.svelte';
-  import { Pencil, Trash } from 'svelte-bootstrap-icons';
+  import MarkdownModal from '../MarkdownModal.svelte';
+  import { Pencil, Trash, QuestionCircle } from 'svelte-bootstrap-icons';
+  import helpContent from './GEOJSON.md?raw';
 
   let {
     map,
@@ -16,6 +18,7 @@
 
   let editingIndex = $state<number | null>(null);
   let isAdding = $state(false);
+  let isShowingHelp = $state(false);
 
   function saveConfig(config: GeoJsonConfig) {
     const newList = [...geoJsonList];
@@ -50,7 +53,12 @@
 </script>
 
 <fieldset>
-  <legend>Custom GeoJSON</legend>
+  <legend>
+    Custom GeoJSON
+    <button class="btn-icon help" aria-label="Help" onclick={() => (isShowingHelp = true)}>
+      <QuestionCircle />
+    </button>
+  </legend>
 
   {#if geoJsonList.length === 0}
     <div class="empty">No GeoJSON files added.</div>
@@ -79,6 +87,10 @@
       onsave={saveConfig}
       onclose={closeModal}
     />
+  {/if}
+
+  {#if isShowingHelp}
+    <MarkdownModal title="GeoJSON Help" markdown={helpContent} onclose={() => (isShowingHelp = false)} />
   {/if}
 </fieldset>
 
@@ -138,5 +150,13 @@
   }
   .add-btn {
     width: 100%;
+  }
+  legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .btn-icon.help {
+    color: #666;
   }
 </style>
