@@ -80,7 +80,7 @@
       highlightCountries={options.highlightCountries}
       onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
     />
-    <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
+    <PropGeoJSON geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
     <MarkerAdmin />
     <fieldset>
       <legend>Tools</legend>

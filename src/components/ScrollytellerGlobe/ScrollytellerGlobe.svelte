@@ -36,7 +36,7 @@
       {#if loading}
         <div class="loading"></div>
       {/if}
-      <CustomGlobe {options} />
+      <CustomGlobe {options} rootElStyle="width:100%;height:100vh" interactive={false} />
     </div>
   </Scrollyteller>
 {/if}

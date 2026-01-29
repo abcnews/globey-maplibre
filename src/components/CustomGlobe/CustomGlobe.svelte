@@ -10,17 +10,18 @@
   import countriesNaturalEarth from './mapStyle/countriesNaturalEarth';
   import type { maplibregl } from '../mapLibre/index';
   type Props = {
+    rootElStyle?: string;
     interactive: Boolean;
     onLoad?: (map: maplibregl.Map) => void;
     options: DecodedObject;
     children?: import('svelte').Snippet;
   };
-  let { interactive, onLoad, options, children }: Props = $props();
+  let { rootElStyle, interactive, onLoad, options, children }: Props = $props();
 </script>
 
 {#key options.base}
   <MapLibreLoader
-    rootElStyle="width:100%;height:100vh"
+    {rootElStyle}
     onLoad={async ({ rootNode, maplibregl }) => {
       rootNode.style.opacity = '0';
       const map = new maplibregl.Map({

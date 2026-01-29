@@ -6,12 +6,7 @@
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
   import helpContent from './GEOJSON.md?raw';
 
-  let {
-    map,
-    geoJsonList = [],
-    onchange
-  } = $props<{
-    map: maplibregl.Map;
+  let { geoJsonList = [], onchange } = $props<{
     geoJsonList: GeoJsonConfig[];
     onchange: (list: GeoJsonConfig[]) => void;
   }>();
@@ -62,7 +57,7 @@
   </legend>
 
   {#if geoJsonList.length === 0}
-    <small>Click Add to add a new layer</small>
+    <small>Click <code>+</code> to add a new layer</small>
   {:else}
     <ul class="list">
       {#each geoJsonList as config, i}

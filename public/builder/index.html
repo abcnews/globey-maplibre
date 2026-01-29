@@ -6,16 +6,12 @@
     <title>Globey Builder</title>
     <!-- If you add `extractCSS:true` to your build config, add the <link> below -->
     <!-- <link rel="stylesheet" href="index.css" /> -->
-    <script src="../index.js"></script>
+    <script src="../index.js" defer></script>
     <!-- If you add `addModernJS:true` to your build config, replace the <script> above with the ones below -->
     <!-- <script type="module" src="index_modern.js"></script> -->
     <!-- <script nomodule src="index.js"></script> -->
   </head>
   <body>
     <div data-mount id="interactivemapbuilder"></div>
-    <!-- Mock Odyssey's loaded event so the `whenOdysseyLoaded` promise resolves -->
-    <script>
-      window.dispatchEvent(new CustomEvent('odyssey:api'));
-    </script>
   </body>
 </html>
