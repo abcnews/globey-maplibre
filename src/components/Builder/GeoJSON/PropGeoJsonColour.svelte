@@ -4,6 +4,8 @@
   import type { GeoJsonConfig } from '../../../lib/marker';
   import ColorLegendPreview from './ColorLegendPreview.svelte';
 
+  import DistributionInput from './DistributionInput.svelte';
+
   let {
     config = $bindable(),
     properties,
@@ -14,16 +16,19 @@
     features: any[];
   }>();
 
-  // Determine if the selected property contains numeric values for the colour scale
-  let isNumeric = $derived.by(() => {
+  // Selected property numeric values
+  let numericValues = $derived.by(() => {
     const prop = config.colourProp;
-    if (config.colourMode !== 'scale' || !prop) return true;
-
-    return features.some(f => {
-      const v = f.properties?.[prop];
-      return v !== undefined && v !== null && v !== '' && !isNaN(Number(v));
-    });
+    if (!prop) return [];
+    return features
+      .map(f => f.properties?.[prop])
+      .filter(v => v !== undefined && v !== null && v !== '')
+      .map(Number)
+      .filter(v => !isNaN(v));
   });
+
+  // Determine if the selected property contains numeric values for the colour scale
+  let isNumeric = $derived(numericValues.length > 0);
 
   // Ensure the colour configuration object exists for override and scale modes
   $effect(() => {
@@ -68,16 +73,10 @@
       // Only calculate if at least one is missing
       if (cc.min !== undefined && cc.max !== undefined) return;
 
-      const values = features
-        .map(f => f.properties?.[prop])
-        .filter(v => v !== undefined && v !== null && v !== '')
-        .map(Number)
-        .filter(v => !isNaN(v));
-
-      if (values.length > 0) {
+      if (numericValues.length > 0) {
         untrack(() => {
-          if (cc.min === undefined) cc.min = Math.floor(Math.min(...values));
-          if (cc.max === undefined) cc.max = Math.ceil(Math.max(...values));
+          if (cc.min === undefined) cc.min = Math.floor(Math.min(...numericValues));
+          if (cc.max === undefined) cc.max = Math.ceil(Math.max(...numericValues));
         });
       }
     }
@@ -164,16 +163,7 @@
       paletteVariant={config.colourConfig.paletteVariant}
     />
 
-    <div class="gj-grid">
-      <div>
-        <label for="gj-min-val" style="display:block">Min Value</label>
-        <input id="gj-min-val" type="number" bind:value={config.colourConfig.min} />
-      </div>
-      <div>
-        <label for="gj-max-val" style="display:block">Max Value</label>
-        <input id="gj-max-val" type="number" bind:value={config.colourConfig.max} />
-      </div>
-    </div>
+    <DistributionInput values={numericValues} bind:min={config.colourConfig.min} bind:max={config.colourConfig.max} />
   {/if}
 </fieldset>
 

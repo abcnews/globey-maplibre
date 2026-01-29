@@ -28,8 +28,15 @@ For instance if your GeoJSON features all have a "type" property, you can filter
 
 There are several options to style your GeoJSON features:
 
-1. *Colour Scale*
-    If your GeoJSON data has data properties, you can use a colour scale to style your features. Choose "Colour scale", then pick the property you want to scale on, e.g. for a coral bleaching dataset choose `bleaching_2025_01`. Then set a min and max value for this field, and the features will be scaled based on this range. If you have multiple datasets you can swap to a new one on the fly to transition to the new dataset (e.g. `bleaching_2025_02`)
+1. *Colour scale*
+    If your GeoJSON data has numeric properties, you can use a colour scale to style your features. 
+    
+    Choose "Colour scale", then pick the property you want to scale on (e.g., `bleaching_2025_01`). In a scrollyteller context you can swap to a new property on the fly to transition between datasets.
+
+    The **pallette type** and **distribution graph** will appear, so you can choose your colour scheme and how to scale the colours.
+    
+    The **distribution graph** will appear, showing how your data is spread. This histogram helps you see where most of your data points lie. You can use the **draggable handles** or the numeric input boxes to set your `min` and `max` values:
+    
 1. *Class Based*
     If you process your GeoJSON to have class properties, you can specify standard ABC styles for each of your features TBD.
 1. *Simplestyle*
