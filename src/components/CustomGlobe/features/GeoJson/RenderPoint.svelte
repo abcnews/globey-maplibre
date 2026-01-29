@@ -2,7 +2,7 @@
   import { getContext, untrack } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColourExpression, getCircleRadiusExpression, getCircleOpacityExpression } from './utils';
+  import { getColourExpression, getCircleRadiusExpression, getCircleOpacityExpression, getLabelAnchor } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -30,21 +30,24 @@
 
       // Add layer if source exists and layer doesn't
       if (map.getSource(sid) && !map.getLayer(lid)) {
-        map.addLayer({
-          id: lid,
-          type: 'circle',
-          source: sid,
-          paint: {
-            'circle-color': getColourExpression(config, 'marker'),
+        map.addLayer(
+          {
+            id: lid,
+            type: 'circle',
+            source: sid,
+            paint: {
+              'circle-color': getColourExpression(config, 'marker'),
 
-            'circle-radius': getCircleRadiusExpression(config),
-            'circle-opacity': getCircleOpacityExpression(config),
-            'circle-pitch-scale': 'map',
-            'circle-color-transition': { duration: 300 },
-            'circle-radius-transition': { duration: 300 },
-            'circle-opacity-transition': { duration: 300 }
-          }
-        });
+              'circle-radius': getCircleRadiusExpression(config),
+              'circle-opacity': getCircleOpacityExpression(config),
+              'circle-pitch-scale': 'map',
+              'circle-color-transition': { duration: 300 },
+              'circle-radius-transition': { duration: 300 },
+              'circle-opacity-transition': { duration: 300 }
+            }
+          },
+          getLabelAnchor(map)
+        );
       }
     });
 

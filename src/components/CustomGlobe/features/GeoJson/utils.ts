@@ -295,3 +295,17 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     const scalar = config.spike.scalar ?? 1;
     return val * scalar;
 }
+
+/**
+ * Finds the ID of the first label (symbol) layer in the map's style.
+ * This can be used as a beforeId in addLayer to ensure GeoJSON layers
+ * appear underneath map labels.
+ */
+export function getLabelAnchor(map: maplibregl.Map): string | undefined {
+    const layers = map.getStyle().layers;
+    if (!layers) return undefined;
+
+    // Find the first symbol layer
+    const labelLayer = layers.find(l => l.type === 'symbol');
+    return labelLayer?.id;
+}

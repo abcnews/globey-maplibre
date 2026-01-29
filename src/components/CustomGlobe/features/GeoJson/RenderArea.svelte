@@ -6,7 +6,8 @@
     getColourExpression,
     getFillOpacityExpression,
     getStrokeOpacityExpression,
-    getStrokeWidthExpression
+    getStrokeWidthExpression,
+    getLabelAnchor
   } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
@@ -36,35 +37,41 @@
       // Initialize Layers
       if (map.getSource(sid)) {
         if (!map.getLayer(lid)) {
-          map.addLayer({
-            id: lid,
-            type: 'fill',
-            source: sid,
-            paint: {
-              'fill-color': getColourExpression(config, 'fill'),
-              'fill-opacity': getFillOpacityExpression(config),
+          map.addLayer(
+            {
+              id: lid,
+              type: 'fill',
+              source: sid,
+              paint: {
+                'fill-color': getColourExpression(config, 'fill'),
+                'fill-opacity': getFillOpacityExpression(config),
 
-              'fill-color-transition': { duration: 300 },
-              'fill-opacity-transition': { duration: 300 }
-            }
-          });
+                'fill-color-transition': { duration: 300 },
+                'fill-opacity-transition': { duration: 300 }
+              }
+            },
+            getLabelAnchor(map)
+          );
         }
 
         if (!map.getLayer(olid)) {
-          map.addLayer({
-            id: olid,
-            type: 'line',
-            source: sid,
-            paint: {
-              'line-color': getColourExpression(config, 'stroke'),
+          map.addLayer(
+            {
+              id: olid,
+              type: 'line',
+              source: sid,
+              paint: {
+                'line-color': getColourExpression(config, 'stroke'),
 
-              'line-width': getStrokeWidthExpression(config),
-              'line-opacity': getStrokeOpacityExpression(config),
-              'line-width-transition': { duration: 300 },
-              'line-color-transition': { duration: 300 },
-              'line-opacity-transition': { duration: 300 }
-            }
-          });
+                'line-width': getStrokeWidthExpression(config),
+                'line-opacity': getStrokeOpacityExpression(config),
+                'line-width-transition': { duration: 300 },
+                'line-color-transition': { duration: 300 },
+                'line-opacity-transition': { duration: 300 }
+              }
+            },
+            getLabelAnchor(map)
+          );
         }
       }
     });

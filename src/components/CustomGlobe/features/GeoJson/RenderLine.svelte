@@ -2,7 +2,7 @@
   import { getContext, untrack } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColourExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
+  import { getColourExpression, getStrokeOpacityExpression, getStrokeWidthExpression, getLabelAnchor } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -28,24 +28,27 @@
 
       // Initialize Layer
       if (map.getSource(sid) && !map.getLayer(lid)) {
-        map.addLayer({
-          id: lid,
-          type: 'line',
-          source: sid,
-          layout: {
-            'line-cap': 'round',
-            'line-join': 'round'
-          },
-          paint: {
-            'line-color': getColourExpression(config, 'stroke'),
+        map.addLayer(
+          {
+            id: lid,
+            type: 'line',
+            source: sid,
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': getColourExpression(config, 'stroke'),
 
-            'line-opacity': getStrokeOpacityExpression(config),
-            'line-width': getStrokeWidthExpression(config),
-            'line-color-transition': { duration: 300 },
-            'line-opacity-transition': { duration: 300 },
-            'line-width-transition': { duration: 300 }
-          }
-        });
+              'line-opacity': getStrokeOpacityExpression(config),
+              'line-width': getStrokeWidthExpression(config),
+              'line-color-transition': { duration: 300 },
+              'line-opacity-transition': { duration: 300 },
+              'line-width-transition': { duration: 300 }
+            }
+          },
+          getLabelAnchor(map)
+        );
       }
     });
 
