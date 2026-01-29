@@ -13,8 +13,9 @@
 
   const sourceId = 'natural-earth-countries';
   const sourceLayer = 'world';
-  // Use random suffix to ensure unique ID even if re-mounted quickly
-  const layerId = `highlight-country-${country.code}-${Math.random().toString(36).substring(2, 11)}`;
+  // Use random suffix to ensure unique ID, in case of duplicates.
+  // The parent key ensures the country.code will never change for the lifetime of this component.
+  const layerId = untrack(() => `highlight-country-${country.code}-${Math.random().toString(36).substring(2, 11)}`);
 
   function getCountryColor(style: string) {
     return style === 'secondary' ? '#8ad1e8' : '#b9a0ce';
@@ -34,7 +35,7 @@
           type: 'fill',
           source: sourceId,
           'source-layer': sourceLayer,
-          filter: ['==', 'iso_a2', country.code],
+          filter: ['==', 'iso_a2_eh', country.code],
           paint: {
             'fill-color': getCountryColor(country.style),
             'fill-opacity': 0, // Start invisible

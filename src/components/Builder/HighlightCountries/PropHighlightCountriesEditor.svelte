@@ -23,7 +23,7 @@
     x: number;
     y: number;
     name?: string;
-    iso_a2?: string;
+    isoCode?: string;
   }>({
     isOpen: false,
     x: 0,
@@ -35,8 +35,8 @@
     onchange?.(countries);
   }
 
-  function setCountryStyle(iso_a2: string, style: 'primary' | 'secondary' | null) {
-    const existingIndex = highlightedCountries.findIndex(c => c.code === iso_a2);
+  function setCountryStyle(isoCode: string, style: 'primary' | 'secondary' | null) {
+    const existingIndex = highlightedCountries.findIndex(c => c.code === isoCode);
     let newCountries = [...highlightedCountries];
 
     if (style === null) {
@@ -45,18 +45,18 @@
       }
     } else {
       if (existingIndex > -1) {
-        newCountries[existingIndex] = { code: iso_a2, style };
+        newCountries[existingIndex] = { code: isoCode, style };
       } else {
-        newCountries.push({ code: iso_a2, style });
+        newCountries.push({ code: isoCode, style });
       }
     }
     updateSelected(newCountries);
     onWindowClick();
   }
 
-  function getCountryStyle(iso_a2?: string): 'primary' | 'secondary' | null {
-    if (!iso_a2) return null;
-    const country = highlightedCountries.find(c => c.code === iso_a2);
+  function getCountryStyle(isoCode?: string): 'primary' | 'secondary' | null {
+    if (!isoCode) return null;
+    const country = highlightedCountries.find(c => c.code === isoCode);
     return country ? country.style : null;
   }
 
@@ -77,7 +77,7 @@
           x: e.originalEvent.clientX,
           y: e.originalEvent.clientY,
           name: props.name, // 'name' property from Natural Earth
-          iso_a2: props.iso_a2 // 'iso_a2' property from Natural Earth
+          isoCode: props.iso_a2_eh // 'iso_a2_eh' property from Natural Earth is more complete
         };
       }
     };
@@ -99,15 +99,15 @@
 
 <svelte:window onclick={onWindowClick} />
 
-{#if contextMenu.isOpen && contextMenu.iso_a2}
+{#if contextMenu.isOpen && contextMenu.isoCode}
   <ContextMenu position={[contextMenu.x, contextMenu.y]}>
     <div class="section" style="white-space:pre-wrap;">
       <strong>{contextMenu.name}</strong>
-      <small>{contextMenu.iso_a2}</small>
+      <small>{contextMenu.isoCode}</small>
     </div>
     <hr />
 
-    {@const currentStyle = getCountryStyle(contextMenu.iso_a2)}
+    {@const currentStyle = getCountryStyle(contextMenu.isoCode)}
 
     <label class="item">
       <div class="section">
@@ -115,7 +115,7 @@
           type="radio"
           name="country-style"
           checked={currentStyle === null}
-          onchange={() => setCountryStyle(contextMenu.iso_a2!, null)}
+          onchange={() => setCountryStyle(contextMenu.isoCode!, null)}
         />
         None
       </div>
@@ -126,7 +126,7 @@
           type="radio"
           name="country-style"
           checked={currentStyle === 'primary'}
-          onchange={() => setCountryStyle(contextMenu.iso_a2!, 'primary')}
+          onchange={() => setCountryStyle(contextMenu.isoCode!, 'primary')}
         />
         Primary
       </div>
@@ -137,7 +137,7 @@
           type="radio"
           name="country-style"
           checked={currentStyle === 'secondary'}
-          onchange={() => setCountryStyle(contextMenu.iso_a2!, 'secondary')}
+          onchange={() => setCountryStyle(contextMenu.isoCode!, 'secondary')}
         />
         Secondary
       </div>

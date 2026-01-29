@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker';
+import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker.ts';
 
 describe('marker', () => {
   describe('geohashCodec', () => {
@@ -154,6 +154,22 @@ describe('marker', () => {
       assert.strictEqual(decoded.labels![0].name, 'Sydney');
       assert.strictEqual(decoded.labels![1].name, 'Brisbane');
       assert.strictEqual(decoded.labels![1].pointless, true);
+    });
+    it('should handle highlightCountries with ISO_A2', async () => {
+      const input = {
+        highlightCountries: [
+          { code: 'AU', style: 'primary' as const },
+          { code: 'NZ', style: 'secondary' as const }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.highlightCountries?.length, 2);
+      assert.strictEqual(decoded.highlightCountries![0].code, 'AU');
+      assert.strictEqual(decoded.highlightCountries![0].style, 'primary');
+      assert.strictEqual(decoded.highlightCountries![1].code, 'NZ');
+      assert.strictEqual(decoded.highlightCountries![1].style, 'secondary');
     });
   });
 });

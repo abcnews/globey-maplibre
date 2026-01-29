@@ -4,13 +4,6 @@
   import { Search } from 'svelte-bootstrap-icons';
   import { debounce } from 'throttle-debounce';
 
-  // Props
-  // onselect event implementation via props callback pattern familiar in Svelte 5 or dispatch.
-  // The user code uses createEventDispatcher. in Svelte 5 we can use props for callbacks or standard events.
-  // Let's stick to standard props for callbacks if possible, or maintain dispatch if preferred.
-  // Given "refactor", let's use props for better type safety if we can, but dispatch is fine.
-  // Actually, standard Svelte 5 replacement for dispatch is just passing a prop `onselect`.
-
   let { onselect } = $props<{ onselect?: (value: { name: string; coords: [number, number] }) => void }>();
 
   let isOpen = $state(false);
@@ -207,7 +200,6 @@
     border-bottom: 1px solid #eee;
   }
 
-  .cursor-pointer,
   .result-row {
     cursor: pointer;
   }

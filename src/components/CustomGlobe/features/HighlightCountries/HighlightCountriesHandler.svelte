@@ -40,7 +40,7 @@
         // Add source if it doesn't exist
         map.addSource(sourceId, {
           ...naturalEarthStyle.sources.composite,
-          promoteId: 'iso_a2'
+          promoteId: 'iso_a2_eh'
         } as any);
         // Check again in next tick or wait for 'styledata' event ideally,
         // but addSource is sync-ish for config, checking immediately after:
