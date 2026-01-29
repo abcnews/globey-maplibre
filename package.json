@@ -1,67 +1,67 @@
 {
-  "name": "interactive-globey-maplibre",
-  "version": "0.0.1",
-  "description": "A MapLibre globe scrollyteller and builder",
-  "license": "MIT",
-  "private": true,
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/abcnews/interactive-globey-maplibre.git"
-  },
-  "bugs": {
-    "url": "https://github.com/abcnews/interactive-globey-maplibre/issues"
-  },
-  "homepage": "https://github.com/abcnews/interactive-globey-maplibre#readme",
-  "contributors": [
-    "Ash Kyd <kyd.ashley@abc.net.au>"
-  ],
-  "aunty": {
-    "type": "svelte",
-    "build": {
-      "includedDependencies": [
-        "@abcnews/svelte-scrollyteller",
-        "@abcnews/components-builder",
-        "@abcnews/components-storylab"
-      ],
-      "entry": [
-        "index"
-      ]
-    }
-  },
-  "scripts": {
-    "start": "aunty serve",
-    "dev": "aunty serve",
-    "build": "aunty build",
-    "tsc": "tsc --noEmit",
-    "test": "mocha test src/**/*.test.ts"
-  },
-  "devDependencies": {
-    "@abcnews/aunty": "^16.0.1",
-    "@testing-library/svelte": "^5.3.1",
-    "@types/jest": "^30.0.0",
-    "@types/mocha": "^10.0.10",
-    "@types/webpack-env": "^1.18.8",
-    "mocha": "^11.7.5"
-  },
-  "dependencies": {
-    "@abcnews/alternating-case-to-object": "^3.2.0",
-    "@abcnews/base-36-text": "^1.0.1",
-    "@abcnews/components-builder": "^0.0.12",
-    "@abcnews/components-storylab": "^0.0.2",
-    "@abcnews/env-utils": "^6.0.0",
-    "@abcnews/hash-codec": "^2.0.0",
-    "@abcnews/mount-utils": "^3.0.0",
-    "@abcnews/palette": "^1.0.1",
-    "@abcnews/svelte-scrollyteller": "^3.0.0",
-    "@types/topojson-client": "^3.1.5",
-    "compression-streams-polyfill": "^0.1.7",
-    "latlon-geohash": "^2.0.0",
-    "maplibre-gl": "^5.16.0",
-    "marked": "^17.0.1",
-    "svelte": "^5.47.1",
-    "svelte-bootstrap-icons": "^3.3.0",
-    "three": "^0.182.0",
-    "throttle-debounce": "^5.0.2",
-    "topojson-client": "^3.1.0"
-  }
+	"name": "interactive-globey-maplibre",
+	"version": "0.0.2-0",
+	"description": "A MapLibre globe scrollyteller and builder",
+	"license": "MIT",
+	"private": true,
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/abcnews/interactive-globey-maplibre.git"
+	},
+	"bugs": {
+		"url": "https://github.com/abcnews/interactive-globey-maplibre/issues"
+	},
+	"homepage": "https://github.com/abcnews/interactive-globey-maplibre#readme",
+	"contributors": [
+		"Ash Kyd <kyd.ashley@abc.net.au>"
+	],
+	"aunty": {
+		"type": "svelte",
+		"build": {
+			"includedDependencies": [
+				"@abcnews/svelte-scrollyteller",
+				"@abcnews/components-builder",
+				"@abcnews/components-storylab"
+			],
+			"entry": [
+				"index"
+			]
+		}
+	},
+	"scripts": {
+		"start": "aunty serve",
+		"dev": "aunty serve",
+		"build": "aunty build",
+		"tsc": "tsc --noEmit",
+		"test": "mocha test src/**/*.test.ts"
+	},
+	"devDependencies": {
+		"@abcnews/aunty": "^16.0.1",
+		"@testing-library/svelte": "^5.3.1",
+		"@types/jest": "^30.0.0",
+		"@types/mocha": "^10.0.10",
+		"@types/webpack-env": "^1.18.8",
+		"mocha": "^11.7.5"
+	},
+	"dependencies": {
+		"@abcnews/alternating-case-to-object": "^3.2.0",
+		"@abcnews/base-36-text": "^1.0.1",
+		"@abcnews/components-builder": "^0.0.12",
+		"@abcnews/components-storylab": "^0.0.2",
+		"@abcnews/env-utils": "^6.0.0",
+		"@abcnews/hash-codec": "^2.0.0",
+		"@abcnews/mount-utils": "^3.0.0",
+		"@abcnews/palette": "^1.0.1",
+		"@abcnews/svelte-scrollyteller": "^3.0.0",
+		"@types/topojson-client": "^3.1.5",
+		"compression-streams-polyfill": "^0.1.7",
+		"latlon-geohash": "^2.0.0",
+		"maplibre-gl": "^5.16.0",
+		"marked": "^17.0.1",
+		"svelte": "^5.47.1",
+		"svelte-bootstrap-icons": "^3.3.0",
+		"three": "^0.182.0",
+		"throttle-debounce": "^5.0.2",
+		"topojson-client": "^3.1.0"
+	}
 }
