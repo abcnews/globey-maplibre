@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { options } from './store';
-  import type { maplibregl } from '../mapLibre/index';
+  import { options } from '../store';
+  import type { maplibregl } from '../../mapLibre/index';
+  import PropBaseAdvancedLabels from './PropBaseAdvancedLabels.svelte';
 
   let { map } = $props<{ map: maplibregl.Map }>();
 </script>
@@ -29,4 +30,11 @@
       Countries
     </label>
   </div>
+
+  {#if $options.base !== 'countries'}
+    <PropBaseAdvancedLabels />
+  {/if}
 </fieldset>
+
+<style>
+</style>

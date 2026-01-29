@@ -49,7 +49,7 @@
     }}
   >
     <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
-    <MapLabelHandler />
+    <MapLabelHandler labels={options.mapLabels} />
     <MapCustomLabelHandler labels={options.labels} />
     {#if options.base === 'countries'}
       <HighlightCountriesHandler highlightCountries={options.highlightCountries} />

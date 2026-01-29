@@ -152,7 +152,7 @@
 <form {onsubmit}>
   <fieldset disabled={hasBounds}>
     <legend>Coord</legend>
-    <small style:display="block" style:margin-bottom="0.5rem">
+    <small>
       {#if hasBounds}
         Coordinates/zoom are disabled because map bounds are set. You can only use one or the other.
       {:else}
@@ -161,10 +161,8 @@
     </small>
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
 
-    <details style:margin-top="1rem">
-      <summary style:cursor="pointer" style:margin-bottom="0.5rem" style:font-size="0.9rem" style:opacity="0.8"
-        >Advanced</summary
-      >
+    <details>
+      <summary>Advanced</summary>
       <div class="coord-grid">
         <label for="zoom-slider">Zoom</label>
         <input
@@ -244,12 +242,5 @@
     font-size: 0.9rem;
     width: 5ch;
     text-align: right;
-  }
-
-  details > summary {
-    cursor: pointer;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-    opacity: 0.8;
   }
 </style>

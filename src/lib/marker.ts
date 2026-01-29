@@ -45,6 +45,13 @@ export interface DecodedObject {
   labels?: Label[];
   legend?: any[];
   base?: string;
+  mapLabels?: {
+    countries: number;
+    states: boolean;
+    cities: boolean;
+    towns: boolean;
+    oceans: boolean;
+  };
   geoJson?: GeoJsonConfig[];
 }
 
@@ -125,6 +132,46 @@ export const countriesCodec = {
 
 
 /**
+ * Custom codec for Custom Labels
+ */
+export const customLabelsCodec = {
+  encode: (labels: Label[]) =>
+    labels?.map(({ coords, name, style, number, pointless }) => {
+      const hash = Geohash.encode(coords[1], coords[0], 7);
+      const styles = ['country', 'level3', 'level4', 'water'];
+      const styleIndex = styles.indexOf(style);
+      const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
+      
+      // Compact format: hash,name,style,number,pointless
+      const data = [hash, name, s, number || 0, Number(pointless || 0)];
+       // Remove trailing zeros/defaults to save space
+       while (data.length > 3 && data[data.length - 1] === 0) {
+         data.pop();
+       }
+      return encode(JSON.stringify(data));
+    }),
+  decode: (encodedLabels: string | string[]) => {
+    if (!encodedLabels) return [];
+    const normalised = Array.isArray(encodedLabels) ? encodedLabels : [encodedLabels];
+    return (normalised as string[]).map(string => {
+      const decodedJSON = decode(string);
+      const [encodedCoords, name, styleOrInt, number = 0, pointless = 0] =
+        decodedJSON.slice(0, 1) === '['
+          ? // Current labels are [coords,name,style,number] array
+            JSON.parse(decodedJSON)
+          : // legacy labels were fixed length
+            [string.slice(0, 7), decode(string.slice(7))];
+      
+      const styles = ['country', 'level3', 'level4', 'water'];
+      const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
+      
+      const { lat, lon } = Geohash.decode(encodedCoords);
+      return { name, coords: [Number(lon), Number(lat)], style, number, pointless: Boolean(pointless) };
+    });
+  }
+};
+
+/**
  * Custom codec for GeoJSON config
  * Flattens config to compact array
  */
@@ -195,6 +242,55 @@ export const geoJsonCodec = {
   }
 };
 
+const defaultMapLabels = {
+  countries: 3,
+  states: false,
+  cities: false,
+  towns: false,
+  oceans: false
+};
+
+/**
+ * Custom codec for MapLabels
+ * Encodes as a 5-character string: [countries][states][cities][towns][oceans]
+ * e.g. {countries: 3, states: false, ...} -> "30000"
+ */
+export const mapLabelsCodec = {
+  encode: (val: DecodedObject['mapLabels']) => {
+    if (!val) return undefined;
+
+    const isDefault =
+      val.countries === defaultMapLabels.countries &&
+      val.states === defaultMapLabels.states &&
+      val.cities === defaultMapLabels.cities &&
+      val.towns === defaultMapLabels.towns &&
+      val.oceans === defaultMapLabels.oceans;
+
+    if (isDefault) return undefined;
+
+    return [
+      val.countries,
+      val.states ? 1 : 0,
+      val.cities ? 1 : 0,
+      val.towns ? 1 : 0,
+      val.oceans ? 1 : 0
+    ].join('');
+  },
+  decode: (hash: any) => {
+    if (hash === undefined || hash === null) return { ...defaultMapLabels };
+    const s = String(hash).padStart(5, '0');
+    if (s.length !== 5) return { ...defaultMapLabels };
+    const [countries, states, cities, towns, oceans] = s.split('').map(Number);
+    return {
+      countries,
+      states: states === 1,
+      cities: cities === 1,
+      towns: towns === 1,
+      oceans: oceans === 1
+    };
+  }
+};
+
 /**
  * Schema for marker data
  */
@@ -235,50 +331,7 @@ export const markerSchema = {
   labels: {
     key: 'labels',
     type: 'custom',
-    codec: {
-      encode: (labels: Label[]) =>
-        labels?.map(({ coords, name, style, number, pointless }) => {
-          const hash = Geohash.encode(coords[1], coords[0], 7);
-          const styles = ['country', 'level3', 'level4', 'water'];
-          const styleIndex = styles.indexOf(style);
-          const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
-          
-          // Compact format: hash,name,style,number,pointless
-          // We use a custom delimiter derived from control characters or filtered pipes if name is safe.
-          // But JSON array is robust. To be compact, we can just use the array.
-          // Base36 encoding the stringified array is what was happening.
-          // To be MORE compact, we could use a custom separator if names don't contain it.
-          // Let's stick to the current array approach but ensure style is minimized (int).
-          
-          const data = [hash, name, s, number || 0, Number(pointless || 0)];
-           // Remove trailing zeros/defaults to save space?
-           // e.g. if pointless is 0, remove it. if number is 0, remove it.
-           // [hash, name, s] if others are 0.
-           while (data.length > 3 && data[data.length - 1] === 0) {
-             data.pop();
-           }
-          return encode(JSON.stringify(data));
-        }),
-      decode: (encodedLabels: string | string[]) => {
-        if (!encodedLabels) return [];
-        const normalised = Array.isArray(encodedLabels) ? encodedLabels : [encodedLabels];
-        return (normalised as string[]).map(string => {
-          const decodedJSON = decode(string);
-          const [encodedCoords, name, styleOrInt, number = 0, pointless = 0] =
-            decodedJSON.slice(0, 1) === '['
-              ? // Current labels are [coords,name,style,number] array
-                JSON.parse(decodedJSON)
-              : // legacy labels were fixed length
-                [string.slice(0, 7), decode(string.slice(7))];
-          
-          const styles = ['country', 'level3', 'level4', 'water'];
-          const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
-          
-          const { lat, lon } = Geohash.decode(encodedCoords);
-          return { name, coords: [Number(lon), Number(lat)], style, number, pointless: Boolean(pointless) };
-        });
-      }
-    },
+    codec: customLabelsCodec,
     defaultValue: []
   },
   base: {
@@ -286,6 +339,12 @@ export const markerSchema = {
     type: 'enum',
     values: ['street', 'countries'],
     defaultValue: 'street'
+  },
+  mapLabels: {
+    key: 'ml',
+    type: 'custom',
+    codec: mapLabelsCodec,
+    defaultValue: defaultMapLabels
   }
 };
 

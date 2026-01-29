@@ -9,7 +9,7 @@
   import PropBounds from './PropBounds.svelte';
   import PropLabels from './PropLabels.svelte';
   import PropHighlightCountries from './HighlightCountries/PropHighlightCountries.svelte';
-  import PropBase from './PropBase.svelte';
+  import PropBase from './PropBase/PropBase.svelte';
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
   import MarkerJson from './MarkerJson.svelte';
 

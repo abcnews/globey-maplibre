@@ -6,7 +6,6 @@
   const {
     labels = {
       countries: 3,
-      continents: true,
       states: false,
       cities: false,
       towns: false,
@@ -15,7 +14,6 @@
   }: {
     labels?: {
       countries: number;
-      continents: boolean;
       states: boolean;
       cities: boolean;
       towns: boolean;
@@ -38,11 +36,6 @@
         map.setLayoutProperty(id, 'visibility', labels.countries >= i ? 'visible' : 'none');
       }
     });
-
-    // CONTINENTS
-    if (map.getLayer('place-continent')) {
-      map.setLayoutProperty('place-continent', 'visibility', labels.continents ? 'visible' : 'none');
-    }
 
     // STATES
     if (map.getLayer('place-state')) {

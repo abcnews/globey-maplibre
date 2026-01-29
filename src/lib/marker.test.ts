@@ -245,5 +245,38 @@ describe('marker', () => {
 
       assert.strictEqual(decoded.base, 'countries');
     });
+
+    it('should round-trip map labels config', async () => {
+      const input = {
+        mapLabels: {
+          countries: 2,
+          states: true,
+          cities: true,
+          towns: false,
+          oceans: true
+        }
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
+    });
+
+    it('should handle map labels with leading zeros', async () => {
+      const input = {
+        mapLabels: {
+          countries: 0,
+          states: false,
+          cities: false,
+          towns: false,
+          oceans: true
+        }
+      };
+      const fragment = await encodeFragment(input);
+      // Fragment should contain something like ml00001
+      const decoded = await decodeFragment(fragment);
+
+      assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
+    });
   });
 });
