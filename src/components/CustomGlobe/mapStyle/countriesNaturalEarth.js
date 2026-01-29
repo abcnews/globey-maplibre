@@ -122,6 +122,7 @@ const naturalEarthStyle = {
     "sources": {
         "composite": {
             "type": "vector",
+            "maxzoom": 5,
             "tiles": [
                 "https://abcnewsdata.sgp1.digitaloceanspaces.com/map-tiles-natural-earth/{z}/{x}/{y}.pbf"
             ]

@@ -84,6 +84,17 @@
     <MarkerAdmin />
     <fieldset>
       <legend>Tools</legend>
+      <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">
+        <input
+          id="reduced-motion-toggle"
+          type="checkbox"
+          checked={document.body.classList.contains('is-reduced-motion')}
+          onchange={e => {
+            document.body.classList.toggle('is-reduced-motion', e.currentTarget.checked);
+          }}
+        />
+        <label for="reduced-motion-toggle">Reduced motion preview</label>
+      </div>
       <MarkerJson bind:options />
     </fieldset>
   {/if}

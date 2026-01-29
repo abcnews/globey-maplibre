@@ -4,7 +4,7 @@ import { writable } from 'svelte/store';
 export const disableMapAnimation = writable(false);
 
 /** Does the user prefer reduced motion, or have they toggled it it with interactive-plugins */
-const prefersReducedMotion = writable(document.body.classList.contains('is-reduced-motion'));
+export const prefersReducedMotion = writable(document.body.classList.contains('is-reduced-motion'));
 
 const observer = new MutationObserver(function (event) {
   prefersReducedMotion.set(document.body.classList.contains('is-reduced-motion'));
