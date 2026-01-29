@@ -31,6 +31,8 @@
   "scripts": {
     "start": "aunty serve",
     "dev": "aunty serve",
+    "build": "aunty build",
+    "tsc": "tsc --noEmit",
     "test": "mocha test src/**/*.test.ts"
   },
   "devDependencies": {

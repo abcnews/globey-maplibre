@@ -19,12 +19,15 @@ export function generateId(url: string): string {
   return `gj-${Math.abs(hash).toString(36)}`;
 }
 
-export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'stroke' | 'marker'): any {
-  if (config.colorMode === 'override') {
-    return config.colorConfig?.override || '#ff0000';
+/**
+ * Generates a MapLibre expression for the feature colour based on the configuration.
+ */
+export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'stroke' | 'marker'): any {
+  if (config.colourMode === 'override') {
+    return config.colourConfig?.override || '#ff0000';
   }
   
-  if (config.colorMode === 'simple') {
+  if (config.colourMode === 'simple') {
     if (context === 'stroke') {
         return ['coalesce', ['get', 'stroke'], '#555555'];
     }
@@ -34,10 +37,10 @@ export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'str
     return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#555555'];
   }
 
-  if (config.colorMode === 'scale' && config.colorProp) {
-    const min = config.colorConfig?.min ?? 0;
-    const max = config.colorConfig?.max ?? 100;
-    const { paletteType, paletteVariant } = config.colorConfig || {};
+  if (config.colourMode === 'scale' && config.colourProp) {
+    const min = config.colourConfig?.min ?? 0;
+    const max = config.colourConfig?.max ?? 100;
+    const { paletteType, paletteVariant } = config.colourConfig || {};
 
     if (paletteType && paletteVariant) {
       let interpolator: ((t: number) => any) | null = null;
@@ -64,27 +67,27 @@ export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'str
         return [
           'interpolate',
           ['linear'],
-          ['get', config.colorProp],
+          ['get', config.colourProp],
           ...stops
         ];
       }
     }
 
 
-    const minColor = config.colorConfig?.minColor || '#ffffff';
-    const maxColor = config.colorConfig?.maxColor || '#ff0000';
+    const minColour = config.colourConfig?.minColour || '#ffffff';
+    const maxColour = config.colourConfig?.maxColour || '#ff0000';
     
     return [
       'interpolate',
       ['linear'],
-      ['get', config.colorProp],
-      min, minColor,
-      max, maxColor
+      ['get', config.colourProp],
+      min, minColour,
+      max, maxColour
     ];
   }
 
-  if (config.colorMode === 'class') {
-      const prop = config.colorProp || 'class';
+  if (config.colourMode === 'class') {
+      const prop = config.colourProp || 'class';
       return [
           'match',
           ['get', prop],
@@ -99,14 +102,14 @@ export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'str
 }
 
 export function getStrokeWidthExpression(config: GeoJsonConfig): any {
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return ['coalesce', ['get', 'stroke-width'], 2];
     }
     return 2;
 }
 
 export function getCircleRadiusExpression(config: GeoJsonConfig): any {
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return [
             'match',
             ['get', 'marker-size'],
@@ -120,7 +123,7 @@ export function getCircleRadiusExpression(config: GeoJsonConfig): any {
 
 export function getCircleOpacityExpression(config: GeoJsonConfig): any {
     const baseOpacity = getOpacityExpression(config);
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return ['*', baseOpacity, ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 1.0]];
     }
     return baseOpacity;
@@ -128,7 +131,7 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
 
 export function getFillOpacityExpression(config: GeoJsonConfig): any {
     const baseOpacity = getOpacityExpression(config);
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
     }
     return baseOpacity === 1 ? 0.5 : baseOpacity; // Default to 0.5 for areas unless filtered
@@ -136,7 +139,7 @@ export function getFillOpacityExpression(config: GeoJsonConfig): any {
 
 export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
     const baseOpacity = getOpacityExpression(config);
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return ['*', baseOpacity, ['coalesce', ['get', 'stroke-opacity'], 1.0]];
     }
     return baseOpacity;
@@ -165,31 +168,36 @@ function hexToRgb(hex: string): [number, number, number] {
     ] : [0, 0, 0];
 }
 
-function interpolateColor(color1: string, color2: string, factor: number): string {
-    const c1 = hexToRgb(color1);
-    const c2 = hexToRgb(color2);
+function interpolateColour(colour1: string, colour2: string, factor: number): string {
+    const c1 = hexToRgb(colour1);
+    const c2 = hexToRgb(colour2);
     const result = c1.map((c, i) => Math.round(c + factor * (c2[i] - c)));
     return `rgb(${result.join(',')})`;
 }
 
-export function evaluateColor(config: GeoJsonConfig, feature: any): string {
+/**
+ * Evaluates the colour for a specific feature using JavaScript.
+ * Used for layers that require direct THREE.js values (like spikes).
+ * @returns A CSS-compatible colour string
+ */
+export function evaluateColour(config: GeoJsonConfig, feature: any): string {
     const props = feature.properties || {};
 
-    if (config.colorMode === 'override') {
-        return config.colorConfig?.override || '#ff0000';
+    if (config.colourMode === 'override') {
+        return config.colourConfig?.override || '#ff0000';
     }
     
-    if (config.colorMode === 'simple') {
+    if (config.colourMode === 'simple') {
         return props['marker-color'] || props['stroke'] || props['fill'] || props['fill-color'] || '#888888';
     }
 
-    if (config.colorMode === 'scale' && config.colorProp) {
-        const val = Number(props[config.colorProp]);
+    if (config.colourMode === 'scale' && config.colourProp) {
+        const val = Number(props[config.colourProp]);
         if (isNaN(val)) return '#888888';
 
-        const min = config.colorConfig?.min ?? 0;
-        const max = config.colorConfig?.max ?? 100;
-        const { paletteType, paletteVariant } = config.colorConfig || {};
+        const min = config.colourConfig?.min ?? 0;
+        const max = config.colourConfig?.max ?? 100;
+        const { paletteType, paletteVariant } = config.colourConfig || {};
         
         const factor = Math.max(0, Math.min(1, (val - min) / (max - min)));
 
@@ -211,17 +219,17 @@ export function evaluateColor(config: GeoJsonConfig, feature: any): string {
         }
 
 
-        const minColor = config.colorConfig?.minColor || '#ffffff';
-        const maxColor = config.colorConfig?.maxColor || '#ff0000';
+        const minColour = config.colourConfig?.minColour || '#ffffff';
+        const maxColour = config.colourConfig?.maxColour || '#ff0000';
 
-        if (val <= min) return minColor;
-        if (val >= max) return maxColor;
+        if (val <= min) return minColour;
+        if (val >= max) return maxColour;
         
-        return interpolateColor(minColor, maxColor, factor);
+        return interpolateColour(minColour, maxColour, factor);
     }
     
-    if (config.colorMode === 'class') {
-         const prop = config.colorProp || 'class';
+    if (config.colourMode === 'class') {
+         const prop = config.colourProp || 'class';
          const val = props[prop];
          if (val === 'primary') return '#1f77b4';
          if (val === 'secondary') return '#ff7f0e'; // TODO: make configurable
@@ -232,6 +240,10 @@ export function evaluateColor(config: GeoJsonConfig, feature: any): string {
     return '#888888';
 }
 
+/**
+ * Evaluates the opacity for a specific feature using JavaScript.
+ * Takes into account both filters and simple style properties.
+ */
 export function evaluateOpacity(config: GeoJsonConfig, feature: any): number {
     const props = feature.properties || {};
     let opacity = 1;
@@ -243,7 +255,7 @@ export function evaluateOpacity(config: GeoJsonConfig, feature: any): number {
         }
     }
 
-    if (opacity > 0 && config.colorMode === 'simple') {
+    if (opacity > 0 && config.colourMode === 'simple') {
         const simpleOpacity = props['stroke-opacity'] ?? props['fill-opacity'] ?? props['opacity'] ?? 1;
         opacity *= Number(simpleOpacity);
     }
@@ -251,8 +263,11 @@ export function evaluateOpacity(config: GeoJsonConfig, feature: any): number {
     return opacity;
 }
 
+/**
+ * Evaluates the symbol/icon for a specific feature.
+ */
 export function evaluateSymbol(config: GeoJsonConfig, feature: any): string {
-    if (config.colorMode !== 'simple') return '';
+    if (config.colourMode !== 'simple') return '';
     const symbol = feature.properties?.['marker-symbol'];
     if (!symbol) return '';
     // Spec says: "a single digit 0-9 or an ID from the Maki icon set"
@@ -260,6 +275,9 @@ export function evaluateSymbol(config: GeoJsonConfig, feature: any): string {
     return String(symbol);
 }
 
+/**
+ * Evaluates the spike height for a specific feature.
+ */
 export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     if (!config.spike?.heightProp) return 0;
     const val = Number(feature.properties?.[config.spike.heightProp]);
@@ -267,3 +285,4 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     const scalar = config.spike.scalar ?? 1;
     return val * scalar;
 }
+

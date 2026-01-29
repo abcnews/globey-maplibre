@@ -3,6 +3,7 @@
  * Render a dataset as a spike layer in ThreeJS.
  */
 
+import type { CustomLayerInterface, CustomRenderMethodInput, Map } from 'maplibre-gl';
 import * as THREE from 'three';
 
 interface SpikeLayerOptions {
@@ -16,7 +17,7 @@ export default class SpikeLayer implements CustomLayerInterface {
   type: 'custom' = 'custom';
   renderingMode: '3d' = '3d';
 
-  protected map?: MaplibreMap;
+  protected map?: Map;
   protected camera?: THREE.Camera;
   protected scene?: THREE.Scene;
   protected renderer?: THREE.WebGLRenderer;
@@ -35,7 +36,7 @@ export default class SpikeLayer implements CustomLayerInterface {
     if (coords) this.pendingCoords = coords;
   }
 
-  onAdd(map: MaplibreMap, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+  onAdd(map: Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     this.map = map;
     this.camera = new THREE.Camera();
     this.scene = new THREE.Scene();
@@ -100,13 +101,13 @@ export default class SpikeLayer implements CustomLayerInterface {
     this.scene.add(this.mesh);
   }
 
-  updateData(heights: Float32Array, colors: Float32Array): void {
+  updateData(heights: Float32Array, colours: Float32Array): void {
     if (!this.mesh || heights.length !== this.count) {
       return;
     }
 
     const tempMatrix = new THREE.Matrix4();
-    const tempColor = new THREE.Color();
+    const tempColour = new THREE.Color();
     const w = this.baseDiameter;
 
     for (let i = 0; i < this.count; i++) {
@@ -119,8 +120,8 @@ export default class SpikeLayer implements CustomLayerInterface {
       tempMatrix.scale(new THREE.Vector3(w, heights[i], w));
       this.mesh.setMatrixAt(i, tempMatrix);
 
-      tempColor.setRGB(colors[i * 3], colors[i * 3 + 1], colors[i * 3 + 2]);
-      this.mesh.setColorAt(i, tempColor);
+      tempColour.setRGB(colours[i * 3], colours[i * 3 + 1], colours[i * 3 + 2]);
+      this.mesh.setColorAt(i, tempColour);
     }
 
     this.mesh.instanceMatrix.needsUpdate = true;
@@ -128,6 +129,7 @@ export default class SpikeLayer implements CustomLayerInterface {
 
     this.map?.triggerRepaint();
   }
+
 
   protected onPreRender(): void {}
 

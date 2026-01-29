@@ -19,18 +19,19 @@ export interface Country {
 export interface GeoJsonConfig {
   url: string;
   type: 'areas' | 'lines' | 'points' | 'spikes';
-  colorMode: 'scale' | 'simple' | 'class' | 'override';
-  colorProp?: string;
-  colorConfig?: {
+  colourMode: 'scale' | 'simple' | 'class' | 'override';
+  colourProp?: string;
+  colourConfig?: {
     min?: number;
     max?: number;
-    minColor?: string;
-    maxColor?: string;
+    minColour?: string;
+    maxColour?: string;
     scale?: { [key: string]: string };
     override?: string;
     paletteType?: 'sequential' | 'divergent';
     paletteVariant?: string;
   };
+
   filter?: { prop: string; values: string[] };
   spike?: { heightProp: string; scalar: number };
 }
@@ -90,8 +91,10 @@ export const boundsCodec = {
 };
 
 /**
- * Custom codec for country codes
- * Encodes ["AU", "US"] to "AUUS"
+ * Custom codec for country codes.
+ * Encodes each country into 3 characters: 2 for the lowercase code, 
+ * plus 'p' or 's' for primary or secondary styling.
+ * e.g. [{code: 'AU', style: 'primary'}] -> "aup"
  */
 export const countriesCodec = {
   encode: (countries: Country[]) =>
@@ -106,7 +109,8 @@ export const countriesCodec = {
   decode: (hash: string) => {
     if (!hash) return [];
     
-    return (hash.match(/.{3}/g) || []).reduce<Country[]>((countries, part) => {
+    const parts = hash.match(/.{3}/g) || [];
+    return (parts as string[]).reduce<Country[]>((countries, part) => {
       const code = part.slice(0, 2).toUpperCase();
       const styleChar = part.slice(2, 3);
       countries.push({
@@ -115,6 +119,7 @@ export const countriesCodec = {
       });
       return countries;
     }, []);
+
   }
 };
 
@@ -132,23 +137,24 @@ export const geoJsonCodec = {
         const types = ['areas', 'lines', 'points', 'spikes'];
         const modes = ['scale', 'simple', 'class', 'override'];
 
-        // [url, type, mode, colorProp, ...]
+        // [url, type, mode, colourProp, ...]
         const arr: any[] = [
         config.url,
         types.indexOf(config.type),
-        modes.indexOf(config.colorMode)
+        modes.indexOf(config.colourMode)
         ];
 
-        if (config.colorProp) arr[3] = config.colorProp;
+        if (config.colourProp) arr[3] = config.colourProp;
 
         // Condense Configs
-        if (config.colorConfig || config.filter || config.spike) {
+        if (config.colourConfig || config.filter || config.spike) {
         const extras: any = {};
-        if (config.colorConfig) extras.cc = config.colorConfig;
+        if (config.colourConfig) extras.cc = config.colourConfig;
         if (config.filter) extras.f = config.filter;
         if (config.spike) extras.s = config.spike;
         arr[4] = extras;
         }
+
         return arr;
     });
 
@@ -165,21 +171,22 @@ export const geoJsonCodec = {
 
       return outerArr.map((arr: any) => {
           if (!Array.isArray(arr)) return null;
-          const [url, typeIdx, modeIdx, colorProp, extras] = arr;
+          const [url, typeIdx, modeIdx, colourProp, extras] = arr;
 
           const config: GeoJsonConfig = {
             url,
             type: types[typeIdx] || 'areas',
-            colorMode: modes[modeIdx] || 'scale'
+            colourMode: modes[modeIdx] || 'scale'
           };
 
-          if (colorProp) config.colorProp = colorProp;
+          if (colourProp) config.colourProp = colourProp;
 
           if (extras) {
-            if (extras.cc) config.colorConfig = extras.cc;
+            if (extras.cc) config.colourConfig = extras.cc;
             if (extras.f) config.filter = extras.f;
             if (extras.s) config.spike = extras.s;
           }
+
           return config;
       }).filter(Boolean) as GeoJsonConfig[];
     } catch (e) {

@@ -3,7 +3,7 @@
   import type { maplibregl } from '../../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import SpikeLayer from '../../../../snippets/SpikeLayer';
-  import { evaluateColor, evaluateHeight } from './utils';
+  import { evaluateColour, evaluateHeight } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -14,15 +14,15 @@
 
   // Animation state
   let targetHeights: Float32Array;
-  let targetColors: Float32Array;
+  let targetColours: Float32Array;
 
   // The state we are animating FROM
   let startHeights: Float32Array;
-  let startColors: Float32Array;
+  let startColours: Float32Array;
 
   // The state currently rendered (to use as start if interrupted)
   let lastRenderedHeights: Float32Array;
-  let lastRenderedColors: Float32Array;
+  let lastRenderedColours: Float32Array;
 
   let animationFrame: number;
   let startTime: number;
@@ -67,10 +67,10 @@
     // Resize arrays if needed
     if (!lastRenderedHeights || lastRenderedHeights.length !== count) {
       lastRenderedHeights = new Float32Array(count).fill(0);
-      lastRenderedColors = new Float32Array(count * 3).fill(1);
+      lastRenderedColours = new Float32Array(count * 3).fill(1);
       // If resizing, we reset 'start' state too
       startHeights = new Float32Array(count).fill(0);
-      startColors = new Float32Array(count * 3).fill(1);
+      startColours = new Float32Array(count * 3).fill(1);
     }
   });
 
@@ -80,7 +80,7 @@
     const count = data.features.length;
 
     targetHeights = new Float32Array(count);
-    targetColors = new Float32Array(count * 3);
+    targetColours = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
       const feature = data.features[i];
@@ -91,11 +91,11 @@
 
       targetHeights[i] = opacity > 0 ? h : 0;
 
-      const colorHex = evaluateColor(config, feature);
-      const [r, g, b] = hexToRgb(colorHex);
-      targetColors[i * 3] = r;
-      targetColors[i * 3 + 1] = g;
-      targetColors[i * 3 + 2] = b;
+      const colourHex = evaluateColour(config, feature);
+      const [r, g, b] = hexToRgb(colourHex);
+      targetColours[i * 3] = r;
+      targetColours[i * 3 + 1] = g;
+      targetColours[i * 3 + 2] = b;
     }
 
     startAnimation();
@@ -105,7 +105,7 @@
     // Capture current state as start state
     if (lastRenderedHeights) {
       startHeights = new Float32Array(lastRenderedHeights);
-      startColors = new Float32Array(lastRenderedColors);
+      startColours = new Float32Array(lastRenderedColours);
     }
 
     cancelAnimationFrame(animationFrame);
@@ -123,24 +123,24 @@
 
     const count = startHeights.length;
     const heights = new Float32Array(count);
-    const colors = new Float32Array(count * 3);
+    const colours = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
       // Lerp height
       heights[i] = startHeights[i] + (targetHeights[i] - startHeights[i]) * ease;
 
-      // Lerp color
+      // Lerp colour
       const idx = i * 3;
-      colors[idx] = startColors[idx] + (targetColors[idx] - startColors[idx]) * ease;
-      colors[idx + 1] = startColors[idx + 1] + (targetColors[idx + 1] - startColors[idx + 1]) * ease;
-      colors[idx + 2] = startColors[idx + 2] + (targetColors[idx + 2] - startColors[idx + 2]) * ease;
+      colours[idx] = startColours[idx] + (targetColours[idx] - startColours[idx]) * ease;
+      colours[idx + 1] = startColours[idx + 1] + (targetColours[idx + 1] - startColours[idx + 1]) * ease;
+      colours[idx + 2] = startColours[idx + 2] + (targetColours[idx + 2] - startColours[idx + 2]) * ease;
     }
 
-    layer.updateData(heights, colors);
+    layer.updateData(heights, colours);
 
     // Update our tracker
     lastRenderedHeights = heights;
-    lastRenderedColors = colors;
+    lastRenderedColours = colours;
 
     if (progress < 1) {
       animationFrame = requestAnimationFrame(animate);

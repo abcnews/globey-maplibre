@@ -83,7 +83,7 @@
 
   {#if editingIndex !== null || isAdding}
     <GeoJsonConfigModal
-      config={editingIndex !== null ? geoJsonList[editingIndex] : { url: '', type: 'areas', colorMode: 'simple' }}
+      config={editingIndex !== null ? geoJsonList[editingIndex] : { url: '', type: 'areas', colourMode: 'simple' }}
       onsave={saveConfig}
       onclose={closeModal}
     />

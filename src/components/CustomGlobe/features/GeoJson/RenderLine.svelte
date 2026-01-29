@@ -2,7 +2,7 @@
   import { getContext, untrack } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColorExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
+  import { getColourExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -37,7 +37,8 @@
             'line-join': 'round'
           },
           paint: {
-            'line-color': getColorExpression(config, 'stroke'),
+            'line-color': getColourExpression(config, 'stroke'),
+
             'line-opacity': getStrokeOpacityExpression(config),
             'line-width': getStrokeWidthExpression(config),
             'line-color-transition': { duration: 300 },
@@ -70,7 +71,8 @@
     const map = mapRoot.map;
     const lid = layerId;
     if (map && map.getLayer(lid)) {
-      map.setPaintProperty(lid, 'line-color', getColorExpression(config, 'stroke'));
+      map.setPaintProperty(lid, 'line-color', getColourExpression(config, 'stroke'));
+
       map.setPaintProperty(lid, 'line-opacity', getStrokeOpacityExpression(config));
       map.setPaintProperty(lid, 'line-width', getStrokeWidthExpression(config));
     }

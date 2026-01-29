@@ -2,7 +2,7 @@
   import { getContext, untrack } from 'svelte';
   import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColorExpression, getCircleRadiusExpression, getCircleOpacityExpression } from './utils';
+  import { getColourExpression, getCircleRadiusExpression, getCircleOpacityExpression } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -35,7 +35,8 @@
           type: 'circle',
           source: sid,
           paint: {
-            'circle-color': getColorExpression(config, 'marker'),
+            'circle-color': getColourExpression(config, 'marker'),
+
             'circle-radius': getCircleRadiusExpression(config),
             'circle-opacity': getCircleOpacityExpression(config),
             'circle-pitch-scale': 'map',
@@ -69,7 +70,8 @@
     const map = mapRoot.map;
     const lid = layerId;
     if (map && map.getLayer(lid)) {
-      map.setPaintProperty(lid, 'circle-color', getColorExpression(config, 'marker'));
+      map.setPaintProperty(lid, 'circle-color', getColourExpression(config, 'marker'));
+
       map.setPaintProperty(lid, 'circle-radius', getCircleRadiusExpression(config));
       map.setPaintProperty(lid, 'circle-opacity', getCircleOpacityExpression(config));
     }

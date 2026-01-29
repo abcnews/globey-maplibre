@@ -14,10 +14,10 @@
     features: any[];
   }>();
 
-  // Determine if the selected property contains numeric values for the color scale
+  // Determine if the selected property contains numeric values for the colour scale
   let isNumeric = $derived.by(() => {
-    const prop = config.colorProp;
-    if (config.colorMode !== 'scale' || !prop) return true;
+    const prop = config.colourProp;
+    if (config.colourMode !== 'scale' || !prop) return true;
 
     return features.some(f => {
       const v = f.properties?.[prop];
@@ -25,14 +25,14 @@
     });
   });
 
-  // Ensure the color configuration object exists for override and scale modes
+  // Ensure the colour configuration object exists for override and scale modes
   $effect(() => {
     // Ensure nested objects exist based on mode/type
-    if (config.colorMode === 'override' || config.colorMode === 'scale') {
-      if (!config.colorConfig) {
-        config.colorConfig = {
-          minColor: '#ffffff',
-          maxColor: '#ff0000',
+    if (config.colourMode === 'override' || config.colourMode === 'scale') {
+      if (!config.colourConfig) {
+        config.colourConfig = {
+          minColour: '#ffffff',
+          maxColour: '#ff0000',
           override: '#ff0000',
           paletteType: 'sequential',
           paletteVariant: SequentialPalette.Blue
@@ -43,7 +43,7 @@
 
   // Reset the palette variant to a valid default when the palette type changes
   $effect(() => {
-    const cc = config.colorConfig;
+    const cc = config.colourConfig;
     if (cc && cc.paletteType) {
       untrack(() => {
         // Reset variant if it's not valid for the type
@@ -62,9 +62,9 @@
 
   // Automatically calculate the min/max range for numeric properties if not already set
   $effect(() => {
-    const prop = config.colorProp;
-    const cc = config.colorConfig;
-    if (config.colorMode === 'scale' && prop && cc) {
+    const prop = config.colourProp;
+    const cc = config.colourConfig;
+    if (config.colourMode === 'scale' && prop && cc) {
       // Only calculate if at least one is missing
       if (cc.min !== undefined && cc.max !== undefined) return;
 
@@ -89,8 +89,8 @@
 
   <div class="gj-grid">
     <div>
-      <label for="gj-color-mode">Mode</label>
-      <select id="gj-color-mode" bind:value={config.colorMode}>
+      <label for="gj-colour-mode">Mode</label>
+      <select id="gj-colour-mode" bind:value={config.colourMode}>
         <option value="simple">Simple Style</option>
         <option value="scale">Colour Scale</option>
         <option value="class">Class Based</option>
@@ -98,10 +98,10 @@
       </select>
     </div>
 
-    {#if config.colorMode === 'scale'}
+    {#if config.colourMode === 'scale'}
       <div>
-        <label for="gj-color-prop">Property</label>
-        <select id="gj-color-prop" bind:value={config.colorProp}>
+        <label for="gj-colour-prop">Property</label>
+        <select id="gj-colour-prop" bind:value={config.colourProp}>
           <option value="">(Select)</option>
           {#each properties as p}
             <option value={p}>{p}</option>
@@ -111,14 +111,14 @@
     {/if}
   </div>
 
-  {#if config.colorMode === 'simple'}
+  {#if config.colourMode === 'simple'}
     <small>Uses <code>marker-color</code>, <code>fill</code>, <code>stroke</code> properties from GeoJSON.</small>
-  {:else if config.colorMode === 'override'}
-    <label for="gj-color-override">Colour</label>
-    {#if config.colorConfig}
-      <input id="gj-color-override" type="color" bind:value={config.colorConfig.override} />
+  {:else if config.colourMode === 'override'}
+    <label for="gj-colour-override">Colour</label>
+    {#if config.colourConfig}
+      <input id="gj-colour-override" type="color" bind:value={config.colourConfig.override} />
     {/if}
-  {:else if config.colorMode === 'scale' && config.colorProp}
+  {:else if config.colourMode === 'scale' && config.colourProp}
     {#if !isNumeric}
       <div style:color="var(--builder-color-danger, red)" style:font-size="0.85em" style:margin-top="0.5rem">
         <strong>Warning:</strong> The selected property does not appear to contain numeric values.
@@ -130,27 +130,27 @@
         <span style:font-weight="bold" style:font-size="0.85em">Palette Type</span>
         <div style:display="flex" style:gap="1rem" style:margin-top="0.25rem">
           <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
-            <input type="radio" name="paletteType" value="sequential" bind:group={config.colorConfig.paletteType} />
+            <input type="radio" name="paletteType" value="sequential" bind:group={config.colourConfig.paletteType} />
             Sequential
           </label>
           <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
-            <input type="radio" name="paletteType" value="divergent" bind:group={config.colorConfig.paletteType} />
+            <input type="radio" name="paletteType" value="divergent" bind:group={config.colourConfig.paletteType} />
             Diverging
           </label>
         </div>
       </div>
 
       <div style="grid-column: span 1">
-        {#if config.colorConfig.paletteType === 'sequential'}
+        {#if config.colourConfig.paletteType === 'sequential'}
           <label for="gj-palette-variant-s">Palette</label>
-          <select id="gj-palette-variant-s" bind:value={config.colorConfig.paletteVariant}>
+          <select id="gj-palette-variant-s" bind:value={config.colourConfig.paletteVariant}>
             {#each Object.values(SequentialPalette) as p}
               <option value={p}>{p}</option>
             {/each}
           </select>
-        {:else if config.colorConfig.paletteType === 'divergent'}
+        {:else if config.colourConfig.paletteType === 'divergent'}
           <label for="gj-palette-variant-d">Palette</label>
-          <select id="gj-palette-variant-d" bind:value={config.colorConfig.paletteVariant}>
+          <select id="gj-palette-variant-d" bind:value={config.colourConfig.paletteVariant}>
             {#each Object.keys(DivergentPalette) as p}
               <option value={p}>{p}</option>
             {/each}
@@ -160,18 +160,18 @@
     </div>
 
     <ColorLegendPreview
-      paletteType={config.colorConfig.paletteType}
-      paletteVariant={config.colorConfig.paletteVariant}
+      paletteType={config.colourConfig.paletteType}
+      paletteVariant={config.colourConfig.paletteVariant}
     />
 
     <div class="gj-grid">
       <div>
         <label for="gj-min-val" style="display:block">Min Value</label>
-        <input id="gj-min-val" type="number" bind:value={config.colorConfig.min} />
+        <input id="gj-min-val" type="number" bind:value={config.colourConfig.min} />
       </div>
       <div>
         <label for="gj-max-val" style="display:block">Max Value</label>
-        <input id="gj-max-val" type="number" bind:value={config.colorConfig.max} />
+        <input id="gj-max-val" type="number" bind:value={config.colourConfig.max} />
       </div>
     </div>
   {/if}

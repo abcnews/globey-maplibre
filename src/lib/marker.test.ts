@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker.ts';
+import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker';
 
 describe('marker', () => {
   describe('geohashCodec', () => {
@@ -65,8 +65,8 @@ describe('marker', () => {
       assert.ok(markerSchema.bounds);
       assert.ok(markerSchema.z);
       assert.ok(markerSchema.labels);
-      assert.ok(markerSchema.legend);
     });
+
   });
 
   describe('encodeFragment / decodeFragment', () => {

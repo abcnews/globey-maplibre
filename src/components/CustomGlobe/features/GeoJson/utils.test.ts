@@ -2,11 +2,11 @@ import assert from 'node:assert';
 import { 
     getOpacityExpression, 
     evaluateOpacity, 
-    getColorExpression, 
-    evaluateColor,
+    getColourExpression, 
+    evaluateColour,
     evaluateHeight,
     generateId
-} from './utils.ts';
+} from './utils';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
 describe('GeoJson Utils', () => {
@@ -26,7 +26,7 @@ describe('GeoJson Utils', () => {
 
     describe('getOpacityExpression', () => {
         it('should return 1 if no filter is set', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'areas', colorMode: 'simple' };
+            const config: GeoJsonConfig = { url: 'test', type: 'areas', colourMode: 'simple' };
             assert.strictEqual(getOpacityExpression(config), 1);
         });
 
@@ -34,7 +34,7 @@ describe('GeoJson Utils', () => {
             const config: GeoJsonConfig = { 
                 url: 'test', 
                 type: 'areas', 
-                colorMode: 'simple',
+                colourMode: 'simple',
                 filter: { prop: 'id', values: ['1', '2'] }
             };
             const expected = [
@@ -50,7 +50,7 @@ describe('GeoJson Utils', () => {
     describe('evaluateOpacity (JS Evaluation)', () => {
         it('should handle string property matching string filter', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'simple',
+                url: 'test', type: 'areas', colourMode: 'simple',
                 filter: { prop: 'type', values: ['A', 'B'] }
             };
             const feature = { properties: { type: 'A' } };
@@ -59,7 +59,7 @@ describe('GeoJson Utils', () => {
 
         it('should return 0 if filter does not match', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'simple',
+                url: 'test', type: 'areas', colourMode: 'simple',
                 filter: { prop: 'type', values: ['A', 'B'] }
             };
             const feature = { properties: { type: 'C' } };
@@ -67,49 +67,49 @@ describe('GeoJson Utils', () => {
         });
 
         it('should multiply by simple style opacities', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'areas', colorMode: 'simple' };
+            const config: GeoJsonConfig = { url: 'test', type: 'areas', colourMode: 'simple' };
             const feature = { properties: { 'fill-opacity': 0.5 } };
             assert.strictEqual(evaluateOpacity(config, feature), 0.5);
         });
     });
 
-    describe('getColorExpression (MapLibre Expressions)', () => {
-        it('should return override color', () => {
+    describe('getColourExpression (MapLibre Expressions)', () => {
+        it('should return override colour', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'override', 
-                colorConfig: { override: '#00ff00' } 
+                url: 'test', type: 'areas', colourMode: 'override', 
+                colourConfig: { override: '#00ff00' } 
             };
-            assert.strictEqual(getColorExpression(config, 'fill'), '#00ff00');
+            assert.strictEqual(getColourExpression(config, 'fill'), '#00ff00');
         });
 
-        it('should return stroke color from property (simple mode)', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'lines', colorMode: 'simple' };
-            const expr = getColorExpression(config, 'stroke');
+        it('should return stroke colour from property (simple mode)', () => {
+            const config: GeoJsonConfig = { url: 'test', type: 'lines', colourMode: 'simple' };
+            const expr = getColourExpression(config, 'stroke');
             assert.deepStrictEqual(expr, ['coalesce', ['get', 'stroke'], '#555555']);
         });
 
-        it('should return marker color (simple mode)', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'points', colorMode: 'simple' };
-            const expr = getColorExpression(config, 'marker');
+        it('should return marker colour (simple mode)', () => {
+            const config: GeoJsonConfig = { url: 'test', type: 'points', colourMode: 'simple' };
+            const expr = getColourExpression(config, 'marker');
             assert.deepStrictEqual(expr, ['coalesce', ['get', 'marker-color'], ['get', 'stroke'], ['get', 'fill'], ['get', 'fill-color'], '#7e7e7e']);
         });
 
         it('should generate interpolate expression for sequential palette', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'points', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'points', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: 0,
                     max: 100,
                     paletteType: 'sequential',
                     paletteVariant: 'blue'
                 }
             };
-            const expr = getColorExpression(config, 'marker');
+            const expr = getColourExpression(config, 'marker');
             assert.strictEqual(expr[0], 'interpolate');
             assert.strictEqual(expr[1][0], 'linear');
             assert.strictEqual(expr[2][1], 'val');
-            // Stops: [val, color, val, color, ...]
+            // Stops: [val, colour, val, colour, ...]
             assert.strictEqual(expr[3], 0);
             assert.strictEqual(expr[5], 25);
             assert.strictEqual(expr[11], 100);
@@ -117,36 +117,36 @@ describe('GeoJson Utils', () => {
 
         it('should generate interpolate expression for divergent palette', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'areas', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: -100,
                     max: 100,
                     paletteType: 'divergent',
                     paletteVariant: 'RedBlue'
                 }
             };
-            const expr = getColorExpression(config, 'fill');
+            const expr = getColourExpression(config, 'fill');
             assert.strictEqual(expr[0], 'interpolate');
             assert.strictEqual(expr[3], -100);
             assert.strictEqual(expr[7], 0); // Middle stop
             assert.strictEqual(expr[11], 100);
         });
 
-        it('should fallback to manual colors if palette variant is invalid', () => {
+        it('should fallback to manual colours if palette variant is invalid', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'areas', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: 0,
                     max: 100,
                     paletteType: 'sequential',
                     paletteVariant: 'invalid-variant',
-                    minColor: '#ff0000',
-                    maxColor: '#0000ff'
+                    minColour: '#ff0000',
+                    maxColour: '#0000ff'
                 }
             };
-            const expr = getColorExpression(config, 'fill');
+            const expr = getColourExpression(config, 'fill');
             assert.deepStrictEqual(expr, [
                 'interpolate',
                 ['linear'],
@@ -158,105 +158,106 @@ describe('GeoJson Utils', () => {
 
         it('should return match expression for class mode', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'class', 
-                colorProp: 'category' 
+                url: 'test', type: 'areas', colourMode: 'class', 
+                colourProp: 'category' 
             };
-            const expr = getColorExpression(config, 'fill');
+            const expr = getColourExpression(config, 'fill');
             assert.strictEqual(expr[0], 'match');
             assert.deepStrictEqual(expr[1], ['get', 'category']);
         });
     });
 
-    describe('evaluateColor (JS Evaluation)', () => {
-        it('should return override color', () => {
+    describe('evaluateColour (JS Evaluation)', () => {
+        it('should return override colour', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'areas', colorMode: 'override', 
-                colorConfig: { override: '#ff00ff' } 
+                url: 'test', type: 'areas', colourMode: 'override', 
+                colourConfig: { override: '#ff0ff' } 
             };
-            assert.strictEqual(evaluateColor(config, {}), '#ff00ff');
+            assert.strictEqual(evaluateColour(config, {}), '#ff0ff');
         });
 
-        it('should return simple style color', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'points', colorMode: 'simple' };
+        it('should return simple style colour', () => {
+            const config: GeoJsonConfig = { url: 'test', type: 'points', colourMode: 'simple' };
             const feature = { properties: { 'marker-color': '#ff0000' } };
-            assert.strictEqual(evaluateColor(config, feature), '#ff0000');
+            assert.strictEqual(evaluateColour(config, feature), '#ff0000');
         });
 
-        it('should evaluate color for sequential palette', () => {
+        it('should evaluate colour for sequential palette', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'points', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'points', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: 0,
                     max: 100,
                     paletteType: 'sequential',
                     paletteVariant: 'blue'
                 }
             };
-            const colorMin = evaluateColor(config, { properties: { val: 0 } });
-            const colorMax = evaluateColor(config, { properties: { val: 100 } });
-            assert.ok(colorMin.startsWith('rgb'));
-            assert.notStrictEqual(colorMin, colorMax);
+            const colourMin = evaluateColour(config, { properties: { val: 0 } });
+            const colourMax = evaluateColour(config, { properties: { val: 100 } });
+            assert.ok(colourMin.startsWith('rgb'));
+            assert.notStrictEqual(colourMin, colourMax);
         });
 
-        it('should evaluate color for divergent palette', () => {
+        it('should evaluate colour for divergent palette', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'points', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'points', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: -100,
                     max: 100,
                     paletteType: 'divergent',
                     paletteVariant: 'RedBlue'
                 }
             };
-            const colorMin = evaluateColor(config, { properties: { val: -100 } });
-            const colorMid = evaluateColor(config, { properties: { val: 0 } });
-            const colorMax = evaluateColor(config, { properties: { val: 100 } });
-            assert.notStrictEqual(colorMin, colorMid);
-            assert.notStrictEqual(colorMid, colorMax);
+            const colourMin = evaluateColour(config, { properties: { val: -100 } });
+            const colourMid = evaluateColour(config, { properties: { val: 0 } });
+            const colourMax = evaluateColour(config, { properties: { val: 100 } });
+            assert.notStrictEqual(colourMin, colourMid);
+            assert.notStrictEqual(colourMid, colourMax);
         });
 
         it('should fallback to manual interpolation if palette is invalid', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'points', colorMode: 'scale',
-                colorProp: 'val',
-                colorConfig: {
+                url: 'test', type: 'points', colourMode: 'scale',
+                colourProp: 'val',
+                colourConfig: {
                     min: 0,
                     max: 100,
                     paletteType: 'sequential',
                     paletteVariant: 'invalid-variant',
-                    minColor: '#000000',
-                    maxColor: '#ffffff'
+                    minColour: '#000000',
+                    maxColour: '#ffffff'
                 }
             };
-            const colorMid = evaluateColor(config, { properties: { val: 50 } });
-            assert.strictEqual(colorMid, 'rgb(128,128,128)');
+            const colourMid = evaluateColour(config, { properties: { val: 50 } });
+            assert.strictEqual(colourMid, 'rgb(128,128,128)');
         });
 
-        it('should return palette colors for class mode', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'areas', colorMode: 'class' };
-            assert.strictEqual(evaluateColor(config, { properties: { class: 'primary' } }), '#1f77b4');
+        it('should return palette colours for class mode', () => {
+            const config: GeoJsonConfig = { url: 'test', type: 'areas', colourMode: 'class' };
+            assert.strictEqual(evaluateColour(config, { properties: { class: 'primary' } }), '#1f77b4');
         });
 
-        it('should return default color for unknown class', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'areas', colorMode: 'class' };
-            assert.strictEqual(evaluateColor(config, { properties: { class: 'unknown' } }), '#888888');
+        it('should return default colour for unknown class', () => {
+            const config: GeoJsonConfig = { url: 'test', type: 'areas', colourMode: 'class' };
+            assert.strictEqual(evaluateColour(config, { properties: { class: 'unknown' } }), '#888888');
         });
     });
 
     describe('evaluateHeight', () => {
         it('should return 0 if no heightProp is set', () => {
-            const config: GeoJsonConfig = { url: 'test', type: 'spikes', colorMode: 'simple' };
+            const config: GeoJsonConfig = { url: 'test', type: 'spikes', colourMode: 'simple' };
             assert.strictEqual(evaluateHeight(config, { properties: { val: 10 } }), 0);
         });
 
         it('should return property value multiplied by scalar', () => {
             const config: GeoJsonConfig = { 
-                url: 'test', type: 'spikes', colorMode: 'simple',
+                url: 'test', type: 'spikes', colourMode: 'simple',
                 spike: { heightProp: 'val', scalar: 2 }
             };
             assert.strictEqual(evaluateHeight(config, { properties: { val: 10 } }), 20);
         });
     });
 });
+

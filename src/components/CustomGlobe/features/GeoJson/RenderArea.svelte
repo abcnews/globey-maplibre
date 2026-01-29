@@ -3,7 +3,7 @@
   import maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import {
-    getColorExpression,
+    getColourExpression,
     getFillOpacityExpression,
     getStrokeOpacityExpression,
     getStrokeWidthExpression
@@ -41,8 +41,9 @@
             type: 'fill',
             source: sid,
             paint: {
-              'fill-color': getColorExpression(config, 'fill'),
+              'fill-color': getColourExpression(config, 'fill'),
               'fill-opacity': getFillOpacityExpression(config),
+
               'fill-color-transition': { duration: 300 },
               'fill-opacity-transition': { duration: 300 }
             }
@@ -55,7 +56,8 @@
             type: 'line',
             source: sid,
             paint: {
-              'line-color': getColorExpression(config, 'stroke'),
+              'line-color': getColourExpression(config, 'stroke'),
+
               'line-width': getStrokeWidthExpression(config),
               'line-opacity': getStrokeOpacityExpression(config),
               'line-width-transition': { duration: 300 },
@@ -92,11 +94,12 @@
     const olid = outlineLayerId;
 
     if (map && map.getLayer(lid)) {
-      map.setPaintProperty(lid, 'fill-color', getColorExpression(config, 'fill'));
+      map.setPaintProperty(lid, 'fill-color', getColourExpression(config, 'fill'));
       map.setPaintProperty(lid, 'fill-opacity', getFillOpacityExpression(config));
     }
     if (map && map.getLayer(olid)) {
-      map.setPaintProperty(olid, 'line-color', getColorExpression(config, 'stroke'));
+      map.setPaintProperty(olid, 'line-color', getColourExpression(config, 'stroke'));
+
       map.setPaintProperty(olid, 'line-width', getStrokeWidthExpression(config));
       map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
     }
