@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ContextMenu } from '@abcnews/components-builder';
-  import type { maplibregl } from '../mapLibre/index';
-  import type { Country } from '../../lib/marker';
+  import type { maplibregl } from '../../mapLibre/index';
+  import type { Country } from '../../../lib/marker';
 
   const {
     map,
@@ -145,14 +145,11 @@
   </ContextMenu>
 {/if}
 
-<fieldset>
-  <legend>Countries</legend>
-  {#if highlightedCountries.length === 0}
-    <small>Right-click a country to highlight it.</small>
-  {:else}
-    <div style:display="flex" style:gap="0.5rem" style:align-items="center">
-      <small>{highlightedCountries.length} selected</small>
-      <button onclick={() => updateSelected([])}>Clear</button>
-    </div>
-  {/if}
-</fieldset>
+{#if highlightedCountries.length === 0}
+  <small>Right-click a country to highlight it.</small>
+{:else}
+  <div style:display="flex" style:gap="0.5rem" style:align-items="center">
+    <small>{highlightedCountries.length} selected</small>
+    <button onclick={() => updateSelected([])}>Clear</button>
+  </div>
+{/if}

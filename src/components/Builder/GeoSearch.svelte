@@ -121,26 +121,7 @@
   <Search />
 </button>
 
-<!-- Using Modal from components-builder. Docs say it takes snippets. -->
 {#if isOpen}
-  <!-- Note: Modal docs imply it renders when mounted? Or controls its own open state? 
-         "The context menu is designed for you to manually handle the isOpen state".
-         Modal: "<Modal title="Example modal" {children} {footerChildren} />"
-         It doesn't show an "open" prop in the example, but standard dialogs might handle it?
-         Wait, HTML dialog element: "style='display:block'?" or .showModal()?
-         The doc example: <Modal title="Example modal" {children} {footerChildren} />
-         And inside footer: onclick={() => (isOpen = false)}.
-         This implies we conditionally render the Modal component when isOpen is true, OR passing an open prop.
-         Let's assume we render it when isOpen is true, or check if it accepts an `open` prop.
-         The previous code used <Modal open={isOpen} ... >.
-         The NEW docs show snippets.
-         Let's assume we render it conditionally or pass open. 
-         Safe bet: Render conditionally if the docs example implies it (it's implicit).
-         Actually, the doc says "This uses the native dialogue element... focus will always be inside".
-         Let's try wrapping in #if isOpen block for safety, or just passing open prop if the component supports it.
-         Given the doc example doesn't show `open={true}`, but shows `isOpen = false` callback, it likely mounts open.
-    -->
-
   {#snippet modalContent()}
     <div class="search-container">
       <input
@@ -193,14 +174,6 @@
 {/if}
 
 <style>
-  button {
-    background: none;
-    border: 1px solid #ccc; /* Generic style, builder styles might override */
-    cursor: pointer;
-    padding: 0.5rem;
-    border-radius: 4px;
-  }
-
   .search-input {
     width: 100%;
     padding: 0.5rem;

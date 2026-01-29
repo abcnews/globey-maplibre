@@ -8,10 +8,12 @@
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
   import countriesNaturalEarth from './mapStyle/countriesNaturalEarth';
+  import type { maplibregl } from '../mapLibre/index';
   type Props = {
     interactive: Boolean;
-    onLoad?: (map: maplibre.Map) => void;
+    onLoad?: (map: maplibregl.Map) => void;
     options: DecodedObject;
+    children?: import('svelte').Snippet;
   };
   let { interactive, onLoad, options, children }: Props = $props();
 </script>
@@ -48,7 +50,9 @@
     <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
     <MapLabelHandler />
     <MapCustomLabelHandler labels={options.labels} />
-    <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
+    {#if options.base === 'countries'}
+      <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
+    {/if}
     <GeoJsonHandler config={options.geoJson} />
     {@render children?.()}
   </MapLibreLoader>

@@ -3,7 +3,7 @@
   import type { maplibregl } from '../mapLibre/index';
   import type { Label } from '../../lib/marker';
   import GeoSearch from './GeoSearch.svelte';
-  import { Trash, GeoAlt } from 'svelte-bootstrap-icons';
+  import { Trash, GeoAlt, Plus, X } from 'svelte-bootstrap-icons';
   import { safeFlyTo } from './utils';
 
   let { map, onchange } = $props<{ map: maplibregl.Map; onchange?: (labels: Label[]) => void }>();
@@ -13,8 +13,6 @@
   // Sync store to local state when store changes
   $effect(() => {
     if ($options?.labels) {
-      // Avoid overwriting if we are currently editing?
-      // For now, simple sync.
       labels = $options.labels;
     } else {
       labels = [];
@@ -22,9 +20,6 @@
   });
 
   function updateStore(newLabels: Label[]) {
-    // This will trigger the effect above, essentially a round trip.
-    // Svelte 5 is smart about granular updates, but careful about loops.
-    // If newLabels is structurally same, likely fine.
     $options = {
       ...$options,
       labels: newLabels
@@ -82,11 +77,15 @@
 </script>
 
 <fieldset>
-  <legend>Custom Labels</legend>
-  <small>Search for a location, or click to add a label.</small>
-  <div style:display="flex" style:gap="0.5rem" style:align-items="center" style:margin-bottom="0.5rem">
-    <button onclick={() => (isPicking = !isPicking)} aria-pressed={isPicking}>
-      {isPicking ? 'Cancel' : 'Add Label'}
+  <legend
+    >Custom Labels
+
+    <button onclick={() => (isPicking = !isPicking)} aria-pressed={isPicking} class="btn-icon" aria-label="Add label">
+      {#if isPicking}
+        <X />
+      {:else}
+        <Plus />
+      {/if}
     </button>
     <GeoSearch
       onselect={val => {
@@ -110,7 +109,8 @@
     >
       <Trash />
     </button>
-  </div>
+  </legend>
+  <small>Search for a location, or click to add a label</small>
 
   {#if isPicking}
     <small style:display="block" style:margin-bottom="0.5rem">Click map to place label</small>
