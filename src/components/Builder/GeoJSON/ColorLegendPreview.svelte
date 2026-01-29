@@ -6,6 +6,7 @@
     getDivergentContinuousPaletteInterpolator,
     ColourMode
   } from '@abcnews/palette';
+  import { getSequentialInterpolator } from '../../../lib/sequentialPalette';
 
   let { paletteType, paletteVariant } = $props<{
     paletteType?: 'sequential' | 'divergent';
@@ -18,7 +19,7 @@
     try {
       if (paletteType === 'sequential') {
         if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
-          return getSequentialContinuousPaletteInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
+          return getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
         }
       }
       if (paletteType === 'divergent') {

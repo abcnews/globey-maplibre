@@ -5,6 +5,7 @@ import {
   DivergentPalette,
   ColourMode
 } from '@abcnews/palette';
+import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../../../lib/sequentialPalette';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
 export function generateId(url: string): string {
@@ -46,7 +47,7 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
       let interpolator: ((t: number) => any) | null = null;
       if (paletteType === 'sequential') {
         if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
-          interpolator = getSequentialContinuousPaletteInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
+          interpolator = getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
         }
       } else {
         const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
@@ -61,6 +62,15 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
         for (let i = 0; i < numStops; i++) {
           const t = i / (numStops - 1);
           const val = min + t * (max - min);
+
+          // For the map expression, we need to manually calculate the offset for sequential palettes 
+          // because it doesn't use the JS interpolator directly
+          let mapT = t;
+          if (paletteType === 'sequential') {
+            mapT = SEQUENTIAL_PALETTE_OFFSET_PCT + t * (1 - SEQUENTIAL_PALETTE_OFFSET_PCT);
+          }
+
+          // We use the interpolator's result to get the actual hex/rgb string at that stop
           stops.push(val, (interpolator as any)(t));
         }
 
@@ -205,7 +215,7 @@ export function evaluateColour(config: GeoJsonConfig, feature: any): string {
             let interpolator: ((t: number) => any) | null = null;
             if (paletteType === 'sequential') {
                 if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
-                    interpolator = getSequentialContinuousPaletteInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
+                    interpolator = getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
                 }
             } else {
                 const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
@@ -285,4 +295,3 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     const scalar = config.spike.scalar ?? 1;
     return val * scalar;
 }
-
