@@ -83,14 +83,14 @@ describe('marker', () => {
       assert.strictEqual(decoded.z, 10.123);
     });
 
-    it('should handle negative z values', async () => {
+    it('should clamp negative z values to 0', async () => {
       const input = {
         z: -1.23456
       };
       const fragment = await encodeFragment(input);
       const decoded = await decodeFragment(fragment);
 
-      assert.ok(Math.abs(decoded.z! - input.z) < 0.00001);
+      assert.strictEqual(decoded.z, 0);
     });
 
     it('should handle z=0', async () => {
@@ -170,6 +170,80 @@ describe('marker', () => {
       assert.strictEqual(decoded.highlightCountries![0].style, 'primary');
       assert.strictEqual(decoded.highlightCountries![1].code, 'NZ');
       assert.strictEqual(decoded.highlightCountries![1].style, 'secondary');
+    });
+
+    it('should round-trip geoJson config', async () => {
+      const input = {
+        geoJson: [
+          {
+            url: 'https://example.com/data.json',
+            type: 'areas' as const,
+            colourMode: 'scale' as const,
+            colourProp: 'value',
+            colourConfig: {
+              min: 0,
+              max: 100,
+              minColour: '#ffffff',
+              maxColour: '#ff0000'
+            }
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.geoJson?.length, 1);
+      assert.strictEqual(decoded.geoJson![0].url, 'https://example.com/data.json');
+      assert.strictEqual(decoded.geoJson![0].type, 'areas');
+      assert.strictEqual(decoded.geoJson![0].colourMode, 'scale');
+      assert.strictEqual(decoded.geoJson![0].colourProp, 'value');
+      assert.deepStrictEqual(decoded.geoJson![0].colourConfig, input.geoJson[0].colourConfig);
+    });
+
+    it('should handle complex geoJson config with filters and spikes', async () => {
+      const input = {
+        geoJson: [
+          {
+            url: 'https://example.com/spikes.json',
+            type: 'spikes' as const,
+            colourMode: 'simple' as const,
+            filter: { prop: 'category', values: ['A', 'B'] },
+            spike: { heightProp: 'count', scalar: 10 }
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.geoJson?.length, 1);
+      assert.strictEqual(decoded.geoJson![0].type, 'spikes');
+      assert.deepStrictEqual(decoded.geoJson![0].filter, input.geoJson[0].filter);
+      assert.deepStrictEqual(decoded.geoJson![0].spike, input.geoJson[0].spike);
+    });
+
+    it('should handle multiple geoJson configs', async () => {
+      const input = {
+        geoJson: [
+          { url: 'a', type: 'areas' as const, colourMode: 'simple' as const },
+          { url: 'b', type: 'lines' as const, colourMode: 'scale' as const }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.geoJson?.length, 2);
+      assert.strictEqual(decoded.geoJson![0].url, 'a');
+      assert.strictEqual(decoded.geoJson![1].url, 'b');
+    });
+
+    it('should round-trip base style', async () => {
+      const input = {
+        base: 'countries' as const
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.base, 'countries');
     });
   });
 });
