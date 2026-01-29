@@ -28,6 +28,8 @@ export interface GeoJsonConfig {
     maxColor?: string;
     scale?: { [key: string]: string };
     override?: string;
+    paletteType?: 'sequential' | 'divergent';
+    paletteVariant?: string;
   };
   filter?: { prop: string; values: string[] };
   spike?: { heightProp: string; scalar: number };

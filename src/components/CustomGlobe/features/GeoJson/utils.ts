@@ -1,3 +1,10 @@
+import {
+  getSequentialContinuousPaletteInterpolator,
+  getDivergentContinuousPaletteInterpolator,
+  SequentialPalette,
+  DivergentPalette,
+  ColourMode
+} from '@abcnews/palette';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
 export function generateId(url: string): string {
@@ -30,6 +37,40 @@ export function getColorExpression(config: GeoJsonConfig, context: 'fill' | 'str
   if (config.colorMode === 'scale' && config.colorProp) {
     const min = config.colorConfig?.min ?? 0;
     const max = config.colorConfig?.max ?? 100;
+    const { paletteType, paletteVariant } = config.colorConfig || {};
+
+    if (paletteType && paletteVariant) {
+      let interpolator: ((t: number) => any) | null = null;
+      if (paletteType === 'sequential') {
+        if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
+          interpolator = getSequentialContinuousPaletteInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
+        }
+      } else {
+        const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
+        if (variant) {
+          interpolator = getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
+        }
+      }
+
+      if (interpolator) {
+        const stops: any[] = [];
+        const numStops = 5; // Good enough for sequential/divergent visualization
+        for (let i = 0; i < numStops; i++) {
+          const t = i / (numStops - 1);
+          const val = min + t * (max - min);
+          stops.push(val, (interpolator as any)(t));
+        }
+
+        return [
+          'interpolate',
+          ['linear'],
+          ['get', config.colorProp],
+          ...stops
+        ];
+      }
+    }
+
+
     const minColor = config.colorConfig?.minColor || '#ffffff';
     const maxColor = config.colorConfig?.maxColor || '#ff0000';
     
@@ -148,13 +189,34 @@ export function evaluateColor(config: GeoJsonConfig, feature: any): string {
 
         const min = config.colorConfig?.min ?? 0;
         const max = config.colorConfig?.max ?? 100;
+        const { paletteType, paletteVariant } = config.colorConfig || {};
+        
+        const factor = Math.max(0, Math.min(1, (val - min) / (max - min)));
+
+        if (paletteType && paletteVariant) {
+            let interpolator: ((t: number) => any) | null = null;
+            if (paletteType === 'sequential') {
+                if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
+                    interpolator = getSequentialContinuousPaletteInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
+                }
+            } else {
+                const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
+                if (variant) {
+                    interpolator = getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
+                }
+            }
+            if (interpolator) {
+                return interpolator(factor);
+            }
+        }
+
+
         const minColor = config.colorConfig?.minColor || '#ffffff';
         const maxColor = config.colorConfig?.maxColor || '#ff0000';
 
         if (val <= min) return minColor;
         if (val >= max) return maxColor;
         
-        const factor = (val - min) / (max - min);
         return interpolateColor(minColor, maxColor, factor);
     }
     
