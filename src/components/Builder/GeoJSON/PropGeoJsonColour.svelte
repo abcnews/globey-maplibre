@@ -2,7 +2,7 @@
   import { untrack } from 'svelte';
   import { SequentialPalette, DivergentPalette } from '@abcnews/palette';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import ColorLegendPreview from './ColorLegendPreview.svelte';
+  import ColourLegendPreview from './ColourLegendPreview.svelte';
 
   import DistributionInput from './DistributionInput.svelte';
 
@@ -81,6 +81,19 @@
       }
     }
   });
+
+  let customPaletteStr = $state(config.colourConfig?.customPalette?.join(', ') || '');
+
+  $effect(() => {
+    if (config.colourConfig?.paletteType === 'custom') {
+      const colours = customPaletteStr
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s));
+
+      config.colourConfig.customPalette = colours;
+    }
+  });
 </script>
 
 <fieldset>
@@ -136,6 +149,10 @@
             <input type="radio" name="paletteType" value="divergent" bind:group={config.colourConfig.paletteType} />
             Diverging
           </label>
+          <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
+            <input type="radio" name="paletteType" value="custom" bind:group={config.colourConfig.paletteType} />
+            Custom
+          </label>
         </div>
       </div>
 
@@ -154,13 +171,22 @@
               <option value={p}>{p}</option>
             {/each}
           </select>
+        {:else if config.colourConfig.paletteType === 'custom'}
+          <label for="gj-custom-palette">Colours (comma separated)</label>
+          <input
+            id="gj-custom-palette"
+            type="text"
+            placeholder="#ff0000, #00ff00, #0000ff"
+            bind:value={customPaletteStr}
+          />
         {/if}
       </div>
     </div>
 
-    <ColorLegendPreview
+    <ColourLegendPreview
       paletteType={config.colourConfig.paletteType}
       paletteVariant={config.colourConfig.paletteVariant}
+      customPalette={config.colourConfig.customPalette}
     />
 
     <DistributionInput values={numericValues} bind:min={config.colourConfig.min} bind:max={config.colourConfig.max} />

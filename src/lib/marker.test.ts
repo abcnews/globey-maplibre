@@ -200,6 +200,28 @@ describe('marker', () => {
       assert.deepStrictEqual(decoded.geoJson![0].colourConfig, input.geoJson[0].colourConfig);
     });
 
+    it('should round-trip custom palette', async () => {
+      const input = {
+        geoJson: [
+          {
+            url: 'custom.json',
+            type: 'areas' as const,
+            colourMode: 'scale' as const,
+            colourConfig: {
+              paletteType: 'custom' as const,
+              customPalette: ['#ff0000', '#00ff00', '#0000ff']
+            }
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.deepStrictEqual(decoded.geoJson![0].colourConfig?.customPalette, input.geoJson[0].colourConfig.customPalette);
+      // Ensure it was encoded efficiently (not as a full JSON array of strings)
+      assert.ok(!fragment.includes('ff0000')); // Should be base36
+    });
+
     it('should handle complex geoJson config with filters and spikes', async () => {
       const input = {
         geoJson: [

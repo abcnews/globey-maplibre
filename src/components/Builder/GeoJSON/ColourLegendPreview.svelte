@@ -7,10 +7,12 @@
     ColourMode
   } from '@abcnews/palette';
   import { getSequentialInterpolator } from '../../../lib/sequentialPalette';
+  import { getCustomPaletteInterpolator } from '../../../lib/colours';
 
-  let { paletteType, paletteVariant } = $props<{
-    paletteType?: 'sequential' | 'divergent';
+  let { paletteType, paletteVariant, customPalette } = $props<{
+    paletteType?: 'sequential' | 'divergent' | 'custom';
     paletteVariant?: string;
+    customPalette?: string[];
   }>();
 
   let interpolator = $derived.by(() => {
@@ -27,6 +29,9 @@
         if (variant) {
           return getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
         }
+      }
+      if (paletteType === 'custom' && customPalette) {
+        return getCustomPaletteInterpolator(customPalette);
       }
     } catch (e) {
       console.error('Error generating interpolator', e);

@@ -28,8 +28,9 @@ export interface GeoJsonConfig {
     maxColour?: string;
     scale?: { [key: string]: string };
     override?: string;
-    paletteType?: 'sequential' | 'divergent';
+    paletteType?: 'sequential' | 'divergent' | 'custom';
     paletteVariant?: string;
+    customPalette?: string[];
   };
 
   filter?: { prop: string; values: string[] };
@@ -181,28 +182,39 @@ export const geoJsonCodec = {
     
     // Config[] -> Array<CompactArray>
     const condensed = configs.map(config => {
-        const types = ['areas', 'lines', 'points', 'spikes'];
-        const modes = ['scale', 'simple', 'class', 'override'];
+      const types = ['areas', 'lines', 'points', 'spikes'];
+      const modes = ['scale', 'simple', 'class', 'override'];
 
-        // [url, type, mode, colourProp, ...]
-        const arr: any[] = [
-        config.url,
-        types.indexOf(config.type),
-        modes.indexOf(config.colourMode)
-        ];
+      // [url, type, mode, colourProp, ...]
+      const arr: any[] = [config.url, types.indexOf(config.type), modes.indexOf(config.colourMode)];
 
-        if (config.colourProp) arr[3] = config.colourProp;
+      if (config.colourProp) arr[3] = config.colourProp;
 
-        // Condense Configs
-        if (config.colourConfig || config.filter || config.spike) {
+      // Condense Configs
+      if (config.colourConfig || config.filter || config.spike) {
         const extras: any = {};
-        if (config.colourConfig) extras.cc = config.colourConfig;
+        if (config.colourConfig) {
+          const cc = { ...config.colourConfig };
+          // If custom palette, encode colours into a compact base36 string
+          if (cc.paletteType === 'custom' && Array.from(cc.customPalette || []).length > 0) {
+            cc.customPalette = [
+              cc.customPalette!
+                .map(c => {
+                  let hex = c.replace('#', '');
+                  if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+                  return parseInt(hex, 16).toString(36).padStart(5, '0');
+                })
+                .join('')
+            ] as any; // Store as single-item array/string to trigger compact JSON
+          }
+          extras.cc = cc;
+        }
         if (config.filter) extras.f = config.filter;
         if (config.spike) extras.s = config.spike;
         arr[4] = extras;
-        }
+      }
 
-        return arr;
+      return arr;
     });
 
     return encode(JSON.stringify(condensed));
@@ -216,7 +228,8 @@ export const geoJsonCodec = {
       const types = ['areas', 'lines', 'points', 'spikes'] as const;
       const modes = ['scale', 'simple', 'class', 'override'] as const;
 
-      return outerArr.map((arr: any) => {
+      return outerArr
+        .map((arr: any) => {
           if (!Array.isArray(arr)) return null;
           const [url, typeIdx, modeIdx, colourProp, extras] = arr;
 
@@ -229,13 +242,27 @@ export const geoJsonCodec = {
           if (colourProp) config.colourProp = colourProp;
 
           if (extras) {
-            if (extras.cc) config.colourConfig = extras.cc;
+            if (extras.cc) {
+              const cc = extras.cc;
+              // Decode custom palette if it was compressed
+              if (cc.paletteType === 'custom' && Array.isArray(cc.customPalette) && cc.customPalette.length === 1) {
+                const encoded = cc.customPalette[0];
+                const colours: string[] = [];
+                for (let i = 0; i < encoded.length; i += 5) {
+                  const chunk = encoded.slice(i, i + 5);
+                  colours.push(`#${parseInt(chunk, 36).toString(16).padStart(6, '0')}`);
+                }
+                cc.customPalette = colours;
+              }
+              config.colourConfig = cc;
+            }
             if (extras.f) config.filter = extras.f;
             if (extras.s) config.spike = extras.s;
           }
 
           return config;
-      }).filter(Boolean) as GeoJsonConfig[];
+        })
+        .filter(Boolean) as GeoJsonConfig[];
     } catch (e) {
       return [];
     }

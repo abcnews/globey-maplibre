@@ -6,6 +6,7 @@ import {
   ColourMode
 } from '@abcnews/palette';
 import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../../../lib/sequentialPalette';
+import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
 export function generateId(url: string): string {
@@ -42,28 +43,29 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
     const min = config.colourConfig?.min ?? 0;
     const max = config.colourConfig?.max ?? 100;
     const { paletteType, paletteVariant } = config.colourConfig || {};
-
-    if (paletteType && paletteVariant) {
+    if ((paletteType && paletteVariant) || paletteType === 'custom') {
       let interpolator: ((t: number) => any) | null = null;
       if (paletteType === 'sequential') {
         if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
           interpolator = getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
         }
-      } else {
+      } else if (paletteType === 'divergent') {
         const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
         if (variant) {
           interpolator = getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
         }
+      } else if (paletteType === 'custom' && config.colourConfig?.customPalette) {
+        interpolator = getCustomPaletteInterpolator(config.colourConfig.customPalette);
       }
 
       if (interpolator) {
         const stops: any[] = [];
-        const numStops = 5; // Good enough for sequential/divergent visualization
+        const numStops = paletteType === 'custom' ? config.colourConfig?.customPalette?.length || 5 : 5;
         for (let i = 0; i < numStops; i++) {
           const t = i / (numStops - 1);
           const val = min + t * (max - min);
 
-          // For the map expression, we need to manually calculate the offset for sequential palettes 
+          // For the map expression, we need to manually calculate the offset for sequential palettes
           // because it doesn't use the JS interpolator directly
           let mapT = t;
           if (paletteType === 'sequential') {
@@ -169,22 +171,6 @@ export function getOpacityExpression(config: GeoJsonConfig): any {
 
 // JS Evaluation for Points/Spikes
 
-function hexToRgb(hex: string): [number, number, number] {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-    ] : [0, 0, 0];
-}
-
-function interpolateColour(colour1: string, colour2: string, factor: number): string {
-    const c1 = hexToRgb(colour1);
-    const c2 = hexToRgb(colour2);
-    const result = c1.map((c, i) => Math.round(c + factor * (c2[i] - c)));
-    return `rgb(${result.join(',')})`;
-}
-
 /**
  * Evaluates the colour for a specific feature using JavaScript.
  * Used for layers that require direct THREE.js values (like spikes).
@@ -208,20 +194,21 @@ export function evaluateColour(config: GeoJsonConfig, feature: any): string {
         const min = config.colourConfig?.min ?? 0;
         const max = config.colourConfig?.max ?? 100;
         const { paletteType, paletteVariant } = config.colourConfig || {};
-        
         const factor = Math.max(0, Math.min(1, (val - min) / (max - min)));
 
-        if (paletteType && paletteVariant) {
+        if ((paletteType && paletteVariant) || paletteType === 'custom') {
             let interpolator: ((t: number) => any) | null = null;
             if (paletteType === 'sequential') {
                 if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
                     interpolator = getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
                 }
-            } else {
+            } else if (paletteType === 'divergent') {
                 const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
                 if (variant) {
                     interpolator = getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
                 }
+            } else if (paletteType === 'custom' && config.colourConfig?.customPalette) {
+                interpolator = getCustomPaletteInterpolator(config.colourConfig.customPalette);
             }
             if (interpolator) {
                 return interpolator(factor);
