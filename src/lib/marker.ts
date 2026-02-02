@@ -38,6 +38,13 @@ export interface GeoJsonConfig {
   pointSize?: string;
 }
 
+export interface ImageSourceConfig {
+  id: string;
+  url: string;
+  opacity: number;
+  coordinates: [number, number][];
+}
+
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
@@ -55,6 +62,7 @@ export interface DecodedObject {
     oceans: boolean;
   };
   geoJson?: GeoJsonConfig[];
+  imageSources?: ImageSourceConfig[];
 }
 
 export interface DecodeProps {
@@ -274,6 +282,48 @@ export const geoJsonCodec = {
   }
 };
 
+/**
+ * Custom codec for ImageSource config
+ * [url, opacity, coordinates[]]
+ */
+export const imageSourceCodec = {
+  encode: (configs: ImageSourceConfig[]) => {
+    if (!configs || configs.length === 0) return undefined;
+
+    const condensed = configs.map(config => {
+      // coords -> geohashes
+      const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], 7));
+      return [config.url, Math.round(config.opacity * 100), hashes];
+    });
+
+    return encode(JSON.stringify(condensed));
+  },
+  decode: (hash: string) => {
+    if (!hash) return [];
+    try {
+      const outerArr = JSON.parse(decode(hash));
+      if (!Array.isArray(outerArr)) return [];
+
+      return outerArr.map((arr: any, index: number) => {
+        const [url, opacityInt, hashes] = arr;
+        const coordinates = hashes.map((h: string) => {
+          const { lat, lon } = Geohash.decode(h);
+          return [Number(lon), Number(lat)];
+        });
+
+        return {
+          id: `img-${index}`,
+          url,
+          opacity: opacityInt / 100,
+          coordinates
+        };
+      });
+    } catch (e) {
+      return [];
+    }
+  }
+};
+
 const defaultMapLabels = {
   countries: 3,
   states: false,
@@ -377,6 +427,12 @@ export const markerSchema = {
     type: 'custom',
     codec: mapLabelsCodec,
     defaultValue: defaultMapLabels
+  },
+  imageSources: {
+    key: 'is',
+    type: 'custom',
+    codec: imageSourceCodec,
+    defaultValue: []
   }
 };
 
