@@ -4,6 +4,7 @@
   import * as topojson from 'topojson-client';
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
+  import PropGeoJsonPointSize from './PropGeoJsonPointSize.svelte';
 
   let {
     config: initialConfig,
@@ -142,6 +143,10 @@
     <PropGeoJsonFilter bind:config {properties} {getUniqueValues} />
 
     <PropGeoJsonColour bind:config {properties} features={rawFeatures} />
+
+    {#if config.type === 'points'}
+      <PropGeoJsonPointSize bind:config />
+    {/if}
 
     {#if config.type === 'spikes'}
       <fieldset>

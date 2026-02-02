@@ -121,16 +121,40 @@ export function getStrokeWidthExpression(config: GeoJsonConfig): any {
 }
 
 export function getCircleRadiusExpression(config: GeoJsonConfig): any {
-    if (config.colourMode === 'simple') {
+  if (config.pointSize) {
+    const match = config.pointSize.match(/^(\d+(?:\.\d+)?)([pk])$/);
+    if (match) {
+      const val = Number(match[1]);
+      const unit = match[2];
+      if (unit === 'p') {
+        return val;
+      }
+      if (unit === 'k') {
+        // MapLibre's circle-radius is in pixels.
+        // At zoom Level 0, one degree of longitude at the equator is ~111km.
+        // Map tile size is 512px.
+        // Approximate calculation for km to px:
+        // pixels = (km / 40075) * 512 * 2^zoom
+        // radius_pixels = (km / 40075) * 256 * 2^zoom
+        // Simplifying the constant: 256 / 40075 approx = 0.006388
+        // Using a slightly more robust expression:
         return [
-            'match',
-            ['get', 'marker-size'],
-            'small', 4,
-            'large', 9,
-            ['coalesce', ['to-number', ['get', 'marker-size']], 6]
+          'interpolate',
+          ['exponential', 2],
+          ['zoom'],
+          0,
+          (val / 40075) * 512, // Diameter at zoom 0 (approx)
+          22,
+          (val / 40075) * 512 * Math.pow(2, 22)
         ];
+      }
     }
-    return 6;
+  }
+
+  if (config.colourMode === 'simple') {
+    return ['match', ['get', 'marker-size'], 'small', 4, 'large', 9, ['coalesce', ['to-number', ['get', 'marker-size']], 6]];
+  }
+  return 6;
 }
 
 export function getCircleOpacityExpression(config: GeoJsonConfig): any {

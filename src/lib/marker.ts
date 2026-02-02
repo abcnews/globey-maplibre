@@ -35,6 +35,7 @@ export interface GeoJsonConfig {
 
   filter?: { prop: string; values: string[] };
   spike?: { heightProp: string; scalar: number };
+  pointSize?: string;
 }
 
 export interface DecodedObject {
@@ -214,6 +215,8 @@ export const geoJsonCodec = {
         arr[4] = extras;
       }
 
+      if (config.pointSize) arr[5] = config.pointSize;
+
       return arr;
     });
 
@@ -259,6 +262,8 @@ export const geoJsonCodec = {
             if (extras.f) config.filter = extras.f;
             if (extras.s) config.spike = extras.s;
           }
+
+          if (arr[5]) config.pointSize = arr[5];
 
           return config;
         })

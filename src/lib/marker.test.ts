@@ -200,6 +200,24 @@ describe('marker', () => {
       assert.deepStrictEqual(decoded.geoJson![0].colourConfig, input.geoJson[0].colourConfig);
     });
 
+    it('should round-trip point size', async () => {
+      const input = {
+        geoJson: [
+          {
+            url: 'points.json',
+            type: 'points' as const,
+            colourMode: 'simple' as const,
+            pointSize: '12.5k'
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.geoJson?.length, 1);
+      assert.strictEqual(decoded.geoJson![0].pointSize, '12.5k');
+    });
+
     it('should round-trip custom palette', async () => {
       const input = {
         geoJson: [
