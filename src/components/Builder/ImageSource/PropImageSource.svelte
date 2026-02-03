@@ -53,7 +53,7 @@
   {#if imageSources.length === 0}
     <small>Click <code>+</code> to add an image overlay</small>
   {:else}
-    <PropList items={imageSources}>
+    <PropList items={imageSources} {onchange}>
       {#snippet name(config: ImageSourceConfig)}
         <span title={config.url}>{config.url}</span>
       {/snippet}

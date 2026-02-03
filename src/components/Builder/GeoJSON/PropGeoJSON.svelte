@@ -60,7 +60,7 @@
   {#if geoJsonList.length === 0}
     <small>Click <code>+</code> to add a new layer</small>
   {:else}
-    <PropList items={geoJsonList}>
+    <PropList items={geoJsonList} {onchange}>
       {#snippet name(config: GeoJsonConfig)}
         <strong>{config.type}</strong>
       {/snippet}
