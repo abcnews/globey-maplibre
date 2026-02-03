@@ -5,6 +5,7 @@
   import MarkdownModal from '../MarkdownModal.svelte';
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
   import helpContent from './GEOJSON.md?raw';
+  import PropList from '../PropList.svelte';
 
   let { geoJsonList = [], onchange } = $props<{
     geoJsonList: GeoJsonConfig[];
@@ -59,20 +60,18 @@
   {#if geoJsonList.length === 0}
     <small>Click <code>+</code> to add a new layer</small>
   {:else}
-    <ul class="list">
-      {#each geoJsonList as config, i}
-        <li>
-          <div class="info">
-            <strong>{config.type}</strong>
-            <span class="url" title={config.url}>{config.url}</span>
-          </div>
-          <div class="actions">
-            <button class="btn-icon" aria-label="Edit" onclick={() => openEdit(i)}><Pencil /></button>
-            <button class="btn-icon" aria-label="Delete" onclick={() => removeConfig(i)}><Trash /></button>
-          </div>
-        </li>
-      {/each}
-    </ul>
+    <PropList items={geoJsonList}>
+      {#snippet name(config: GeoJsonConfig)}
+        <strong>{config.type}</strong>
+      {/snippet}
+      {#snippet description(config: GeoJsonConfig)}
+        <span title={config.url}>{config.url}</span>
+      {/snippet}
+      {#snippet actions(_, i)}
+        <button class="btn-icon" aria-label="Edit" onclick={() => openEdit(i)}><Pencil /></button>
+        <button class="btn-icon" aria-label="Delete" onclick={() => removeConfig(i)}><Trash /></button>
+      {/snippet}
+    </PropList>
   {/if}
 
   {#if editingIndex !== null || isAdding}
@@ -89,39 +88,6 @@
 </fieldset>
 
 <style>
-  .list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 0.5rem 0;
-    border: 1px solid #eee;
-  }
-  .list li {
-    padding: 0.5rem;
-    border-bottom: 1px solid #eee;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .list li:last-child {
-    border-bottom: none;
-  }
-  .info {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-  .url {
-    font-size: 0.8em;
-    color: #666;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 150px;
-  }
-  .actions {
-    display: flex;
-    gap: 0.2rem;
-  }
   legend {
     display: flex;
     align-items: center;
