@@ -24,21 +24,14 @@
         ]) as any
       });
 
-      // Try to find a layer to insert before to keep labels on top
-      const layers = map.getStyle().layers;
-      const beforeId = layers.find(l => l.id.includes('label') || l.id.includes('symbol'))?.id;
-
-      map.addLayer(
-        {
-          id: layerId,
-          type: 'raster',
-          source: sourceId,
-          paint: {
-            'raster-opacity': config.opacity
-          }
-        },
-        beforeId
-      );
+      map.addLayer({
+        id: layerId,
+        type: 'raster',
+        source: sourceId,
+        paint: {
+          'raster-opacity': config.opacity
+        }
+      });
     } else {
       const source = map.getSource(sourceId) as any;
       if (source && source.setCoordinates) {

@@ -9,17 +9,7 @@ import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../
 import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 
-export function generateId(url: string): string {
-  if (!url) return 'none';
-  // Simple hash for stable IDs
-  let hash = 0;
-  for (let i = 0; i < url.length; i++) {
-    const char = url.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return `gj-${Math.abs(hash).toString(36)}`;
-}
+export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layerUtils';
 
 /**
  * Generates a MapLibre expression for the feature colour based on the configuration.
@@ -307,16 +297,4 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     return val * scalar;
 }
 
-/**
- * Finds the ID of the first label (symbol) layer in the map's style.
- * This can be used as a beforeId in addLayer to ensure GeoJSON layers
- * appear underneath map labels.
- */
-export function getLabelAnchor(map: maplibregl.Map): string | undefined {
-    const layers = map.getStyle().layers;
-    if (!layers) return undefined;
-
-    // Find the first symbol layer
-    const labelLayer = layers.find(l => l.type === 'symbol');
-    return labelLayer?.id;
-}
+// getLabelAnchor removed, now imported from layerUtils

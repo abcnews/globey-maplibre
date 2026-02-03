@@ -57,7 +57,7 @@
       <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
     {/if}
     <GeoJsonHandler config={options.geoJson} />
-    <ImageSourcesHandler config={options.imageSources} />
+    <ImageSourcesHandler config={options.imageSources} geoJsonConfig={options.geoJson} />
     {@render children?.()}
   </MapLibreLoader>
 {/key}
