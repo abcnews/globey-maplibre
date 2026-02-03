@@ -1,16 +1,10 @@
 <script lang="ts">
-  import type { maplibregl } from '../../mapLibre/index';
   import type { ImageSourceConfig } from '../../../lib/marker';
   import ImageSourceConfigModal from './ImageSourceConfigModal.svelte';
   import { Pencil, Trash, Plus } from 'svelte-bootstrap-icons';
 
-  let {
-    imageSources = [],
-    map,
-    onchange
-  } = $props<{
+  let { imageSources = [], onchange } = $props<{
     imageSources: ImageSourceConfig[];
-    map: maplibregl.Map;
     onchange: (list: ImageSourceConfig[]) => void;
   }>();
 
@@ -74,12 +68,11 @@
     </ul>
   {/if}
 
-  {#if (editingIndex !== null || isAdding) && map}
+  {#if editingIndex !== null || isAdding}
     <ImageSourceConfigModal
       config={editingIndex !== null
         ? imageSources[editingIndex]
         : { id: Date.now().toString(), url: '', opacity: 1, coordinates: [] }}
-      {map}
       onsave={saveConfig}
       onclose={closeModal}
     />

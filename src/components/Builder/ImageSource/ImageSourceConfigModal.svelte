@@ -1,16 +1,15 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type { ImageSourceConfig } from '../../../lib/marker';
-  import type { maplibregl } from '../../mapLibre/index';
+  import KmlImportButton from './KmlImportButton.svelte';
+  import NearmapImportButton from './NearmapImportButton.svelte';
 
   let {
     config,
-    map,
     onsave,
     onclose
   }: {
     config: ImageSourceConfig;
-    map: maplibregl.Map;
     onsave: (config: ImageSourceConfig) => void;
     onclose: () => void;
   } = $props();
@@ -18,8 +17,6 @@
   let url = $state(config.url);
   let opacity = $state(config.opacity);
   let coordsString = $state(JSON.stringify(config.coordinates));
-  let isPicking = $state(false);
-  let pickedPoints = $state<[number, number][]>([]);
 
   function handleSave() {
     try {
@@ -40,38 +37,9 @@
     coordsString = JSON.stringify(world);
   }
 
-  function setWholeWorldPolar() {
-    const world = [
-      [-180, 90],
-      [180, 90],
-      [180, -90],
-      [-180, -90]
-    ];
-    coordsString = JSON.stringify(world);
+  function handleKmlImport(coordinates: [number, number][]) {
+    coordsString = JSON.stringify(coordinates);
   }
-
-  $effect(() => {
-    if (!isPicking || !map) return;
-
-    const onClick = (e: any) => {
-      pickedPoints = [...pickedPoints, [e.lngLat.lng, e.lngLat.lat]];
-      if (pickedPoints.length === 4) {
-        coordsString = JSON.stringify(pickedPoints);
-        isPicking = false;
-        pickedPoints = [];
-      }
-    };
-
-    map.on('click', onClick);
-    map.getCanvas().style.cursor = 'crosshair';
-
-    return () => {
-      map.off('click', onClick);
-      if (map.getCanvas()) {
-        map.getCanvas().style.cursor = '';
-      }
-    };
-  });
 </script>
 
 {#snippet footerChildren()}
@@ -97,11 +65,9 @@
     <textarea id="img-coords" bind:value={coordsString} rows="4" style="width: 100%; font-family: monospace;"
     ></textarea>
     <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
-      <button type="button" onclick={() => (isPicking = !isPicking)}>
-        {isPicking ? `Click ${4 - pickedPoints.length} more` : 'Pick on Map'}
-      </button>
       <button type="button" onclick={setWholeWorld}>Whole World (Mercator)</button>
-      <button type="button" onclick={setWholeWorldPolar}>Whole World (Polar/Equi)</button>
+      <KmlImportButton onimport={handleKmlImport} />
+      <NearmapImportButton onimport={handleKmlImport} />
     </div>
   </fieldset>
 </Modal>

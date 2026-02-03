@@ -10,6 +10,7 @@
   import { MapLibreLoader } from '../mapLibre/index';
   import countriesNaturalEarth from './mapStyle/countriesNaturalEarth';
   import type { maplibregl } from '../mapLibre/index';
+  import { MAX_ZOOM } from '../../lib/constants';
   type Props = {
     rootElStyle?: string;
     interactive: Boolean;
@@ -28,7 +29,7 @@
       const map = new maplibregl.Map({
         zoom: options.z || 3,
         minZoom: -1,
-        maxZoom: 13,
+        maxZoom: MAX_ZOOM,
         attributionControl: false,
         dragRotate: false,
         doubleClickZoom: false,
