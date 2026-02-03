@@ -4,6 +4,7 @@
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
   import GeoTiffImportButton from './GeoTiffImportButton.svelte';
+  import { isValidUrl } from '../../../lib/marker';
 
   let {
     config,
@@ -23,6 +24,10 @@
   let naturalHeight = $state(0);
 
   function handleSave() {
+    if (!isValidUrl(url)) {
+      alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
+      return;
+    }
     try {
       const coordinates = JSON.parse(coordsString);
       onsave({ ...config, url, opacity, coordinates });
@@ -64,6 +69,9 @@
         <legend>Data source</legend>
         <label for="img-url">Image URL</label>
         <input id="img-url" type="text" bind:value={url} placeholder="https://..." />
+        <p style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+          Use <code>live-production</code> or <code>res/sites</code> URLs. <code>preview-production</code> is not supported.
+        </p>
       </fieldset>
 
       <fieldset>

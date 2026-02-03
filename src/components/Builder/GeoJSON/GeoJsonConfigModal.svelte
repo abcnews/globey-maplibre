@@ -5,6 +5,7 @@
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
   import PropGeoJsonPointSize from './PropGeoJsonPointSize.svelte';
+  import { isValidUrl } from '../../../lib/marker';
 
   let {
     config: initialConfig,
@@ -27,6 +28,11 @@
   async function fetchAndParse(url: string) {
     if (!url) {
       status = 'no-data';
+      return;
+    }
+    if (!isValidUrl(url)) {
+      status = 'error';
+      errorMessage = 'Preview URLs are not allowed. Please use a live-production or res/sites URL.';
       return;
     }
     status = 'loading';

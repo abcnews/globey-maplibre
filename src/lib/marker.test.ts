@@ -1,6 +1,16 @@
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment, GEOHASH_PRECISION } from './marker.ts';
+import {
+  geohashCodec,
+  boundsCodec,
+  markerSchema,
+  encodeFragment,
+  decodeFragment,
+  GEOHASH_PRECISION,
+  compressUrl,
+  decompressUrl,
+  isValidUrl
+} from './marker.ts';
 
 describe('marker', () => {
   describe('geohashCodec', () => {
@@ -345,6 +355,31 @@ describe('marker', () => {
       // We expect less than 0.00001 difference
       assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources[0].coordinates[0][0]) < 0.00001);
       assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources[0].coordinates[0][1]) < 0.00001);
+    });
+    
+    it('should compress and decompress recognized URLs', () => {
+      const url = 'https://www.abc.net.au/res/sites/news-projects/my-data.json';
+      const compressed = compressUrl(url);
+      assert.ok(compressed.startsWith('~1'));
+      assert.strictEqual(decompressUrl(compressed), url);
+    });
+
+    it('should validate URLs correctly', () => {
+      assert.strictEqual(isValidUrl('https://live-production.wcms.abc-cdn.net.au/foo'), true);
+      assert.strictEqual(isValidUrl('https://preview-production.wcms.abc-cdn.net.au/foo'), false);
+    });
+
+    it('should filter out invalid URLs during encode', async () => {
+      const input = {
+        geoJson: [
+          { url: 'https://live-production.wcms.abc-cdn.net.au/valid.json', type: 'areas' as const, colourMode: 'simple' as const },
+          { url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.json', type: 'areas' as const, colourMode: 'simple' as const }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+      assert.strictEqual(decoded.geoJson?.length, 1);
+      assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/valid.json');
     });
   });
 });

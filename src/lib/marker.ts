@@ -5,6 +5,39 @@ import Geohash from 'latlon-geohash';
 
 export const GEOHASH_PRECISION = 10;
 
+const URL_TOKENS = [
+  ['https://www.abc.net.au/res/sites/news-projects/', '~1'],
+  ['https://abc.net.au/dat/news/', '~2'],
+  ['https://live-production.wcms.abc-cdn.net.au/', '~3']
+] as const;
+
+const INVALID_URL_PREFIX = 'https://preview-production.wcms.abc-cdn.net.au/';
+
+export function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  return !url.startsWith(INVALID_URL_PREFIX);
+}
+
+export function compressUrl(url: string): string {
+  if (!url) return url;
+  for (const [full, token] of URL_TOKENS) {
+    if (url.startsWith(full)) {
+      return url.replace(full, token);
+    }
+  }
+  return url;
+}
+
+export function decompressUrl(compressed: string): string {
+  if (!compressed) return compressed;
+  for (const [full, token] of URL_TOKENS) {
+    if (compressed.startsWith(token)) {
+      return compressed.replace(token, full);
+    }
+  }
+  return compressed;
+}
+
 export interface Label {
   name: string;
   coords: [number, number];
@@ -192,12 +225,14 @@ export const geoJsonCodec = {
     if (!configs || configs.length === 0) return undefined;
     
     // Config[] -> Array<CompactArray>
-    const condensed = configs.map(config => {
-      const types = ['areas', 'lines', 'points', 'spikes'];
-      const modes = ['scale', 'simple', 'class', 'override'];
+    const condensed = configs
+      .filter(config => isValidUrl(config.url))
+      .map(config => {
+        const types = ['areas', 'lines', 'points', 'spikes'];
+        const modes = ['scale', 'simple', 'class', 'override'];
 
-      // [url, type, mode, colourProp, ...]
-      const arr: any[] = [config.url, types.indexOf(config.type), modes.indexOf(config.colourMode)];
+        // [url, type, mode, colourProp, ...]
+        const arr: any[] = [compressUrl(config.url), types.indexOf(config.type), modes.indexOf(config.colourMode)];
 
       if (config.colourProp) arr[3] = config.colourProp;
 
@@ -244,10 +279,10 @@ export const geoJsonCodec = {
       return outerArr
         .map((arr: any) => {
           if (!Array.isArray(arr)) return null;
-          const [url, typeIdx, modeIdx, colourProp, extras] = arr;
+          const [compressedUrl, typeIdx, modeIdx, colourProp, extras] = arr;
 
           const config: GeoJsonConfig = {
-            url,
+            url: decompressUrl(compressedUrl),
             type: types[typeIdx] || 'areas',
             colourMode: modes[modeIdx] || 'scale'
           };
@@ -292,11 +327,13 @@ export const imageSourceCodec = {
   encode: (configs: ImageSourceConfig[]) => {
     if (!configs || configs.length === 0) return undefined;
 
-    const condensed = configs.map(config => {
-      // coords -> geohashes
-      const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], GEOHASH_PRECISION));
-      return [config.url, Math.round(config.opacity * 100), hashes];
-    });
+    const condensed = configs
+      .filter(config => isValidUrl(config.url))
+      .map(config => {
+        // coords -> geohashes
+        const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], GEOHASH_PRECISION));
+        return [compressUrl(config.url), Math.round(config.opacity * 100), hashes];
+      });
 
     return encode(JSON.stringify(condensed));
   },
@@ -307,7 +344,7 @@ export const imageSourceCodec = {
       if (!Array.isArray(outerArr)) return [];
 
       return outerArr.map((arr: any, index: number) => {
-        const [url, opacityInt, hashes] = arr;
+        const [compressedUrl, opacityInt, hashes] = arr;
         const coordinates = hashes.map((h: string) => {
           const { lat, lon } = Geohash.decode(h);
           return [Number(lon), Number(lat)];
@@ -315,7 +352,7 @@ export const imageSourceCodec = {
 
         return {
           id: `img-${index}`,
-          url,
+          url: decompressUrl(compressedUrl),
           opacity: opacityInt / 100,
           coordinates
         };
