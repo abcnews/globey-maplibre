@@ -6,16 +6,29 @@
    */
   import { parseNearmapUrl } from './utils';
 
-  let { onimport }: { onimport: (coords: [number, number][]) => void } = $props();
+  let {
+    onimport,
+    width = 0,
+    height = 0
+  }: {
+    onimport: (coords: [number, number][]) => void;
+    width?: number;
+    height?: number;
+  } = $props();
 
   function handleAddNearmap() {
+    if (width === 0 || height === 0) {
+      alert('Wait for the preview image to load so we can get its dimensions, or ensure the URL is correct.');
+      return;
+    }
+
     const input = prompt(
-      'Paste a Nearmap URL (e.g. https://apps.nearmap.com/maps/#/@-27.48,153.00,18.00z,0d/...)\n\nNote: Calculating from URL assumes a standard 1920x1080 view.'
+      `Paste a Nearmap URL (e.g. https://apps.nearmap.com/maps/#/@-27.48,153.00,18.00z,0d/...)\n\nWe will calculate coordinates based on image dimensions: ${width}x${height} px`
     );
 
     if (input === null || input.trim() === '') return; // User cancelled or empty
 
-    const result = parseNearmapUrl(input);
+    const result = parseNearmapUrl(input, width, height);
 
     if (result) {
       if (result.pitch > 0) {
