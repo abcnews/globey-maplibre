@@ -4,7 +4,6 @@
 	"description": "A MapLibre globe scrollyteller and builder",
 	"license": "MIT",
 	"private": true,
-	"type": "module",
 	"repository": {
 		"type": "git",
 		"url": "git+ssh://git@github.com/abcnews/interactive-globey-maplibre.git"
@@ -42,6 +41,7 @@
 		"@testing-library/svelte": "^5.3.1",
 		"@turf/turf": "^7.3.3",
 		"@types/jest": "^30.0.0",
+		"@types/latlon-geohash": "^2.0.4",
 		"@types/mocha": "^10.0.10",
 		"@types/webpack-env": "^1.18.8",
 		"mocha": "^11.7.5"
@@ -60,6 +60,7 @@
 		"canvas": "^2.11.2",
 		"compression-streams-polyfill": "^0.1.7",
 		"d3-geo": "^3.1.1",
+		"geotiff": "^3.0.0",
 		"latlon-geohash": "^2.0.0",
 		"layercake": "^10.0.2",
 		"maplibre-gl": "^5.16.0",

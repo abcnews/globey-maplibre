@@ -11,6 +11,7 @@
   import PropHighlightCountries from './HighlightCountries/PropHighlightCountries.svelte';
   import PropBase from './PropBase/PropBase.svelte';
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
+  import PropImageSource from './ImageSource/PropImageSource.svelte';
   import MarkerJson from './MarkerJson.svelte';
 
   let options = $state<DecodedObject>({});
@@ -81,6 +82,7 @@
       onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
     />
     <PropGeoJSON geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
+    <PropImageSource imageSources={options.imageSources || []} onchange={list => (options.imageSources = list)} />
     <MarkerAdmin />
     <fieldset>
       <legend>Tools</legend>

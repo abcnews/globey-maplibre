@@ -3,6 +3,41 @@ import { decode, encode } from '@abcnews/base-36-text';
 import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
 import Geohash from 'latlon-geohash';
 
+export const GEOHASH_PRECISION = 10;
+
+const URL_TOKENS = [
+  ['https://www.abc.net.au/res/sites/news-projects/', '~1'],
+  ['https://abc.net.au/dat/news/', '~2'],
+  ['https://live-production.wcms.abc-cdn.net.au/', '~3']
+] as const;
+
+const INVALID_URL_PREFIX = 'https://preview-production.wcms.abc-cdn.net.au/';
+
+export function isValidUrl(url: string | undefined): boolean {
+  if (!url) return false;
+  return !url.startsWith(INVALID_URL_PREFIX);
+}
+
+export function compressUrl(url: string): string {
+  if (!url) return url;
+  for (const [full, token] of URL_TOKENS) {
+    if (url.startsWith(full)) {
+      return url.replace(full, token);
+    }
+  }
+  return url;
+}
+
+export function decompressUrl(compressed: string): string {
+  if (!compressed) return compressed;
+  for (const [full, token] of URL_TOKENS) {
+    if (compressed.startsWith(token)) {
+      return compressed.replace(token, full);
+    }
+  }
+  return compressed;
+}
+
 export interface Label {
   name: string;
   coords: [number, number];
@@ -38,6 +73,13 @@ export interface GeoJsonConfig {
   pointSize?: string;
 }
 
+export interface ImageSourceConfig {
+  id: string;
+  url: string;
+  opacity: number;
+  coordinates: [number, number][];
+}
+
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
@@ -55,6 +97,7 @@ export interface DecodedObject {
     oceans: boolean;
   };
   geoJson?: GeoJsonConfig[];
+  imageSources?: ImageSourceConfig[];
 }
 
 export interface DecodeProps {
@@ -72,7 +115,7 @@ export interface DecodeProps {
  * Encodes [lon, lat] to a 7-character geohash string
  */
 export const geohashCodec = {
-  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], 7) : undefined),
+  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION) : undefined),
   decode: (hash: string) => {
     if (!hash) return [0, 0];
     const { lat, lon } = Geohash.decode(hash);
@@ -86,12 +129,12 @@ export const geohashCodec = {
  */
 export const boundsCodec = {
   encode: (bounds: [number, number][]) =>
-    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], 7)).join('') : undefined,
+    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION)).join('') : undefined,
   decode: (hash: string) => {
     if (!hash) return [];
     const points: [number, number][] = [];
-    for (let i = 0; i < hash.length; i += 7) {
-      const part = hash.slice(i, i + 7);
+    for (let i = 0; i < hash.length; i += GEOHASH_PRECISION) {
+      const part = hash.slice(i, i + GEOHASH_PRECISION);
       const { lat, lon } = Geohash.decode(part);
       points.push([Number(lon), Number(lat)]);
     }
@@ -139,7 +182,7 @@ export const countriesCodec = {
 export const customLabelsCodec = {
   encode: (labels: Label[]) =>
     labels?.map(({ coords, name, style, number, pointless }) => {
-      const hash = Geohash.encode(coords[1], coords[0], 7);
+      const hash = Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION);
       const styles = ['country', 'level3', 'level4', 'water'];
       const styleIndex = styles.indexOf(style);
       const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
@@ -162,7 +205,7 @@ export const customLabelsCodec = {
           ? // Current labels are [coords,name,style,number] array
             JSON.parse(decodedJSON)
           : // legacy labels were fixed length
-            [string.slice(0, 7), decode(string.slice(7))];
+            [string.slice(0, GEOHASH_PRECISION), decode(string.slice(GEOHASH_PRECISION))];
       
       const styles = ['country', 'level3', 'level4', 'water'];
       const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
@@ -182,12 +225,14 @@ export const geoJsonCodec = {
     if (!configs || configs.length === 0) return undefined;
     
     // Config[] -> Array<CompactArray>
-    const condensed = configs.map(config => {
-      const types = ['areas', 'lines', 'points', 'spikes'];
-      const modes = ['scale', 'simple', 'class', 'override'];
+    const condensed = configs
+      .filter(config => isValidUrl(config.url))
+      .map(config => {
+        const types = ['areas', 'lines', 'points', 'spikes'];
+        const modes = ['scale', 'simple', 'class', 'override'];
 
-      // [url, type, mode, colourProp, ...]
-      const arr: any[] = [config.url, types.indexOf(config.type), modes.indexOf(config.colourMode)];
+        // [url, type, mode, colourProp, ...]
+        const arr: any[] = [compressUrl(config.url), types.indexOf(config.type), modes.indexOf(config.colourMode)];
 
       if (config.colourProp) arr[3] = config.colourProp;
 
@@ -234,10 +279,10 @@ export const geoJsonCodec = {
       return outerArr
         .map((arr: any) => {
           if (!Array.isArray(arr)) return null;
-          const [url, typeIdx, modeIdx, colourProp, extras] = arr;
+          const [compressedUrl, typeIdx, modeIdx, colourProp, extras] = arr;
 
           const config: GeoJsonConfig = {
-            url,
+            url: decompressUrl(compressedUrl),
             type: types[typeIdx] || 'areas',
             colourMode: modes[modeIdx] || 'scale'
           };
@@ -268,6 +313,50 @@ export const geoJsonCodec = {
           return config;
         })
         .filter(Boolean) as GeoJsonConfig[];
+    } catch (e) {
+      return [];
+    }
+  }
+};
+
+/**
+ * Custom codec for ImageSource config
+ * [url, opacity, coordinates[]]
+ */
+export const imageSourceCodec = {
+  encode: (configs: ImageSourceConfig[]) => {
+    if (!configs || configs.length === 0) return undefined;
+
+    const condensed = configs
+      .filter(config => isValidUrl(config.url))
+      .map(config => {
+        // coords -> geohashes
+        const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], GEOHASH_PRECISION));
+        return [compressUrl(config.url), Math.round(config.opacity * 100), hashes];
+      });
+
+    return encode(JSON.stringify(condensed));
+  },
+  decode: (hash: string) => {
+    if (!hash) return [];
+    try {
+      const outerArr = JSON.parse(decode(hash));
+      if (!Array.isArray(outerArr)) return [];
+
+      return outerArr.map((arr: any, index: number) => {
+        const [compressedUrl, opacityInt, hashes] = arr;
+        const coordinates = hashes.map((h: string) => {
+          const { lat, lon } = Geohash.decode(h);
+          return [Number(lon), Number(lat)];
+        });
+
+        return {
+          id: `img-${index}`,
+          url: decompressUrl(compressedUrl),
+          opacity: opacityInt / 100,
+          coordinates
+        };
+      });
     } catch (e) {
       return [];
     }
@@ -377,6 +466,12 @@ export const markerSchema = {
     type: 'custom',
     codec: mapLabelsCodec,
     defaultValue: defaultMapLabels
+  },
+  imageSources: {
+    key: 'is',
+    type: 'custom',
+    codec: imageSourceCodec,
+    defaultValue: []
   }
 };
 

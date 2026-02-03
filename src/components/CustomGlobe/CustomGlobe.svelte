@@ -4,11 +4,13 @@
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
   import GeoJsonHandler from './features/GeoJson/GeoJsonHandler.svelte';
+  import ImageSourcesHandler from './features/ImageSourcesHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import mapStyle from './mapStyle/streetMap';
   import { MapLibreLoader } from '../mapLibre/index';
   import countriesNaturalEarth from './mapStyle/countriesNaturalEarth';
   import type { maplibregl } from '../mapLibre/index';
+  import { MAX_ZOOM } from '../../lib/constants';
   type Props = {
     rootElStyle?: string;
     interactive: Boolean;
@@ -27,7 +29,7 @@
       const map = new maplibregl.Map({
         zoom: options.z || 3,
         minZoom: -1,
-        maxZoom: 13,
+        maxZoom: MAX_ZOOM,
         attributionControl: false,
         dragRotate: false,
         doubleClickZoom: false,
@@ -55,6 +57,7 @@
       <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
     {/if}
     <GeoJsonHandler config={options.geoJson} />
+    <ImageSourcesHandler config={options.imageSources} geoJsonConfig={options.geoJson} />
     {@render children?.()}
   </MapLibreLoader>
 {/key}
