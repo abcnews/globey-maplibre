@@ -29,7 +29,7 @@
           tiles: [url],
           tileSize: 256,
           attribution,
-          maxzoom: 9
+          maxzoom: 10
         });
       }
 
