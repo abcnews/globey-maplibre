@@ -83,3 +83,47 @@ export function parseNearmapUrl(url: string, width = 1920, height = 1080): { coo
     pitch
   };
 }
+
+/**
+ * parseGeoTiffCoords
+ * Converts a GeoTIFF bounding box and geoKeys into MapLibre-ready coordinates.
+ * Handles EPSG:3857 (Web Mercator) and EPSG:4326 (WGS84).
+ */
+export function parseGeoTiffCoords(bbox: number[], geoKeys: any): [number, number][] | null {
+  const [minX, minY, maxX, maxY] = bbox;
+
+  // Check for Web Mercator (EPSG:3857 is common)
+  const isWebMercator =
+    geoKeys.ProjectedCSTypeGeoKey === 3857 ||
+    geoKeys.ProjectedCSTypeGeoKey === 3785 ||
+    geoKeys.ProjectedCSTypeGeoKey === 900913 ||
+    geoKeys.ProjectedCoordinateSystemGeoKey === 3857;
+
+  if (isWebMercator) {
+    // Unproject from Web Mercator meters to Lat/Lon
+    // Standard Web Mercator radius
+    const R = 6378137;
+
+    const unprojectMeters = (x: number, y: number): [number, number] => {
+      const lon = (x * 180) / (Math.PI * R);
+      const lat = (Math.atan(Math.exp(y / R)) * 360) / Math.PI - 90;
+      return [lon, lat];
+    };
+
+    const tl = unprojectMeters(minX, maxY);
+    const tr = unprojectMeters(maxX, maxY);
+    const br = unprojectMeters(maxX, minY);
+    const bl = unprojectMeters(minX, minY);
+
+    return [tl, tr, br, bl];
+  }
+
+  // Assume WGS84 or similar if not Web Mercator
+  // GeoTIFF bbox is [West, South, East, North] for WGS84
+  return [
+    [minX, maxY], // TL
+    [maxX, maxY], // TR
+    [maxX, minY], // BR
+    [minX, minY] // BL
+  ];
+}

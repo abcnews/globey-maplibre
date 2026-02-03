@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { parseKmlCoords, parseNearmapUrl } from './utils.ts';
+import { parseKmlCoords, parseNearmapUrl, parseGeoTiffCoords } from './utils.ts';
 
 describe('ImageSource Utils', () => {
     describe('parseKmlCoords', () => {
@@ -113,6 +113,32 @@ describe('ImageSource Utils', () => {
         it('should return null for invalid URLs', () => {
             const invalidUrl = 'https://google.com';
             assert.strictEqual(parseNearmapUrl(invalidUrl), null);
+        });
+    });
+
+    describe('parseGeoTiffCoords', () => {
+        it('should parse WGS84 bbox', () => {
+            const bbox = [140, -40, 150, -30]; // [W, S, E, N]
+            const geoKeys = { GeographicTypeGeoKey: 4326 };
+            const result = parseGeoTiffCoords(bbox, geoKeys);
+            assert.ok(result);
+            assert.deepStrictEqual(result, [
+                [140, -30], // TL
+                [150, -30], // TR
+                [150, -40], // BR
+                [140, -40]  // BL
+            ]);
+        });
+
+        it('should parse Web Mercator bbox', () => {
+            // Roughly Sydney in meters
+            const bbox = [16800000, -4000000, 16900000, -3900000];
+            const geoKeys = { ProjectedCSTypeGeoKey: 3857 };
+            const result = parseGeoTiffCoords(bbox, geoKeys);
+            assert.ok(result);
+            // Verify TL is NW of BR
+            assert.ok(result[0][0] < result[2][0]); // Lon
+            assert.ok(result[0][1] > result[2][1]); // Lat
         });
     });
 });

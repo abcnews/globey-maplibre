@@ -3,6 +3,7 @@
   import type { ImageSourceConfig } from '../../../lib/marker';
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
+  import GeoTiffImportButton from './GeoTiffImportButton.svelte';
 
   let {
     config,
@@ -79,6 +80,7 @@
           <button type="button" onclick={setWholeWorld}>Whole World (Mercator)</button>
           <KmlImportButton onimport={handleKmlImport} />
           <NearmapImportButton onimport={handleKmlImport} width={naturalWidth} height={naturalHeight} />
+          <GeoTiffImportButton onimport={handleKmlImport} />
         </div>
       </fieldset>
     </div>
