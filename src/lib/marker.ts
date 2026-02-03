@@ -3,6 +3,8 @@ import { decode, encode } from '@abcnews/base-36-text';
 import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
 import Geohash from 'latlon-geohash';
 
+export const GEOHASH_PRECISION = 10;
+
 export interface Label {
   name: string;
   coords: [number, number];
@@ -80,7 +82,7 @@ export interface DecodeProps {
  * Encodes [lon, lat] to a 7-character geohash string
  */
 export const geohashCodec = {
-  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], 7) : undefined),
+  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION) : undefined),
   decode: (hash: string) => {
     if (!hash) return [0, 0];
     const { lat, lon } = Geohash.decode(hash);
@@ -94,12 +96,12 @@ export const geohashCodec = {
  */
 export const boundsCodec = {
   encode: (bounds: [number, number][]) =>
-    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], 7)).join('') : undefined,
+    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION)).join('') : undefined,
   decode: (hash: string) => {
     if (!hash) return [];
     const points: [number, number][] = [];
-    for (let i = 0; i < hash.length; i += 7) {
-      const part = hash.slice(i, i + 7);
+    for (let i = 0; i < hash.length; i += GEOHASH_PRECISION) {
+      const part = hash.slice(i, i + GEOHASH_PRECISION);
       const { lat, lon } = Geohash.decode(part);
       points.push([Number(lon), Number(lat)]);
     }
@@ -147,7 +149,7 @@ export const countriesCodec = {
 export const customLabelsCodec = {
   encode: (labels: Label[]) =>
     labels?.map(({ coords, name, style, number, pointless }) => {
-      const hash = Geohash.encode(coords[1], coords[0], 7);
+      const hash = Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION);
       const styles = ['country', 'level3', 'level4', 'water'];
       const styleIndex = styles.indexOf(style);
       const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
@@ -170,7 +172,7 @@ export const customLabelsCodec = {
           ? // Current labels are [coords,name,style,number] array
             JSON.parse(decodedJSON)
           : // legacy labels were fixed length
-            [string.slice(0, 7), decode(string.slice(7))];
+            [string.slice(0, GEOHASH_PRECISION), decode(string.slice(GEOHASH_PRECISION))];
       
       const styles = ['country', 'level3', 'level4', 'water'];
       const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
@@ -292,7 +294,7 @@ export const imageSourceCodec = {
 
     const condensed = configs.map(config => {
       // coords -> geohashes
-      const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], 7));
+      const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], GEOHASH_PRECISION));
       return [config.url, Math.round(config.opacity * 100), hashes];
     });
 

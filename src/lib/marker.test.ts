@@ -1,19 +1,19 @@
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment } from './marker.ts';
+import { geohashCodec, boundsCodec, markerSchema, encodeFragment, decodeFragment, GEOHASH_PRECISION } from './marker.ts';
 
 describe('marker', () => {
   describe('geohashCodec', () => {
     it('should encode coordinates to a geohash', () => {
       const coords: [number, number] = [10, -10];
       const encoded = geohashCodec.encode(coords);
-      const expected = Geohash.encode(-10, 10, 7);
+      const expected = Geohash.encode(-10, 10, GEOHASH_PRECISION);
       assert.strictEqual(encoded, expected);
     });
 
     it('should decode a geohash to coordinates', () => {
       const coords: [number, number] = [10, -10];
-      const hash = Geohash.encode(-10, 10, 7);
+      const hash = Geohash.encode(-10, 10, GEOHASH_PRECISION);
       const decoded = geohashCodec.decode(hash);
 
       assert.ok(Array.isArray(decoded));
@@ -35,7 +35,7 @@ describe('marker', () => {
         [20, -20]
       ];
       const encoded = boundsCodec.encode(bounds);
-      const expected = Geohash.encode(-10, 10, 7) + Geohash.encode(-20, 20, 7);
+      const expected = Geohash.encode(-10, 10, GEOHASH_PRECISION) + Geohash.encode(-20, 20, GEOHASH_PRECISION);
       assert.strictEqual(encoded, expected);
     });
 
@@ -44,7 +44,7 @@ describe('marker', () => {
         [10, -10],
         [20, -20]
       ];
-      const hash = Geohash.encode(-10, 10, 7) + Geohash.encode(-20, 20, 7);
+      const hash = Geohash.encode(-10, 10, GEOHASH_PRECISION) + Geohash.encode(-20, 20, GEOHASH_PRECISION);
       const decoded = boundsCodec.decode(hash);
 
       assert.strictEqual(decoded.length, 2);
@@ -317,6 +317,34 @@ describe('marker', () => {
       const decoded = await decodeFragment(fragment);
 
       assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
+    });
+    it('should round-trip imageSources with high precision', async () => {
+      const input = {
+        imageSources: [
+          {
+            id: 'img-0',
+            url: 'https://example.com/map.png',
+            opacity: 0.75,
+            coordinates: [
+              [151.2093, -33.8688],
+              [151.2193, -33.8688],
+              [151.2193, -33.8788],
+              [151.2093, -33.8788]
+            ] as [number, number][]
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.imageSources?.length, 1);
+      assert.strictEqual(decoded.imageSources![0].url, input.imageSources[0].url);
+      assert.strictEqual(decoded.imageSources![0].opacity, 0.75);
+      
+      // Check precision - 10 chars is ~0.6m which is ~0.000005 degrees
+      // We expect less than 0.00001 difference
+      assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources[0].coordinates[0][0]) < 0.00001);
+      assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources[0].coordinates[0][1]) < 0.00001);
     });
   });
 });
