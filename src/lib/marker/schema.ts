@@ -54,7 +54,7 @@ export const markerSchema = {
   base: {
     key: 'base',
     type: 'enum',
-    values: ['street', 'countries'],
+    values: ['street', 'countries', 'satellite'],
     defaultValue: 'street'
   },
   mapLabels: {

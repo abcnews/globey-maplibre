@@ -29,6 +29,16 @@
       />
       Countries
     </label>
+    <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
+      <input
+        type="radio"
+        name="map-base"
+        value="satellite"
+        checked={$options.base === 'satellite'}
+        onchange={() => ($options.base = 'satellite')}
+      />
+      Satellite
+    </label>
   </div>
 
   {#if $options.base !== 'countries'}

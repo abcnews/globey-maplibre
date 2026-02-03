@@ -41,7 +41,7 @@ export interface DecodedObject {
   highlightCountries?: Country[];
   labels?: Label[];
   legend?: any[];
-  base?: string;
+  base?: 'street' | 'countries' | 'satellite';
   mapLabels?: {
     countries: number;
     states: boolean;

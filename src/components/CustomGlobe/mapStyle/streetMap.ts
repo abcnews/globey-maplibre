@@ -2,40 +2,26 @@ import type { maplibregl } from '../../mapLibre/index';
 import styleSource from './style.json';
 
 // We clone the style source to avoid mutating the original import
-const getBaseStyle = () => JSON.parse(JSON.stringify(styleSource)) as maplibregl.StyleSpecification;
+export const getBaseStyleSource = () => JSON.parse(JSON.stringify(styleSource)) as maplibregl.StyleSpecification;
+
+export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
+export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
+
+const LAND = '#EDF0F2';
+const OCEAN = '#AFCCDB';
+const DARK_OCEAN = '#a2bbc9';
+const STREET_TEXT = '#5B687C';
+const STREET_TEXT_HALO = '#FFF';
+const SATELLITE_TEXT = '#FFF';
+const SATELLITE_TEXT_HALO = 'rgba(0,0,0,0.8)';
 
 /**
- * @file OpenMapTiles Street Style
- *
- * Sources: openmaptiles
- *
- * @property {string} name - Local name
- * @property {string} name:en - English name
- * @property {string} name:latin - Latin script name
- * @property {string} class - Feature class (e.g. city, town, country)
- * @property {number} rank - Importance rank
- * @property {string} capital - Capital status
- * @property {string} iso_a2 - ISO country code
+ * OpenMapTiles Street Style components
  */
 
-/**
- * MapLibre style definition, based on Andrew Kesper's "bright" base map.
- *
- * @see https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/style.json
- */
-export default function mapStyle(): maplibregl.StyleSpecification {
-  const style = getBaseStyle();
-  // REWRITE STYLE TO MATCH DATAWRAPPER
-  const LAND = '#EDF0F2';
-  const OCEAN = '#AFCCDB';
-  const DARK_OCEAN = '#a2bbc9';
-  const TEXT = '#5B687C';
-  const TEXT_HALO = '#FFF';
-
-  // We map the layers to a new array to avoid mutating the original import if called multiple times,
-  // though TypeScript's import of JSON is usually a fresh object per call in some environments,
-  // but better to be safe.
-  style.layers = style.layers
+export function getProcessedLayers(): maplibregl.LayerSpecification[] {
+  const style = getBaseStyleSource();
+  return style.layers
     .filter(layer => {
       return layer.id !== 'boundary-water' && !layer.id.includes('boundary-');
     })
@@ -76,7 +62,6 @@ export default function mapStyle(): maplibregl.StyleSpecification {
           'text-field': [
             'case',
             // We prioritize ASCII-safe names for countries using their ISO codes to avoid missing glyphs.
-            // If it's a country, try to use a safe ASCII name based on ISO code
             ['==', ['get', 'class'], 'country'],
             [
               'match',
@@ -95,8 +80,8 @@ export default function mapStyle(): maplibregl.StyleSpecification {
         } as any;
         layer.paint = {
           ...layer.paint,
-          'text-color': TEXT,
-          'text-halo-color': TEXT_HALO,
+          'text-color': STREET_TEXT,
+          'text-halo-color': STREET_TEXT_HALO,
           'text-halo-width': 1.2
         };
       }
@@ -120,6 +105,29 @@ export default function mapStyle(): maplibregl.StyleSpecification {
 
       return layer;
     });
+}
 
+export function getStreetBaseLayers(): maplibregl.LayerSpecification[] {
+  return getProcessedLayers().filter(l => l.type !== 'symbol' && l.id !== 'background');
+}
+
+export function getLabelLayers(isSatellite = false): maplibregl.LayerSpecification[] {
+  const layers = getProcessedLayers().filter(l => l.type === 'symbol');
+  if (isSatellite) {
+    return layers.map(layer => {
+      const l = JSON.parse(JSON.stringify(layer));
+      if (l.paint) {
+        l.paint['text-color'] = SATELLITE_TEXT;
+        l.paint['text-halo-color'] = SATELLITE_TEXT_HALO;
+      }
+      return l;
+    });
+  }
+  return layers;
+}
+
+export default function mapStyle(): maplibregl.StyleSpecification {
+  const style = getBaseStyleSource();
+  style.layers = getProcessedLayers();
   return style;
 }
