@@ -33,6 +33,12 @@ export interface GeoJsonConfig {
   pointSize?: string;
 }
 
+export interface ImageSourceConfig {
+  id: string;
+  url: string;
+  opacity: number;
+}
+
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
@@ -50,7 +56,8 @@ export interface DecodedObject {
     oceans: boolean;
   };
   geoJson?: GeoJsonConfig[];
-  imageSources?: any[];
+  imageSources?: ImageSourceConfig[];
+  projection?: 'globe' | 'mercator';
 }
 
 export interface DecodeProps {
@@ -61,4 +68,5 @@ export interface DecodeProps {
   legend?: string;
   c?: string;
   gj?: string;
+  p?: string;
 }

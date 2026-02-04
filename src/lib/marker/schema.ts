@@ -6,7 +6,7 @@ import {
   geoJsonCodec,
   mapLabelsCodec,
   defaultMapLabels
-} from './codecs.ts';
+} from './codecs';
 
 /**
  * Schema for marker data
@@ -62,5 +62,11 @@ export const markerSchema = {
     type: 'custom',
     codec: mapLabelsCodec,
     defaultValue: defaultMapLabels
+  },
+  projection: {
+    key: 'p',
+    type: 'enum',
+    values: ['globe', 'mercator'],
+    defaultValue: 'globe'
   }
 };

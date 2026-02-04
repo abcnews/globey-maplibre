@@ -22,12 +22,6 @@
       loading = true;
     }, 1200);
   });
-
-  $effect(() => {
-    Promise.all(panels.map(p => decodeObject(p, true))).then(decodedPanels => {
-      console.log({ decodedPanels });
-    });
-  });
 </script>
 
 {#if options}

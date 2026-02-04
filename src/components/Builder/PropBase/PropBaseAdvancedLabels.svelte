@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { options } from '../store';
+  import type { DecodedObject } from '../../../lib/marker';
+
+  let { options = $bindable() } = $props<{ options: DecodedObject }>();
 
   const defaultLabels = {
     countries: 3,
@@ -10,10 +12,13 @@
   };
 
   function updateMapLabel(key: keyof typeof defaultLabels, value: any) {
-    const current = $options.mapLabels || { ...defaultLabels };
+    const current = options.mapLabels || { ...defaultLabels };
     const next = { ...current };
     (next as any)[key] = value;
-    $options.mapLabels = next;
+    options = {
+      ...options,
+      mapLabels: next
+    };
   }
 </script>
 
@@ -29,15 +34,15 @@
           min="0"
           max="3"
           step="1"
-          value={$options.mapLabels?.countries ?? 3}
+          value={options.mapLabels?.countries ?? 3}
           oninput={e => updateMapLabel('countries', Number(e.currentTarget.value))}
         />
         <span class="value">
-          {#if ($options.mapLabels?.countries ?? 3) === 0}
+          {#if (options.mapLabels?.countries ?? 3) === 0}
             None
-          {:else if ($options.mapLabels?.countries ?? 3) === 1}
+          {:else if (options.mapLabels?.countries ?? 3) === 1}
             Major
-          {:else if ($options.mapLabels?.countries ?? 3) === 2}
+          {:else if (options.mapLabels?.countries ?? 3) === 2}
             Most
           {:else}
             All
@@ -50,7 +55,7 @@
       <label class="control-label">
         <input
           type="checkbox"
-          checked={$options.mapLabels?.states ?? false}
+          checked={options.mapLabels?.states ?? false}
           onchange={e => updateMapLabel('states', e.currentTarget.checked)}
         />
         States
@@ -58,7 +63,7 @@
       <label class="control-label">
         <input
           type="checkbox"
-          checked={$options.mapLabels?.oceans ?? false}
+          checked={options.mapLabels?.oceans ?? false}
           onchange={e => updateMapLabel('oceans', e.currentTarget.checked)}
         />
         Oceans
@@ -66,7 +71,7 @@
       <label class="control-label">
         <input
           type="checkbox"
-          checked={$options.mapLabels?.cities ?? false}
+          checked={options.mapLabels?.cities ?? false}
           onchange={e => updateMapLabel('cities', e.currentTarget.checked)}
         />
         Cities
@@ -74,7 +79,7 @@
       <label class="control-label">
         <input
           type="checkbox"
-          checked={$options.mapLabels?.towns ?? false}
+          checked={options.mapLabels?.towns ?? false}
           onchange={e => updateMapLabel('towns', e.currentTarget.checked)}
         />
         Towns

@@ -74,7 +74,7 @@
         if (z !== undefined) options.z = z;
       }}
     />
-    <PropBase {map} />
+    <PropBase {map} bind:options />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
     <PropHighlightCountries

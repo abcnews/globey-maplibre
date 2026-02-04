@@ -10,6 +10,7 @@
   import MapRasterHandler from './features/MapRasterHandler.svelte';
   import MapVectorHandler from './features/MapVectorHandler.svelte';
   import MapCountriesBaseHandler from './features/HighlightCountries/MapCountriesBaseHandler.svelte';
+  import ProjectionHandler from './features/ProjectionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
   import type { maplibregl } from '../mapLibre/index';
 
@@ -54,22 +55,21 @@
         },
         container: rootNode,
         interactive: !!interactive,
-        center: options.coords
+        center: options.coords,
+        projection: { type: options.projection || 'globe' }
+      } as any);
+
+      map.on('load', () => {
+        onLoad?.(map);
+        rootNode.style.opacity = '1';
       });
 
-      await Promise.all([new Promise(resolve => map.on('load', resolve))]);
-      map.setProjection({
-        type: 'globe' // Set projection to globe
-      });
-      await new Promise(resolve => map.on('idle', resolve));
-      onLoad?.(map);
-
-      rootNode.style.opacity = '1';
       mapInstance = map;
       return map;
     }}
   >
     {#if mapInstance}
+      <ProjectionHandler projection={options.projection} />
       <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
       {#if options.base !== 'countries'}
         <MapLabelHandler labels={options.mapLabels} {isSatellite} />

@@ -13,11 +13,22 @@
     const map = mapRoot.map;
     if (!map) return;
 
-    // We want to stack GeoJSON layers BELOW map labels
-    const beforeId = getLabelAnchor(map);
-    const allLayerIds = config.flatMap(item => getGeoJsonLayerIds(item));
+    // Track config dependency at the top level of the effect
+    const currentConfig = config;
 
-    stackLayers(map, allLayerIds, beforeId);
+    const arrangeLayers = () => {
+      // We want to stack GeoJSON layers BELOW map labels
+      const beforeId = getLabelAnchor(map);
+      const allLayerIds = currentConfig.flatMap(item => getGeoJsonLayerIds(item));
+      stackLayers(map, allLayerIds, beforeId);
+    };
+
+    if (map.isStyleLoaded()) {
+      arrangeLayers();
+    } else {
+      map.once('styledata', arrangeLayers);
+      return () => map.off('styledata', arrangeLayers);
+    }
   });
 </script>
 

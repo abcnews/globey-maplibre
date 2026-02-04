@@ -1,7 +1,7 @@
 import { parse, stringify } from '@abcnews/alternating-case-to-object';
 import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
-import type { DecodedObject, DecodeProps } from './marker/types.ts';
-export type { DecodedObject, DecodeProps };
+import type { DecodedObject, DecodeProps } from './marker/types';
+export * from './marker/types';
 import { markerSchema } from './marker/schema';
 /**
  * Encode globey props into a hash string for the url or fragment

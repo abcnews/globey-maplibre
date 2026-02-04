@@ -45,9 +45,9 @@ export function getImageLayerId(config: ImageSourceConfig): string {
  * Finds the ID of the first label (symbol) layer in the map's style.
  */
 export function getLabelAnchor(map: maplibregl.Map): string | undefined {
-  const layers = map.getStyle().layers;
-  if (!layers) return undefined;
-  const labelLayer = layers.find(l => l.type === 'symbol');
+  const style = map.getStyle();
+  if (!style || !style.layers) return undefined;
+  const labelLayer = style.layers.find(l => l.type === 'symbol');
   return labelLayer?.id;
 }
 
