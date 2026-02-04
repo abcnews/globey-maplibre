@@ -1,6 +1,6 @@
 <script lang="ts">
   import PanZoomHandler from './features/PanZoomHandler.svelte';
-  import MapLabelHandler from './features/MapLabelHandler.svelte';
+  import MapVectorHandler from './features/MapVectorHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
   import GeoJsonHandler from './features/GeoJson/GeoJsonHandler.svelte';
@@ -8,7 +8,6 @@
   import type { DecodedObject } from '../../lib/marker';
   import { MapLibreLoader } from '../mapLibre/index';
   import MapRasterHandler from './features/MapRasterHandler.svelte';
-  import MapVectorHandler from './features/MapVectorHandler.svelte';
   import MapCountriesBaseHandler from './features/HighlightCountries/MapCountriesBaseHandler.svelte';
   import ProjectionHandler from './features/ProjectionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
@@ -71,9 +70,11 @@
     {#if mapInstance}
       <ProjectionHandler projection={options.projection} />
       <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
+
       {#if options.base !== 'countries'}
-        <MapLabelHandler labels={options.mapLabels} {isSatellite} />
+        <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
       {/if}
+
       <MapCustomLabelHandler labels={options.labels} />
 
       {#if options.base === 'countries'}
@@ -85,8 +86,6 @@
           maxZoom={7}
           attribution="NASA Blue Marble"
         />
-      {:else}
-        <MapVectorHandler />
       {/if}
 
       <GeoJsonHandler config={options.geoJson} />
