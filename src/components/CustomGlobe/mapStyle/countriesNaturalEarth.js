@@ -124,7 +124,7 @@ const naturalEarthStyle = {
             "type": "vector",
             "maxzoom": 5,
             "tiles": [
-                "https://abcnewsdata.sgp1.digitaloceanspaces.com/map-tiles-natural-earth/{z}/{x}/{y}.pbf"
+                "https://abcnewsdata.sgp1.digitaloceanspaces.com/map-vector-tiles-natural-earth/{z}/{x}/{y}.pbf"
             ]
         }
     },
