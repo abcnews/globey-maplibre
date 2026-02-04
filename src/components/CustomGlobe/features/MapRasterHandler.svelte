@@ -7,11 +7,13 @@
   let {
     url,
     attribution,
-    id = 'raster-base'
+    id = 'raster-base',
+    maxZoom
   }: {
     url: string;
     attribution?: string;
     id?: string;
+    maxZoom: number;
   } = $props();
 
   $effect(() => {
@@ -29,7 +31,7 @@
           tiles: [url],
           tileSize: 256,
           attribution,
-          maxzoom: 10
+          maxzoom: maxZoom
         });
       }
 
