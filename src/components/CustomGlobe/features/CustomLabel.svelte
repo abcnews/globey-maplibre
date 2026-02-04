@@ -12,9 +12,7 @@
 </div>
 
 <style lang="scss">
-  /* Global vars from .globey-root, scoped here for convenience for now. 
-     Ideally these would be in a global stylesheet, but we'll include them to ensure it works as requested. */
-  :global(:root) {
+  .globey__label {
     --space: #000;
     --sea: #0b0d0f;
     --land: #22262a;
