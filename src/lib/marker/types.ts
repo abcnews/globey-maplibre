@@ -50,6 +50,7 @@ export interface DecodedObject {
     oceans: boolean;
   };
   geoJson?: GeoJsonConfig[];
+  imageSources?: any[];
 }
 
 export interface DecodeProps {

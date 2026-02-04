@@ -13,6 +13,7 @@
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
   import PropImageSource from './ImageSource/PropImageSource.svelte';
   import MarkerJson from './MarkerJson.svelte';
+  import IframeUrl from './IframeUrl.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -97,6 +98,7 @@
         />
         <label for="reduced-motion-toggle">Reduced motion preview</label>
       </div>
+      <IframeUrl />
       <MarkerJson bind:options />
     </fieldset>
   {/if}

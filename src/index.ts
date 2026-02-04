@@ -19,6 +19,17 @@ if (builderMountEl) {
   });
 }
 
+const [iframeMountEl] = selectMounts('interactiveglobeyframe');
+
+if (iframeMountEl) {
+  const iframeModule = await import('./components/CustomGlobeIframe/CustomGlobeIframe.svelte');
+
+  mount(iframeModule.default, {
+    target: iframeMountEl,
+    props: {}
+  });
+}
+
 whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts(MARKER_NAME);
   mounts.forEach(appMountEl => {

@@ -71,8 +71,8 @@
   >
     {#if mapInstance}
       <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
-      {#if options.base !== 'satellite'}
-        <MapLabelHandler labels={options.mapLabels} isSatellite={options.base === 'satellite'} />
+      {#if options.base !== 'countries'}
+        <MapLabelHandler labels={options.mapLabels} {isSatellite} />
       {/if}
       <MapCustomLabelHandler labels={options.labels} />
 
