@@ -85,7 +85,9 @@
         style:box-sizing="border-box"
       ></textarea>
     {:else}
-      <label>Values ({config.filter.values.length} chosen)</label>
+      <div>
+        Values ({config.filter.values.length} chosen)
+      </div>
       <div style:display="flex" style:gap="0.5rem" style:margin-bottom="0.5rem">
         <button onclick={() => (config.filter!.values = allValues)}>Show All</button>
         <button onclick={() => (config.filter!.values = [])}>Hide All</button>
