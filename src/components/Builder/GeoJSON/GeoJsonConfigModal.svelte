@@ -131,7 +131,7 @@
     <fieldset>
       <legend>Geometry Type</legend>
       <div style:display="flex" style:gap="1rem">
-        {#each ['areas', 'lines', 'points', 'spikes'] as type}
+        {#each ['areas', 'lines', 'points'] as type}
           <label
             style:display="flex"
             style:align-items="center"
@@ -154,24 +154,22 @@
       <PropGeoJsonPointSize bind:config />
     {/if}
 
-    {#if config.type === 'spikes'}
+    {#if config.type === 'spikes' && config.spike}
       <fieldset>
         <legend>Spikes</legend>
         <div class="field">
           <label for="gj-spike-prop">Height Property</label>
-          <select id="gj-spike-prop" bind:value={config.spike!.heightProp}>
+          <select id="gj-spike-prop" bind:value={config.spike.heightProp}>
             <option value="">(None)</option>
             {#each properties as p}
               <option value={p}>{p}</option>
             {/each}
           </select>
         </div>
-        {#if config.spike}
-          <div class="field">
-            <label for="gj-spike-scalar">Scalar</label>
-            <input id="gj-spike-scalar" type="number" step="0.1" bind:value={config.spike!.scalar} />
-          </div>
-        {/if}
+        <div class="field">
+          <label for="gj-spike-scalar">Scalar</label>
+          <input id="gj-spike-scalar" type="number" step="0.1" bind:value={config.spike.scalar} />
+        </div>
       </fieldset>
     {/if}
   {/if}

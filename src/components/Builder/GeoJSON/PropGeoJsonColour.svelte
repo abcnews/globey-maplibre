@@ -137,59 +137,61 @@
       </div>
     {/if}
 
-    <div class="gj-grid">
-      <div style="grid-column: span 1">
-        <span style:font-weight="bold" style:font-size="0.85em">Palette Type</span>
-        <div style:display="flex" style:gap="1rem" style:margin-top="0.25rem">
-          <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
-            <input type="radio" name="paletteType" value="sequential" bind:group={config.colourConfig.paletteType} />
-            Sequential
-          </label>
-          <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
-            <input type="radio" name="paletteType" value="divergent" bind:group={config.colourConfig.paletteType} />
-            Diverging
-          </label>
-          <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
-            <input type="radio" name="paletteType" value="custom" bind:group={config.colourConfig.paletteType} />
-            Custom
-          </label>
+    {#if config.colourConfig}
+      <div class="gj-grid">
+        <div style="grid-column: span 1">
+          <span style:font-weight="bold" style:font-size="0.85em">Palette Type</span>
+          <div style:display="flex" style:gap="1rem" style:margin-top="0.25rem">
+            <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
+              <input type="radio" name="paletteType" value="sequential" bind:group={config.colourConfig.paletteType} />
+              Sequential
+            </label>
+            <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
+              <input type="radio" name="paletteType" value="divergent" bind:group={config.colourConfig.paletteType} />
+              Diverging
+            </label>
+            <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:font-weight="normal">
+              <input type="radio" name="paletteType" value="custom" bind:group={config.colourConfig.paletteType} />
+              Custom
+            </label>
+          </div>
+        </div>
+
+        <div style="grid-column: span 1">
+          {#if config.colourConfig.paletteType === 'sequential'}
+            <label for="gj-palette-variant-s">Palette</label>
+            <select id="gj-palette-variant-s" bind:value={config.colourConfig.paletteVariant}>
+              {#each Object.values(SequentialPalette) as p}
+                <option value={p}>{p}</option>
+              {/each}
+            </select>
+          {:else if config.colourConfig.paletteType === 'divergent'}
+            <label for="gj-palette-variant-d">Palette</label>
+            <select id="gj-palette-variant-d" bind:value={config.colourConfig.paletteVariant}>
+              {#each Object.keys(DivergentPalette) as p}
+                <option value={p}>{p}</option>
+              {/each}
+            </select>
+          {:else if config.colourConfig.paletteType === 'custom'}
+            <label for="gj-custom-palette">Colours (comma separated)</label>
+            <input
+              id="gj-custom-palette"
+              type="text"
+              placeholder="#ff0000, #00ff00, #0000ff"
+              bind:value={customPaletteStr}
+            />
+          {/if}
         </div>
       </div>
 
-      <div style="grid-column: span 1">
-        {#if config.colourConfig.paletteType === 'sequential'}
-          <label for="gj-palette-variant-s">Palette</label>
-          <select id="gj-palette-variant-s" bind:value={config.colourConfig.paletteVariant}>
-            {#each Object.values(SequentialPalette) as p}
-              <option value={p}>{p}</option>
-            {/each}
-          </select>
-        {:else if config.colourConfig.paletteType === 'divergent'}
-          <label for="gj-palette-variant-d">Palette</label>
-          <select id="gj-palette-variant-d" bind:value={config.colourConfig.paletteVariant}>
-            {#each Object.keys(DivergentPalette) as p}
-              <option value={p}>{p}</option>
-            {/each}
-          </select>
-        {:else if config.colourConfig.paletteType === 'custom'}
-          <label for="gj-custom-palette">Colours (comma separated)</label>
-          <input
-            id="gj-custom-palette"
-            type="text"
-            placeholder="#ff0000, #00ff00, #0000ff"
-            bind:value={customPaletteStr}
-          />
-        {/if}
-      </div>
-    </div>
+      <ColourLegendPreview
+        paletteType={config.colourConfig.paletteType}
+        paletteVariant={config.colourConfig.paletteVariant}
+        customPalette={config.colourConfig.customPalette}
+      />
 
-    <ColourLegendPreview
-      paletteType={config.colourConfig.paletteType}
-      paletteVariant={config.colourConfig.paletteVariant}
-      customPalette={config.colourConfig.customPalette}
-    />
-
-    <DistributionInput values={numericValues} bind:min={config.colourConfig.min} bind:max={config.colourConfig.max} />
+      <DistributionInput values={numericValues} bind:min={config.colourConfig.min} bind:max={config.colourConfig.max} />
+    {/if}
   {/if}
 </fieldset>
 

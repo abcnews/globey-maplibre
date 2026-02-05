@@ -2,14 +2,13 @@
  * @file
  * Render a dataset as a spike layer in ThreeJS.
  */
-
 import type { maplibregl } from '../components/mapLibre/index';
-import * as THREE from 'three';
 
 interface SpikeLayerOptions {
   id: string;
   baseDiameter?: number;
   coords?: [number, number][]; // Optional initial data
+  THREE: any;
 }
 
 export default class SpikeLayer implements maplibregl.CustomLayerInterface {
@@ -18,29 +17,31 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
   renderingMode: '3d' = '3d';
 
   protected map?: maplibregl.Map;
-  protected camera?: THREE.Camera;
-  protected scene?: THREE.Scene;
-  protected renderer?: THREE.WebGLRenderer;
-  protected mesh?: THREE.InstancedMesh;
+  protected camera?: any;
+  protected scene?: any;
+  protected renderer?: any;
+  protected mesh?: any;
 
-  protected baseMatrices: THREE.Matrix4[] = [];
+  protected baseMatrices: any[] = [];
   protected baseDiameter: number;
   protected count: number = 0;
+  protected THREE: any;
 
   // Internal store for coordinates if set before onAdd
   private pendingCoords: [number, number][] | null = null;
 
-  constructor({ id, baseDiameter = 100000, coords }: SpikeLayerOptions) {
+  constructor({ id, baseDiameter = 100000, coords, THREE }: SpikeLayerOptions) {
     this.id = id;
     this.baseDiameter = baseDiameter;
+    this.THREE = THREE;
     if (coords) this.pendingCoords = coords;
   }
 
   onAdd(map: maplibregl.Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     this.map = map;
-    this.camera = new THREE.Camera();
-    this.scene = new THREE.Scene();
-    this.renderer = new THREE.WebGLRenderer({
+    this.camera = new this.THREE.Camera();
+    this.scene = new this.THREE.Scene();
+    this.renderer = new this.THREE.WebGLRenderer({
       canvas: map.getCanvas(),
       context: gl,
       antialias: true
@@ -77,23 +78,23 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
     if (this.mesh) {
       this.scene.remove(this.mesh);
       this.mesh.geometry.dispose();
-      (this.mesh.material as THREE.Material).dispose();
+      (this.mesh.material as any).dispose();
     }
 
     this.count = coords.length;
     this.baseMatrices = coords.map(lngLat => {
       const modelMatrixArray = this.map!.transform.getMatrixForModel(lngLat, 0);
-      return new THREE.Matrix4().fromArray(modelMatrixArray);
+      return new this.THREE.Matrix4().fromArray(modelMatrixArray);
     });
 
-    const geometry = new THREE.ConeGeometry(0.5, 1, 12);
+    const geometry = new this.THREE.ConeGeometry(0.5, 1, 12);
     geometry.translate(0, 0.5, 0);
-    const material = new THREE.MeshBasicMaterial();
+    const material = new this.THREE.MeshBasicMaterial();
 
-    this.mesh = new THREE.InstancedMesh(geometry, material, this.count);
+    this.mesh = new this.THREE.InstancedMesh(geometry, material, this.count);
 
     // Default to scale 0 so they don't pop in until updateData is called
-    const zeroScale = new THREE.Matrix4().makeScale(0, 0, 0);
+    const zeroScale = new this.THREE.Matrix4().makeScale(0, 0, 0);
     for (let i = 0; i < this.count; i++) {
       this.mesh.setMatrixAt(i, zeroScale);
     }
@@ -106,8 +107,8 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
       return;
     }
 
-    const tempMatrix = new THREE.Matrix4();
-    const tempColour = new THREE.Color();
+    const tempMatrix = new this.THREE.Matrix4();
+    const tempColour = new this.THREE.Color();
     const w = this.baseDiameter;
 
     for (let i = 0; i < this.count; i++) {
@@ -117,7 +118,7 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
         continue;
       }
 
-      tempMatrix.scale(new THREE.Vector3(w, heights[i], w));
+      tempMatrix.scale(new this.THREE.Vector3(w, heights[i], w));
       this.mesh.setMatrixAt(i, tempMatrix);
 
       tempColour.setRGB(colours[i * 3], colours[i * 3 + 1], colours[i * 3 + 2]);
@@ -137,7 +138,7 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
     if (!this.camera || !this.renderer || !this.scene || !this.map || !this.mesh) return;
 
     this.onPreRender();
-    this.camera.projectionMatrix = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
+    this.camera.projectionMatrix = new this.THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix);
     this.renderer.resetState();
     this.renderer.render(this.scene, this.camera);
   }
@@ -145,7 +146,7 @@ export default class SpikeLayer implements maplibregl.CustomLayerInterface {
   onRemove(): void {
     if (this.mesh) {
       this.mesh.geometry.dispose();
-      (this.mesh.material as THREE.Material).dispose();
+      (this.mesh.material as any).dispose();
     }
     this.renderer?.dispose();
   }
