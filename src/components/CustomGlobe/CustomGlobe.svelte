@@ -82,9 +82,9 @@
         <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
       {:else if options.base === 'satellite'}
         <MapRasterHandler
-          url={'https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-blue-marble/{z}/{x}/{y}.webp'}
+          url={`https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${options.satelliteVariant || 'blue'}-marble/{z}/{x}/{y}.webp`}
           maxZoom={7}
-          attribution="NASA Blue Marble"
+          attribution={options.satelliteVariant === 'black' ? 'NASA Black Marble' : 'NASA Blue Marble'}
         />
       {/if}
 

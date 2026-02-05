@@ -58,6 +58,7 @@ export interface DecodedObject {
   geoJson?: GeoJsonConfig[];
   imageSources?: ImageSourceConfig[];
   projection?: 'globe' | 'mercator';
+  satelliteVariant?: 'blue' | 'black';
 }
 
 export interface DecodeProps {

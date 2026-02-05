@@ -68,5 +68,11 @@ export const markerSchema = {
     type: 'enum',
     values: ['globe', 'mercator'],
     defaultValue: 'globe'
+  },
+  satelliteVariant: {
+    key: 'sv',
+    type: 'enum',
+    values: ['blue', 'black'],
+    defaultValue: 'blue'
   }
 };

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BuilderStyleRoot, BuilderFrame, UpdateChecker, MarkerAdmin } from '@abcnews/components-builder';
+  import { BuilderStyleRoot, BuilderFrame, UpdateChecker, MarkerAdmin, Loader } from '@abcnews/components-builder';
   import { onMount } from 'svelte';
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
@@ -66,7 +66,12 @@
 {/snippet}
 
 {#snippet Sidebar()}
+  {#if !map || !options}
+    <Loader></Loader>
+  {/if}
+
   {#if map && options}
+    <PropBase {map} bind:options />
     <PropCoord
       {map}
       onchange={(coords, z) => {
@@ -74,7 +79,6 @@
         if (z !== undefined) options.z = z;
       }}
     />
-    <PropBase {map} bind:options />
     <PropBounds {map} onchange={bounds => (options.bounds = bounds)} />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
     <PropHighlightCountries
