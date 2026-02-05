@@ -5,6 +5,7 @@
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
   import PropGeoJsonPointSize from './PropGeoJsonPointSize.svelte';
+  import { untrack } from 'svelte';
   import { isValidUrl } from '../../../lib/marker';
 
   let {
@@ -17,8 +18,10 @@
     onclose: () => void;
   }>();
 
-  let config = $state<GeoJsonConfig>({ ...initialConfig });
-  let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(initialConfig.url ? 'loading' : 'no-data');
+  let config = $state<GeoJsonConfig>(untrack(() => $state.snapshot(initialConfig)));
+  let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(
+    untrack(() => ($state.snapshot(initialConfig).url ? 'loading' : 'no-data'))
+  );
   let errorMessage = $state<string | undefined>();
   let properties = $state<string[]>([]);
   let featureCount = $state(0);

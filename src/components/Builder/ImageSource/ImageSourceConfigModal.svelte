@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
+  import { untrack } from 'svelte';
   import type { ImageSourceConfig } from '../../../lib/marker';
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
@@ -16,9 +17,9 @@
     onclose: () => void;
   } = $props();
 
-  let url = $state(config.url);
-  let opacity = $state(config.opacity);
-  let coordsString = $state(JSON.stringify(config.coordinates));
+  let url = $state(untrack(() => $state.snapshot(config).url));
+  let opacity = $state(untrack(() => $state.snapshot(config).opacity));
+  let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config).coordinates)));
 
   let naturalWidth = $state(0);
   let naturalHeight = $state(0);

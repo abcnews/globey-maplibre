@@ -8,27 +8,29 @@ const MARKER_NAME = 'globey';
 
 
 
-const [builderMountEl] = selectMounts('interactivemapbuilder');
+(async () => {
+  const [builderMountEl] = selectMounts('interactivemapbuilder');
 
-if (builderMountEl) {
-  const builderModule = await import(/* webpackChunkName: "builder" */ './components/Builder/Builder.svelte');
+  if (builderMountEl) {
+    const builderModule = await import(/* webpackChunkName: "builder" */ './components/Builder/Builder.svelte');
 
-  mount(builderModule.default, {
-    target: builderMountEl,
-    props: {}
-  });
-}
+    mount(builderModule.default, {
+      target: builderMountEl,
+      props: {}
+    });
+  }
 
-const [iframeMountEl] = selectMounts('interactiveglobeyframe');
+  const [iframeMountEl] = selectMounts('interactiveglobeyframe');
 
-if (iframeMountEl) {
-  const iframeModule = await import(/* webpackChunkName: "iframe" */ './components/CustomGlobeIframe/CustomGlobeIframe.svelte');
+  if (iframeMountEl) {
+    const iframeModule = await import(/* webpackChunkName: "iframe" */ './components/CustomGlobeIframe/CustomGlobeIframe.svelte');
 
-  mount(iframeModule.default, {
-    target: iframeMountEl,
-    props: {}
-  });
-}
+    mount(iframeModule.default, {
+      target: iframeMountEl,
+      props: {}
+    });
+  }
+})();
 
 whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts(MARKER_NAME);
