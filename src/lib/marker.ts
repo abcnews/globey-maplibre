@@ -1,8 +1,19 @@
 import { parse, stringify } from '@abcnews/alternating-case-to-object';
 import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
-import type { DecodedObject, DecodeProps } from './marker/types';
-export * from './marker/types';
-import { markerSchema } from './marker/schema';
+import type { DecodedObject, DecodeProps } from './marker/types.ts';
+export * from './marker/types.ts';
+import { markerSchema } from './marker/schema.ts';
+export { markerSchema };
+export { compressUrl, decompressUrl, isValidUrl } from './marker/utils.ts';
+export {
+  geohashCodec,
+  boundsCodec,
+  GEOHASH_PRECISION,
+  customLabelsCodec,
+  geoJsonCodec,
+  mapLabelsCodec,
+  defaultMapLabels
+} from './marker/codecs.ts';
 /**
  * Encode globey props into a hash string for the url or fragment
  */

@@ -2,7 +2,9 @@
   "extends": "@abcnews/aunty/ts/config.json",
   "compilerOptions": {
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noEmit": true,
+    "allowImportingTsExtensions":true
   },
   "include": ["src/**/*"],
   "exclude": ["src/**/*.test.ts"]

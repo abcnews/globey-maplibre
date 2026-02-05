@@ -37,6 +37,7 @@ export interface ImageSourceConfig {
   id: string;
   url: string;
   opacity: number;
+  coordinates: [number, number][];
 }
 
 export interface DecodedObject {
@@ -70,4 +71,5 @@ export interface DecodeProps {
   c?: string;
   gj?: string;
   p?: string;
+  is?: string;
 }

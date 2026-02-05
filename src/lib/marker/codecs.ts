@@ -1,6 +1,7 @@
 import Geohash from 'latlon-geohash';
 import { decode, encode } from '@abcnews/base-36-text';
-import type { Label, Country, GeoJsonConfig, DecodedObject } from './types.ts';
+import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig } from './types.ts';
+import { isValidUrl, compressUrl, decompressUrl } from './utils.ts';
 
 const STYLE_TO_CODE: Record<string, string> = {
   primary: 'p',
@@ -10,6 +11,8 @@ const STYLE_TO_CODE: Record<string, string> = {
 const CODE_TO_STYLE: Record<string, Country['style']> = Object.fromEntries(
   Object.entries(STYLE_TO_CODE).map(([style, code]) => [code, style as Country['style']])
 );
+
+export const GEOHASH_PRECISION = 10;
 
 const GEOJSON_TYPES = ['areas', 'lines', 'points', 'spikes'] as const;
 const GEOJSON_MODES = ['scale', 'simple', 'class', 'override'] as const;
@@ -66,7 +69,7 @@ function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
   }
 
   // [url, typeIdx, modeIdx, colourProp, extras, pointSize]
-  const arr = [url, typeIdx, modeIdx, colourProp, extras, pointSize];
+  const arr = [isValidUrl(url) ? compressUrl(url) : undefined, typeIdx, modeIdx, colourProp, extras, pointSize];
 
   // Trim trailing undefined values to save space
   while (arr.length > 0 && arr[arr.length - 1] === undefined) {
@@ -84,7 +87,7 @@ function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
   const [url, typeIdx, modeIdx, colourProp, extras, pointSize] = arr;
 
   const config: GeoJsonConfig = {
-    url,
+    url: decompressUrl(url),
     type: GEOJSON_TYPES[typeIdx] || 'areas',
     colourMode: GEOJSON_MODES[modeIdx] || 'scale'
   };
@@ -115,7 +118,7 @@ function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
  * @example [151.2, -33.8] -> "r3gx2ue"
  */
 export const geohashCodec = {
-  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], 7) : undefined),
+  encode: (coords: [number, number]) => (coords ? Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION) : undefined),
   decode: (hash: string) => {
     if (!hash) return [0, 0];
     const { lat, lon } = Geohash.decode(hash);
@@ -130,10 +133,11 @@ export const geohashCodec = {
  */
 export const boundsCodec = {
   encode: (bounds: [number, number][]) =>
-    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], 7)).join('') : undefined,
+    bounds?.length ? bounds.map(coords => Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION)).join('') : undefined,
   decode: (hash: string) => {
     if (!hash) return [];
-    return (hash.match(/.{7}/g) || []).map(part => {
+    const regex = new RegExp(`.{${GEOHASH_PRECISION}}`, 'g');
+    return (hash.match(regex) || []).map(part => {
       const { lat, lon } = Geohash.decode(part);
       return [Number(lon), Number(lat)];
     });
@@ -177,7 +181,7 @@ export const countriesCodec = {
 export const customLabelsCodec = {
   encode: (labels: Label[]) =>
     labels?.map(({ coords, name, style, number, pointless }) => {
-      const hash = Geohash.encode(coords[1], coords[0], 7);
+      const hash = Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION);
       const styles = ['country', 'level3', 'level4', 'water'];
       const styleIndex = styles.indexOf(style);
       const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
@@ -200,7 +204,7 @@ export const customLabelsCodec = {
           ? // Current labels are [coords,name,style,number] array
             JSON.parse(decodedJSON)
           : // legacy labels were fixed length
-            [string.slice(0, 7), decode(string.slice(7))];
+            [string.slice(0, GEOHASH_PRECISION), decode(string.slice(GEOHASH_PRECISION))];
       
       const styles = ['country', 'level3', 'level4', 'water'];
       const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
@@ -219,7 +223,7 @@ export const customLabelsCodec = {
 export const geoJsonCodec = {
   encode: (configs: GeoJsonConfig[]) => {
     if (!configs || configs.length === 0) return undefined;
-    return encode(JSON.stringify(configs.map(encodeGeoJsonConfig)));
+    return encode(JSON.stringify(configs.filter(c => isValidUrl(c.url)).map(encodeGeoJsonConfig)));
   },
   decode: (hash: string) => {
     if (!hash) return [];
@@ -279,5 +283,48 @@ export const mapLabelsCodec = {
       towns: towns === 1,
       oceans: oceans === 1
     };
+  }
+};
+
+/**
+ * Custom codec for Image Sources
+ */
+export const imageSourceCodec = {
+  encode: (configs: ImageSourceConfig[]) => {
+    if (!configs || configs.length === 0) return undefined;
+
+    const condensed = configs
+      .filter(config => isValidUrl(config.url))
+      .map(config => {
+        // coords -> geohashes
+        const hashes = config.coordinates.map(c => Geohash.encode(c[1], c[0], GEOHASH_PRECISION));
+        return [compressUrl(config.url), Math.round(config.opacity * 100), hashes];
+      });
+
+    return encode(JSON.stringify(condensed));
+  },
+  decode: (hash: string) => {
+    if (!hash) return [];
+    try {
+      const outerArr = JSON.parse(decode(hash));
+      if (!Array.isArray(outerArr)) return [];
+
+      return outerArr.map((arr: any, index: number) => {
+        const [compressedUrl, opacityInt, hashes] = arr;
+        const coordinates = hashes.map((h: string) => {
+          const { lat, lon } = Geohash.decode(h);
+          return [Number(lon), Number(lat)];
+        });
+
+        return {
+          id: `img-${index}`,
+          url: decompressUrl(compressedUrl),
+          opacity: opacityInt / 100,
+          coordinates
+        };
+      });
+    } catch (e) {
+      return [];
+    }
   }
 };

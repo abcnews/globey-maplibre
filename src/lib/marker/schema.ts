@@ -5,8 +5,9 @@ import {
   customLabelsCodec,
   geoJsonCodec,
   mapLabelsCodec,
-  defaultMapLabels
-} from './codecs';
+  defaultMapLabels,
+  imageSourceCodec
+} from './codecs.ts';
 
 /**
  * Schema for marker data
@@ -74,5 +75,11 @@ export const markerSchema = {
     type: 'enum',
     values: ['blue', 'black'],
     defaultValue: 'blue'
+  },
+  imageSources: {
+    key: 'is',
+    type: 'custom',
+    codec: imageSourceCodec,
+    defaultValue: []
   }
 };
