@@ -293,8 +293,11 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     if (!config.spike?.heightProp) return 0;
     const val = Number(feature.properties?.[config.spike.heightProp]);
     if (isNaN(val)) return 0;
-    const scalar = config.spike.scalar ?? 1;
-    return val * scalar;
+    
+    const { min = 0, max = 100, scalar = 50000 } = config.spike;
+    const factor = Math.max(0, Math.min(1, (val - min) / (max - min)));
+    
+    return factor * scalar;
 }
 
 // getLabelAnchor removed, now imported from layerUtils

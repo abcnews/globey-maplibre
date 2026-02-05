@@ -29,7 +29,12 @@ export interface GeoJsonConfig {
   };
 
   filter?: { prop: string; values: string[] };
-  spike?: { heightProp: string; scalar: number };
+  spike?: { 
+    heightProp: string; 
+    scalar: number;
+    min?: number;
+    max?: number;
+  };
   pointSize?: string;
 }
 

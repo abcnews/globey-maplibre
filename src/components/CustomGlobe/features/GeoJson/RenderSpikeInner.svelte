@@ -2,16 +2,19 @@
   import { getContext } from 'svelte';
   import type { maplibregl } from '../../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import SpikeLayer from '../../../../snippets/SpikeLayer';
   import { evaluateColour, evaluateHeight } from './utils';
 
-  let { data, config, sourceId }: { data: any; config: GeoJsonConfig; sourceId: string } = $props();
+  let {
+    data,
+    config,
+    sourceId,
+    SpikeLayerClass
+  }: { data: any; config: GeoJsonConfig; sourceId: string; SpikeLayerClass: any } = $props();
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const threeInstance = getContext<{ module: any }>('threeInstance');
 
   const layerId = $derived(`${sourceId}-spike`);
-  let layer: SpikeLayer | undefined;
+  let layer: any;
 
   // Animation state
   let targetHeights: Float32Array;
@@ -38,13 +41,11 @@
 
   $effect(() => {
     const map = mapRoot.map;
-    const THREE = threeInstance?.module;
-    if (!map || !THREE) return;
+    if (!map || !SpikeLayerClass) return;
 
-    layer = new SpikeLayer({
+    layer = new SpikeLayerClass({
       id: layerId,
-      baseDiameter: 15000,
-      THREE
+      baseDiameter: 15000
     });
 
     map.addLayer(layer as any);

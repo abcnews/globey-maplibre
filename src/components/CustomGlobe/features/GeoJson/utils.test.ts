@@ -250,14 +250,25 @@ describe('GeoJson Utils', () => {
             const config: GeoJsonConfig = { url: 'test', type: 'spikes', colourMode: 'simple' };
             assert.strictEqual(evaluateHeight(config, { properties: { val: 10 } }), 0);
         });
-
-        it('should return property value multiplied by scalar', () => {
+        
+        it('should return normalized height based on min, max and scalar', () => {
             const config: GeoJsonConfig = { 
                 url: 'test', type: 'spikes', colourMode: 'simple',
-                spike: { heightProp: 'val', scalar: 2 }
+                spike: { heightProp: 'val', min: 0, max: 100, scalar: 1000 }
             };
-            assert.strictEqual(evaluateHeight(config, { properties: { val: 10 } }), 20);
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 50 } }), 500);
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 0 } }), 0);
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 100 } }), 1000);
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 150 } }), 1000); // Clamped
+            assert.strictEqual(evaluateHeight(config, { properties: { val: -50 } }), 0);    // Clamped
+        });
+
+        it('should use default values for min, max and scalar if not provided', () => {
+            const config: GeoJsonConfig = { 
+                url: 'test', type: 'spikes', colourMode: 'simple',
+                spike: { heightProp: 'val', scalar: 50000 } // min 0, max 100 by default (per code)
+            };
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 50 } }), 25000);
         });
     });
 });
-
