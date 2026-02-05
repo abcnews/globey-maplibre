@@ -14,6 +14,7 @@
   import PropImageSource from './ImageSource/PropImageSource.svelte';
   import MarkerJson from './MarkerJson.svelte';
   import IframeUrl from './IframeUrl.svelte';
+  import TestbuilderFrame from './TestbuilderFrame.svelte';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -111,7 +112,7 @@
 
 {#if options}
   <BuilderStyleRoot>
-    <BuilderFrame {Viz} {Sidebar} />
+    <TestbuilderFrame {Viz} {Sidebar} />
   </BuilderStyleRoot>
 {/if}
 
