@@ -46,7 +46,7 @@
 </fieldset>
 
 {#if isOpen}
-  <Modal onClose={() => (isOpen = false)} title="Map Base & Style">
+  <Modal onClose={() => (isOpen = false)} title="Map Base & Style" position="right">
     <div class="prop-base">
       <div class="prop-base__layer">
         <div>

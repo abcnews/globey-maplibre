@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BuilderStyleRoot, BuilderFrame, UpdateChecker, MarkerAdmin, Loader } from '@abcnews/components-builder';
+  import { BuilderStyleRoot, UpdateChecker, MarkerAdmin, Loader, BuilderFrame } from '@abcnews/components-builder';
   import { onMount } from 'svelte';
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
@@ -122,7 +122,7 @@
     border: 0;
     position: relative;
   }
-  :global(#webpack-dev-server-client-overlay) {
-    display: none !important;
-  }
+  // :global(#webpack-dev-server-client-overlay) {
+  //   display: none !important;
+  // }
 </style>
