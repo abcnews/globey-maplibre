@@ -27,6 +27,9 @@
 			"entry": [
 				"index"
 			]
+		},
+		"serve": {
+			"hasBundleAnalysis": true
 		}
 	},
 	"scripts": {

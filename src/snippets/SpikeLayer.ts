@@ -3,7 +3,7 @@
  * Render a dataset as a spike layer in ThreeJS.
  */
 
-import type { CustomLayerInterface, CustomRenderMethodInput, Map } from 'maplibre-gl';
+import type { maplibregl } from '../components/mapLibre/index';
 import * as THREE from 'three';
 
 interface SpikeLayerOptions {
@@ -12,12 +12,12 @@ interface SpikeLayerOptions {
   coords?: [number, number][]; // Optional initial data
 }
 
-export default class SpikeLayer implements CustomLayerInterface {
+export default class SpikeLayer implements maplibregl.CustomLayerInterface {
   id: string;
   type: 'custom' = 'custom';
   renderingMode: '3d' = '3d';
 
-  protected map?: Map;
+  protected map?: maplibregl.Map;
   protected camera?: THREE.Camera;
   protected scene?: THREE.Scene;
   protected renderer?: THREE.WebGLRenderer;
@@ -36,7 +36,7 @@ export default class SpikeLayer implements CustomLayerInterface {
     if (coords) this.pendingCoords = coords;
   }
 
-  onAdd(map: Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+  onAdd(map: maplibregl.Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
     this.map = map;
     this.camera = new THREE.Camera();
     this.scene = new THREE.Scene();
@@ -133,7 +133,7 @@ export default class SpikeLayer implements CustomLayerInterface {
 
   protected onPreRender(): void {}
 
-  render(gl: WebGLRenderingContext | WebGL2RenderingContext, args: CustomRenderMethodInput): void {
+  render(gl: WebGLRenderingContext | WebGL2RenderingContext, args: maplibregl.CustomRenderMethodInput): void {
     if (!this.camera || !this.renderer || !this.scene || !this.map || !this.mesh) return;
 
     this.onPreRender();

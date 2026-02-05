@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import maplibregl from 'maplibre-gl';
+  import type { maplibregl } from '../../../../components/mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import {
     getColourExpression,
@@ -111,7 +111,7 @@
     const lid = layerId;
     if (!map || !map.getLayer(lid)) return;
 
-    const popup = new maplibregl.Popup({
+    const popup = new window.maplibregl.Popup({
       closeButton: false,
       closeOnClick: true
     });
