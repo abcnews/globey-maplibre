@@ -1,36 +1,16 @@
 import type { maplibregl } from '../../mapLibre/index';
-import styleSource from './styleStoryLabLight.json';
+import _styleSource from './styleStoryLabLight.json';
+import { patchStyleWithABCSources } from './utils';
+const styleSource = patchStyleWithABCSources(_styleSource);
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
-const MAP_LAYERS = {
-  "openmaptiles": "https://www.abc.net.au/res/sites/news-projects/map-vector-tiles-world/world.json",
-  "sprite": "https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/sprite",
-  "glyphs": "https://www.abc.net.au/res/sites/news-projects/map-vector-fonts/{fontstack}/{range}.pbf",
-}
-export const OPENMAPTILES_SOURCE_DEF = {
-  type: 'vector',
-  url: MAP_LAYERS.openmaptiles
-};
-
-  // Update our asset URLs
-styleSource.sources.openmaptiles.url = MAP_LAYERS.openmaptiles;
-styleSource.sprite = MAP_LAYERS.sprite;
-styleSource.glyphs = MAP_LAYERS.glyphs;
-
-// remove heightmaps and "Individual countries" sample layers.
-// styleSource.sources.IndividualCountries has been deleted because it's massive and doesn't work
-styleSource.layers = styleSource.layers.filter(layer => ['terrarium', 'natural_earth_shading'].includes(layer.id) == false && ['IndividualCountries'].includes(layer.source) === false)
-  
+export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
 
 // We clone the style source to avoid mutating the original import
 export const getBaseStyleSource = () => {
   const style = JSON.parse(JSON.stringify(styleSource));
   return style as maplibregl.StyleSpecification;
 }
-
-/**
- * OpenMapTiles Street Style components
- */
 
 export function getProcessedLayers(): maplibregl.LayerSpecification[] {
   const style = getBaseStyleSource();
