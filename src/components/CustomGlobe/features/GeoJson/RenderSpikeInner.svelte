@@ -3,7 +3,7 @@
   import type { maplibregl } from '../../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { parseColor } from '../../../../lib/colours';
-  import { getColourEvaluator, getHeightEvaluator, getProcessedFeatures } from './utils';
+  import { getColourEvaluator, getHeightEvaluator } from './utils';
 
   let {
     data,
@@ -13,23 +13,20 @@
   }: { data: any; config: GeoJsonConfig; sourceId: string; SpikeLayerClass: any } = $props();
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-
   const layerId = $derived(`${sourceId}-spike`);
+
   let layer: any;
-
-  // Animation state buffers
-  let targetHeights: Float32Array;
-  let targetColours: Float32Array;
-  let startHeights: Float32Array;
-  let startColours: Float32Array;
-  let lastRenderedHeights: Float32Array;
-  let lastRenderedColours: Float32Array;
-
   let animationFrame: number;
   let startTime: number;
   const DURATION = 500;
 
-  // Initialise Three.js Spike Layer
+  // Animation state buffers
+  let currentHeights: Float32Array;
+  let currentColours: Float32Array;
+  let startHeights: Float32Array;
+  let startColours: Float32Array;
+
+  // Lifecycle: Manage the Three.js Layer
   $effect(() => {
     const map = mapRoot.map;
     if (!map || !SpikeLayerClass) return;
@@ -39,7 +36,7 @@
       baseDiameter: 15000
     });
 
-    map.addLayer(layer as any);
+    map.addLayer(layer);
 
     return () => {
       cancelAnimationFrame(animationFrame);
@@ -49,106 +46,78 @@
     };
   });
 
-  /**
-   * Pre-process GeoJSON into a slimmed-down format for high-performance rendering.
-   */
-  const sourceFeatures = $derived.by(() => {
-    if (!data?.features) return [];
+  // Pre-calculate all values in a $derived for clarity and debuggability
+  const processedValues = $derived.by(() => {
+    if (!data?.features?.length) return null;
 
-    // Cache prop lookups
-    const hProp = config.spike?.heightProp;
-    const cMode = config.colourMode;
-    const cProp = config.colourProp;
-
-    const preprocessedFeatures = data.features.map((f: any) => {
-      const props = f.properties || {};
-
-      // Extract height value
-      const hVal = hProp ? Number(props[hProp]) || 0 : 0;
-
-      // Extract colour value based on mode
-      let cVal: any;
-      if (cMode === 'simple') {
-        cVal = props['fill'] || '#888888';
-      } else if (cMode === 'scale' && cProp) {
-        cVal = Number(props[cProp] || '0');
-      } else if (cMode === 'class') {
-        cVal = props[cProp || 'class'];
-      }
-
-      return {
-        coords: f.geometry.coordinates as [number, number],
-        hVal,
-        cVal
-      };
-    });
-    return preprocessedFeatures;
-  });
-
-  // Calculate targets and trigger animation whenever data or config changes
-  $effect(() => {
-    if (!layer || sourceFeatures.length === 0) return;
-
-    // Use unified processing logic for filtering and property evaluation.
-    // This now accepts our pre-processed features instead of raw GeoJSON.
     const colourEvaluator = getColourEvaluator(config);
     const heightEvaluator = getHeightEvaluator(config);
+    const count = data.features.length;
 
-    const processed = sourceFeatures.map(feature => ({
-      coords: feature.coords,
-      height: heightEvaluator(feature),
-      colour: colourEvaluator(feature)
-    }));
-    const count = processed.length;
+    const locations: [number, number][] = [];
+    const targetHeights = new Float32Array(count);
+    const targetColours = new Float32Array(count * 3);
 
-    // Sync locations with the layer (handles instantiation of Three.js objects)
-    layer.setLocations(sourceFeatures.map(f => f.coords));
+    data.features.forEach((f: any, i: number) => {
+      const props = f.properties || {};
 
-    // Prepare target buffers for animation using functional mappings.
-    // This avoids explicit iteration and manual indexing.
-    targetHeights = Float32Array.from(processed.map(p => p.height));
-    targetColours = Float32Array.from(processed.flatMap(p => parseColor(p.colour).map(c => c / 255)));
+      // Map GeoJSON properties to hVal/cVal for shared evaluators in utils.ts
+      const hVal = config.spike?.heightProp ? Number(props[config.spike.heightProp]) || 0 : 0;
+      let cVal: any;
 
-    // Ensure we have current state buffers to animate from
-    if (!lastRenderedHeights || lastRenderedHeights.length !== count) {
-      lastRenderedHeights = new Float32Array(count).fill(0);
-      lastRenderedColours = new Float32Array(count * 3).fill(1);
-    }
+      if (config.colourMode === 'simple') {
+        cVal = props['fill'] || '#888888';
+      } else if (config.colourMode === 'scale' && config.colourProp) {
+        cVal = Number(props[config.colourProp] || '0');
+      } else if (config.colourMode === 'class') {
+        cVal = props[config.colourProp || 'class'];
+      }
 
-    startAnimation();
+      const height = heightEvaluator({ hVal });
+      const colour = colourEvaluator({ cVal });
+      const [r, g, b] = parseColor(colour).map(c => c / 255);
+
+      locations.push(f.geometry.coordinates as [number, number]);
+      targetHeights[i] = height;
+      targetColours[i * 3] = r;
+      targetColours[i * 3 + 1] = g;
+      targetColours[i * 3 + 2] = b;
+    });
+
+    return { locations, targetHeights, targetColours };
   });
 
-  function startAnimation() {
-    if (!lastRenderedHeights) return;
+  // Reactivity: Trigger Animation on Data Changes
+  $effect(() => {
+    if (!layer || !processedValues) return;
 
-    // Capture current visible state as our starting point
-    startHeights = new Float32Array(lastRenderedHeights);
-    startColours = new Float32Array(lastRenderedColours);
+    const count = processedValues.locations.length;
+    layer.setLocations(processedValues.locations);
+
+    // Initialise or capture current state as the starting point for animation
+    startHeights =
+      currentHeights?.length === count ? new Float32Array(currentHeights) : new Float32Array(count).fill(0);
+    startColours =
+      currentColours?.length === count * 3 ? new Float32Array(currentColours) : new Float32Array(count * 3).fill(1);
 
     cancelAnimationFrame(animationFrame);
     startTime = performance.now();
     animate();
-  }
+  });
 
   function animate() {
-    const now = performance.now();
-    const progress = Math.min((now - startTime) / DURATION, 1);
-    const ease = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+    const progress = Math.min((performance.now() - startTime) / DURATION, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
 
-    if (!layer || !startHeights || !targetHeights) return;
+    if (!layer || !processedValues) return;
 
-    const count = startHeights.length;
+    const { targetHeights, targetColours } = processedValues;
 
-    // Linearly interpolate between start and target buffers using functional map
-    const heights = startHeights.map((start, i) => start + (targetHeights[i] - start) * ease);
-    const colours = startColours.map((start, i) => start + (targetColours[i] - start) * ease);
+    // Interpolate between start and target
+    currentHeights = startHeights.map((start, i) => start + (targetHeights[i] - start) * ease);
+    currentColours = startColours.map((start, i) => start + (targetColours[i] - start) * ease);
 
-    // Push new data to Three.js InstancedMesh
-    layer.updateData(heights, colours);
-
-    // Update trackers for next frame or animation interruption
-    lastRenderedHeights = heights;
-    lastRenderedColours = colours;
+    layer.updateData(currentHeights, currentColours);
 
     if (progress < 1) {
       animationFrame = requestAnimationFrame(animate);
