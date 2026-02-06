@@ -266,9 +266,9 @@ describe('GeoJson Utils', () => {
         it('should use default values for min, max and scalar if not provided', () => {
             const config: GeoJsonConfig = { 
                 url: 'test', type: 'spikes', colourMode: 'simple',
-                spike: { heightProp: 'val', scalar: 50000 } // min 0, max 100 by default (per code)
+                spike: { heightProp: 'val', scalar: 2000000 } // min 0, max 100 by default (per code)
             };
-            assert.strictEqual(evaluateHeight(config, { properties: { val: 50 } }), 25000);
+            assert.strictEqual(evaluateHeight(config, { properties: { val: 50 } }), 1000000);
         });
     });
 });

@@ -286,6 +286,12 @@ export function evaluateSymbol(config: GeoJsonConfig, feature: any): string {
     return String(symbol);
 }
 
+/** 
+ * Spikes shorter than this get occluded by the globe and glitch out.
+ * This is fine for planet scale, but closer zooms may need more.
+ */
+const MIN_HEIGHT_JANK_FACTOR = 3000
+
 /**
  * Evaluates the spike height for a specific feature.
  */
@@ -294,10 +300,10 @@ export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
     const val = Number(feature.properties?.[config.spike.heightProp]);
     if (isNaN(val)) return 0;
     
-    const { min = 0, max = 100, scalar = 50000 } = config.spike;
+    const { min = 0, max = 100, scalar = 2000000 } = config.spike;
     const factor = Math.max(0, Math.min(1, (val - min) / (max - min)));
     
-    return factor * scalar;
+    return Math.max(MIN_HEIGHT_JANK_FACTOR,factor * scalar);
 }
 
 // getLabelAnchor removed, now imported from layerUtils

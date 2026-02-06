@@ -31,7 +31,7 @@
     if (!config.spike) {
       config.spike = {
         heightProp: '',
-        scalar: 50000 // Default max height in meters
+        scalar: 2000000 // Default max height in meters (2000km)
       };
     }
   });
@@ -65,8 +65,14 @@
       </select>
     </div>
     <div>
-      <label for="gj-spike-scalar">Max Height (m)</label>
-      <input id="gj-spike-scalar" type="number" step="1000" bind:value={config.spike!.scalar} />
+      <label for="gj-spike-scalar">Max Height (km)</label>
+      <input
+        id="gj-spike-scalar"
+        type="number"
+        step="10"
+        value={config.spike!.scalar / 1000}
+        oninput={e => (config.spike!.scalar = Number(e.currentTarget.value) * 1000)}
+      />
     </div>
   </div>
 
