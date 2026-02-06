@@ -3,6 +3,7 @@
  * Render a dataset as a spike layer in ThreeJS.
  */
 
+import type { CustomRenderMethodInput } from 'maplibre-gl';
 import type { THREE } from '../components/threeJS';
 import { loadThreeJS } from '../components/threeJS/utils';
 

@@ -40,6 +40,7 @@ export function getStyleColor(style: maplibregl.StyleSpecification, layerId: str
  */
 export function patchStyleWithABCSources(styleSource: maplibregl.StyleSpecification): maplibregl.StyleSpecification {
   // Update our asset URLs
+  // @ts-ignore
   styleSource.sources.openmaptiles.url = OPENMAPTILES_URL;
 
   styleSource.sprite = SPRITE_URL;

@@ -1,7 +1,8 @@
 import type { maplibregl } from '../../mapLibre/index';
 import _styleSource from './styleStoryLabLight.json';
 import { patchStyleWithABCSources, getStyleColor } from './utils';
-const styleSource = patchStyleWithABCSources(_styleSource);
+//@ts-ignore
+export const styleSource = patchStyleWithABCSources(_styleSource);
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
 export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
@@ -33,9 +34,11 @@ export function getProcessedLayers(): maplibregl.LayerSpecification[] {
               'CW', 'Curacao',
               'RE', 'Reunion',
               'BJ', 'Benin',
+              //@ts-ignore
               nameFallback
             ],
             // For everything else, use the standard fallback
+            //@ts-ignore
             nameFallback
           ]
       }
