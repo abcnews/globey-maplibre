@@ -71,9 +71,7 @@
       <ProjectionHandler projection={options.projection} />
       <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} />
 
-      {#if options.base !== 'countries'}
-        <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
-      {/if}
+      <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
 
       <MapCustomLabelHandler labels={options.labels} />
 
