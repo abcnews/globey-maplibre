@@ -2,6 +2,7 @@
   import { getContext, onMount, untrack } from 'svelte';
   import type { maplibregl } from '../../../mapLibre/index';
   import type { Country } from '../../../../lib/marker';
+  import { getThemeColors } from '../../mapStyle/streetMap';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -18,7 +19,8 @@
   const layerId = untrack(() => `highlight-country-${country.code}-${Math.random().toString(36).substring(2, 11)}`);
 
   function getCountryColor(style: string) {
-    return style === 'secondary' ? '#8ad1e8' : '#b9a0ce';
+    const colors = getThemeColors();
+    return style === 'secondary' ? colors.highlightSecondary : colors.highlightPrimary;
   }
 
   $effect(() => {

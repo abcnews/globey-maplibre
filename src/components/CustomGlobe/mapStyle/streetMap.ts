@@ -1,6 +1,6 @@
 import type { maplibregl } from '../../mapLibre/index';
 import _styleSource from './styleStoryLabLight.json';
-import { patchStyleWithABCSources } from './utils';
+import { patchStyleWithABCSources, getStyleColor } from './utils';
 const styleSource = patchStyleWithABCSources(_styleSource);
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
@@ -64,6 +64,18 @@ export function getLabelLayers(isSatellite = false): maplibregl.LayerSpecificati
     });
   }
   return layers;
+}
+
+export function getThemeColors() {
+  const style = getBaseStyleSource();
+  return {
+    land: getStyleColor(style, 'background', 'background-color', '#F5F5F5'),
+    ocean: getStyleColor(style, 'water', 'fill-color', '#CFDBED'),
+    // These are currently hardcoded in the highlights but we'll export them here too
+    // so we have a single place to change them.
+    highlightPrimary: '#b9a0ce',
+    highlightSecondary: '#8ad1e8'
+  };
 }
 
 export default function mapStyle(): maplibregl.StyleSpecification {

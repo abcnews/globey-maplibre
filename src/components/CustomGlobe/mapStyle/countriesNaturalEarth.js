@@ -115,8 +115,9 @@
  * @property {string} brk_group
  */
 
-const LAND = '#EDF0F2';
-const OCEAN = '#AFCCDB';
+// Default colors which are often overridden by the theme utility in handlers
+const LAND = '#F5F5F5';
+const OCEAN = '#CFDBED';
 const naturalEarthStyle = {
     "version": 8,
     "sources": {

@@ -52,7 +52,7 @@
 	"dependencies": {
 		"@abcnews/alternating-case-to-object": "^3.2.0",
 		"@abcnews/base-36-text": "^1.0.1",
-		"@abcnews/components-builder": "^0.0.14",
+		"@abcnews/components-builder": "^0.0.15",
 		"@abcnews/components-storylab": "^0.0.2",
 		"@abcnews/env-utils": "^6.0.0",
 		"@abcnews/hash-codec": "^2.0.0",
