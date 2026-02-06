@@ -1,6 +1,6 @@
 import Geohash from 'latlon-geohash';
 import { decode, encode } from '@abcnews/base-36-text';
-import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig } from './types.ts';
+import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig, PointSize } from './types.ts';
 import { isValidUrl, compressUrl, decompressUrl } from './utils.ts';
 
 const STYLE_TO_CODE: Record<string, string> = {
@@ -43,6 +43,27 @@ function decompressPalette(encoded: string): string[] {
 }
 
 /**
+ * Parses a pointSize string (e.g., "12.5k") into a PointSize object.
+ */
+export function decodePointSize(s: string | undefined): PointSize | undefined {
+  if (!s) return undefined;
+  const match = String(s).match(/^(\d+(?:\.\d+)?)([pk])$/);
+  if (!match) return undefined;
+  return {
+    value: Number(match[1]),
+    unit: match[2] as 'p' | 'k'
+  };
+}
+
+/**
+ * Formats a PointSize object into a string (e.g., "12.5k").
+ */
+export function encodePointSize(ps: PointSize | undefined): string | undefined {
+  if (!ps) return undefined;
+  return `${ps.value}${ps.unit}`;
+}
+
+/**
  * Converts a GeoJsonConfig object into a compact array.
  */
 function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
@@ -69,7 +90,14 @@ function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
   }
 
   // [url, typeIdx, modeIdx, colourProp, extras, pointSize]
-  const arr = [isValidUrl(url) ? compressUrl(url) : undefined, typeIdx, modeIdx, colourProp, extras, pointSize];
+  const arr = [
+    isValidUrl(url) ? compressUrl(url) : undefined,
+    typeIdx,
+    modeIdx,
+    colourProp,
+    extras,
+    encodePointSize(pointSize)
+  ];
 
   // Trim trailing undefined values to save space
   while (arr.length > 0 && arr[arr.length - 1] === undefined) {
@@ -107,7 +135,7 @@ function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
     if (extras.s) config.spike = extras.s;
   }
 
-  if (pointSize) config.pointSize = pointSize;
+  if (pointSize) config.pointSize = decodePointSize(pointSize);
 
   return config;
 }

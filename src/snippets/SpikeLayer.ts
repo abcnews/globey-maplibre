@@ -72,6 +72,13 @@ export async function getSpikeLayer(){
     }
 
     /**
+     * Public API to set base diameter (thickness).
+     */
+    setBaseDiameter(val: number): void {
+      this.baseDiameter = val;
+    }
+
+    /**
      * Internal method to build the THREE objects once context is available
      */
     private initMesh(coords: [number, number][]): void {

@@ -11,6 +11,11 @@ export interface Country {
   style: 'primary' | 'secondary';
 }
 
+export interface PointSize {
+  value: number;
+  unit: 'p' | 'k';
+}
+
 export interface GeoJsonConfig {
   url: string;
   type: 'areas' | 'lines' | 'points' | 'spikes';
@@ -35,7 +40,7 @@ export interface GeoJsonConfig {
     min?: number;
     max?: number;
   };
-  pointSize?: string;
+  pointSize?: PointSize;
 }
 
 export interface ImageSourceConfig {

@@ -20,6 +20,9 @@
   let startTime: number;
   const DURATION = 500;
 
+  // Map state for pixel-based sizing
+  let currentZoom = $state(mapRoot.map?.getZoom() || 0);
+
   // Animation state buffers
   let currentHeights: Float32Array;
   let currentColours: Float32Array;
@@ -38,12 +41,40 @@
 
     map.addLayer(layer);
 
+    // Zoom listener for pixel-based sizing
+    const onZoom = () => (currentZoom = map.getZoom());
+    map.on('zoom', onZoom);
+    currentZoom = map.getZoom();
+
     return () => {
+      map.off('zoom', onZoom);
       cancelAnimationFrame(animationFrame);
       if (map.getLayer(layerId)) {
         map.removeLayer(layerId);
       }
     };
+  });
+
+  // Derived diameter based on pointSize (supporting k=km and p=px)
+  const diameter = $derived.by(() => {
+    const map = mapRoot.map;
+    const ps = config.pointSize;
+    if (!map || !ps) return 15000;
+
+    const { value, unit } = ps;
+
+    if (unit === 'k') {
+      return value * 1000;
+    }
+
+    if (unit === 'p') {
+      // Calculate meters per pixel at the equator for the current zoom
+      // This is a common approximation for consistent screen-relative sizing in 3D
+      const metersPerPixel = (40075016.686 * Math.cos(0)) / Math.pow(2, currentZoom + 8);
+      return value * metersPerPixel;
+    }
+
+    return 15000;
   });
 
   // Pre-calculate all values in a $derived for clarity and debuggability
@@ -87,9 +118,12 @@
     return { locations, targetHeights, targetColours };
   });
 
-  // Reactivity: Trigger Animation on Data Changes
+  // Reactivity: Handle Diameter & Data Changes
   $effect(() => {
     if (!layer || !processedValues) return;
+
+    // Update diameter first
+    layer.setBaseDiameter(diameter);
 
     const count = processedValues.locations.length;
     layer.setLocations(processedValues.locations);

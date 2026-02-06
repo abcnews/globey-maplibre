@@ -154,7 +154,7 @@
 
     <PropGeoJsonColour bind:config {properties} features={rawFeatures} />
 
-    {#if config.type === 'points'}
+    {#if config.type === 'points' || config.type === 'spikes'}
       <PropGeoJsonPointSize bind:config />
     {/if}
 

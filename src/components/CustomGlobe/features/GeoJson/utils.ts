@@ -196,24 +196,20 @@ export function getStrokeWidthExpression(config: GeoJsonConfig): any {
  */
 export function getCircleRadiusExpression(config: GeoJsonConfig): any {
   if (config.pointSize) {
-    const match = config.pointSize.match(/^(\d+(?:\.\d+)?)([pk])$/);
-    if (match) {
-      const val = Number(match[1]);
-      const unit = match[2];
-      if (unit === 'p') {
-        return val;
-      }
-      if (unit === 'k') {
-        return [
-          'interpolate',
-          ['exponential', 2],
-          ['zoom'],
-          0,
-          (val / 40075) * 512,
-          22,
-          (val / 40075) * 512 * Math.pow(2, 22)
-        ];
-      }
+    const { value, unit } = config.pointSize;
+    if (unit === 'p') {
+      return value;
+    }
+    if (unit === 'k') {
+      return [
+        'interpolate',
+        ['exponential', 2],
+        ['zoom'],
+        0,
+        (value / 40075) * 512,
+        22,
+        (value / 40075) * 512 * Math.pow(2, 22)
+      ];
     }
   }
 

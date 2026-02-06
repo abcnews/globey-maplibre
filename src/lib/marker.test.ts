@@ -217,7 +217,7 @@ describe('marker', () => {
             url: 'points.json',
             type: 'points' as const,
             colourMode: 'simple' as const,
-            pointSize: '12.5k'
+            pointSize: { value: 12.5, unit: 'k' as const }
           }
         ]
       };
@@ -225,7 +225,7 @@ describe('marker', () => {
       const decoded = await decodeFragment(fragment);
 
       assert.strictEqual(decoded.geoJson?.length, 1);
-      assert.strictEqual(decoded.geoJson![0].pointSize, '12.5k');
+      assert.deepStrictEqual(decoded.geoJson![0].pointSize, input.geoJson[0].pointSize);
     });
 
     it('should round-trip custom palette', async () => {
