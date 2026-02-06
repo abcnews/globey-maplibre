@@ -303,7 +303,8 @@ describe('marker', () => {
           states: true,
           cities: true,
           towns: false,
-          oceans: true
+          oceans: true,
+          continents: false
         }
       };
       const fragment = await encodeFragment(input);
@@ -319,7 +320,8 @@ describe('marker', () => {
           states: false,
           cities: false,
           towns: false,
-          oceans: true
+          oceans: true,
+          continents: false
         }
       };
       const fragment = await encodeFragment(input);
@@ -350,13 +352,13 @@ describe('marker', () => {
       assert.strictEqual(decoded.imageSources?.length, 1);
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources[0].url);
       assert.strictEqual(decoded.imageSources![0].opacity, 0.75);
-      
+
       // Check precision - 10 chars is ~0.6m which is ~0.000005 degrees
       // We expect less than 0.00001 difference
       assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources[0].coordinates[0][0]) < 0.00001);
       assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources[0].coordinates[0][1]) < 0.00001);
     });
-    
+
     it('should compress and decompress recognized URLs', () => {
       const url = 'https://www.abc.net.au/res/sites/news-projects/my-data.json';
       const compressed = compressUrl(url);
