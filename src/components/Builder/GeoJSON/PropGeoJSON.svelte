@@ -65,7 +65,8 @@
         <strong>{config.type}</strong>
       {/snippet}
       {#snippet description(config: GeoJsonConfig)}
-        <span title={config.url}>{config.url}</span>
+        {@const filename = config.url.split('?')[0].split('/').pop() || config.url}
+        <span title={config.url}>{filename}</span>
       {/snippet}
       {#snippet actions(_, i)}
         <button class="btn-icon" aria-label="Edit" onclick={() => openEdit(i)}><Pencil /></button>

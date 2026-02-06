@@ -55,7 +55,8 @@
   {:else}
     <PropList items={imageSources} {onchange}>
       {#snippet name(config: ImageSourceConfig)}
-        <span title={config.url}>{config.url}</span>
+        {@const filename = config.url.split('?')[0].split('/').pop() || config.url}
+        <span title={config.url}>{filename}</span>
       {/snippet}
       {#snippet description(config: ImageSourceConfig)}
         <small>Opacity: {Math.round(config.opacity * 100)}%</small>
