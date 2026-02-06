@@ -1,3 +1,14 @@
+export function parseColor(color: string): [number, number, number] {
+  if (color.startsWith('#')) {
+    return hexToRgb(color);
+  }
+  const rgbMatch = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (rgbMatch) {
+    return [parseInt(rgbMatch[1], 10), parseInt(rgbMatch[2], 10), parseInt(rgbMatch[3], 10)];
+  }
+  return [128, 128, 128]; // Default grey
+}
+
 export function hexToRgb(hex: string): [number, number, number] {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return [0, 0, 0];
@@ -5,8 +16,8 @@ export function hexToRgb(hex: string): [number, number, number] {
 }
 
 export function interpolateColour(colour1: string, colour2: string, factor: number): string {
-  const c1 = hexToRgb(colour1);
-  const c2 = hexToRgb(colour2);
+  const c1 = parseColor(colour1);
+  const c2 = parseColor(colour2);
   const result = c1.map((c, i) => Math.round(c + factor * (c2[i] - c)));
   return `rgb(${result.join(',')})`;
 }
