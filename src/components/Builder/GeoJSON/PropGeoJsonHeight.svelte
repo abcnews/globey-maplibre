@@ -16,7 +16,7 @@
   // Selected property numeric values for histogram
   let numericValues = $derived.by(() => {
     const prop = config.spike?.heightProp;
-    if (!prop) return [];
+    if (!prop || !features) return [];
     return features
       .map(f => f.properties?.[prop])
       .filter(v => v !== undefined && v !== null && v !== '')
@@ -52,40 +52,42 @@
   });
 </script>
 
-<fieldset>
-  <legend>Height</legend>
-  <div class="gj-grid">
-    <div>
-      <label for="gj-spike-prop">Property</label>
-      <select id="gj-spike-prop" bind:value={config.spike!.heightProp}>
-        <option value="">(None)</option>
-        {#each properties as p}
-          <option value={p}>{p}</option>
-        {/each}
-      </select>
-    </div>
-    <div>
-      <label for="gj-spike-scalar">Max Height (km)</label>
-      <input
-        id="gj-spike-scalar"
-        type="number"
-        step="10"
-        value={config.spike!.scalar / 1000}
-        oninput={e => (config.spike!.scalar = Number(e.currentTarget.value) * 1000)}
-      />
-    </div>
-  </div>
-
-  {#if config.spike!.heightProp}
-    {#if !isNumeric}
-      <div style:color="var(--builder-color-danger, red)" style:font-size="0.85em" style:margin-top="0.5rem">
-        <strong>Warning:</strong> The selected property does not appear to contain numeric values.
+{#if config.spike}
+  <fieldset>
+    <legend>Height</legend>
+    <div class="gj-grid">
+      <div>
+        <label for="gj-spike-prop">Property</label>
+        <select id="gj-spike-prop" bind:value={config.spike.heightProp}>
+          <option value="">(None)</option>
+          {#each properties as p}
+            <option value={p}>{p}</option>
+          {/each}
+        </select>
       </div>
-    {/if}
+      <div>
+        <label for="gj-spike-scalar">Max Height (km)</label>
+        <input
+          id="gj-spike-scalar"
+          type="number"
+          step="10"
+          value={config.spike.scalar / 1000}
+          oninput={e => (config.spike.scalar = Number(e.currentTarget.value) * 1000)}
+        />
+      </div>
+    </div>
 
-    <DistributionInput values={numericValues} bind:min={config.spike!.min} bind:max={config.spike!.max} />
-  {/if}
-</fieldset>
+    {#if config.spike.heightProp}
+      {#if !isNumeric}
+        <div style:color="var(--builder-color-danger, red)" style:font-size="0.85em" style:margin-top="0.5rem">
+          <strong>Warning:</strong> The selected property does not appear to contain numeric values.
+        </div>
+      {/if}
+
+      <DistributionInput values={numericValues} bind:min={config.spike.min} bind:max={config.spike.max} />
+    {/if}
+  </fieldset>
+{/if}
 
 <style>
   .gj-grid {

@@ -102,7 +102,7 @@
   $effect(() => {
     // Ensure nested objects exist based on type
     if (config.type === 'spikes') {
-      if (!config.spike) config.spike = { scalar: 1, heightProp: '' };
+      if (!config.spike) config.spike = { scalar: 2000000, heightProp: '' };
     }
   });
 </script>
