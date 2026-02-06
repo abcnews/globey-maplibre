@@ -6,7 +6,7 @@
 
   let { config } = $props<{ config: GeoJsonConfig }>();
 
-  let data = $state<any>(null);
+  let data = $state.raw<any>(null);
   let lastUrl = '';
   let sourceId = $derived(generateId(config.url));
 

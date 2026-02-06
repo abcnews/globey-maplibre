@@ -51,7 +51,6 @@
 
   /**
    * Pre-process GeoJSON into a slimmed-down format for high-performance rendering.
-   * This re-runs only when 'data' or the specific config properties it pulls from change.
    */
   const sourceFeatures = $derived.by(() => {
     if (!data?.features) return [];
@@ -61,7 +60,6 @@
     const cMode = config.colourMode;
     const cProp = config.colourProp;
 
-    console.time('preprocessFeatures');
     const preprocessedFeatures = data.features.map((f: any) => {
       const props = f.properties || {};
 
@@ -84,12 +82,8 @@
         cVal
       };
     });
-    console.timeEnd('preprocessFeatures');
     return preprocessedFeatures;
   });
-
-  /** coordinate tuples for the Three.js layer. */
-  const sourceCoordinates = $derived(sourceFeatures.map(f => f.coords));
 
   // Calculate targets and trigger animation whenever data or config changes
   $effect(() => {
@@ -97,7 +91,6 @@
 
     // Use unified processing logic for filtering and property evaluation.
     // This now accepts our pre-processed features instead of raw GeoJSON.
-    console.time('processing features');
     const colourEvaluator = getColourEvaluator(config);
     const heightEvaluator = getHeightEvaluator(config);
 
@@ -106,18 +99,15 @@
       height: heightEvaluator(feature),
       colour: colourEvaluator(feature)
     }));
-    console.timeEnd('processing features');
     const count = processed.length;
 
     // Sync locations with the layer (handles instantiation of Three.js objects)
-    layer.setLocations(sourceCoordinates);
+    layer.setLocations(sourceFeatures.map(f => f.coords));
 
     // Prepare target buffers for animation using functional mappings.
     // This avoids explicit iteration and manual indexing.
-    console.time('parseColour');
     targetHeights = Float32Array.from(processed.map(p => p.height));
     targetColours = Float32Array.from(processed.flatMap(p => parseColor(p.colour).map(c => c / 255)));
-    console.timeEnd('parseColour');
 
     // Ensure we have current state buffers to animate from
     if (!lastRenderedHeights || lastRenderedHeights.length !== count) {
