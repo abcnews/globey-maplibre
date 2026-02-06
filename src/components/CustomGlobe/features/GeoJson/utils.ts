@@ -100,33 +100,18 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
  *
  * @returns A CSS-compatible colour string
  */
-/**
- * Direct evaluation of a feature's colour based on its properties and the builder configuration.
- * @returns A CSS-compatible colour string
- */
-export function evaluateColour(config: GeoJsonConfig, feature: any): string {
-  return getColourEvaluator(config)(feature);
-}
 
 /**
  * Creates a high-performance colour evaluator function.
- * This hoists configuration lookups and interpolator creation out of the evaluation logic,
- * making it suitable for use in high-frequency loops.
- *
- * @param config The GeoJSON configuration
- * @returns A function that takes a feature and returns a colour string
+ * This hoists configuration lookups and interpolator creation out of the evaluation logic.
  */
-export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => string {
+export function getColourEvaluator(config: GeoJsonConfig): (feature: { cVal: any }) => string {
   const mode = config.colourMode;
-  const prop = config.colourProp;
   const colourConfig = config.colourConfig;
 
   // Simple Mode
   if (mode === 'simple') {
-    return (feature: any) => {
-      const props = feature.properties || {};
-      return props['marker-color'] || props['stroke'] || props['fill'] || props['fill-color'] || '#888888';
-    };
+    return (feature) => feature.cVal || '#888888';
   }
 
   // Override Mode
@@ -136,7 +121,7 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => str
   }
 
   // Scale (Continuous) Mode
-  if (mode === 'scale' && prop) {
+  if (mode === 'scale') {
     const min = colourConfig?.min ?? 0;
     const max = colourConfig?.max ?? 100;
     const range = max - min || 1;
@@ -144,8 +129,8 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => str
     const minColour = colourConfig?.minColour || '#ffffff';
     const maxColour = colourConfig?.maxColour || '#ff0000';
 
-    return (feature: any) => {
-      const val = Number(feature.properties?.[prop]);
+    return (feature) => {
+      const val = Number(feature.cVal);
       if (isNaN(val)) return '#888888';
 
       const factor = Math.max(0, Math.min(1, (val - min) / range));
@@ -162,9 +147,8 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => str
 
   // Classification Mode
   if (mode === 'class') {
-    const classProp = prop || 'class';
-    return (feature: any) => {
-      const val = feature.properties?.[classProp];
+    return (feature) => {
+      const val = feature.cVal;
       if (val === 'primary') return '#1f77b4';
       if (val === 'secondary') return '#ff7f0e';
       if (val === 'tertiary') return '#2ca02c';
@@ -175,70 +159,26 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => str
   return () => '#888888';
 }
 
-/**
- * Normalises Point and MultiPoint geometries into a flat array of [lng, lat] pairs.
- */
-export function getNormalisedPoints(geometry: any): [number, number][] {
-  if (!geometry) return [];
-  if (geometry.type === 'Point') {
-    return [geometry.coordinates];
-  }
-  if (geometry.type === 'MultiPoint') {
-    return geometry.coordinates;
-  }
-  // For other types, we could technically extract centroids, but for now we focus on points
-  return [];
-}
 
 /**
- * Transforms a GeoJSON feature collection into a list of rendered points.
- * This unifies filtering and geometric flattening so that complex types like
- * MultiPoint are handled consistently across custom renderers.
- *
- * This function is optimised by hoisting configuration and evaluators
- * out of the feature loop.
+ * Transforms a list of pre-processed features into a list of rendered points.
+ * This is the final step in the spike rendering pipeline.
  */
 export function getProcessedFeatures(
   config: GeoJsonConfig,
-  data: any
+  features: { coords: [number, number]; hVal: number; cVal: any }[]
 ): { coords: [number, number]; height: number; colour: string }[] {
-  if (!data || !data.features) return [];
-  console.time('processFeatures');
+  if (!features) return [];
 
   // Hoist evaluators and configuration
   const colourEvaluator = getColourEvaluator(config);
   const heightEvaluator = getHeightEvaluator(config);
-  const filterProp = config.filter?.prop;
-  const filterValues = config.filter?.values;
 
-  const results: { coords: [number, number]; height: number; colour: string }[] = [];
-
-  data.features.forEach((feature: any) => {
-    // 1. Filter Check (hoisted logic)
-    if (filterProp && filterValues) {
-      const val = String(feature.properties?.[filterProp]);
-      if (!filterValues.includes(val)) {
-        return;
-      }
-    }
-
-    // 2. Coordinate Extraction
-    const points = getNormalisedPoints(feature.geometry);
-    if (points.length === 0) return;
-
-    // 3. Evaluation (using hoisted evaluators)
-    const height = heightEvaluator(feature);
-    const colour = colourEvaluator(feature);
-
-    // 4. Collect results (one per point in MultiPoint)
-    points.forEach(coords => {
-      results.push({ coords, height, colour });
-    });
-  });
-
-  console.timeEnd('processFeatures');
-
-  return results;
+  return features.map(feature => ({
+    coords: feature.coords,
+    height: heightEvaluator(feature),
+    colour: colourEvaluator(feature)
+  }));
 }
 
 
@@ -318,72 +258,25 @@ export function getOpacityExpression(config: GeoJsonConfig): any {
   return 1;
 }
 
-/**
- * Direct evaluation of a feature's opacity.
- * Combines builder filters with feature-specific simple properties.
- */
-export function evaluateOpacity(config: GeoJsonConfig, feature: any): number {
-  const props = feature.properties || {};
-  let opacity = 1;
-
-  if (config.filter?.prop && config.filter.values) {
-    const val = String(props[config.filter.prop]);
-    if (!config.filter.values.includes(val)) {
-      opacity = 0;
-    }
-  }
-
-  if (opacity > 0 && config.colourMode === 'simple') {
-    const simpleOpacity = props['stroke-opacity'] ?? props['fill-opacity'] ?? props['opacity'] ?? 1;
-    opacity *= Number(simpleOpacity);
-  }
-
-  return opacity;
-}
-
-/**
- * Extracts the Maki icon ID or numeric symbol for a feature.
- */
-export function evaluateSymbol(config: GeoJsonConfig, feature: any): string {
-  if (config.colourMode !== 'simple') return '';
-  const symbol = feature.properties?.['marker-symbol'];
-  if (!symbol) return '';
-  return String(symbol);
-}
 
 const MIN_HEIGHT_JANK_FACTOR = 3000;
 
-/**
- * Maps a numeric feature property to a 3D spike height.
- * Factors in the configured scalar and min/max bounds from the builder.
- *
- * @returns Height in metres
- */
-export function evaluateHeight(config: GeoJsonConfig, feature: any): number {
-  return getHeightEvaluator(config)(feature);
-}
 
 /**
  * Creates a high-performance height evaluator function.
  * This hoists configuration lookups out of the evaluation logic.
- *
- * @param config The GeoJSON configuration
- * @returns A function that takes a feature and returns a height in metres
  */
-export function getHeightEvaluator(config: GeoJsonConfig): (feature: any) => number {
+export function getHeightEvaluator(config: GeoJsonConfig): (feature: { hVal: number }) => number {
   const spikeConfig = config.spike;
   if (!spikeConfig?.heightProp) return () => 0;
 
-  const prop = spikeConfig.heightProp;
   const min = spikeConfig.min ?? 0;
   const max = spikeConfig.max ?? 100;
   const scalar = spikeConfig.scalar ?? 2000000;
   const range = max - min || 1;
 
-  return (feature: any) => {
-    const val = Number(feature.properties?.[prop]);
-    if (isNaN(val)) return 0;
-
+  return (feature) => {
+    const val = feature.hVal;
     const factor = Math.max(0, Math.min(1, (val - min) / range));
     return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);
   };

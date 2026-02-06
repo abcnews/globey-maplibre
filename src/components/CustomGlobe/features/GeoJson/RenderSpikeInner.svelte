@@ -3,7 +3,7 @@
   import type { maplibregl } from '../../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { parseColor } from '../../../../lib/colours';
-  import { getProcessedFeatures } from './utils';
+  import { getColourEvaluator, getHeightEvaluator, getProcessedFeatures } from './utils';
 
   let {
     data,
@@ -49,28 +49,75 @@
     };
   });
 
+  /**
+   * Pre-process GeoJSON into a slimmed-down format for high-performance rendering.
+   * This re-runs only when 'data' or the specific config properties it pulls from change.
+   */
+  const sourceFeatures = $derived.by(() => {
+    if (!data?.features) return [];
+
+    // Cache prop lookups
+    const hProp = config.spike?.heightProp;
+    const cMode = config.colourMode;
+    const cProp = config.colourProp;
+
+    console.time('preprocessFeatures');
+    const preprocessedFeatures = data.features.map((f: any) => {
+      const props = f.properties || {};
+
+      // Extract height value
+      const hVal = hProp ? Number(props[hProp]) || 0 : 0;
+
+      // Extract colour value based on mode
+      let cVal: any;
+      if (cMode === 'simple') {
+        cVal = props['fill'] || '#888888';
+      } else if (cMode === 'scale' && cProp) {
+        cVal = Number(props[cProp] || '0');
+      } else if (cMode === 'class') {
+        cVal = props[cProp || 'class'];
+      }
+
+      return {
+        coords: f.geometry.coordinates as [number, number],
+        hVal,
+        cVal
+      };
+    });
+    console.timeEnd('preprocessFeatures');
+    return preprocessedFeatures;
+  });
+
+  /** coordinate tuples for the Three.js layer. */
+  const sourceCoordinates = $derived(sourceFeatures.map(f => f.coords));
+
   // Calculate targets and trigger animation whenever data or config changes
   $effect(() => {
-    if (!layer || !data) return;
+    if (!layer || sourceFeatures.length === 0) return;
 
-    // Use unified processing logic for filtering, coordinate extraction, and property evaluation
-    const processed = getProcessedFeatures(config, data);
+    // Use unified processing logic for filtering and property evaluation.
+    // This now accepts our pre-processed features instead of raw GeoJSON.
+    console.time('processing features');
+    const colourEvaluator = getColourEvaluator(config);
+    const heightEvaluator = getHeightEvaluator(config);
+
+    const processed = sourceFeatures.map(feature => ({
+      coords: feature.coords,
+      height: heightEvaluator(feature),
+      colour: colourEvaluator(feature)
+    }));
+    console.timeEnd('processing features');
     const count = processed.length;
 
     // Sync locations with the layer (handles instantiation of Three.js objects)
-    layer.setLocations(processed.map(p => p.coords));
+    layer.setLocations(sourceCoordinates);
 
-    // Prepare target buffers for animation
-    targetHeights = new Float32Array(count);
-    targetColours = new Float32Array(count * 3);
-
-    processed.forEach((p, i) => {
-      targetHeights[i] = p.height;
-      const [r, g, b] = parseColor(p.colour).map(c => c / 255);
-      targetColours[i * 3] = r;
-      targetColours[i * 3 + 1] = g;
-      targetColours[i * 3 + 2] = b;
-    });
+    // Prepare target buffers for animation using functional mappings.
+    // This avoids explicit iteration and manual indexing.
+    console.time('parseColour');
+    targetHeights = Float32Array.from(processed.map(p => p.height));
+    targetColours = Float32Array.from(processed.flatMap(p => parseColor(p.colour).map(c => c / 255)));
+    console.timeEnd('parseColour');
 
     // Ensure we have current state buffers to animate from
     if (!lastRenderedHeights || lastRenderedHeights.length !== count) {
@@ -101,18 +148,10 @@
     if (!layer || !startHeights || !targetHeights) return;
 
     const count = startHeights.length;
-    const heights = new Float32Array(count);
-    const colours = new Float32Array(count * 3);
 
-    for (let i = 0; i < count; i++) {
-      // Linear interpolation between start and target
-      heights[i] = startHeights[i] + (targetHeights[i] - startHeights[i]) * ease;
-
-      const idx = i * 3;
-      colours[idx] = startColours[idx] + (targetColours[idx] - startColours[idx]) * ease;
-      colours[idx + 1] = startColours[idx + 1] + (targetColours[idx + 1] - startColours[idx + 1]) * ease;
-      colours[idx + 2] = startColours[idx + 2] + (targetColours[idx + 2] - startColours[idx + 2]) * ease;
-    }
+    // Linearly interpolate between start and target buffers using functional map
+    const heights = startHeights.map((start, i) => start + (targetHeights[i] - start) * ease);
+    const colours = startColours.map((start, i) => start + (targetColours[i] - start) * ease);
 
     // Push new data to Three.js InstancedMesh
     layer.updateData(heights, colours);
