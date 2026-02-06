@@ -36,7 +36,8 @@
     OPENMAPTILES_SOURCE_ID,
     OPENMAPTILES_SOURCE_DEF,
     getStreetBaseLayers,
-    getLabelLayers
+    getLabelLayers,
+    getBaseStyleSource
   } from '../mapStyle/streetMap';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
@@ -95,7 +96,10 @@
 
       // Update background color for street map
       if (s_showBase && map.getLayer('background')) {
-        map.setPaintProperty('background', 'background-color', '#EDF0F2');
+        const defaultBackground = getBaseStyleSource().layers.find(layer => layer.id === 'background')?.paint?.[
+          'background-color'
+        ];
+        map.setPaintProperty('background', 'background-color', defaultBackground);
       }
 
       const currentStyle = map.getStyle();
