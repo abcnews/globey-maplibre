@@ -146,7 +146,7 @@ export const boundsCodec = {
 
 /**
  * Custom codec for country codes.
- * Encodes each country into 3 characters: 2 for the lowercase code, 
+ * Encodes each country into 3 characters: 2 for the lowercase code,
  * plus 'p' or 's' for primary or secondary styling.
  * e.g. [{code: 'AU', style: 'primary'}] -> "aup"
  */
@@ -185,7 +185,7 @@ export const customLabelsCodec = {
       const styles = ['country', 'level3', 'level4', 'water'];
       const styleIndex = styles.indexOf(style);
       const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
-      
+
       // Compact format: hash,name,style,number,pointless
       const data = [hash, name, s, number || 0, Number(pointless || 0)];
        // Remove trailing zeros/defaults to save space
@@ -205,10 +205,10 @@ export const customLabelsCodec = {
             JSON.parse(decodedJSON)
           : // legacy labels were fixed length
             [string.slice(0, GEOHASH_PRECISION), decode(string.slice(GEOHASH_PRECISION))];
-      
+
       const styles = ['country', 'level3', 'level4', 'water'];
       const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
-      
+
       const { lat, lon } = Geohash.decode(encodedCoords);
       return { name, coords: [Number(lon), Number(lat)], style, number, pointless: Boolean(pointless) };
     });
@@ -242,7 +242,8 @@ export const defaultMapLabels = {
   states: false,
   cities: false,
   towns: false,
-  oceans: false
+  oceans: false,
+  continents: false
 };
 
 /**
@@ -259,7 +260,8 @@ export const mapLabelsCodec = {
       val.states === defaultMapLabels.states &&
       val.cities === defaultMapLabels.cities &&
       val.towns === defaultMapLabels.towns &&
-      val.oceans === defaultMapLabels.oceans;
+      val.oceans === defaultMapLabels.oceans &&
+      val.continents === defaultMapLabels.continents;
 
     if (isDefault) return undefined;
 
@@ -268,20 +270,22 @@ export const mapLabelsCodec = {
       val.states ? 1 : 0,
       val.cities ? 1 : 0,
       val.towns ? 1 : 0,
-      val.oceans ? 1 : 0
+      val.oceans ? 1 : 0,
+      val.continents ? 1 : 0
     ].join('');
   },
   decode: (hash: any) => {
     if (hash === undefined || hash === null) return { ...defaultMapLabels };
-    const s = String(hash).padStart(5, '0');
-    if (s.length !== 5) return { ...defaultMapLabels };
-    const [countries, states, cities, towns, oceans] = s.split('').map(Number);
+    const s = String(hash).padEnd(6, '0');
+    if (s.length < 5) return { ...defaultMapLabels }; // Support legacy 5-char format
+    const [countries, states, cities, towns, oceans, continents = 0] = s.split('').map(Number);
     return {
       countries,
       states: states === 1,
       cities: cities === 1,
       towns: towns === 1,
-      oceans: oceans === 1
+      oceans: oceans === 1,
+      continents: continents === 1
     };
   }
 };

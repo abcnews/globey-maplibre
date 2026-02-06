@@ -8,7 +8,8 @@
     states: false,
     cities: false,
     towns: false,
-    oceans: false
+    oceans: false,
+    continents: false
   };
 
   function updateMapLabel(key: keyof typeof defaultLabels, value: any) {
@@ -57,6 +58,14 @@
         onchange={e => updateMapLabel('states', e.currentTarget.checked)}
       />
       States
+    </label>
+    <label class="control-label">
+      <input
+        type="checkbox"
+        checked={options.mapLabels?.continents ?? false}
+        onchange={e => updateMapLabel('continents', e.currentTarget.checked)}
+      />
+      Continents
     </label>
     <label class="control-label">
       <input

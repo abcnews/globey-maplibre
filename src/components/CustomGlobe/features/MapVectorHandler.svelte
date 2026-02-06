@@ -49,7 +49,8 @@
       states: false,
       cities: false,
       towns: false,
-      oceans: false
+      oceans: false,
+      continents: false
     },
     isSatellite = false
   }: {
@@ -60,12 +61,15 @@
       cities: boolean;
       towns: boolean;
       oceans: boolean;
+      continents: boolean;
     };
     isSatellite?: boolean;
   } = $props();
 
   // Determine if we need to show labels at all
-  const hasLabels = $derived(labels.countries > 0 || labels.states || labels.cities || labels.towns || labels.oceans);
+  const hasLabels = $derived(
+    labels.countries > 0 || labels.states || labels.cities || labels.towns || labels.oceans || labels.continents
+  );
 
   // Determine if we need to show base layers (only in street mode)
   const showBase = $derived(base === 'street' || !base);
@@ -138,16 +142,28 @@
     const map = mapRoot.map;
 
     // Track all individual label properties to ensure reactivity
-    const deps = [labels.countries, labels.states, labels.cities, labels.towns, labels.oceans];
+    const deps = [labels.countries, labels.continents, labels.states, labels.cities, labels.towns, labels.oceans];
 
     const syncVisibility = () => {
       // COUNTRIES
-      [1, 2, 3].forEach(i => {
-        const id = `place-country-${i}`;
+      // We map layers to the minimum level required for them to be visible
+      const countryLayers: Record<string, number> = {
+        'place-country-1': 1,
+        'place-country-2': 2,
+        'place-country-3': 3,
+        'place-country-other': 3
+      };
+
+      Object.entries(countryLayers).forEach(([id, minLevel]) => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.countries >= i ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', labels.countries >= minLevel ? 'visible' : 'none');
         }
       });
+
+      // CONTINENTS
+      if (map.getLayer('place-continent')) {
+        map.setLayoutProperty('place-continent', 'visibility', labels.continents ? 'visible' : 'none');
+      }
 
       // STATES
       if (map.getLayer('place-state')) {
@@ -155,19 +171,27 @@
       }
 
       // CITIES
-      ['place-city', 'place-city-capital'].forEach(id => {
+      ['place-city', 'place-city-important', 'place-city-capital', 'place-city-capital-state'].forEach(id => {
         if (map.getLayer(id)) {
           map.setLayoutProperty(id, 'visibility', labels.cities ? 'visible' : 'none');
         }
       });
 
       // TOWNS
-      if (map.getLayer('place-town')) {
-        map.setLayoutProperty('place-town', 'visibility', labels.towns ? 'visible' : 'none');
-      }
+      ['place-town', 'place-village', 'place-other'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', labels.towns ? 'visible' : 'none');
+        }
+      });
 
       // OCEANS
-      ['water-name-ocean', 'water-name-other'].forEach(id => {
+      [
+        'water-name-ocean1',
+        'water-name-sea',
+        'water-name-lake',
+        'water-name-lakeline',
+        'water-name-bay-straight'
+      ].forEach(id => {
         if (map.getLayer(id)) {
           map.setLayoutProperty(id, 'visibility', labels.oceans ? 'visible' : 'none');
         }
