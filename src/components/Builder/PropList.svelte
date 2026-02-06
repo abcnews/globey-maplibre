@@ -97,14 +97,16 @@
     border: 1px solid var(--border);
     border-radius: 0.2rem;
     overflow: hidden;
+    width: 100%;
+    min-width: 0;
   }
   .prop-list li {
     position: relative;
     padding: 0.5rem;
     padding-left: 1.5rem;
     border-bottom: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: 0.5rem;
     background: var(--background-alt);
@@ -126,7 +128,7 @@
     flex-direction: column;
     overflow: hidden;
     flex: 1;
-    pointer-events: none; /* Let drag pass through to li */
+    min-width: 0;
   }
   .name {
     white-space: nowrap;
@@ -136,6 +138,9 @@
   .description {
     font-size: 0.8em;
     opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .actions-wrapper {
