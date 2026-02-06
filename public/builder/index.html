@@ -5,12 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Globey Builder</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <!-- If you add `extractCSS:true` to your build config, add the <link> below -->
-    <!-- <link rel="stylesheet" href="index.css" /> -->
     <script src="../index.js" defer></script>
-    <!-- If you add `addModernJS:true` to your build config, replace the <script> above with the ones below -->
-    <!-- <script type="module" src="index_modern.js"></script> -->
-    <!-- <script nomodule src="index.js"></script> -->
+    <script type="text/javascript">
+      if(location.host !== 'www.abc.net.au'){
+        document.querySelector('link[rel="icon"]').setAttribute('href', 'favicon-local.svg')
+      }
+    </script>
   </head>
   <body>
     <div data-mount id="interactivemapbuilder"></div>
