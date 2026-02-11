@@ -6,30 +6,6 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 
 const MARKER_NAME = 'globey';
 
-(async () => {
-  const [builderMountEl] = selectMounts('interactivemapbuilder');
-
-  if (builderMountEl) {
-    const builderModule = await import('./components/Builder/Builder.svelte');
-
-    mount(builderModule.default, {
-      target: builderMountEl,
-      props: {}
-    });
-  }
-
-  const [iframeMountEl] = selectMounts('interactiveglobeyframe');
-
-  if (iframeMountEl) {
-    const iframeModule = await import('./components/CustomGlobeIframe/CustomGlobeIframe.svelte');
-
-    mount(iframeModule.default, {
-      target: iframeMountEl,
-      props: {}
-    });
-  }
-})();
-
 whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts(MARKER_NAME);
   mounts.forEach(appMountEl => {
@@ -62,7 +38,3 @@ whenOdysseyLoaded.then(async () => {
     }
   });
 });
-
-if (process.env.NODE_ENV === 'development') {
-  console.debug(`[interactive-globey-maplibre] public path: ${__webpack_public_path__}`);
-}
