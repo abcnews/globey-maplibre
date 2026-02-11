@@ -1,6 +1,6 @@
 {
 	"name": "interactive-globey-maplibre",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "A MapLibre globe scrollyteller and builder",
 	"license": "MIT",
 	"repository": {
@@ -17,7 +17,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
-    "deploy": "npm run build && node deploy/index.js",
+		"deploy": "npm run build && node deploy/index.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"prepack": "svelte-kit sync && svelte-package && publint",
