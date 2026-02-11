@@ -20,6 +20,7 @@
 	import PropImageSource from './ImageSource/PropImageSource.svelte';
 	import MarkerJson from './MarkerJson.svelte';
 	import IframeUrl from './IframeUrl.svelte';
+	import Favicon from './Favicon/Favicon.svelte';
 
 	let options = $state<DecodedObject>({});
 	let map = $state<maplibregl.Map>();
@@ -62,6 +63,7 @@
 </script>
 
 <svelte:window onhashchange={updateHash} />
+<Favicon />
 
 {#snippet Viz()}
 	<div class="frame">
