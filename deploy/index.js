@@ -74,7 +74,7 @@ async function deploy() {
 
     const rl = readline.createInterface({ input, output });
     const answer = await rl.question(
-      exists ? `⚠️  Directory ${remoteDir} already exists. Overwrite? (y/N): ` : 'Upload now? ?(y/N): '
+      exists ? `⚠️  Directory ${remoteDir} already exists. Overwrite? (y/N): ` : 'Upload now? (y/N): '
     );
     rl.close();
 
@@ -88,13 +88,21 @@ async function deploy() {
      */
     console.log(`📤 Uploading contents of ${DIST_DIR} to ${remoteDir}...`);
 
+    let lastFile = "";
+    client.trackProgress((info) => {
+      if (info.name !== lastFile) {
+        console.log(`  - ${info.name}`);
+        lastFile = info.name;
+      }
+    });
+
     // Ensure the remote path exists
     await client.ensureDir(remoteDir);
 
     // Upload the directory contents
     await client.uploadFromDir(DIST_DIR);
 
-    console.log(["✅ Deployment complete!", `Public dir https://www.abc.net.au/res/sites/news-projects/${name}/${version}/`]);
+    console.log(["✅ Deployment complete!", `Public dir https://www.abc.net.au/res/sites/news-projects/${name}/${version}/`].join('\n'));
   } catch (err) {
     console.error(`❌ Deployment failed: ${err.message}`);
   } finally {
