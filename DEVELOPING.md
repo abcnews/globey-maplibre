@@ -19,21 +19,24 @@ The server will automatically attempt to load certificates from your `aunty` SSL
 If you don't already have certificates for your development host, use the `aunty` CLI:
 
 ```bash
-# Default host
-aunty sign-cert
-
-# Specific host
-AUNTY_HOST=my-custom-host.aus.aunty.abc.net.au aunty sign-cert
+AUNTY_HOST=my-custom-host.aus.aunty.abc.net.au npx @abcnews/aunty sign-cert
 ```
 
 This will create `server.crt` and `server.key` in `~/.aunty/ssl/<host>/`.
 
 Once this is done you should trust it in your macOS Keychain to avoid browser warnings:
 
-#### 3. Run with SSL
-
-Once the certificate is in place, restart the dev server. Vite will automatically detect the certificates and serve over HTTPS.
-
 ```bash
 npm run dev -- --host=your-host.aus.aunty.abc.net.au
 ```
+
+## Deployment
+
+To deploy the project to the ABC content FTP:
+
+1.  **Version**: Increment the version number according to [SemVer](https://docs.npmjs.com/about-semantic-versioning) using [`npm version`](https://docs.npmjs.com/cli/commands/npm-version).
+2.  **Deploy**: Run `npm run deploy`.
+
+If the target version directory already exists on the server, you will be prompted before it is overwritten.
+
+
