@@ -5,8 +5,7 @@ import { join } from 'node:path';
 import { homedir, hostname } from 'node:os';
 
 /**
- * Get server configuration for development.
- * Falls back to HTTP if SSL certificates are not found in the aunty directory.
+ * Get SSL config from the Aunty dir, if exists. See DEVELOPING.md
  * @returns {import('vite').CommonServerOptions}
  */
 const getServer = () => {
@@ -48,6 +47,8 @@ const getServer = () => {
 /**
  * Vite plugin to export a CoreMedia-compatible non-module entrypoint to
  * bootstrap the rest of the app as type="module".
+ *
+ * /coremedia.js
  */
 const coremediaPlugin = (): Plugin => {
 	let isBuild = false;
@@ -107,4 +108,3 @@ export default defineConfig({
 	plugins: [sveltekit(), coremediaPlugin()],
 	server: getServer()
 });
-
