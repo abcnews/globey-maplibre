@@ -1,9 +1,23 @@
 {
 	"name": "interactive-globey-maplibre",
-	"version": "0.0.1",
+	"version": "0.0.4",
+	"description": "A MapLibre globe scrollyteller and builder",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+ssh://git@github.com/abcnews/interactive-globey-maplibre.git"
+	},
+	"bugs": {
+		"url": "https://github.com/abcnews/interactive-globey-maplibre/issues"
+	},
+	"homepage": "https://github.com/abcnews/interactive-globey-maplibre#readme",
+	"contributors": [
+		"Ash Kyd <kyd.ashley@abc.net.au>"
+	],
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run prepack",
+    "deploy": "npm run build && node deploy/index.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"prepack": "svelte-kit sync && svelte-package && publint",
@@ -48,6 +62,8 @@
 		"@sveltejs/package": "^2.5.7",
 		"@sveltejs/vite-plugin-svelte": "^6.2.4",
 		"@types/topojson-client": "^3.1.5",
+		"async": "^3.2.6",
+		"basic-ftp": "^5.1.0",
 		"canvas": "^2.11.2",
 		"compression-streams-polyfill": "^0.1.7",
 		"d3-geo": "^3.1.1",
