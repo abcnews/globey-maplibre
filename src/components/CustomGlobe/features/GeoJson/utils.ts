@@ -95,13 +95,6 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
 }
 
 /**
- * Direct evaluation of a feature's colour based on its properties and the builder configuration.
- * Used for custom layers (like Three.js spikes) where MapLibre expressions cannot be used.
- *
- * @returns A CSS-compatible colour string
- */
-
-/**
  * Creates a high-performance colour evaluator function.
  * This hoists configuration lookups and interpolator creation out of the evaluation logic.
  */
