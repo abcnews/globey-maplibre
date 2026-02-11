@@ -1,14 +1,25 @@
-# dependencies
-/node_modules
+node_modules
 
-# environment
-.env
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+/dist
 
-# output
-/.aunty
-
-# misc
+# OS
 .DS_Store
-npm-debug.log
-plans
-tools
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+dist-www

@@ -5,9 +5,9 @@ import {
   DivergentPalette,
   ColourMode
 } from '@abcnews/palette';
-import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../../../lib/sequentialPalette';
-import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours';
-import type { GeoJsonConfig } from '../../../../lib/marker';
+import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../../../../../interactive-globey-maplibre/src/lib/sequentialPalette';
+import { interpolateColour, getCustomPaletteInterpolator } from '../../../../../../interactive-globey-maplibre/src/lib/colours';
+import type { GeoJsonConfig } from '../../../../../../interactive-globey-maplibre/src/lib/marker';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layerUtils';
 

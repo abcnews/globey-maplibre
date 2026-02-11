@@ -1,5 +1,5 @@
 import type { maplibregl } from '../../mapLibre/index';
-import type { ImageSourceConfig, GeoJsonConfig } from '../../../lib/marker';
+import type { ImageSourceConfig, GeoJsonConfig } from '../../../../../interactive-globey-maplibre/src/lib/marker';
 
 /**
  * Generates a stable ID for GeoJSON sources based on the URL.
@@ -57,8 +57,8 @@ export function getLabelAnchor(map: maplibregl.Map): string | undefined {
  */
 export function stackLayers(map: maplibregl.Map, layerIds: string[], beforeId?: string) {
   if (!map) return;
-  
-  // We iterate backwards through the IDs because moveLayer(id, beforeId) 
+
+  // We iterate backwards through the IDs because moveLayer(id, beforeId)
   // places 'id' directly below 'beforeId'.
   // If we want [A, B] below [Label], we move B below Label, then A below Label.
   // Result: [Label, A, B]

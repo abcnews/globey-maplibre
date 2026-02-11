@@ -1,12 +1,16 @@
 {
-  "extends": "@abcnews/aunty/ts/config.json",
-  "compilerOptions": {
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "noEmit": true,
-    "allowImportingTsExtensions":true
-  },
-  "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts"]
+	"extends": "./.svelte-kit/tsconfig.json",
+	"compilerOptions": {
+		"rewriteRelativeImportExtensions": true,
+		"allowJs": true,
+		"checkJs": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"sourceMap": true,
+		"strict": true,
+		"module": "es2015",
+		"esModuleInterop": true,
+		"noEmit": true
+	}
 }
-
