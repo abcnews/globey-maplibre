@@ -9,7 +9,7 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"module": "es2015",
+		"module": "es2022",
 		"esModuleInterop": true,
 		"noEmit": true
 	}
