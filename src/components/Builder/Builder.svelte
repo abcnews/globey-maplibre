@@ -100,7 +100,12 @@
     />
     <PropGeoJSON geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
     <PropImageSource imageSources={options.imageSources || []} onchange={list => (options.imageSources = list)} />
-    <MarkerAdmin />
+    <MarkerAdmin
+      prefixes={{
+        Mark: '#mark',
+        'Scrollyteller opener': '#scrollytellerNAMEglobey1'
+      }}
+    />
     <fieldset>
       <legend>Tools</legend>
       <div style="margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem;">

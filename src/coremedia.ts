@@ -1,5 +1,5 @@
 import { whenOdysseyLoaded } from '@abcnews/env-utils';
-import { selectMounts } from '@abcnews/mount-utils';
+import { getMountValue, selectMounts } from '@abcnews/mount-utils';
 import { mount } from 'svelte';
 import ScrollytellerGlobe from './components/ScrollytellerGlobe/ScrollytellerGlobe.svelte';
 import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
@@ -7,16 +7,12 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 const MARKER_NAME = 'globey';
 
 whenOdysseyLoaded.then(async () => {
-  const mounts = selectMounts(MARKER_NAME);
-  mounts.forEach(appMountEl => {
-    const id = appMountEl.id.match(/\d+$/)?.[0];
-    if (mounts.length > 1 && !id) {
-      console.error(`IDs must be specified when multiple mounts are used. E.g. #${MARKER_NAME}1`);
-      return;
-    }
+  const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, { markAsUsed: false });
+  mounts.forEach(mountEl => {
+    const scrollyName = getMountValue(mountEl, 'scrollytellerNAME');
 
     try {
-      const scrollyConfig = loadScrollyteller(MARKER_NAME + (id || ''), 'u-full', 'mark');
+      const scrollyConfig = loadScrollyteller(scrollyName, 'u-full', 'mark');
 
       const panels = scrollyConfig.panels.map(panel => ({
         ...panel,
@@ -34,7 +30,7 @@ whenOdysseyLoaded.then(async () => {
     } catch (e) {
       const errorMessage = 'Unable to load interactive.';
       console.error(errorMessage, e);
-      appMountEl.innerHTML = `<p style="border:1px solid red;padding:1rem;">${errorMessage}</p>`;
+      mountEl.innerHTML = `<p style="border:1px solid red;padding:1rem;">${errorMessage}</p>`;
     }
   });
 });
