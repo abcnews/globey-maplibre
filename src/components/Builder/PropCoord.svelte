@@ -1,15 +1,21 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
+  import PropBounds from './PropBounds.svelte';
 
   import { disableMapAnimation } from '../../lib/stores';
 
   let {
     map,
-    onchange
+    onchange,
+    onBoundsChange,
+    onFitGlobeChange
   }: {
     map: maplibregl.Map;
     onchange?: (coords: [number, number], z?: number) => void;
+    onBoundsChange?: (bounds: [number, number][]) => void;
+    onFitGlobeChange?: (fitGlobe: boolean) => void;
   } = $props();
 
   let inputValue = $state('');
@@ -95,11 +101,23 @@
   /**
    * Update store, map, and call onchange
    */
-  function update(coords: [number, number], z?: number) {
-    // Disable animation for this update
-    $disableMapAnimation = true;
-
+  function update(coords: [number, number], z?: number, smooth = false) {
     const newZ = z ?? $options.z;
+
+    // Guard: check if anything has actually changed meaningfully
+    const dLng = Math.abs(($options.coords?.[0] ?? 0) - coords[0]);
+    const dLat = Math.abs(($options.coords?.[1] ?? 0) - coords[1]);
+    const dZ = Math.abs(($options.z ?? 0) - (newZ ?? 0));
+
+    if (dLng < 0.000001 && dLat < 0.000001 && dZ < 0.001) {
+      return;
+    }
+
+    // Disable animation for this update unless explicitly smooth
+    if (!smooth) {
+      $disableMapAnimation = true;
+    }
+
     $options = {
       ...$options,
       coords,
@@ -108,9 +126,11 @@
     onchange?.(coords, newZ);
 
     // Re-enable animation in the next tick
-    setTimeout(() => {
-      $disableMapAnimation = false;
-    }, 0);
+    if (!smooth) {
+      setTimeout(() => {
+        $disableMapAnimation = false;
+      }, 0);
+    }
   }
 
   function onsubmit(e: SubmitEvent) {
@@ -150,19 +170,34 @@
 </script>
 
 <form {onsubmit}>
-  <fieldset disabled={hasBounds}>
+  <fieldset>
     <legend>Coord</legend>
-    <small>
-      {#if hasBounds}
-        Coordinates/zoom are disabled because map bounds are set. You can only use one or the other.
-      {:else}
-        Paste a Google Maps link or coordinates (lat, lng)
-      {/if}
-    </small>
+
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
 
     <details>
       <summary>Advanced</summary>
+
+      <hr />
+
+      <label for="fit-globe-checkbox">
+        <input
+          type="checkbox"
+          id="fit-globe-checkbox"
+          bind:checked={$options.fitGlobe}
+          onchange={() => {
+            onFitGlobeChange?.(!!$options.fitGlobe);
+            if ($options.fitGlobe) {
+              $options = {
+                ...$options,
+                bounds: []
+              };
+              onBoundsChange?.([]);
+            }
+          }}
+        /> Fit globe to screen
+      </label>
+
       <div class="coord-grid">
         <label for="zoom-slider">Zoom</label>
         <input
@@ -171,6 +206,7 @@
           min="-1"
           max="13"
           step="0.1"
+          disabled={$options.fitGlobe}
           value={$options?.z ?? 3}
           oninput={e => update($options.coords!, parseFloat(e.currentTarget.value))}
           aria-valuemin={-1}
@@ -215,6 +251,10 @@
         />
         <span class="value">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
       </div>
+
+      <hr />
+
+      <PropBounds {map} onchange={onBoundsChange} {onFitGlobeChange} />
     </details>
   </fieldset>
 </form>

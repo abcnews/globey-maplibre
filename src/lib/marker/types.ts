@@ -1,86 +1,87 @@
 export interface Label {
-  name: string;
-  coords: [number, number];
-  style: string;
-  number: number;
-  pointless: boolean;
+	name: string;
+	coords: [number, number];
+	style: string;
+	number: number;
+	pointless: boolean;
 }
 
 export interface Country {
-  code: string;
-  style: 'primary' | 'secondary';
+	code: string;
+	style: 'primary' | 'secondary';
 }
 
 export interface PointSize {
-  value: number;
-  unit: 'p' | 'k';
+	value: number;
+	unit: 'p' | 'k';
 }
 
 export interface GeoJsonConfig {
-  url: string;
-  type: 'areas' | 'lines' | 'points' | 'spikes';
-  colourMode: 'scale' | 'simple' | 'class' | 'override';
-  colourProp?: string;
-  colourConfig?: {
-    min?: number;
-    max?: number;
-    minColour?: string;
-    maxColour?: string;
-    scale?: { [key: string]: string };
-    override?: string;
-    paletteType?: 'sequential' | 'divergent' | 'custom';
-    paletteVariant?: string;
-    customPalette?: string[];
-  };
+	url: string;
+	type: 'areas' | 'lines' | 'points' | 'spikes';
+	colourMode: 'scale' | 'simple' | 'class' | 'override';
+	colourProp?: string;
+	colourConfig?: {
+		min?: number;
+		max?: number;
+		minColour?: string;
+		maxColour?: string;
+		scale?: { [key: string]: string };
+		override?: string;
+		paletteType?: 'sequential' | 'divergent' | 'custom';
+		paletteVariant?: string;
+		customPalette?: string[];
+	};
 
-  filter?: { prop: string; values: string[] };
-  spike?: {
-    heightProp: string;
-    scalar: number;
-    min?: number;
-    max?: number;
-  };
-  pointSize?: PointSize;
+	filter?: { prop: string; values: string[] };
+	spike?: {
+		heightProp: string;
+		scalar: number;
+		min?: number;
+		max?: number;
+	};
+	pointSize?: PointSize;
 }
 
 export interface ImageSourceConfig {
-  id: string;
-  url: string;
-  opacity: number;
-  coordinates: [number, number][];
+	id: string;
+	url: string;
+	opacity: number;
+	coordinates: [number, number][];
 }
 
 export interface DecodedObject {
-  z?: number;
-  /** coordinate in [longitude, latutude] */
-  coords?: [number, number];
-  bounds?: [number, number][];
-  highlightCountries?: Country[];
-  labels?: Label[];
-  legend?: any[];
-  base?: 'street' | 'countries' | 'satellite';
-  mapLabels?: {
-    countries: number;
-    states: boolean;
-    cities: boolean;
-    towns: boolean;
-    oceans: boolean;
-    continents: boolean;
-  };
-  geoJson?: GeoJsonConfig[];
-  imageSources?: ImageSourceConfig[];
-  projection?: 'globe' | 'mercator';
-  satelliteVariant?: 'blue' | 'black';
+	z?: number;
+	/** coordinate in [longitude, latutude] */
+	coords?: [number, number];
+	bounds?: [number, number][];
+	highlightCountries?: Country[];
+	labels?: Label[];
+	legend?: any[];
+	base?: 'street' | 'countries' | 'satellite';
+	mapLabels?: {
+		countries: number;
+		states: boolean;
+		cities: boolean;
+		towns: boolean;
+		oceans: boolean;
+		continents: boolean;
+	};
+	geoJson?: GeoJsonConfig[];
+	imageSources?: ImageSourceConfig[];
+	projection?: 'globe' | 'mercator';
+	satelliteVariant?: 'blue' | 'black';
+	fitGlobe?: boolean;
 }
 
 export interface DecodeProps {
-  z?: string | number;
-  geohash?: string;
-  b?: string;
-  labels?: string | string[];
-  legend?: string;
-  c?: string;
-  gj?: string;
-  p?: string;
-  is?: string;
+	z?: string | number;
+	geohash?: string;
+	b?: string;
+	labels?: string | string[];
+	legend?: string;
+	c?: string;
+	gj?: string;
+	p?: string;
+	is?: string;
 }
