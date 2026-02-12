@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
 
@@ -95,11 +96,23 @@
   /**
    * Update store, map, and call onchange
    */
-  function update(coords: [number, number], z?: number) {
-    // Disable animation for this update
-    $disableMapAnimation = true;
-
+  function update(coords: [number, number], z?: number, smooth = false) {
     const newZ = z ?? $options.z;
+
+    // Guard: check if anything has actually changed meaningfully
+    const dLng = Math.abs(($options.coords?.[0] ?? 0) - coords[0]);
+    const dLat = Math.abs(($options.coords?.[1] ?? 0) - coords[1]);
+    const dZ = Math.abs(($options.z ?? 0) - (newZ ?? 0));
+
+    if (dLng < 0.000001 && dLat < 0.000001 && dZ < 0.001) {
+      return;
+    }
+
+    // Disable animation for this update unless explicitly smooth
+    if (!smooth) {
+      $disableMapAnimation = true;
+    }
+
     $options = {
       ...$options,
       coords,
@@ -108,9 +121,11 @@
     onchange?.(coords, newZ);
 
     // Re-enable animation in the next tick
-    setTimeout(() => {
-      $disableMapAnimation = false;
-    }, 0);
+    if (!smooth) {
+      setTimeout(() => {
+        $disableMapAnimation = false;
+      }, 0);
+    }
   }
 
   function onsubmit(e: SubmitEvent) {
@@ -147,18 +162,62 @@
     const currentLng = map?.getCenter().lng ?? $options.coords?.[0] ?? 0;
     update([currentLng, lat]);
   }
+
+  function fitTheGlobe() {
+    if (!map) return;
+
+    const container = map.getContainer();
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+
+    // 1. Determine how big (in pixels) we want the globe diameter to be on screen.
+    const padding = -20;
+    const targetDiameterPx = Math.min(width, height) - padding * 2;
+
+    // 2. MapLibre's zoom logic is based on a Mercator projection, which stretches
+    // the world as you move away from the equator by a factor of 1/cos(latitude).
+    // To keep the globe a constant physical size, we must shrink our target
+    // dimensions by cos(latitude) to counteract that internal magnification.
+    const lat = $options.coords?.[1] ?? 0;
+    const latRad = (lat * Math.PI) / 180;
+    const mercatorScaleCorrection = Math.cos(latRad);
+
+    // 3. Calculate the necessary world circumference (in pixels) to achieve
+    // our target diameter. On a sphere, Circumference = Diameter * PI.
+    const requiredWorldCircumferencePx = targetDiameterPx * Math.PI * mercatorScaleCorrection;
+
+    // 4. MapLibre defines Zoom 0 as a world circumference of 512px.
+    // Each zoom level doubles the pixel size (exponential growth: 512 * 2^z).
+    // We use Math.log2 to convert that pixel growth back into a linear zoom level 'z'.
+    const targetZoom = Math.log2(requiredWorldCircumferencePx / 512);
+
+    const storeZoom = $options.z ?? 0;
+    if (Math.abs(storeZoom - targetZoom) > 0.01) {
+      update($options.coords || [0, 0], targetZoom, true);
+    }
+  }
+
+  $effect(() => {
+    if ($options.fitGlobe) {
+      untrack(() => fitTheGlobe());
+    }
+  });
 </script>
 
 <form {onsubmit}>
   <fieldset disabled={hasBounds}>
     <legend>Coord</legend>
-    <small>
-      {#if hasBounds}
-        Coordinates/zoom are disabled because map bounds are set. You can only use one or the other.
-      {:else}
-        Paste a Google Maps link or coordinates (lat, lng)
-      {/if}
-    </small>
+    <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-bottom="0.5rem">
+      <input
+        type="checkbox"
+        id="fit-globe-checkbox"
+        bind:checked={$options.fitGlobe}
+        onchange={() => {
+          if ($options.fitGlobe) fitTheGlobe();
+        }}
+      />
+      <label for="fit-globe-checkbox">Fit globe to screen</label>
+    </div>
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
 
     <details>
@@ -171,6 +230,7 @@
           min="-1"
           max="13"
           step="0.1"
+          disabled={$options.fitGlobe}
           value={$options?.z ?? 3}
           oninput={e => update($options.coords!, parseFloat(e.currentTarget.value))}
           aria-valuemin={-1}
