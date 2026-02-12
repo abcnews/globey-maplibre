@@ -5,10 +5,12 @@
 
   let {
     map,
-    onchange
+    onchange,
+    onFitGlobeChange
   }: {
     map: maplibregl.Map;
     onchange?: (bounds: [number, number][]) => void;
+    onFitGlobeChange?: (fitGlobe: boolean) => void;
   } = $props();
 
   let isPicking = $state(false);
@@ -108,8 +110,10 @@
 
         $options = {
           ...$options,
-          bounds: points
+          bounds: points,
+          fitGlobe: false
         };
+        onFitGlobeChange?.(false);
         onchange?.(points);
       }
     }
@@ -131,24 +135,30 @@
   }
 </script>
 
-<fieldset>
-  <legend>Bounds</legend>
-  <small
-    >Set the zoom of the map by picking the locations you want to be shown. This zooms to fit the contents regardless of
-    screen size.</small
+<small
+  >Set the zoom of the map by picking the locations you want to be shown. This zooms to fit the contents regardless of
+  screen size.</small
+>
+<div style:display="flex" style:gap="0.5rem" style:align-items="center">
+  <button
+    type="button"
+    onclick={() => {
+      if (!isPicking) {
+        $options.fitGlobe = false;
+        onFitGlobeChange?.(false);
+      }
+      togglePicking();
+    }}
   >
-  <div style:display="flex" style:gap="0.5rem" style:align-items="center">
-    <button type="button" onclick={togglePicking}>
-      {isPicking ? 'Finish Picking' : 'Pick Bounds'}
-    </button>
-    {#if points.length > 0}
-      <small>{points.length} points</small>
-      <button type="button" onclick={clearPoints} style:font-size="0.8rem">Clear</button>
-    {/if}
-  </div>
-  {#if isPicking}
-    <small style:display="block" style:margin-top="0.5rem">
-      Click on map to add points. Click a point to remove it.
-    </small>
+    {isPicking ? 'Finish Picking' : 'Pick Bounds'}
+  </button>
+  {#if points.length > 0}
+    <small>{points.length} points</small>
+    <button type="button" onclick={clearPoints} style:font-size="0.8rem">Clear</button>
   {/if}
-</fieldset>
+</div>
+{#if isPicking}
+  <small style:display="block" style:margin-top="0.5rem">
+    Click on map to add points. Click a point to remove it.
+  </small>
+{/if}

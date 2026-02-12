@@ -2,15 +2,20 @@
   import { untrack } from 'svelte';
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
+  import PropBounds from './PropBounds.svelte';
 
   import { disableMapAnimation } from '../../lib/stores';
 
   let {
     map,
-    onchange
+    onchange,
+    onBoundsChange,
+    onFitGlobeChange
   }: {
     map: maplibregl.Map;
     onchange?: (coords: [number, number], z?: number) => void;
+    onBoundsChange?: (bounds: [number, number][]) => void;
+    onFitGlobeChange?: (fitGlobe: boolean) => void;
   } = $props();
 
   let inputValue = $state('');
@@ -199,29 +204,45 @@
 
   $effect(() => {
     if ($options.fitGlobe) {
+      // Ensure bounds are cleared if fitGlobe is active
+      if ($options.bounds?.length) {
+        $options = { ...$options, bounds: [] };
+      }
       untrack(() => fitTheGlobe());
     }
   });
 </script>
 
 <form {onsubmit}>
-  <fieldset disabled={hasBounds}>
+  <fieldset>
     <legend>Coord</legend>
-    <div style:display="flex" style:align-items="center" style:gap="0.5rem" style:margin-bottom="0.5rem">
-      <input
-        type="checkbox"
-        id="fit-globe-checkbox"
-        bind:checked={$options.fitGlobe}
-        onchange={() => {
-          if ($options.fitGlobe) fitTheGlobe();
-        }}
-      />
-      <label for="fit-globe-checkbox">Fit globe to screen</label>
-    </div>
+
     <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
 
     <details>
       <summary>Advanced</summary>
+
+      <hr />
+
+      <label for="fit-globe-checkbox">
+        <input
+          type="checkbox"
+          id="fit-globe-checkbox"
+          bind:checked={$options.fitGlobe}
+          onchange={() => {
+            onFitGlobeChange?.(!!$options.fitGlobe);
+            if ($options.fitGlobe) {
+              $options = {
+                ...$options,
+                bounds: []
+              };
+              onBoundsChange?.([]);
+              fitTheGlobe();
+            }
+          }}
+        /> Fit globe to screen
+      </label>
+
       <div class="coord-grid">
         <label for="zoom-slider">Zoom</label>
         <input
@@ -275,6 +296,10 @@
         />
         <span class="value">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
       </div>
+
+      <hr />
+
+      <PropBounds {map} onchange={onBoundsChange} {onFitGlobeChange} />
     </details>
   </fieldset>
 </form>
