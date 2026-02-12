@@ -71,9 +71,9 @@
       map.on('load', () => {
         onLoad?.(map);
         rootNode.style.opacity = '1';
+        mapInstance = map;
       });
 
-      mapInstance = map;
       return map;
     }}
   >

@@ -3,8 +3,8 @@
  * Extracts north, south, east, and west values from a KML string or fragment
  * and returns them as a 4-point coordinate array [TL, TR, BR, BL] as
  * expected by MapLibre image sources.
- * 
- * We use a regex approach here to be robust against XML fragments 
+ *
+ * We use a regex approach here to be robust against XML fragments
  * and to be testable in a Node environment without DOM dependencies.
  */
 export function parseKmlCoords(input: string): [number, number][] | null {
@@ -36,10 +36,14 @@ export function parseKmlCoords(input: string): [number, number][] | null {
  * Extracts latitude, longitude, zoom, and pitch from a Nearmap URL
  * and calculates the bounding box for a standard 1920x1080 container.
  */
-export function parseNearmapUrl(url: string, width = 1920, height = 1080): { coordinates: [number, number][], pitch: number } | null {
+export function parseNearmapUrl(
+  url: string,
+  width = 1920,
+  height = 1080
+): { coordinates: [number, number][]; pitch: number } | null {
   // Example URL: https://apps.nearmap.com/maps/#/wD1AwlSPT5q9e6b5KpoBvQ/@-27.4809010,153.0041531,18.00z,0d/V/20241106
   const match = url.match(/@(-?\d+\.\d+),(-?\d+\.\d+),(\d+\.?\d*)z,(\d+\.?\d*)d/);
-  
+
   if (!match) return null;
 
   const lat = Number(match[1]);
@@ -73,10 +77,10 @@ export function parseNearmapUrl(url: string, width = 1920, height = 1080): { coo
   // Find the corners by offseting half the container dimensions
   // MapLibre image sources expect TL, TR, BR, BL
   // Note: unproject uses (x, y) where y grows downwards (pixel space)
-  const tl = unproject(center.x - width / 2, center.y - height / 2);
-  const tr = unproject(center.x + width / 2, center.y - height / 2);
-  const br = unproject(center.x + width / 2, center.y + height / 2);
-  const bl = unproject(center.x - width / 2, center.y + height / 2);
+  const tl = unproject(center.x - width / 4, center.y - height / 4);
+  const tr = unproject(center.x + width / 4, center.y - height / 4);
+  const br = unproject(center.x + width / 4, center.y + height / 4);
+  const bl = unproject(center.x - width / 4, center.y + height / 4);
 
   return {
     coordinates: [tl, tr, br, bl],

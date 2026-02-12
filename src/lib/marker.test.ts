@@ -1,3 +1,4 @@
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
 import {
@@ -76,7 +77,6 @@ describe('marker', () => {
       assert.ok(markerSchema.z);
       assert.ok(markerSchema.labels);
     });
-
   });
 
   describe('encodeFragment / decodeFragment', () => {
@@ -245,7 +245,10 @@ describe('marker', () => {
       const fragment = await encodeFragment(input);
       const decoded = await decodeFragment(fragment);
 
-      assert.deepStrictEqual(decoded.geoJson![0].colourConfig?.customPalette, input.geoJson[0].colourConfig.customPalette);
+      assert.deepStrictEqual(
+        decoded.geoJson![0].colourConfig?.customPalette,
+        input.geoJson[0].colourConfig.customPalette
+      );
       // Ensure it was encoded efficiently (not as a full JSON array of strings)
       assert.ok(!fragment.includes('ff0000')); // Should be base36
     });
@@ -355,8 +358,12 @@ describe('marker', () => {
 
       // Check precision - 10 chars is ~0.6m which is ~0.000005 degrees
       // We expect less than 0.00001 difference
-      assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources[0].coordinates[0][0]) < 0.00001);
-      assert.ok(Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources[0].coordinates[0][1]) < 0.00001);
+      assert.ok(
+        Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources[0].coordinates[0][0]) < 0.00001
+      );
+      assert.ok(
+        Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources[0].coordinates[0][1]) < 0.00001
+      );
     });
 
     it('should compress and decompress recognized URLs', () => {
@@ -374,8 +381,16 @@ describe('marker', () => {
     it('should filter out invalid URLs during encode', async () => {
       const input = {
         geoJson: [
-          { url: 'https://live-production.wcms.abc-cdn.net.au/valid.json', type: 'areas' as const, colourMode: 'simple' as const },
-          { url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.json', type: 'areas' as const, colourMode: 'simple' as const }
+          {
+            url: 'https://live-production.wcms.abc-cdn.net.au/valid.json',
+            type: 'areas' as const,
+            colourMode: 'simple' as const
+          },
+          {
+            url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.json',
+            type: 'areas' as const,
+            colourMode: 'simple' as const
+          }
         ]
       };
       const fragment = await encodeFragment(input);
