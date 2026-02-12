@@ -167,50 +167,6 @@
     const currentLng = map?.getCenter().lng ?? $options.coords?.[0] ?? 0;
     update([currentLng, lat]);
   }
-
-  function fitTheGlobe() {
-    if (!map) return;
-
-    const container = map.getContainer();
-    const width = container.clientWidth;
-    const height = container.clientHeight;
-
-    // 1. Determine how big (in pixels) we want the globe diameter to be on screen.
-    const padding = -20;
-    const targetDiameterPx = Math.min(width, height) - padding * 2;
-
-    // 2. MapLibre's zoom logic is based on a Mercator projection, which stretches
-    // the world as you move away from the equator by a factor of 1/cos(latitude).
-    // To keep the globe a constant physical size, we must shrink our target
-    // dimensions by cos(latitude) to counteract that internal magnification.
-    const lat = $options.coords?.[1] ?? 0;
-    const latRad = (lat * Math.PI) / 180;
-    const mercatorScaleCorrection = Math.cos(latRad);
-
-    // 3. Calculate the necessary world circumference (in pixels) to achieve
-    // our target diameter. On a sphere, Circumference = Diameter * PI.
-    const requiredWorldCircumferencePx = targetDiameterPx * Math.PI * mercatorScaleCorrection;
-
-    // 4. MapLibre defines Zoom 0 as a world circumference of 512px.
-    // Each zoom level doubles the pixel size (exponential growth: 512 * 2^z).
-    // We use Math.log2 to convert that pixel growth back into a linear zoom level 'z'.
-    const targetZoom = Math.log2(requiredWorldCircumferencePx / 512);
-
-    const storeZoom = $options.z ?? 0;
-    if (Math.abs(storeZoom - targetZoom) > 0.01) {
-      update($options.coords || [0, 0], targetZoom, true);
-    }
-  }
-
-  $effect(() => {
-    if ($options.fitGlobe) {
-      // Ensure bounds are cleared if fitGlobe is active
-      if ($options.bounds?.length) {
-        $options = { ...$options, bounds: [] };
-      }
-      untrack(() => fitTheGlobe());
-    }
-  });
 </script>
 
 <form {onsubmit}>
@@ -237,7 +193,6 @@
                 bounds: []
               };
               onBoundsChange?.([]);
-              fitTheGlobe();
             }
           }}
         /> Fit globe to screen
