@@ -375,7 +375,7 @@ describe('marker', () => {
 
     it('should validate URLs correctly', () => {
       assert.strictEqual(isValidUrl('https://live-production.wcms.abc-cdn.net.au/foo'), true);
-      assert.strictEqual(isValidUrl('https://preview-production.wcms.abc-cdn.net.au/foo'), false);
+      assert.strictEqual(isValidUrl('https://preview.wcms.abc-cdn.net.au/foo'), false);
     });
 
     it('should filter out invalid URLs during encode', async () => {

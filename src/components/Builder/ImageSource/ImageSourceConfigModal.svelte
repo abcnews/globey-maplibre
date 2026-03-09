@@ -71,7 +71,7 @@
         <label for="img-url">Image URL</label>
         <input id="img-url" type="text" bind:value={url} placeholder="https://..." />
         <p style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
-          Use <code>live-production</code> or <code>res/sites</code> URLs. <code>preview-production</code> is not supported.
+          Use <code>live-production</code> or <code>res/sites</code> URLs. <code>preview</code> is not supported.
         </p>
       </fieldset>
 

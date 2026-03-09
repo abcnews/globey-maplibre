@@ -4,14 +4,12 @@ const URL_TOKENS = [
   ['https://live-production.wcms.abc-cdn.net.au/', '~3']
 ] as const;
 
-const INVALID_URL_PREFIX = 'https://preview-production.wcms.abc-cdn.net.au/';
-
 /**
  * Validates if a URL is allowed (not a preview URL)
  */
 export function isValidUrl(url: string | undefined): boolean {
   if (!url) return false;
-  return !url.startsWith(INVALID_URL_PREFIX);
+  return !url.includes('preview-');
 }
 
 /**
