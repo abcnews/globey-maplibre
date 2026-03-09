@@ -12,7 +12,7 @@
 
   const setConfig = async d => {
     const decoded = await decodeObject(d, true);
-    if (stringify(options) === stringify(decoded)) {
+    if (JSON.stringify(options) === JSON.stringify(decoded)) {
       return;
     }
     options = decoded;
