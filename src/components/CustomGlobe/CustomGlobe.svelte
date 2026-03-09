@@ -41,6 +41,10 @@
   <MapLibreLoader
     {rootElStyle}
     onLoad={async ({ rootNode, maplibregl }) => {
+      if (!rootNode) {
+        console.log('no root node', rootNode, maplibregl);
+        return false;
+      }
       rootNode.style.opacity = '0';
       const map = new maplibregl.Map({
         zoom: options.z || 3,
