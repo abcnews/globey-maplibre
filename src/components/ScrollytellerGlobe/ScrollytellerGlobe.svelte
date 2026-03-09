@@ -11,16 +11,30 @@
   let options = $state();
 
   const setConfig = async d => {
+    console.log('[ScrollytellerGlobe] setConfig called', d);
     const decoded = await decodeObject(d, true);
+    console.log('[ScrollytellerGlobe] decoded options', decoded);
     if (JSON.stringify(options) === JSON.stringify(decoded)) {
+      console.log('[ScrollytellerGlobe] options same, skipping update');
       return;
     }
+    console.log('[ScrollytellerGlobe] options different, updating');
     options = decoded;
   };
 
+  $effect(() => {
+    console.log('[ScrollytellerGlobe] options updated', options);
+  });
+
+  $effect(() => {
+    console.log('[ScrollytellerGlobe] panels changed', panels);
+  });
+
   let loading = $state(false);
   onMount(() => {
+    console.log('[ScrollytellerGlobe] onMount');
     decodeObject(panels[0]?.data, true).then(decodedOptions => {
+      console.log('[ScrollytellerGlobe] Initial options set from mount', decodedOptions);
       options = decodedOptions;
     });
 
@@ -28,18 +42,26 @@
     setTimeout(() => {
       loading = true;
     }, 1200);
+
+    return () => {
+      console.log('[ScrollytellerGlobe] unmounting');
+    };
   });
 </script>
 
 {#if options}
+  {console.log('[ScrollytellerGlobe] Rendering Scrollyteller block, options is set') || ''}
   <Scrollyteller {panels} onMarker={setConfig} discardSlot={true} layout={LAYOUT}>
     <div class="container">
+      {console.log('[ScrollytellerGlobe] Rendering container div') || ''}
       {#if loading}
         <div class="loading"></div>
       {/if}
       <CustomGlobe {options} rootElStyle="width:100%;height:100vh" interactive={false} />
     </div>
   </Scrollyteller>
+{:else}
+  {console.log('[ScrollytellerGlobe] options is NOT set, rendering nothing') || ''}
 {/if}
 
 <style type="scss">
