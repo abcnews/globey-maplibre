@@ -51,7 +51,7 @@
 
 {#if options}
   {console.log('[ScrollytellerGlobe] Rendering Scrollyteller block, options is set') || ''}
-  <Scrollyteller {panels} onMarker={setConfig} discardSlot={true} layout={LAYOUT}>
+  <Scrollyteller {panels} onMarker={setConfig} layout={LAYOUT}>
     <div class="container">
       {console.log('[ScrollytellerGlobe] Rendering container div') || ''}
       {#if loading}
