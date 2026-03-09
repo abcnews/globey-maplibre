@@ -13,6 +13,7 @@
   import { MAX_ZOOM } from '../../lib/constants';
   import MalibrePreload from './maplibrePreload.js';
   import type { maplibregl } from '../mapLibre/index';
+  import { isDarkBase } from './mapStyle/utils';
 
   type Props = {
     rootElStyle?: string;
@@ -25,6 +26,7 @@
 
   let mapInstance = $state<maplibregl.Map | null>(null);
 
+  const isDark = $derived(isDarkBase(options.base || 'street'));
   const isSatellite = $derived(options.base === 'satellite');
   const isVectorLight = $derived(options.base === 'street' || options.base === 'countries');
 </script>
@@ -32,6 +34,7 @@
 <div
   class="custom-globe"
   class:custom-globe--satellite={isSatellite}
+  class:custom-globe--dark={isDark}
   class:custom-globe--vector-light={isVectorLight}
   style={rootElStyle}
 >
@@ -83,7 +86,7 @@
 
       <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
 
-      <MapCustomLabelHandler labels={options.labels} />
+      <MapCustomLabelHandler labels={options.labels} {isDark} />
 
       {#if options.base === 'countries'}
         <MapCountriesBaseHandler />

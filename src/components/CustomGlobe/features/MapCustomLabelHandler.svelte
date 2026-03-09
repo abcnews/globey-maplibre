@@ -6,7 +6,7 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let { labels = [] }: { labels?: Label[] } = $props();
+  let { labels = [], isDark = false }: { labels?: Label[]; isDark?: boolean } = $props();
   let markers: maplibregl.Marker[] = [];
 
   const labelsJson = $derived(JSON.stringify(labels));
@@ -31,7 +31,7 @@
         const el = document.createElement('div');
         mount(CustomLabel, {
           target: el,
-          props: { name: label.name, style: label.style, pointless: label.pointless }
+          props: { name: label.name, style: label.style, pointless: label.pointless, isDark }
         });
 
         const marker = new maplibregl.Marker({

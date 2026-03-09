@@ -1,8 +1,13 @@
 <script lang="ts">
-  let { name, style, pointless } = $props<{ name: string; style: string; pointless?: boolean }>();
+  let {
+    name,
+    style,
+    pointless,
+    isDark = false
+  } = $props<{ name: string; style: string; pointless?: boolean; isDark?: boolean }>();
 </script>
 
-<div class="globey__label globey__label--{style}">
+<div class="globey__label globey__label--{style}" class:globey__label--dark={isDark}>
   {#if !pointless}
     <div class="globey__label-marker globey__label-marker--{style}"></div>
   {/if}
@@ -41,6 +46,13 @@
 
     // GlobeyDomManager
     --point-border: #1f2225;
+
+    &--dark {
+      --text-stroke: rgba(0, 0, 0, 0.8);
+      --text-color: #ffffff;
+      --country-text: #ffffff;
+      --water-text: #ffffff;
+    }
   }
 
   .globey__label {

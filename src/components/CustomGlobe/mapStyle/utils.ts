@@ -8,10 +8,39 @@ const EXCLUDED_LAYER_IDS = ['terrarium', 'natural_earth_shading'];
 const EXCLUDED_SOURCES = ['IndividualCountries'];
 
 /**
+ * Base layer configuration to define theme and other properties.
+ */
+export interface BaseLayerConfig {
+  id: string;
+  theme: 'light' | 'dark';
+}
+
+/**
+ * Standardized base layer definitions.
+ */
+export const BASE_LAYERS: Record<string, BaseLayerConfig> = {
+  street: { id: 'street', theme: 'light' },
+  countries: { id: 'countries', theme: 'light' },
+  satellite: { id: 'satellite', theme: 'dark' }
+};
+
+/**
+ * Determines if a base layer is dark.
+ */
+export function isDarkBase(baseId: string): boolean {
+  return BASE_LAYERS[baseId]?.theme === 'dark';
+}
+
+/**
  * Simple helper to extract a color (or other paint property) from a style layer.
  * Returns the first found property if multiple stops are defined, or the literal value.
  */
-export function getStyleColor(style: maplibregl.StyleSpecification, layerId: string, property: string = 'fill-color', fallback: string = '#ccc'): string {
+export function getStyleColor(
+  style: maplibregl.StyleSpecification,
+  layerId: string,
+  property: string = 'fill-color',
+  fallback: string = '#ccc'
+): string {
   const layer = style.layers?.find(l => l.id === layerId);
   if (!layer || !layer.paint) return fallback;
 
@@ -48,10 +77,11 @@ export function patchStyleWithABCSources(styleSource: maplibregl.StyleSpecificat
 
   // Filter out unwanted layers (e.g. heightmaps and large sample layers)
   // IndividualCountries is removed because it's too large and unnecessary for this globe configuration
-  styleSource.layers = styleSource.layers.filter(layer =>
-    !EXCLUDED_LAYER_IDS.includes(layer.id) &&
-    // @ts-ignore
-    !EXCLUDED_SOURCES.includes(layer.source as string)
+  styleSource.layers = styleSource.layers.filter(
+    layer =>
+      !EXCLUDED_LAYER_IDS.includes(layer.id) &&
+      // @ts-ignore
+      !EXCLUDED_SOURCES.includes(layer.source as string)
   );
 
   return styleSource;
