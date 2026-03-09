@@ -1,12 +1,10 @@
-export const THREE_URL = "https://www.abc.net.au/res/sites/news-projects/threejs/0.182.0/three.module.min.js";
+export const THREE_URL = 'https://www.abc.net.au/res/sites/news-projects/threejs/0.182.0/three.module.min.js';
 
 let promise: Promise<THREE> | null = null;
 
 export type * from 'three';
 import type * as THREE from 'three';
 export type { THREE };
-
-
 
 /**
  * Load an ES module from a URL and put it on the window.

@@ -71,11 +71,11 @@ export default class MaplibrePreload {
     this.fps = options.fps || 60;
     this.rho = options.curve || 1.42;
     const start = {
-      center: this.map.getCenter(),
-      zoom: this.map.getZoom(),
-      bearing: this.map.getBearing(),
-      pitch: this.map.getPitch()
-    },
+        center: this.map.getCenter(),
+        zoom: this.map.getZoom(),
+        bearing: this.map.getBearing(),
+        pitch: this.map.getPitch()
+      },
       tc = options.center || start.center,
       endCenter = !!tc.lng ? tc : { lng: tc[0], lat: tc[1] },
       end = {

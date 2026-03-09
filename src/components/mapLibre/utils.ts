@@ -1,30 +1,26 @@
-import type { maplibregl } from "./maplibre.d.ts";
-export const MAPLIBRE_JS_URL =
-  "https://www.abc.net.au/res/sites/news-projects/maplibre/v5.x.x-latest/maplibre-gl.js";
-export const MAPLIBRE_CSS_URL =
-  "https://www.abc.net.au/res/sites/news-projects/maplibre/v5.x.x-latest/maplibre-gl.css";
+import type { maplibregl } from './maplibre.d.ts';
+export const MAPLIBRE_JS_URL = 'https://www.abc.net.au/res/sites/news-projects/maplibre/v5.x.x-latest/maplibre-gl.js';
+export const MAPLIBRE_CSS_URL = 'https://www.abc.net.au/res/sites/news-projects/maplibre/v5.x.x-latest/maplibre-gl.css';
 
 /** Colourful style */
-export const STYLE_BRIGHT =
-  "https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/style.json";
+export const STYLE_BRIGHT = 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/style.json';
 /** Grey style */
-export const STYLE_LIGHT =
-  "https://www.abc.net.au/res/sites/news-projects/map-vector-style-light/style.json";
+export const STYLE_LIGHT = 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-light/style.json';
 
 const promises: Record<string, Promise<void> | undefined> = {};
 
 function importModule(url: string): Promise<void> {
-  const key = "module" + url;
+  const key = 'module' + url;
   const promise = promises[key];
   if (promise) {
     return promise;
   }
   const newPromise = new Promise<void>((resolve, reject) => {
-    const s = document.createElement("script");
+    const s = document.createElement('script');
     s.src = url;
-    s.type = "module";
-    s.addEventListener("load", () => resolve());
-    s.addEventListener("error", reject);
+    s.type = 'module';
+    s.addEventListener('load', () => resolve());
+    s.addEventListener('error', reject);
     document.head.appendChild(s);
   });
   promises[key] = newPromise;
@@ -32,18 +28,18 @@ function importModule(url: string): Promise<void> {
 }
 
 function loadCss(url: string): Promise<void> {
-  const key = "css" + url;
+  const key = 'css' + url;
   const promise = promises[key];
   if (promise) {
     return promise;
   }
   const newPromise = new Promise<void>((resolve, reject) => {
-    const s = document.createElement("link");
-    s.rel = "stylesheet";
-    s.type = "text/css";
+    const s = document.createElement('link');
+    s.rel = 'stylesheet';
+    s.type = 'text/css';
     s.href = url;
-    s.addEventListener("load", () => resolve());
-    s.addEventListener("error", reject);
+    s.addEventListener('load', () => resolve());
+    s.addEventListener('error', reject);
     document.head.appendChild(s);
   });
   promises[key] = newPromise;

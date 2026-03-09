@@ -3,7 +3,7 @@ import * as turf from '@turf/turf';
 
 const INPUT_FILE = 'arctic_ice.geojson';
 const OUTPUT_FILE = 'arctic_ice_skinny.geojson';
-const TOP_LAT = 89.9; 
+const TOP_LAT = 89.9;
 
 /**
  * Creates "skinny polygons" for every segment of the original GeoJSON.
@@ -16,9 +16,9 @@ function createSkinnyPolygons() {
     const geojson = JSON.parse(rawData);
     const skinnyFeatures = [];
 
-    turf.flattenEach(geojson, (feature) => {
+    turf.flattenEach(geojson, feature => {
       if (feature.geometry.type === 'Polygon') {
-        feature.geometry.coordinates.forEach((ring) => {
+        feature.geometry.coordinates.forEach(ring => {
           for (let i = 0; i < ring.length - 1; i++) {
             let p1 = ring[i];
             let p2 = ring[i + 1];
@@ -28,11 +28,11 @@ function createSkinnyPolygons() {
             if (Math.abs(p1[0] - p2[0]) > 180) continue;
 
             // Ensure no segment crosses the equator (though Arctic ice should be safe)
-            // If one is above and one below, we could split, but for this dataset 
+            // If one is above and one below, we could split, but for this dataset
             // we'll just skip or assume they are all North.
             if ((p1[1] > 0 && p2[1] < 0) || (p1[1] < 0 && p2[1] > 0)) {
-               // Hard split at equator if necessary
-               // For Arctic ice, this shouldn't happen.
+              // Hard split at equator if necessary
+              // For Arctic ice, this shouldn't happen.
             }
 
             const p1Lon = p1[0];
@@ -42,13 +42,15 @@ function createSkinnyPolygons() {
 
             // Create the quadrilateral: P1 -> P2 -> (P2_lon, 89.9) -> (P1_lon, 89.9) -> P1
             // This creates a wedge-like shape pointing towards the pole.
-            const coords = [[
-              [p1Lon, p1Lat],
-              [p2Lon, p2Lat],
-              [p2Lon, TOP_LAT],
-              [p1Lon, TOP_LAT],
-              [p1Lon, p1Lat]
-            ]];
+            const coords = [
+              [
+                [p1Lon, p1Lat],
+                [p2Lon, p2Lat],
+                [p2Lon, TOP_LAT],
+                [p1Lon, TOP_LAT],
+                [p1Lon, p1Lat]
+              ]
+            ];
 
             try {
               const poly = turf.polygon(coords, {

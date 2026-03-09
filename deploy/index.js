@@ -1,27 +1,25 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-import os from "node:os";
-import readline from "node:readline/promises";
-import { stdin as input, stdout as output } from "node:process";
-import ftp from "basic-ftp";
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
+import readline from 'node:readline/promises';
+import { stdin as input, stdout as output } from 'node:process';
+import ftp from 'basic-ftp';
 
-const PROJECT_ROOT = path.resolve(import.meta.dirname, "..");
-const DIST_DIR = path.resolve(PROJECT_ROOT, "dist-www");
-const CREDENTIALS_PATH = path.resolve(os.homedir(), ".abc-credentials");
+const PROJECT_ROOT = path.resolve(import.meta.dirname, '..');
+const DIST_DIR = path.resolve(PROJECT_ROOT, 'dist-www');
+const CREDENTIALS_PATH = path.resolve(os.homedir(), '.abc-credentials');
 
 async function deploy() {
-  console.log("🚀 Starting deployment...");
+  console.log('🚀 Starting deployment...');
 
   /**
    * 1. Load project metadata
    */
-  const packageJson = JSON.parse(
-    await fs.readFile(path.resolve(PROJECT_ROOT, "package.json"), "utf8")
-  );
+  const packageJson = JSON.parse(await fs.readFile(path.resolve(PROJECT_ROOT, 'package.json'), 'utf8'));
   const { name, version } = packageJson;
 
   if (!name || !version) {
-    throw new Error("Missing name or version in package.json");
+    throw new Error('Missing name or version in package.json');
   }
 
   /**
@@ -29,7 +27,7 @@ async function deploy() {
    */
   let credentials;
   try {
-    const credsRaw = await fs.readFile(CREDENTIALS_PATH, "utf8");
+    const credsRaw = await fs.readFile(CREDENTIALS_PATH, 'utf8');
     credentials = JSON.parse(credsRaw).contentftp;
   } catch (err) {
     throw new Error(`Failed to read credentials from ${CREDENTIALS_PATH}: ${err.message}`);
@@ -57,7 +55,7 @@ async function deploy() {
       user: credentials.username,
       password: credentials.password,
       port: Number(credentials.port) || 21,
-      secure: false, // Basic FTP as per standard ABC setup, adjust if needed
+      secure: false // Basic FTP as per standard ABC setup, adjust if needed
     });
 
     /**
@@ -66,7 +64,7 @@ async function deploy() {
     let exists = false;
     try {
       const list = await client.list(path.dirname(remoteDir));
-      exists = list.some((item) => item.name === version);
+      exists = list.some(item => item.name === version);
     } catch (err) {
       // If parent dir doesn't exist, it definitely doesn't exist
       exists = false;
@@ -78,8 +76,8 @@ async function deploy() {
     );
     rl.close();
 
-    if (answer.toLowerCase() !== "y") {
-      console.log("❌ Deployment cancelled.");
+    if (answer.toLowerCase() !== 'y') {
+      console.log('❌ Deployment cancelled.');
       return;
     }
 
@@ -88,8 +86,8 @@ async function deploy() {
      */
     console.log(`📤 Uploading contents of ${DIST_DIR} to ${remoteDir}...`);
 
-    let lastFile = "";
-    client.trackProgress((info) => {
+    let lastFile = '';
+    client.trackProgress(info => {
       if (info.name !== lastFile) {
         console.log(`  - ${info.name}`);
         lastFile = info.name;
@@ -102,7 +100,11 @@ async function deploy() {
     // Upload the directory contents
     await client.uploadFromDir(DIST_DIR);
 
-    console.log(["✅ Deployment complete!", `Public dir https://www.abc.net.au/res/sites/news-projects/${name}/${version}/`].join('\n'));
+    console.log(
+      ['✅ Deployment complete!', `Public dir https://www.abc.net.au/res/sites/news-projects/${name}/${version}/`].join(
+        '\n'
+      )
+    );
   } catch (err) {
     console.error(`❌ Deployment failed: ${err.message}`);
   } finally {
@@ -110,7 +112,7 @@ async function deploy() {
   }
 }
 
-deploy().catch((err) => {
+deploy().catch(err => {
   console.error(err);
   process.exit(1);
 });

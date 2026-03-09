@@ -119,39 +119,37 @@
 const LAND = '#F5F5F5';
 const OCEAN = '#CFDBED';
 const naturalEarthStyle = {
-    "version": 8,
-    "sources": {
-        "composite": {
-            "type": "vector",
-            "maxzoom": 5,
-            "tiles": [
-                "https://abcnewsdata.sgp1.digitaloceanspaces.com/map-vector-tiles-natural-earth/{z}/{x}/{y}.pbf"
-            ]
-        }
+  version: 8,
+  sources: {
+    composite: {
+      type: 'vector',
+      maxzoom: 5,
+      tiles: ['https://abcnewsdata.sgp1.digitaloceanspaces.com/map-vector-tiles-natural-earth/{z}/{x}/{y}.pbf']
+    }
+  },
+  sprite: 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/sprite',
+  glyphs: 'https://www.abc.net.au/res/sites/news-projects/map-vector-fonts/{fontstack}/{range}.pbf',
+  layers: [
+    {
+      id: 'background',
+      type: 'background',
+      layout: {
+        visibility: 'visible'
+      },
+      paint: {
+        'background-color': OCEAN
+      }
     },
-    "sprite": "https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/sprite",
-    "glyphs": "https://www.abc.net.au/res/sites/news-projects/map-vector-fonts/{fontstack}/{range}.pbf",
-    "layers": [
-        {
-            "id": "background",
-            "type": "background",
-            "layout": {
-                "visibility": "visible"
-            },
-            "paint": {
-                "background-color": OCEAN
-            }
-        },
-        {
-            "id": "countries-fill",
-            "type": "fill",
-            "source": "composite",
-            "source-layer": "world",
-            "paint": {
-                "fill-color": LAND,
-                "fill-outline-color": "#c7c5d0ff"
-            }
-        }
-    ]
-}
-export default  naturalEarthStyle;
+    {
+      id: 'countries-fill',
+      type: 'fill',
+      source: 'composite',
+      'source-layer': 'world',
+      paint: {
+        'fill-color': LAND,
+        'fill-outline-color': '#c7c5d0ff'
+      }
+    }
+  ]
+};
+export default naturalEarthStyle;

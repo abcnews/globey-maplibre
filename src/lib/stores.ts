@@ -10,8 +10,8 @@ const observer = new MutationObserver(function (event) {
   prefersReducedMotion.set(document.body.classList.contains('is-reduced-motion'));
 });
 observer.observe(document.body, {
-    attributes: true,
-    attributeFilter: ['class'],
-    childList: false,
-    characterData: false
+  attributes: true,
+  attributeFilter: ['class'],
+  childList: false,
+  characterData: false
 });

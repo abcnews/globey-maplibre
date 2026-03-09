@@ -13,10 +13,10 @@ interface SpikeLayerOptions {
   coords?: [number, number][]; // Optional initial data
 }
 
-export async function getSpikeLayer(){
+export async function getSpikeLayer() {
   const THREE = await loadThreeJS();
 
-  return class SpikeLayer implements  maplibregl.CustomLayerInterface {
+  return class SpikeLayer implements maplibregl.CustomLayerInterface {
     id: string;
     type: 'custom' = 'custom';
     renderingMode: '3d' = '3d';
@@ -159,5 +159,5 @@ export async function getSpikeLayer(){
       }
       this.renderer?.dispose();
     }
-  }
+  };
 }

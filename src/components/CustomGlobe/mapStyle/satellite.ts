@@ -28,7 +28,13 @@ export default function satelliteStyle(): maplibregl.StyleSpecification {
 
       // Set default visibility for PLACE LABELS and use English names where possible.
       if (layer.type === 'symbol' && (layer.layout?.['text-font'] || layer.layout?.['text-field'])) {
-        const nameFallback = ['coalesce', ['get', 'name_en'], ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']];
+        const nameFallback = [
+          'coalesce',
+          ['get', 'name_en'],
+          ['get', 'name:en'],
+          ['get', 'name:latin'],
+          ['get', 'name']
+        ];
 
         layer.layout = {
           ...layer.layout,

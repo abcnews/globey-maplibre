@@ -15,11 +15,11 @@ function polygonsToReorderedLines() {
     const geojson = JSON.parse(rawData);
     const lineFeatures = [];
 
-    turf.flattenEach(geojson, (feature) => {
+    turf.flattenEach(geojson, feature => {
       const geometry = feature.geometry;
       if (geometry.type === 'Polygon') {
-        geometry.coordinates.forEach((ring) => {
-          // 1. Polygons are closed (last point == first). 
+        geometry.coordinates.forEach(ring => {
+          // 1. Polygons are closed (last point == first).
           // We remove the last point to work with the unique sequence.
           const coords = ring.slice(0, -1);
           if (coords.length < 2) return;
@@ -32,8 +32,8 @@ function polygonsToReorderedLines() {
             const next = coords[(i + 1) % coords.length];
             // Calculate longitudinal distance, accounting for 180/-180 wrap
             let jump = Math.abs(coord[0] - next[0]);
-            
-            // If the jump is > 180, it's crossing the meridian. 
+
+            // If the jump is > 180, it's crossing the meridian.
             // We find the segment that spans the widest distance.
             if (jump > maxJump) {
               maxJump = jump;
@@ -46,10 +46,7 @@ function polygonsToReorderedLines() {
           let reordered;
           if (breakIndex !== -1 && maxJump > 180) {
             const rotationIndex = (breakIndex + 1) % coords.length;
-            reordered = [
-              ...coords.slice(rotationIndex),
-              ...coords.slice(0, rotationIndex)
-            ];
+            reordered = [...coords.slice(rotationIndex), ...coords.slice(0, rotationIndex)];
           } else {
             reordered = coords;
           }

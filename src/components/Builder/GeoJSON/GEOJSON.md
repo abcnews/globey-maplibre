@@ -9,15 +9,17 @@ You can upload your TopoJSON & GeoJSON file to a public location, then link them
 1. Paste the link to the public GeoJSON file into the builder. The builder will download and show filter and styling options.
 
 ### Viz types
+
 The globe supports these visualisation types:
 
-* Areas - Show areas on the map (e.g. areas burnt by bushfires)
-* Lines - Show lines on the map (e.g. shipping routes)
-* Points - Draw dots for each point (e.g. locations and status of coral reefs)
-* Spikes - Draw spikes at the location of your GeoJSON features (e.g. megawattage of solar farms at a point)
+- Areas - Show areas on the map (e.g. areas burnt by bushfires)
+- Lines - Show lines on the map (e.g. shipping routes)
+- Points - Draw dots for each point (e.g. locations and status of coral reefs)
+- Spikes - Draw spikes at the location of your GeoJSON features (e.g. megawattage of solar farms at a point)
 
 ### Filtering
-The builder lets you show and hide elements in your GeoJSON by picking a property to filter by, and choosing which values to show. 
+
+The builder lets you show and hide elements in your GeoJSON by picking a property to filter by, and choosing which values to show.
 
 For instance if your GeoJSON features all have a "type" property, you can filter them by type:
 
@@ -28,19 +30,18 @@ For instance if your GeoJSON features all have a "type" property, you can filter
 
 There are several options to style your GeoJSON features:
 
-1. *Colour scale*
-    If your GeoJSON data has numeric properties, you can use a colour scale to style your features. 
-    
-    Choose "Colour scale", then pick the property you want to scale on (e.g., `bleaching_2025_01`). In a scrollyteller context you can swap to a new property on the fly to transition between datasets.
+1. _Colour scale_
+   If your GeoJSON data has numeric properties, you can use a colour scale to style your features.
 
-    The **pallette type** and **distribution graph** will appear, so you can choose your colour scheme and how to scale the colours.
-    
-    The **distribution graph** will appear, showing how your data is spread. This histogram helps you see where most of your data points lie. You can use the **draggable handles** or the numeric input boxes to set your `min` and `max` values:
-    
-1. *Class Based*
-    If you process your GeoJSON to have class properties, you can specify standard ABC styles for each of your features TBD.
-1. *Simplestyle*
-    Set bespoke colour and style properties in your GeoJSON file. If you're using geojson.io you can set simple style props in the gui by opening a feature and clicking "add simplestyle properties". This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.
-1. *Override*
-    Completely override the style in your GeoJSON to do whatever you like from the builder. This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.
+   Choose "Colour scale", then pick the property you want to scale on (e.g., `bleaching_2025_01`). In a scrollyteller context you can swap to a new property on the fly to transition between datasets.
 
+   The **pallette type** and **distribution graph** will appear, so you can choose your colour scheme and how to scale the colours.
+
+   The **distribution graph** will appear, showing how your data is spread. This histogram helps you see where most of your data points lie. You can use the **draggable handles** or the numeric input boxes to set your `min` and `max` values:
+
+1. _Class Based_
+   If you process your GeoJSON to have class properties, you can specify standard ABC styles for each of your features TBD.
+1. _Simplestyle_
+   Set bespoke colour and style properties in your GeoJSON file. If you're using geojson.io you can set simple style props in the gui by opening a feature and clicking "add simplestyle properties". This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.
+1. _Override_
+   Completely override the style in your GeoJSON to do whatever you like from the builder. This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.

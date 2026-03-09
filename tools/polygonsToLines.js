@@ -10,15 +10,15 @@ function polygonsToLines() {
     const geojson = JSON.parse(rawData);
     const lineFeatures = [];
 
-    turf.flattenEach(geojson, (feature) => {
+    turf.flattenEach(geojson, feature => {
       const geometry = feature.geometry;
       if (geometry.type === 'Polygon') {
         // For each ring in the polygon (exterior + holes)
-        geometry.coordinates.forEach((ring) => {
-          // If the user "doesn't need them to close", we can strip the last point 
+        geometry.coordinates.forEach(ring => {
+          // If the user "doesn't need them to close", we can strip the last point
           // which is identical to the first in a valid Polygon ring.
           const coords = ring.slice(0, -1);
-          
+
           if (coords.length >= 2) {
             lineFeatures.push(turf.lineString(coords, feature.properties));
           }

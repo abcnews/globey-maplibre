@@ -38,5 +38,3 @@ To deploy the project to the ABC content FTP:
 2.  **Deploy**: Run `npm run deploy`.
 
 If the target version directory already exists on the server, you will be prompted before it is overwritten.
-
-

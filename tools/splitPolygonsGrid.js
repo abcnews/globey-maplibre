@@ -19,7 +19,7 @@ function splitPolygonsIntoGrid() {
     // Initial prep
     geojson = turf.truncate(geojson, { precision: 6 });
     geojson = turf.rewind(geojson, { mutate: true });
-    
+
     // Flatten to handle individual polygons
     const flattened = turf.flatten(geojson);
     const splitFeatures = [];
@@ -48,9 +48,9 @@ function splitPolygonsIntoGrid() {
 
             if (clipped.geometry.coordinates.length > 0) {
               const area = turf.area(clipped);
-              
+
               // Only keep features with meaningful size
-              if (area > 10) { 
+              if (area > 10) {
                 let processedGeom = clipped.geometry;
 
                 // Handle Pole Ringing:
@@ -63,8 +63,8 @@ function splitPolygonsIntoGrid() {
 
                 splitFeatures.push({
                   type: 'Feature',
-                  properties: { 
-                    ...feature.properties, 
+                  properties: {
+                    ...feature.properties,
                     orig_idx: fIdx,
                     chunk: `${west}_${south}`
                   },
@@ -106,35 +106,39 @@ function ensurePolarFill(geometry, west, east, poleLat) {
     // 2. If it spans the chunk and hits the boundaries
     if (westPoints.length > 0 && eastPoints.length > 0) {
       // Find the "northernmost" (or southernmost) points on these boundaries
-      const topWest = westPoints.reduce((prev, curr) => (poleLat > 0 ? curr[1] > prev[1] : curr[1] < prev[1]) ? curr : prev);
-      const topEast = eastPoints.reduce((prev, curr) => (poleLat > 0 ? curr[1] > prev[1] : curr[1] < prev[1]) ? curr : prev);
+      const topWest = westPoints.reduce((prev, curr) =>
+        (poleLat > 0 ? curr[1] > prev[1] : curr[1] < prev[1]) ? curr : prev
+      );
+      const topEast = eastPoints.reduce((prev, curr) =>
+        (poleLat > 0 ? curr[1] > prev[1] : curr[1] < prev[1]) ? curr : prev
+      );
 
       // If these points don't already touch the pole
       if (Math.abs(topWest[1] - poleLat) > TOLERANCE || Math.abs(topEast[1] - poleLat) > TOLERANCE) {
         // Insert points at the pole corners to "stretch" the polygon to the 90 deg edge.
-        // This effectively turns [west, TOP_LAT] -> [east, TOP_LAT] 
+        // This effectively turns [west, TOP_LAT] -> [east, TOP_LAT]
         // into [west, TOP_LAT] -> [west, 90] -> [east, 90] -> [east, TOP_LAT]
-        
+
         // We find the indices of topWest and topEast in the original ring
         const idxWest = ring.findIndex(p => p[0] === topWest[0] && p[1] === topWest[1]);
         const idxEast = ring.findIndex(p => p[0] === topEast[0] && p[1] === topEast[1]);
 
         if (idxWest !== -1 && idxEast !== -1) {
-            const newRing = [...ring];
-            // Insert pole points between the two boundary points
-            // This is a simple insertion assuming the path between them should go through the pole.
-            // Note: In a real polar split, the "top" of the wedge is the pole.
-            // We'll just force the corners.
-            
-            // To be robust, we'd need to know the order, but for a 45-deg chunk 
-            // of arctic ice, stretching to north=90 usually works.
-            const result = [];
-            for (let i = 0; i < ring.length; i++) {
-                result.push(ring[i]);
-                if (i === idxWest) result.push([west, poleLat]);
-                if (i === idxEast) result.push([east, poleLat]);
-            }
-            return result;
+          const newRing = [...ring];
+          // Insert pole points between the two boundary points
+          // This is a simple insertion assuming the path between them should go through the pole.
+          // Note: In a real polar split, the "top" of the wedge is the pole.
+          // We'll just force the corners.
+
+          // To be robust, we'd need to know the order, but for a 45-deg chunk
+          // of arctic ice, stretching to north=90 usually works.
+          const result = [];
+          for (let i = 0; i < ring.length; i++) {
+            result.push(ring[i]);
+            if (i === idxWest) result.push([west, poleLat]);
+            if (i === idxEast) result.push([east, poleLat]);
+          }
+          return result;
         }
       }
     }

@@ -14,10 +14,9 @@ function processPolygons() {
   try {
     const rawData = fs.readFileSync(INPUT_FILE, 'utf8');
     const geojson = JSON.parse(rawData);
-    
-    turf.featureEach(geojson, (feature) => {
+
+    turf.featureEach(geojson, feature => {
       if (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon') {
-        
         // 1. Truncate precision (helps with floating point noise near -180/180)
         feature.geometry = turf.truncate(feature, { precision: 6 }).geometry;
 
@@ -28,9 +27,7 @@ function processPolygons() {
         if (feature.geometry.type === 'Polygon') {
           feature.geometry.coordinates = feature.geometry.coordinates.map(reorderRing);
         } else if (feature.geometry.type === 'MultiPolygon') {
-          feature.geometry.coordinates = feature.geometry.coordinates.map(polygon => 
-            polygon.map(reorderRing)
-          );
+          feature.geometry.coordinates = feature.geometry.coordinates.map(polygon => polygon.map(reorderRing));
         }
       }
     });
@@ -45,7 +42,7 @@ function processPolygons() {
 }
 
 /**
- * Rotates a polygon ring array so the largest longitude jump occurs 
+ * Rotates a polygon ring array so the largest longitude jump occurs
  * between the last point and the first point.
  */
 function reorderRing(ring) {
@@ -59,7 +56,7 @@ function reorderRing(ring) {
   coords.forEach((coord, i) => {
     const next = coords[(i + 1) % coords.length];
     let jump = Math.abs(coord[0] - next[0]);
-    
+
     // We prioritize jumps across the anti-meridian (> 180)
     if (jump > maxJump) {
       maxJump = jump;
@@ -68,12 +65,10 @@ function reorderRing(ring) {
   });
 
   // If we found a substantial jump, rotate
-  if (breakIndex !== -1 && maxJump > 10) { // Using 10 as a threshold for "significant"
+  if (breakIndex !== -1 && maxJump > 10) {
+    // Using 10 as a threshold for "significant"
     const rotationIndex = (breakIndex + 1) % coords.length;
-    const reordered = [
-      ...coords.slice(rotationIndex),
-      ...coords.slice(0, rotationIndex)
-    ];
+    const reordered = [...coords.slice(rotationIndex), ...coords.slice(0, rotationIndex)];
     // Re-add the closing point
     reordered.push(reordered[0]);
     return reordered;

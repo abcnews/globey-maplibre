@@ -11,40 +11,45 @@ export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
 export const getBaseStyleSource = () => {
   const style = JSON.parse(JSON.stringify(styleSource));
   return style as maplibregl.StyleSpecification;
-}
+};
 
 export function getProcessedLayers(): maplibregl.LayerSpecification[] {
   const style = getBaseStyleSource();
 
-  return style.layers
-    .map(layer => {
-      // Set default visibility for PLACE LABELS and use English names where possible.
-      if (layer.type === 'symbol' && (layer.layout?.['text-font'] || layer.layout?.['text-field'])) {
-        const nameFallback = ['coalesce', ['get', 'name_en'], ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']];
-        layer.layout['text-field'] =  [
-            'case',
-            // We prioritize ASCII-safe names for countries using their ISO codes to avoid missing glyphs.
-            ['==', ['get', 'class'], 'country'],
-            [
-              'match',
-              ['get', 'iso_a2'],
-              'WS', 'Samoa',
-              'CI', "Cote d'Ivoire",
-              'ST', 'Sao Tome and Principe',
-              'CW', 'Curacao',
-              'RE', 'Reunion',
-              'BJ', 'Benin',
-              //@ts-ignore
-              nameFallback
-            ],
-            // For everything else, use the standard fallback
-            //@ts-ignore
-            nameFallback
-          ]
-      }
+  return style.layers.map(layer => {
+    // Set default visibility for PLACE LABELS and use English names where possible.
+    if (layer.type === 'symbol' && (layer.layout?.['text-font'] || layer.layout?.['text-field'])) {
+      const nameFallback = ['coalesce', ['get', 'name_en'], ['get', 'name:en'], ['get', 'name:latin'], ['get', 'name']];
+      layer.layout['text-field'] = [
+        'case',
+        // We prioritize ASCII-safe names for countries using their ISO codes to avoid missing glyphs.
+        ['==', ['get', 'class'], 'country'],
+        [
+          'match',
+          ['get', 'iso_a2'],
+          'WS',
+          'Samoa',
+          'CI',
+          "Cote d'Ivoire",
+          'ST',
+          'Sao Tome and Principe',
+          'CW',
+          'Curacao',
+          'RE',
+          'Reunion',
+          'BJ',
+          'Benin',
+          //@ts-ignore
+          nameFallback
+        ],
+        // For everything else, use the standard fallback
+        //@ts-ignore
+        nameFallback
+      ];
+    }
 
-      return layer;
-    });
+    return layer;
+  });
 }
 
 export function getStreetBaseLayers(): maplibregl.LayerSpecification[] {

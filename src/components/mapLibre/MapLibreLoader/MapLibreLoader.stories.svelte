@@ -1,19 +1,19 @@
 <script module>
-  import { defineMeta } from "@storybook/addon-svelte-csf";
-  import MapLibreLoader from "./MapLibreLoader.svelte";
+  import { defineMeta } from '@storybook/addon-svelte-csf';
+  import MapLibreLoader from './MapLibreLoader.svelte';
 
   // More on how to set up stories at: https://storybook.js.org/docs/writing-stories
   const { Story } = defineMeta({
-    title: "MapLibre/MapLibreLoader",
+    title: 'MapLibre/MapLibreLoader',
     component: MapLibreLoader,
-    tags: ["autodocs"],
+    tags: ['autodocs']
   });
 </script>
 
 <Story
   name="Bright style"
   args={{
-    rootElStyle: "width:100%;height:calc(100dvh - 2rem);",
+    rootElStyle: 'width:100%;height:calc(100dvh - 2rem);',
     onLoad: async ({ rootNode, maplibregl }) => {
       const map = new maplibregl.Map({
         zoom: 3,
@@ -22,21 +22,20 @@
         attributionControl: false,
         dragRotate: false,
         doubleClickZoom: false,
-        style:
-          "https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/style.json",
+        style: 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/style.json',
         container: rootNode,
         interactive: true,
         cooperativeGestures: true,
-        center: [133.28, -28.15],
+        center: [133.28, -28.15]
       });
       return map;
-    },
+    }
   }}
 ></Story>
 <Story
   name="Light style"
   args={{
-    rootElStyle: "width:100%;height:calc(100dvh - 2rem);",
+    rootElStyle: 'width:100%;height:calc(100dvh - 2rem);',
     onLoad: async ({ rootNode, maplibregl }) => {
       const map = new maplibregl.Map({
         zoom: 3,
@@ -45,14 +44,13 @@
         attributionControl: false,
         dragRotate: false,
         doubleClickZoom: false,
-        style:
-          "https://www.abc.net.au/res/sites/news-projects/map-vector-style-light/style.json",
+        style: 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-light/style.json',
         container: rootNode,
         interactive: true,
         cooperativeGestures: true,
-        center: [133.28, -28.15],
+        center: [133.28, -28.15]
       });
       return map;
-    },
+    }
   }}
 ></Story>
