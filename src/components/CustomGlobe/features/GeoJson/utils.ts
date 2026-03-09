@@ -5,12 +5,11 @@ import {
   DivergentPalette,
   ColourMode
 } from '@abcnews/palette';
-import { getSequentialInterpolator, SEQUENTIAL_PALETTE_OFFSET_PCT } from '../../../../../../interactive-globey-maplibre/src/lib/sequentialPalette';
-import { interpolateColour, getCustomPaletteInterpolator } from '../../../../../../interactive-globey-maplibre/src/lib/colours';
+import { interpolateColour, getCustomPaletteInterpolator } from '$lib/colours';
 import type { GeoJsonConfig } from '../../../../../../interactive-globey-maplibre/src/lib/marker';
+import { getSequentialInterpolator } from '$lib/sequentialPalette';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layerUtils';
-
 
 /**
  * Creates a colour interpolation function based on the builder's configuration.
@@ -56,7 +55,14 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
       return ['coalesce', ['get', 'stroke'], '#555555'];
     }
     if (context === 'marker') {
-      return ['coalesce', ['get', 'marker-color'], ['get', 'stroke'], ['get', 'fill'], ['get', 'fill-color'], '#7e7e7e'];
+      return [
+        'coalesce',
+        ['get', 'marker-color'],
+        ['get', 'stroke'],
+        ['get', 'fill'],
+        ['get', 'fill-color'],
+        '#7e7e7e'
+      ];
     }
     return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#555555'];
   }
@@ -68,7 +74,8 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
 
     if (interpolator) {
       const stops: any[] = [];
-      const numStops = config.colourConfig?.paletteType === 'custom' ? config.colourConfig?.customPalette?.length || 5 : 5;
+      const numStops =
+        config.colourConfig?.paletteType === 'custom' ? config.colourConfig?.customPalette?.length || 5 : 5;
       for (let i = 0; i < numStops; i++) {
         const t = i / (numStops - 1);
         const val = min + t * (max - min);
@@ -104,7 +111,7 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: { cVal: any
 
   // Simple Mode
   if (mode === 'simple') {
-    return (feature) => feature.cVal || '#888888';
+    return feature => feature.cVal || '#888888';
   }
 
   // Override Mode
@@ -122,7 +129,7 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: { cVal: any
     const minColour = colourConfig?.minColour || '#ffffff';
     const maxColour = colourConfig?.maxColour || '#ff0000';
 
-    return (feature) => {
+    return feature => {
       const val = Number(feature.cVal);
       if (isNaN(val)) return '#888888';
 
@@ -140,7 +147,7 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: { cVal: any
 
   // Classification Mode
   if (mode === 'class') {
-    return (feature) => {
+    return feature => {
       const val = feature.cVal;
       if (val === 'primary') return '#1f77b4';
       if (val === 'secondary') return '#ff7f0e';
@@ -151,7 +158,6 @@ export function getColourEvaluator(config: GeoJsonConfig): (feature: { cVal: any
 
   return () => '#888888';
 }
-
 
 /**
  * Transforms a list of pre-processed features into a list of rendered points.
@@ -174,8 +180,25 @@ export function getProcessedFeatures(
   }));
 }
 
-
 export function getStrokeWidthExpression(config: GeoJsonConfig): any {
+  if (config.lineWidth) {
+    const { value, unit } = config.lineWidth;
+    if (unit === 'p') {
+      return value;
+    }
+    if (unit === 'k') {
+      return [
+        'interpolate',
+        ['exponential', 2],
+        ['zoom'],
+        0,
+        (value / 40075) * 512,
+        22,
+        (value / 40075) * 512 * Math.pow(2, 22)
+      ];
+    }
+  }
+
   if (config.colourMode === 'simple') {
     return ['coalesce', ['get', 'stroke-width'], 2];
   }
@@ -207,7 +230,15 @@ export function getCircleRadiusExpression(config: GeoJsonConfig): any {
   }
 
   if (config.colourMode === 'simple') {
-    return ['match', ['get', 'marker-size'], 'small', 4, 'large', 9, ['coalesce', ['to-number', ['get', 'marker-size']], 6]];
+    return [
+      'match',
+      ['get', 'marker-size'],
+      'small',
+      4,
+      'large',
+      9,
+      ['coalesce', ['to-number', ['get', 'marker-size']], 6]
+    ];
   }
   return 6;
 }
@@ -215,7 +246,11 @@ export function getCircleRadiusExpression(config: GeoJsonConfig): any {
 export function getCircleOpacityExpression(config: GeoJsonConfig): any {
   const baseOpacity = getOpacityExpression(config);
   if (config.colourMode === 'simple') {
-    return ['*', baseOpacity, ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 1.0]];
+    return [
+      '*',
+      baseOpacity,
+      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 1.0]
+    ];
   }
   return baseOpacity;
 }
@@ -247,9 +282,7 @@ export function getOpacityExpression(config: GeoJsonConfig): any {
   return 1;
 }
 
-
 const MIN_HEIGHT_JANK_FACTOR = 3000;
-
 
 /**
  * Creates a high-performance height evaluator function.
@@ -264,7 +297,7 @@ export function getHeightEvaluator(config: GeoJsonConfig): (feature: { hVal: num
   const scalar = spikeConfig.scalar ?? 2000000;
   const range = max - min || 1;
 
-  return (feature) => {
+  return feature => {
     const val = feature.hVal;
     const factor = Math.max(0, Math.min(1, (val - min) / range));
     return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);

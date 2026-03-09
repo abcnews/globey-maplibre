@@ -4,7 +4,7 @@
   import * as topojson from 'topojson-client';
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
-  import PropGeoJsonPointSize from './PropGeoJsonPointSize.svelte';
+  import PropGeoJsonSize from './PropGeoJsonSize.svelte';
   import PropGeoJsonHeight from './PropGeoJsonHeight.svelte';
   import { untrack } from 'svelte';
   import { isValidUrl } from '../../../lib/marker';
@@ -155,7 +155,11 @@
     <PropGeoJsonColour bind:config {properties} features={rawFeatures} />
 
     {#if config.type === 'points' || config.type === 'spikes'}
-      <PropGeoJsonPointSize bind:config />
+      <PropGeoJsonSize bind:config prop="pointSize" legend="Point Size" />
+    {/if}
+
+    {#if config.type === 'lines'}
+      <PropGeoJsonSize bind:config prop="lineWidth" legend="Line Width" />
     {/if}
 
     {#if config.type === 'spikes'}

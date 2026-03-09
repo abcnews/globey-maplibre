@@ -1,6 +1,6 @@
 import Geohash from 'latlon-geohash';
 import { decode, encode } from '@abcnews/base-36-text';
-import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig, PointSize } from './types.ts';
+import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig, GeoJsonSize } from './types.ts';
 import { isValidUrl, compressUrl, decompressUrl } from './utils.ts';
 
 const STYLE_TO_CODE: Record<string, string> = {
@@ -24,7 +24,11 @@ function compressPalette(colours: string[]): string {
   return (colours || [])
     .map(c => {
       let hex = c.replace('#', '');
-      if (hex.length === 3) hex = hex.split('').map(x => x + x).join('');
+      if (hex.length === 3)
+        hex = hex
+          .split('')
+          .map(x => x + x)
+          .join('');
       return parseInt(hex, 16).toString(36).padStart(5, '0');
     })
     .join('');
@@ -43,9 +47,9 @@ function decompressPalette(encoded: string): string[] {
 }
 
 /**
- * Parses a pointSize string (e.g., "12.5k") into a PointSize object.
+ * Parses a GeoJSON size string (e.g., "12.5k") into a GeoJsonSize object.
  */
-export function decodePointSize(s: string | undefined): PointSize | undefined {
+export function decodeGeoJsonSize(s: string | undefined): GeoJsonSize | undefined {
   if (!s) return undefined;
   const match = String(s).match(/^(\d+(?:\.\d+)?)([pk])$/);
   if (!match) return undefined;
@@ -56,9 +60,9 @@ export function decodePointSize(s: string | undefined): PointSize | undefined {
 }
 
 /**
- * Formats a PointSize object into a string (e.g., "12.5k").
+ * Formats a GeoJsonSize object into a string (e.g., "12.5k").
  */
-export function encodePointSize(ps: PointSize | undefined): string | undefined {
+export function encodeGeoJsonSize(ps: GeoJsonSize | undefined): string | undefined {
   if (!ps) return undefined;
   return `${ps.value}${ps.unit}`;
 }
@@ -67,7 +71,7 @@ export function encodePointSize(ps: PointSize | undefined): string | undefined {
  * Converts a GeoJsonConfig object into a compact array.
  */
 function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
-  const { url, type, colourMode, colourProp, colourConfig, filter, spike, pointSize } = config;
+  const { url, type, colourMode, colourProp, colourConfig, filter, spike, pointSize, lineWidth } = config;
 
   const typeIdx = GEOJSON_TYPES.indexOf(type);
   const modeIdx = GEOJSON_MODES.indexOf(colourMode);
@@ -89,14 +93,15 @@ function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
     if (spike) extras.s = spike;
   }
 
-  // [url, typeIdx, modeIdx, colourProp, extras, pointSize]
+  // [url, typeIdx, modeIdx, colourProp, extras, pointSize, lineWidth]
   const arr = [
     isValidUrl(url) ? compressUrl(url) : undefined,
     typeIdx,
     modeIdx,
     colourProp,
     extras,
-    encodePointSize(pointSize)
+    encodeGeoJsonSize(pointSize),
+    encodeGeoJsonSize(lineWidth)
   ];
 
   // Trim trailing undefined values to save space
@@ -112,7 +117,7 @@ function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
  */
 function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
   if (!Array.isArray(arr)) return null;
-  const [url, typeIdx, modeIdx, colourProp, extras, pointSize] = arr;
+  const [url, typeIdx, modeIdx, colourProp, extras, pointSize, lineWidth] = arr;
 
   const config: GeoJsonConfig = {
     url: decompressUrl(url),
@@ -135,7 +140,8 @@ function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
     if (extras.s) config.spike = extras.s;
   }
 
-  if (pointSize) config.pointSize = decodePointSize(pointSize);
+  if (pointSize) config.pointSize = decodeGeoJsonSize(pointSize);
+  if (lineWidth) config.lineWidth = decodeGeoJsonSize(lineWidth);
 
   return config;
 }
@@ -216,10 +222,10 @@ export const customLabelsCodec = {
 
       // Compact format: hash,name,style,number,pointless
       const data = [hash, name, s, number || 0, Number(pointless || 0)];
-       // Remove trailing zeros/defaults to save space
-       while (data.length > 3 && data[data.length - 1] === 0) {
-         data.pop();
-       }
+      // Remove trailing zeros/defaults to save space
+      while (data.length > 3 && data[data.length - 1] === 0) {
+        data.pop();
+      }
       return encode(JSON.stringify(data));
     }),
   decode: (encodedLabels: string | string[]) => {

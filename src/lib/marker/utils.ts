@@ -9,7 +9,7 @@ const URL_TOKENS = [
  */
 export function isValidUrl(url: string | undefined): boolean {
   if (!url) return false;
-  return !url.includes('preview-');
+  return !url.includes('preview.') && !url.includes('preview-');
 }
 
 /**

@@ -228,6 +228,24 @@ describe('marker', () => {
       assert.deepStrictEqual(decoded.geoJson![0].pointSize, input.geoJson[0].pointSize);
     });
 
+    it('should round-trip line width', async () => {
+      const input = {
+        geoJson: [
+          {
+            url: 'lines.json',
+            type: 'lines' as const,
+            colourMode: 'simple' as const,
+            lineWidth: { value: 3, unit: 'p' as const }
+          }
+        ]
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.geoJson?.length, 1);
+      assert.deepStrictEqual(decoded.geoJson![0].lineWidth, input.geoJson[0].lineWidth);
+    });
+
     it('should round-trip custom palette', async () => {
       const input = {
         geoJson: [
