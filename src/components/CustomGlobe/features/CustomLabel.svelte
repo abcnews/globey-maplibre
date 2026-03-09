@@ -20,11 +20,11 @@
     --land-stroke-width: 0.6px;
 
     // regular labels
-    --text-stroke: #000;
+    --text-stroke: #fff;
     --text-color: #d6dde4;
 
     // country labels
-    --country-text: #9eaec4;
+    --country-text: #7d8794;
     --country-text-stroke: var(--text-stroke);
 
     // ocean/water labels
@@ -52,11 +52,11 @@
     column-gap: 6px;
     align-items: center;
     white-space: nowrap;
-    /* Translate to center the marker. 
-       Note: maplibregl markers are usually anchored. 
+    /* Translate to center the marker.
+       Note: maplibregl markers are usually anchored.
        The user CSS has: translate: -5px -50%;
        If we use anchor='center' in MapLibre, the center of this div is placed at the coord.
-       So we might need to adjust or rely on CSS. 
+       So we might need to adjust or rely on CSS.
        The user's CSS seems to assume it's handling the positioning.
     */
     translate: -5px -50%;
@@ -72,7 +72,7 @@
       justify-content: center;
 
       /* Ensure markers are hidden for these types regardless of prop, if that's the intent.
-         Or just rely on centering. 
+         Or just rely on centering.
          If marker div exists (pointless=false), it takes up space.
          The user said "types without a marker", implying they shouldn't have one.
       */
@@ -128,14 +128,14 @@
       &--country,
       &--water {
         text-shadow:
-          -1.5px -1.5px 0 var(--shadow),
-          1.5px -1.5px 0 var(--shadow),
-          -1.5px 1.5px 0 var(--shadow),
-          1.5px 1.5px 0 var(--shadow),
-          1.5px 0px 0 var(--shadow),
-          0px 1.5px 0 var(--shadow),
-          -1.5px 0px 0 var(--shadow),
-          0px -1.5px 0 var(--shadow);
+          -1px -1px 0 var(--shadow),
+          1px -1px 0 var(--shadow),
+          -1px 1px 0 var(--shadow),
+          1px 1px 0 var(--shadow),
+          1px 0px 0 var(--shadow),
+          0px 1px 0 var(--shadow),
+          -1px 0px 0 var(--shadow),
+          0px -1px 0 var(--shadow);
       }
 
       &--level3 {
@@ -156,7 +156,7 @@
       }
 
       &--country {
-        font-weight: 400;
+        font-weight: 600;
         font-size: 15px;
         letter-spacing: 0.1em;
         color: var(--country-text);
