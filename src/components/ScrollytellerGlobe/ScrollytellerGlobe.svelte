@@ -3,12 +3,19 @@
   import { decodeObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import { onMount } from 'svelte';
+  import { stringify } from '@abcnews/alternating-case-to-object';
+
+  const LAYOUT = { resizeInteractive: false };
 
   let { panels } = $props();
   let options = $state();
 
   const setConfig = async d => {
-    options = await decodeObject(d, true);
+    const decoded = await decodeObject(d, true);
+    if (stringify(options) === stringify(decoded)) {
+      return;
+    }
+    options = decoded;
   };
 
   let loading = $state(false);
@@ -25,7 +32,7 @@
 </script>
 
 {#if options}
-  <Scrollyteller {panels} onMarker={setConfig} discardSlot={true} layout={{ resizeInteractive: false }}>
+  <Scrollyteller {panels} onMarker={setConfig} discardSlot={true} layout={LAYOUT}>
     <div class="container">
       {#if loading}
         <div class="loading"></div>
