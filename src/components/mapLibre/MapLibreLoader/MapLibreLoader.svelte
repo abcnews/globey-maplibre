@@ -8,7 +8,7 @@
     onLoad: ({}: {
       rootNode: HTMLDivElement;
       maplibregl: typeof maplibregl;
-    }) => maplibregl.Map | Promise<maplibregl.Map> | void | Promise<void>;
+    }) => maplibregl.Map | void | Promise<maplibregl.Map | void>;
     onTeardown?: () => void | Promise<void>;
     children?: Snippet;
   };

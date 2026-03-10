@@ -11,13 +11,12 @@
   import MapCountriesBaseHandler from './features/HighlightCountries/MapCountriesBaseHandler.svelte';
   import ProjectionHandler from './features/ProjectionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
-  import MalibrePreload from './maplibrePreload.js';
   import type { maplibregl } from '../mapLibre/index';
   import { isDarkBase } from './mapStyle/utils';
 
   type Props = {
     rootElStyle?: string;
-    interactive: Boolean;
+    interactive: boolean;
     onLoad?: (map: maplibregl.Map) => void;
     options: DecodedObject;
     children?: import('svelte').Snippet;
@@ -43,7 +42,7 @@
     onLoad={async ({ rootNode, maplibregl }) => {
       if (!rootNode) {
         console.log('no root node', rootNode, maplibregl);
-        return false;
+        return;
       }
       rootNode.style.opacity = '0';
       const map = new maplibregl.Map({
@@ -65,15 +64,6 @@
         center: options.coords,
         projection: { type: options.projection || 'globe' }
       } as any);
-
-      // new MalibrePreload(map, {
-      //   progressCallback: ({ loaded, total, failed }) => {
-      //     console.log(`Preloading tiles: ${loaded}/${total} loaded, ${failed} failed`);
-      //   },
-      //   async: true,
-      //   burstLimit: 250,
-      //   useTile: true
-      // });
 
       map.on('load', () => {
         onLoad?.(map);

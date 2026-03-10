@@ -79,7 +79,7 @@
   style="--ratio-mobile: {ratios.mobile}; --ratio-desktop: {ratios.desktop};"
 >
   {#if settings}
-    <CustomGlobe options={settings} interactive={true} />
+    <CustomGlobe options={settings} interactive={false} />
   {/if}
 </div>
 
