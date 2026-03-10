@@ -4,15 +4,22 @@
   import { Pencil, Trash, Plus } from 'svelte-bootstrap-icons';
   import PropList from '../PropList.svelte';
 
-  let { imageSources = [], onchange } = $props<{
+  import type { maplibregl } from '../../mapLibre/index';
+
+  let {
+    imageSources = [],
+    map,
+    onchange
+  } = $props<{
     imageSources: ImageSourceConfig[];
+    map: maplibregl.Map;
     onchange: (list: ImageSourceConfig[]) => void;
   }>();
 
   let editingIndex = $state<number | null>(null);
   let isAdding = $state(false);
 
-  function saveConfig(config: ImageSourceConfig) {
+  function saveConfig(config: ImageSourceConfig, goto = false) {
     const newList = [...imageSources];
     if (editingIndex !== null) {
       newList[editingIndex] = config;
@@ -20,6 +27,21 @@
       newList.push(config);
     }
     onchange(newList);
+
+    if (goto && config.coordinates.length > 0) {
+      const bounds = config.coordinates.reduce(
+        (acc, coord) => {
+          acc.extend(coord as [number, number]);
+          return acc;
+        },
+        new window.maplibregl.LngLatBounds(
+          config.coordinates[0] as [number, number],
+          config.coordinates[0] as [number, number]
+        )
+      );
+      map.fitBounds(bounds, { padding: 50 });
+    }
+
     closeModal();
   }
 

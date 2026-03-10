@@ -12,43 +12,52 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  $effect(() => {
+  const beforeId = $derived.by(() => {
     const map = mapRoot.map;
-    if (!map) return;
+    if (!map) return undefined;
 
-    // We want to stack images BELOW GeoJSON layers and BELOW labels.
-    // The safest "beforeId" for the topmost image is the first layer of the first GeoJSON,
-    // or if no GeoJSON, the first map label.
-    let beforeId = getLabelAnchor(map);
+    // Default to below labels
+    let id = getLabelAnchor(map);
 
+    // If we have GeoJSON, try to be below the FIRST layer of the FIRST GeoJSON
+    // (which is effectively below all GeoJSONs)
     if (geoJsonConfig.length > 0) {
-      const firstGjLayers = getGeoJsonLayerIds(geoJsonConfig[0]);
-      if (firstGjLayers.length > 0 && map.getLayer(firstGjLayers[0])) {
-        // Technically we want to be below the LAST layer of the LAST GeoJSON?
-        // No, we want to be below ALL GeoJSONs if we are images.
-        // So we should find the most bottom GeoJSON layer and be below that?
-        // Actually moveLayer(id, beforeId) puts 'id' BEFORE 'beforeId' (above it).
-        // Wait, MapLibre moveLayer(id, beforeId) places 'id' at index of 'beforeId',
-        // effectively pushing 'beforeId' up. So 'id' is BELOW 'beforeId'.
-
-        // Let's verify MapLibre moveLayer:
-        // "Moves a layer to a different z-order. The layer will be inserted before the layer with ID 'beforeId'."
-        // So yes, moveLayer('image', 'geojson-1') puts 'image' BELOW 'geojson-1'.
-
-        // So for images to be below ALL GeoJSONs, we should find the BOTTOM-MOST GeoJSON layer id.
-        const lastGj = geoJsonConfig[geoJsonConfig.length - 1];
-        const lastGjLayers = getGeoJsonLayerIds(lastGj);
-        if (lastGjLayers.length > 0) {
-          beforeId = lastGjLayers[lastGjLayers.length - 1];
-        }
+      const firstGj = geoJsonConfig[0];
+      const layers = getGeoJsonLayerIds(firstGj);
+      if (layers.length > 0) {
+        id = layers[0];
       }
     }
 
+    return id;
+  });
+
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map || config.length === 0) return;
+
+    // This effect ensures that as image sources are added/removed/reordered,
+    // they maintain their relative order and their position below beforeId.
     const layerIds = config.map(item => getImageLayerId(item));
-    stackLayers(map, layerIds, beforeId);
+
+    const restack = () => {
+      // Style must be loaded to reorder layers
+      if (!map.isStyleLoaded()) return;
+      stackLayers(map, layerIds, beforeId);
+    };
+
+    restack();
+    map.on('styledata', restack);
+    map.on('load', restack);
+    map.on('idle', restack);
+    return () => {
+      map.off('styledata', restack);
+      map.off('load', restack);
+      map.off('idle', restack);
+    };
   });
 </script>
 
 {#each config as item (item.id + item.url)}
-  <ImageSourceHandler config={item} />
+  <ImageSourceHandler config={item} {beforeId} />
 {/each}

@@ -24,14 +24,14 @@
   let naturalWidth = $state(0);
   let naturalHeight = $state(0);
 
-  function handleSave() {
+  function handleSave(goto = false) {
     if (!isValidUrl(url)) {
       alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
       return;
     }
     try {
       const coordinates = JSON.parse(coordsString);
-      onsave({ ...config, url, opacity, coordinates });
+      onsave({ ...config, url, opacity, coordinates }, goto);
     } catch (e) {
       alert('Invalid coordinates format. Must be [[lng, lat], [lng, lat], [lng, lat], [lng, lat]]');
     }
@@ -59,7 +59,8 @@
 </script>
 
 {#snippet footerChildren()}
-  <button onclick={handleSave}>Save</button>
+  <button onclick={() => handleSave()}>Save</button>
+  <button onclick={() => handleSave(true)}>Save and Go To</button>
   <button onclick={onclose}>Cancel</button>
 {/snippet}
 

@@ -7,8 +7,13 @@
   import helpContent from './GEOJSON.md?raw';
   import PropList from '../PropList.svelte';
 
-  let { geoJsonList = [], onchange } = $props<{
+  let {
+    geoJsonList = [],
+    map,
+    onchange
+  } = $props<{
     geoJsonList: GeoJsonConfig[];
+    map: maplibregl.Map;
     onchange: (list: GeoJsonConfig[]) => void;
   }>();
 
@@ -16,7 +21,7 @@
   let isAdding = $state(false);
   let isShowingHelp = $state(false);
 
-  function saveConfig(config: GeoJsonConfig) {
+  function saveConfig(config: GeoJsonConfig, goto = false, bounds?: [number, number][]) {
     const newList = [...geoJsonList];
     if (editingIndex !== null) {
       newList[editingIndex] = config;
@@ -24,6 +29,11 @@
       newList.push(config);
     }
     onchange(newList);
+
+    if (goto && bounds) {
+      map.fitBounds(bounds as any, { padding: 50 });
+    }
+
     closeModal();
   }
 
