@@ -14,7 +14,7 @@
   }>();
 
   let allValues = $derived(config.filter?.prop ? getUniqueValues(config.filter.prop) : []);
-  let isTooMany = $derived(allValues.length > 50);
+  let isTooMany = $derived(allValues.length > 1000);
 
   let filterOptions = $derived(allValues.map(v => ({ label: v, value: v })));
 
