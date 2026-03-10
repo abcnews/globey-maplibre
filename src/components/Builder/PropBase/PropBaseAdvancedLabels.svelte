@@ -9,7 +9,8 @@
     cities: false,
     towns: false,
     oceans: false,
-    continents: false
+    continents: false,
+    boundaries: 'national'
   };
 
   function updateMapLabel(key: keyof typeof defaultLabels, value: any) {

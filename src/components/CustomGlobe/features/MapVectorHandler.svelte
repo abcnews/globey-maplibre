@@ -1,34 +1,20 @@
 <script lang="ts">
   /**
-   * @file MapVectorHandler.svelte
-   * @description Unified handler for MapLibre vector sources and layers (OpenMapTiles).
+   * Unified handler for 'openmaptiles' vector data.
    *
-   * This component manages:
-   * 1. The lifecycle of the 'openmaptiles' vector source.
-   * 2. Base map layers (land, water, roads) when in 'street' mode.
-   * 3. Administrative labels (countries, cities, etc.) for both street and satellite modes.
+   * Manages the lifecycle of the vector source and its associated layers, including
+   * base map geometry (land, water, roads) and administrative labels.
    *
-   * ### How it works:
-   * - **Single Source of Truth**: This component acts as the central manager for all 'openmaptiles' vector data.
-   *   It ensures the vector source is initialized correctly and shared across both the base map (geometry)
-   *   and administrative labels (text).
-   * - **Lazy Loading & Optimization**: The component is "lazy". It monitors requirements: if both base
-   *   layers and labels are disabled (e.g., in satellite mode with labels turned off), it will omit
-   *   the vector source entirely. This prevents the browser from fetching unnecessary vector tiles.
-   * - **Svelte 5 Reactivity**: Leverages `$effect` to sync with MapLibre's state. To ensure full
-   *   reactivity across MapLibre's asynchronous event pipeline, dependencies are explicitly tracked
-   *   at the top of effects. This allows the Builder UI to toggle labels in real-time.
-   * - **Dynamic Theming**: Automatically switches label styles (colors and halos) when toggling
-   *   between light street backgrounds and dark satellite imagery.
+   * - **Lazy Loading**: Omits the source if no layers are active to save bandwidth.
+   * - **Dynamic Theming**: Adjusts label styles automatically for light/dark backgrounds.
+   * - **Shared Source**: Uses a single source for both geometry and text layers.
    *
-   * ### Example:
-   * ```svelte
+   * @example
    * <MapVectorHandler
    *   base="satellite"
-   *   labels={ { countries: 3, states: true, cities: false, towns: false, oceans: true } }
+   *   labels={{ countries: 3, states: true, boundaries: 'national', ... }}
    *   isSatellite={true}
    * />
-   * ```
    */
   import type { maplibregl } from '../../mapLibre/index';
   import { getContext } from 'svelte';
@@ -50,7 +36,8 @@
       cities: false,
       towns: false,
       oceans: false,
-      continents: false
+      continents: false,
+      boundaries: 'national'
     },
     isSatellite = false
   }: {
@@ -62,6 +49,7 @@
       towns: boolean;
       oceans: boolean;
       continents: boolean;
+      boundaries: 'none' | 'national' | 'state';
     };
     isSatellite?: boolean;
   } = $props();
@@ -142,7 +130,15 @@
     const map = mapRoot.map;
 
     // Track all individual label properties to ensure reactivity
-    const deps = [labels.countries, labels.continents, labels.states, labels.cities, labels.towns, labels.oceans];
+    const deps = [
+      labels.countries,
+      labels.continents,
+      labels.states,
+      labels.cities,
+      labels.towns,
+      labels.oceans,
+      labels.boundaries
+    ];
 
     const syncVisibility = () => {
       // COUNTRIES
@@ -196,6 +192,32 @@
           map.setLayoutProperty(id, 'visibility', labels.oceans ? 'visible' : 'none');
         }
       });
+
+      // BOUNDARIES
+      if (map.getLayer('boundary-land-level-2')) {
+        map.setLayoutProperty(
+          'boundary-land-level-2',
+          'visibility',
+          labels.boundaries === 'national' || labels.boundaries === 'state' ? 'visible' : 'none'
+        );
+      }
+      if (map.getLayer('boundary-land-disputed')) {
+        map.setLayoutProperty(
+          'boundary-land-disputed',
+          'visibility',
+          labels.boundaries === 'national' || labels.boundaries === 'state' ? 'visible' : 'none'
+        );
+      }
+      if (map.getLayer('boundary-land-level-4')) {
+        map.setLayoutProperty(
+          'boundary-land-level-4',
+          'visibility',
+          labels.boundaries === 'state' ? 'visible' : 'none'
+        );
+      }
+      if (map.getLayer('boundary-land-level-6')) {
+        map.setLayoutProperty('boundary-land-level-6', 'visibility', 'none');
+      }
     };
 
     if (map.isStyleLoaded()) {

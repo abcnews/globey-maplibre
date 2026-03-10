@@ -277,13 +277,23 @@ export const defaultMapLabels = {
   cities: false,
   towns: false,
   oceans: false,
-  continents: false
+  continents: false,
+  boundaries: 'national'
 };
+
+const BOUNDARY_MAP = {
+  none: 0,
+  national: 1,
+  state: 2
+} as const;
+
+const REVERSE_BOUNDARY_MAP = Object.fromEntries(
+  Object.entries(BOUNDARY_MAP).map(([k, v]) => [v, k as keyof typeof BOUNDARY_MAP])
+);
 
 /**
  * Custom codec for MapLabels
- * Encodes as a 5-character string: [countries][states][cities][towns][oceans]
- * e.g. {countries: 3, states: false, ...} -> "30000"
+ * Encodes as a [countries][states][cities][towns][oceans][continents][boundaries] string
  */
 export const mapLabelsCodec = {
   encode: (val: DecodedObject['mapLabels']) => {
@@ -295,7 +305,8 @@ export const mapLabelsCodec = {
       val.cities === defaultMapLabels.cities &&
       val.towns === defaultMapLabels.towns &&
       val.oceans === defaultMapLabels.oceans &&
-      val.continents === defaultMapLabels.continents;
+      val.continents === defaultMapLabels.continents &&
+      val.boundaries === defaultMapLabels.boundaries;
 
     if (isDefault) return undefined;
 
@@ -305,21 +316,24 @@ export const mapLabelsCodec = {
       val.cities ? 1 : 0,
       val.towns ? 1 : 0,
       val.oceans ? 1 : 0,
-      val.continents ? 1 : 0
+      val.continents ? 1 : 0,
+      BOUNDARY_MAP[val.boundaries] ?? 1
     ].join('');
   },
   decode: (hash: any) => {
     if (hash === undefined || hash === null) return { ...defaultMapLabels };
-    const s = String(hash).padEnd(6, '0');
-    if (s.length < 5) return { ...defaultMapLabels }; // Support legacy 5-char format
-    const [countries, states, cities, towns, oceans, continents = 0] = s.split('').map(Number);
+    const s = String(hash);
+    if (s.length < 5) return { ...defaultMapLabels }; // Support legacy short formats
+
+    const parts = s.split('').map(Number);
     return {
-      countries,
-      states: states === 1,
-      cities: cities === 1,
-      towns: towns === 1,
-      oceans: oceans === 1,
-      continents: continents === 1
+      countries: parts[0],
+      states: parts[1] === 1,
+      cities: parts[2] === 1,
+      towns: parts[3] === 1,
+      oceans: parts[4] === 1,
+      continents: parts[5] !== undefined ? parts[5] === 1 : defaultMapLabels.continents,
+      boundaries: REVERSE_BOUNDARY_MAP[parts[6]] || defaultMapLabels.boundaries
     };
   }
 };

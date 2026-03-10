@@ -325,7 +325,8 @@ describe('marker', () => {
           cities: true,
           towns: false,
           oceans: true,
-          continents: false
+          continents: false,
+          boundaries: 'state'
         }
       };
       const fragment = await encodeFragment(input);
@@ -342,7 +343,8 @@ describe('marker', () => {
           cities: false,
           towns: false,
           oceans: true,
-          continents: false
+          continents: false,
+          boundaries: 'state'
         }
       };
       const fragment = await encodeFragment(input);

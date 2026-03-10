@@ -67,6 +67,7 @@ export interface DecodedObject {
     towns: boolean;
     oceans: boolean;
     continents: boolean;
+    boundaries: 'none' | 'national' | 'state';
   };
   geoJson?: GeoJsonConfig[];
   imageSources?: ImageSourceConfig[];

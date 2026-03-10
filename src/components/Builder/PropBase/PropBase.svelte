@@ -15,6 +15,30 @@
     };
   }
 
+  function updateMapLabel(key: string, value: any) {
+    const current = options.mapLabels || {
+      countries: 3,
+      states: false,
+      cities: false,
+      towns: false,
+      oceans: false,
+      continents: false,
+      boundaries: 'national'
+    };
+    const next = { ...current };
+    (next as any)[key] = value;
+    options = {
+      ...options,
+      mapLabels: next
+    };
+  }
+
+  const boundaryOptions: { value: 'none' | 'national' | 'state'; label: string }[] = [
+    { value: 'none', label: 'None' },
+    { value: 'national', label: 'National' },
+    { value: 'state', label: 'State' }
+  ];
+
   const baseLabels = {
     street: 'Street Map',
     countries: 'Countries',
@@ -108,6 +132,25 @@
                 />
                 Black marble
               </label>
+            </div>
+          </fieldset>
+        {/if}
+        {#if options.base === 'street' || !options.base}
+          <fieldset class="sub-options">
+            <legend>Boundaries</legend>
+            <div class="radio-group">
+              {#each boundaryOptions as opt}
+                <label>
+                  <input
+                    type="radio"
+                    name="ml-boundaries"
+                    value={opt.value}
+                    checked={(options.mapLabels?.boundaries ?? 'national') === opt.value}
+                    onchange={e => updateMapLabel('boundaries', e.currentTarget.value)}
+                  />
+                  {opt.label}
+                </label>
+              {/each}
             </div>
           </fieldset>
         {/if}
