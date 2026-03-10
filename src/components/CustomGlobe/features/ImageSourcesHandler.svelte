@@ -38,7 +38,7 @@
 
     // This effect ensures that as image sources are added/removed/reordered,
     // they maintain their relative order and their position below beforeId.
-    const layerIds = config.map(item => getImageLayerId(item));
+    const layerIds = config.map((item: ImageSourceConfig) => getImageLayerId(item));
 
     const restack = () => {
       // Style must be loaded to reorder layers
@@ -49,15 +49,14 @@
     restack();
     map.on('styledata', restack);
     map.on('load', restack);
-    map.on('idle', restack);
+
     return () => {
       map.off('styledata', restack);
       map.off('load', restack);
-      map.off('idle', restack);
     };
   });
 </script>
 
-{#each config as item (item.id + item.url)}
+{#each config as item (item.id)}
   <ImageSourceHandler config={item} {beforeId} />
 {/each}
