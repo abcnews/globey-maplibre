@@ -142,18 +142,16 @@ describe('marker', () => {
       const input = {
         labels: [
           {
-            name: 'Sydney',
-            coords: [151.2093, -33.8688] as [number, number],
-            style: 'city',
-            number: 1,
-            pointless: false
+            name: 'Melbourne',
+            coords: [144.9631, -37.8136] as [number, number],
+            style: 'level4',
+            number: 0
           },
           {
             name: 'Brisbane',
             coords: [153.0251, -27.4698] as [number, number],
             style: 'city',
-            number: 2,
-            pointless: true
+            number: 2
           }
         ]
       };
@@ -161,9 +159,8 @@ describe('marker', () => {
       const decoded = await decodeFragment(fragment);
 
       assert.strictEqual(decoded.labels?.length, 2);
-      assert.strictEqual(decoded.labels![0].name, 'Sydney');
+      assert.strictEqual(decoded.labels![0].name, 'Melbourne');
       assert.strictEqual(decoded.labels![1].name, 'Brisbane');
-      assert.strictEqual(decoded.labels![1].pointless, true);
     });
     it('should handle highlightCountries with ISO_A2', async () => {
       const input = {
@@ -326,7 +323,7 @@ describe('marker', () => {
           towns: false,
           oceans: true,
           continents: false,
-          boundaries: 'state'
+          boundaries: 'state' as const
         }
       };
       const fragment = await encodeFragment(input);
@@ -344,7 +341,7 @@ describe('marker', () => {
           towns: false,
           oceans: true,
           continents: false,
-          boundaries: 'state'
+          boundaries: 'state' as const
         }
       };
       const fragment = await encodeFragment(input);

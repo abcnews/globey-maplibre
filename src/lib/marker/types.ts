@@ -3,7 +3,6 @@ export interface Label {
   coords: [number, number];
   style: string;
   number: number;
-  pointless: boolean;
 }
 
 export interface Country {

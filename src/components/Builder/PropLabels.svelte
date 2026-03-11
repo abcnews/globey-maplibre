@@ -31,9 +31,8 @@
     const newLabel: Label = {
       name: 'Label',
       coords: [e.lngLat.lng, e.lngLat.lat],
-      style: 'country',
-      number: 0,
-      pointless: false
+      style: 'country-large',
+      number: 0
     };
     updateStore([...labels, newLabel]);
     isPicking = false;
@@ -92,9 +91,8 @@
         const newLabel: Label = {
           name: val.name,
           coords: val.coords,
-          style: 'level4', // Default to city level for search results
-          number: 0,
-          pointless: false
+          style: 'country-large', // Default for search results
+          number: 0
         };
         updateStore([...labels, newLabel]);
       }}
@@ -126,19 +124,11 @@
           placeholder="Label text"
         />
         <select value={label.style} onchange={e => updateLabel(i, 'style', e.currentTarget.value)}>
-          <option value="country">Country</option>
-          <option value="level3">Level 3</option>
-          <option value="level4">Level 4</option>
-          <option value="water">Water</option>
+          <option value="country-large">Country</option>
+          <option value="country-small">Country (small)</option>
+          <option value="water-large">Waterway</option>
+          <option value="water-small">Waterway (small)</option>
         </select>
-        <div style="display:flex; align-items:center;">
-          <input
-            type="checkbox"
-            checked={label.pointless}
-            onchange={e => updateLabel(i, 'pointless', e.currentTarget.checked)}
-            title="Hide Point"
-          />
-        </div>
         <button
           type="button"
           class="btn-icon"
@@ -164,7 +154,7 @@
   }
   .label-item {
     display: grid;
-    grid-template-columns: 1fr auto auto auto auto;
+    grid-template-columns: 1fr auto auto auto;
     gap: 0.5rem;
     align-items: center;
   }

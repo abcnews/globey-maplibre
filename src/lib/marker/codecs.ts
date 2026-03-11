@@ -214,14 +214,14 @@ export const countriesCodec = {
  */
 export const customLabelsCodec = {
   encode: (labels: Label[]) =>
-    labels?.map(({ coords, name, style, number, pointless }) => {
+    labels?.map(({ coords, name, style, number }) => {
       const hash = Geohash.encode(coords[1], coords[0], GEOHASH_PRECISION);
       const styles = ['country', 'level3', 'level4', 'water'];
       const styleIndex = styles.indexOf(style);
       const s = styleIndex > -1 ? styleIndex : style; // Fallback to string if not found
 
-      // Compact format: hash,name,style,number,pointless
-      const data = [hash, name, s, number || 0, Number(pointless || 0)];
+      // Compact format: hash,name,style,number
+      const data = [hash, name, s, number || 0];
       // Remove trailing zeros/defaults to save space
       while (data.length > 3 && data[data.length - 1] === 0) {
         data.pop();
@@ -233,7 +233,7 @@ export const customLabelsCodec = {
     const normalised = Array.isArray(encodedLabels) ? encodedLabels : [encodedLabels];
     return (normalised as string[]).map(string => {
       const decodedJSON = decode(string);
-      const [encodedCoords, name, styleOrInt, number = 0, pointless = 0] =
+      const [encodedCoords, name, styleOrInt, number = 0] =
         decodedJSON.slice(0, 1) === '['
           ? // Current labels are [coords,name,style,number] array
             JSON.parse(decodedJSON)
@@ -244,7 +244,7 @@ export const customLabelsCodec = {
       const style = typeof styleOrInt === 'number' ? styles[styleOrInt] || 'country' : styleOrInt || 'country';
 
       const { lat, lon } = Geohash.decode(encodedCoords);
-      return { name, coords: [Number(lon), Number(lat)], style, number, pointless: Boolean(pointless) };
+      return { name, coords: [Number(lon), Number(lat)], style, number };
     });
   }
 };
