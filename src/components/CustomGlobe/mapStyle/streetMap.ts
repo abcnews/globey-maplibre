@@ -1,8 +1,7 @@
-import type { maplibregl } from '../../mapLibre/index';
-import _styleSource from './styleStoryLabLight.json';
-import { patchStyleWithABCSources, getStyleColor } from './utils';
+import _styleSource from './styleStoryLab.json';
+import { getStyleColor } from './utils';
 //@ts-ignore
-export const styleSource = patchStyleWithABCSources(_styleSource);
+export const styleSource = _styleSource as maplibregl.StyleSpecification;
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
 export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;

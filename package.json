@@ -25,7 +25,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "test": "node --test src/**/*.test.ts"
+    "test": "node --test src/**/*.test.ts",
+    "patch-style": "node src/components/CustomGlobe/mapStyle/node_patchStyleFromBen.js"
   },
   "files": [
     "dist",
@@ -50,7 +51,6 @@
   "devDependencies": {
     "@abcnews/alternating-case-to-object": "^3.2.0",
     "@abcnews/base-36-text": "^1.0.1",
-    "@abcnews/components-builder": "^0.0.15",
     "@abcnews/components-storylab": "^0.0.2",
     "@abcnews/env-utils": "^6.0.0",
     "@abcnews/hash-codec": "^2.0.0",
@@ -89,5 +89,8 @@
   },
   "keywords": [
     "svelte"
-  ]
+  ],
+  "dependencies": {
+    "@abcnews/components-builder": "^0.0.19"
+  }
 }
