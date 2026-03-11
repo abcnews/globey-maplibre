@@ -57,13 +57,13 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
         ['get', 'stroke'],
         ['get', 'fill'],
         ['get', 'fill-color'],
-        '#00267E'
+        '#00297E'
       ];
     }
     if (context === 'stroke') {
-      return ['coalesce', ['get', 'stroke'], '#00267E'];
+      return ['coalesce', ['get', 'stroke'], '#00297E'];
     }
-    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00267E'];
+    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00297E'];
   }
 
   if (config.colourMode === 'scale' && config.colourProp) {

@@ -50,7 +50,7 @@ describe('GeoJson Utils', () => {
     it('should return stroke colour from property (simple mode)', () => {
       const config: GeoJsonConfig = { url: 'test', type: 'lines', colourMode: 'simple' };
       const expr = getColourExpression(config, 'stroke');
-      assert.deepStrictEqual(expr, ['coalesce', ['get', 'stroke'], '#555555']);
+      assert.deepStrictEqual(expr, ['coalesce', ['get', 'stroke'], '#00297E']);
     });
 
     it('should return marker colour (simple mode)', () => {
@@ -61,7 +61,6 @@ describe('GeoJson Utils', () => {
         ['get', 'marker-color'],
         ['get', 'stroke'],
         ['get', 'fill'],
-        ['get', 'fill-color'],
         '#7e7e7e'
       ]);
     });
