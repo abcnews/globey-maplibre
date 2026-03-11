@@ -185,14 +185,18 @@ describe('marker', () => {
           {
             url: 'https://example.com/data.json',
             type: 'areas' as const,
-            colourMode: 'scale' as const,
-            colourProp: 'value',
-            colourConfig: {
-              min: 0,
-              max: 100,
-              minColour: '#ffffff',
-              maxColour: '#ff0000'
-            }
+            styles: [
+              {
+                colourMode: 'scale' as const,
+                colourProp: 'value',
+                colourConfig: {
+                  min: 0,
+                  max: 100,
+                  minColour: '#ffffff',
+                  maxColour: '#ff0000'
+                }
+              }
+            ]
           }
         ]
       };
@@ -202,9 +206,9 @@ describe('marker', () => {
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].url, 'https://example.com/data.json');
       assert.strictEqual(decoded.geoJson![0].type, 'areas');
-      assert.strictEqual(decoded.geoJson![0].colourMode, 'scale');
-      assert.strictEqual(decoded.geoJson![0].colourProp, 'value');
-      assert.deepStrictEqual(decoded.geoJson![0].colourConfig, input.geoJson[0].colourConfig);
+      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourMode, 'scale');
+      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourProp, 'value');
+      assert.deepStrictEqual(decoded.geoJson![0].styles?.[0].colourConfig, input.geoJson[0].styles[0].colourConfig);
     });
 
     it('should round-trip point size', async () => {
@@ -213,7 +217,7 @@ describe('marker', () => {
           {
             url: 'points.json',
             type: 'points' as const,
-            colourMode: 'simple' as const,
+            styles: [{ colourMode: 'simple' as const }],
             pointSize: { value: 12.5, unit: 'k' as const }
           }
         ]
@@ -231,7 +235,7 @@ describe('marker', () => {
           {
             url: 'lines.json',
             type: 'lines' as const,
-            colourMode: 'simple' as const,
+            styles: [{ colourMode: 'simple' as const }],
             lineWidth: { value: 3, unit: 'p' as const }
           }
         ]
@@ -249,11 +253,15 @@ describe('marker', () => {
           {
             url: 'custom.json',
             type: 'areas' as const,
-            colourMode: 'scale' as const,
-            colourConfig: {
-              paletteType: 'custom' as const,
-              customPalette: ['#ff0000', '#00ff00', '#0000ff']
-            }
+            styles: [
+              {
+                colourMode: 'scale' as const,
+                colourConfig: {
+                  paletteType: 'custom' as const,
+                  customPalette: ['#ff0000', '#00ff00', '#0000ff']
+                }
+              }
+            ]
           }
         ]
       };
@@ -261,8 +269,8 @@ describe('marker', () => {
       const decoded = await decodeFragment(fragment);
 
       assert.deepStrictEqual(
-        decoded.geoJson![0].colourConfig?.customPalette,
-        input.geoJson[0].colourConfig.customPalette
+        decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
+        input.geoJson[0].styles[0].colourConfig.customPalette
       );
       // Ensure it was encoded efficiently (not as a full JSON array of strings)
       assert.ok(!fragment.includes('ff0000')); // Should be base36
@@ -274,8 +282,12 @@ describe('marker', () => {
           {
             url: 'https://example.com/spikes.json',
             type: 'spikes' as const,
-            colourMode: 'simple' as const,
-            filter: { prop: 'category', values: ['A', 'B'] },
+            styles: [
+              {
+                colourMode: 'simple' as const,
+                filter: { prop: 'category', values: ['A', 'B'] }
+              }
+            ],
             spike: { heightProp: 'count', scalar: 10 }
           }
         ]
@@ -285,15 +297,15 @@ describe('marker', () => {
 
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].type, 'spikes');
-      assert.deepStrictEqual(decoded.geoJson![0].filter, input.geoJson[0].filter);
+      assert.deepStrictEqual(decoded.geoJson![0].styles?.[0].filter, input.geoJson[0].styles[0].filter);
       assert.deepStrictEqual(decoded.geoJson![0].spike, input.geoJson[0].spike);
     });
 
     it('should handle multiple geoJson configs', async () => {
       const input = {
         geoJson: [
-          { url: 'a', type: 'areas' as const, colourMode: 'simple' as const },
-          { url: 'b', type: 'lines' as const, colourMode: 'scale' as const }
+          { url: 'a', type: 'areas' as const, styles: [{ colourMode: 'simple' as const }] },
+          { url: 'b', type: 'lines' as const, styles: [{ colourMode: 'scale' as const }] }
         ]
       };
       const fragment = await encodeFragment(input);
@@ -401,12 +413,12 @@ describe('marker', () => {
           {
             url: 'https://live-production.wcms.abc-cdn.net.au/valid.json',
             type: 'areas' as const,
-            colourMode: 'simple' as const
+            styles: [{ colourMode: 'simple' as const }]
           },
           {
             url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.json',
             type: 'areas' as const,
-            colourMode: 'simple' as const
+            styles: [{ colourMode: 'simple' as const }]
           }
         ]
       };

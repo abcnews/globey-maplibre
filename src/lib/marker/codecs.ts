@@ -15,7 +15,7 @@ const CODE_TO_STYLE: Record<string, Country['style']> = Object.fromEntries(
 export const GEOHASH_PRECISION = 10;
 
 const GEOJSON_TYPES = ['areas', 'lines', 'points', 'spikes'] as const;
-const GEOJSON_MODES = ['scale', 'simple', 'class', 'override'] as const;
+const GEOJSON_MODES = ['scale', 'simple', 'override'] as const;
 
 /**
  * Encodes hex colors into a compact base36 string.
@@ -67,41 +67,72 @@ export function encodeGeoJsonSize(ps: GeoJsonSize | undefined): string | undefin
   return `${ps.value}${ps.unit}`;
 }
 
-/**
- * Converts a GeoJsonConfig object into a compact array.
- */
-function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
-  const { url, type, colourMode, colourProp, colourConfig, filter, spike, pointSize, lineWidth } = config;
+import type { GeoJsonStyleConfig } from './types.ts';
 
-  const typeIdx = GEOJSON_TYPES.indexOf(type);
+function encodeGeoJsonStyle(style: GeoJsonStyleConfig): any[] {
+  const { colourMode, colourProp, colourConfig, opacity, filter } = style;
   const modeIdx = GEOJSON_MODES.indexOf(colourMode);
-
   let extras: any = undefined;
 
-  // Condense Extras
-  if (colourConfig || filter || spike) {
+  if (colourConfig || filter || opacity !== undefined) {
     extras = {};
     if (colourConfig) {
       const cc = { ...colourConfig };
-      // If custom palette, encode colors into a compact base36 string
       if (cc.paletteType === 'custom' && Array.isArray(cc.customPalette) && cc.customPalette.length > 0) {
-        cc.customPalette = [compressPalette(cc.customPalette)] as any; // Store as single-item array/string
+        cc.customPalette = [compressPalette(cc.customPalette)] as any;
       }
       extras.cc = cc;
     }
     if (filter) extras.f = filter;
-    if (spike) extras.s = spike;
+    if (opacity !== undefined) extras.o = Math.round(opacity * 100);
   }
 
-  // [url, typeIdx, modeIdx, colourProp, extras, pointSize, lineWidth]
+  const arr = [modeIdx, colourProp, extras];
+  while (arr.length > 0 && arr[arr.length - 1] === undefined) arr.pop();
+  return arr;
+}
+
+function decodeGeoJsonStyle(arr: any): GeoJsonStyleConfig {
+  if (!Array.isArray(arr)) {
+    // Fallback for empty/legacy
+    return { colourMode: 'scale' };
+  }
+  const [modeIdx, colourProp, extras] = arr;
+  const style: GeoJsonStyleConfig = {
+    colourMode: GEOJSON_MODES[modeIdx] || 'scale'
+  };
+  if (colourProp) style.colourProp = colourProp;
+
+  if (extras) {
+    if (extras.cc) {
+      const cc = extras.cc;
+      if (cc.paletteType === 'custom' && Array.isArray(cc.customPalette) && cc.customPalette.length === 1) {
+        cc.customPalette = decompressPalette(cc.customPalette[0]);
+      }
+      style.colourConfig = cc;
+    }
+    if (extras.f) style.filter = extras.f;
+    if (extras.o !== undefined) style.opacity = extras.o / 100;
+  }
+  return style;
+}
+
+/**
+ * Converts a GeoJsonConfig object into a compact array.
+ */
+function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
+  const { url, type, styles, spike, pointSize, lineWidth } = config;
+
+  const typeIdx = GEOJSON_TYPES.indexOf(type);
+  const encodedStyles = (styles || []).map(encodeGeoJsonStyle);
+
   const arr = [
     isValidUrl(url) ? compressUrl(url) : undefined,
     typeIdx,
-    modeIdx,
-    colourProp,
-    extras,
+    encodedStyles,
     encodeGeoJsonSize(pointSize),
-    encodeGeoJsonSize(lineWidth)
+    encodeGeoJsonSize(lineWidth),
+    spike
   ];
 
   // Trim trailing undefined values to save space
@@ -117,31 +148,27 @@ function encodeGeoJsonConfig(config: GeoJsonConfig): any[] {
  */
 function decodeGeoJsonConfig(arr: any): GeoJsonConfig | null {
   if (!Array.isArray(arr)) return null;
-  const [url, typeIdx, modeIdx, colourProp, extras, pointSize, lineWidth] = arr;
+  const [url, typeIdx, encodedStyles, pointSize, lineWidth, spike] = arr;
 
   const config: GeoJsonConfig = {
     url: decompressUrl(url),
-    type: GEOJSON_TYPES[typeIdx] || 'areas',
-    colourMode: GEOJSON_MODES[modeIdx] || 'scale'
+    type: GEOJSON_TYPES[typeIdx] || 'areas'
   };
 
-  if (colourProp) config.colourProp = colourProp;
-
-  if (extras) {
-    if (extras.cc) {
-      const cc = extras.cc;
-      // Decode custom palette if it was compressed
-      if (cc.paletteType === 'custom' && Array.isArray(cc.customPalette) && cc.customPalette.length === 1) {
-        cc.customPalette = decompressPalette(cc.customPalette[0]);
-      }
-      config.colourConfig = cc;
-    }
-    if (extras.f) config.filter = extras.f;
-    if (extras.s) config.spike = extras.s;
+  if (Array.isArray(encodedStyles) && encodedStyles.length > 0) {
+    // It's the new format
+    config.styles = encodedStyles.map(decodeGeoJsonStyle);
+  } else if (!Array.isArray(encodedStyles) && typeof encodedStyles === 'number') {
+    // Legacy flat object handled loosely, just map to a single style using the old modeIdx.
+    // We are ignoring legacy conversion for now stringently since user said greenfield.
+    config.styles = [decodeGeoJsonStyle([encodedStyles, pointSize /* colourProp wasn't at this index but anyway */])];
+  } else {
+    config.styles = [];
   }
 
-  if (pointSize) config.pointSize = decodeGeoJsonSize(pointSize);
-  if (lineWidth) config.lineWidth = decodeGeoJsonSize(lineWidth);
+  if (pointSize && typeof pointSize === 'string') config.pointSize = decodeGeoJsonSize(pointSize);
+  if (lineWidth && typeof lineWidth === 'string') config.lineWidth = decodeGeoJsonSize(lineWidth);
+  if (spike) config.spike = spike;
 
   return config;
 }

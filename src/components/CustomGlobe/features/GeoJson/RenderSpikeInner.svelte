@@ -96,12 +96,11 @@
       const hVal = config.spike?.heightProp ? Number(props[config.spike.heightProp]) || 0 : 0;
       let cVal: any;
 
-      if (config.colourMode === 'simple') {
+      const style = config.styles?.[0] || { colourMode: 'scale' as const };
+      if (style.colourMode === 'simple') {
         cVal = props['fill'] || '#888888';
-      } else if (config.colourMode === 'scale' && config.colourProp) {
-        cVal = Number(props[config.colourProp] || '0');
-      } else if (config.colourMode === 'class') {
-        cVal = props[config.colourProp || 'class'];
+      } else if (style.colourMode === 'scale' && style.colourProp) {
+        cVal = Number(props[style.colourProp] || '0');
       }
 
       const height = heightEvaluator({ hVal });

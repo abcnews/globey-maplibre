@@ -15,10 +15,8 @@ export interface GeoJsonSize {
   unit: 'p' | 'k';
 }
 
-export interface GeoJsonConfig {
-  url: string;
-  type: 'areas' | 'lines' | 'points' | 'spikes';
-  colourMode: 'scale' | 'simple' | 'class' | 'override';
+export interface GeoJsonStyleConfig {
+  colourMode: 'scale' | 'simple' | 'override';
   colourProp?: string;
   colourConfig?: {
     min?: number;
@@ -31,8 +29,14 @@ export interface GeoJsonConfig {
     paletteVariant?: string;
     customPalette?: string[];
   };
-
+  opacity?: number;
   filter?: { prop: string; values: string[] };
+}
+
+export interface GeoJsonConfig {
+  url: string;
+  type: 'areas' | 'lines' | 'points' | 'spikes';
+  styles?: GeoJsonStyleConfig[];
   spike?: {
     heightProp: string;
     scalar: number;

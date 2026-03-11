@@ -105,6 +105,33 @@
       if (!config.spike) config.spike = { scalar: 2000000, heightProp: '' };
     }
   });
+
+  $effect(() => {
+    // Ensure styles array exists to be manipulated by the UI
+    if (!config.styles) {
+      if ((config as any).colourMode) {
+        // Migration from old to new inside the UI state, happens when an old config object
+        // is passed into the modal instead of having been parsed by the new codec
+        config.styles = [
+          {
+            colourMode: (config as any).colourMode,
+            colourProp: (config as any).colourProp,
+            colourConfig: (config as any).colourConfig,
+            filter: (config as any).filter,
+            opacity: (config as any).opacity ?? 1
+          } as any
+        ];
+        delete (config as any).colourMode;
+        delete (config as any).colourProp;
+        delete (config as any).colourConfig;
+        delete (config as any).filter;
+        delete (config as any).opacity;
+      } else {
+        config.styles = [{ colourMode: 'override', opacity: 1 }];
+      }
+    }
+  });
+
   function handleSave(goto = false) {
     let bounds: [number, number][] | undefined = undefined;
     if (goto && rawFeatures.length > 0) {
@@ -164,6 +191,17 @@
     }
     onsave(config, goto, bounds);
   }
+
+  function addStyle() {
+    if (!config.styles) config.styles = [];
+    config.styles.push({ colourMode: 'override', opacity: 1 });
+  }
+
+  function removeStyle(index: number) {
+    if (config.styles) {
+      config.styles.splice(index, 1);
+    }
+  }
 </script>
 
 {#snippet footerChildren()}
@@ -210,9 +248,40 @@
       </div>
     </fieldset>
 
-    <PropGeoJsonFilter bind:config {properties} {getUniqueValues} />
+    {#if config.styles}
+      {#each config.styles as style, i}
+        <div style:border="1px solid #ccc" style:padding="1rem" style:border-radius="4px" style:margin-bottom="1rem">
+          <div
+            style:display="flex"
+            style:justify-content="space-between"
+            style:align-items="center"
+            style:margin-bottom="1rem"
+          >
+            <h4 style:margin="0">Style {i + 1}</h4>
+            <div style:display="flex" style:gap="0.5rem">
+              {#if config.styles && config.styles.length > 1}
+                <button type="button" class="gj-btn-small" onclick={() => removeStyle(i)}>Remove</button>
+              {/if}
+            </div>
+          </div>
+          <PropGeoJsonFilter bind:style={config.styles[i]} {properties} {getUniqueValues} />
 
-    <PropGeoJsonColour bind:config {properties} features={rawFeatures} />
+          <PropGeoJsonColour bind:style={config.styles[i]} {properties} features={rawFeatures} />
+
+          <fieldset>
+            <legend>Opacity</legend>
+            <div style:display="flex" style:align-items="center" style:gap="1rem">
+              <input type="range" min="0" max="1" step="0.05" bind:value={config.styles[i].opacity} style="flex: 1" />
+              <span style:font-variant-numeric="tabular-nums">{(config.styles[i].opacity ?? 1).toFixed(2)}</span>
+            </div>
+          </fieldset>
+        </div>
+      {/each}
+
+      <div style:margin-bottom="1rem">
+        <button type="button" onclick={addStyle}>+ Add Another Style</button>
+      </div>
+    {/if}
 
     {#if config.type === 'points' || config.type === 'spikes'}
       <PropGeoJsonSize bind:config prop="pointSize" legend="Point Size" />
@@ -227,3 +296,10 @@
     {/if}
   {/if}
 </Modal>
+
+<style>
+  .gj-btn-small {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8em;
+  }
+</style>
