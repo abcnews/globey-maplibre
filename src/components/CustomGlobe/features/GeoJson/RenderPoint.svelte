@@ -2,7 +2,13 @@
   import { getContext, untrack } from 'svelte';
   import type { maplibregl } from '../../../../components/mapLibre/index';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import { getColourExpression, getCircleRadiusExpression, getCircleOpacityExpression } from './utils';
+  import {
+    getColourExpression,
+    getCircleRadiusExpression,
+    getCircleOpacityExpression,
+    getStrokeWidthExpression,
+    getStrokeOpacityExpression
+  } from './utils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -36,13 +42,17 @@
           source: sid,
           paint: {
             'circle-color': getColourExpression(config, 'marker'),
-
             'circle-radius': getCircleRadiusExpression(config),
             'circle-opacity': getCircleOpacityExpression(config),
+            'circle-stroke-width': getStrokeWidthExpression(config),
+            'circle-stroke-color': getColourExpression(config, 'stroke'),
+            'circle-stroke-opacity': getStrokeOpacityExpression(config),
             'circle-pitch-scale': 'map',
             'circle-color-transition': { duration: 300 },
             'circle-radius-transition': { duration: 300 },
-            'circle-opacity-transition': { duration: 300 }
+            'circle-opacity-transition': { duration: 300 },
+            'circle-stroke-color-transition': { duration: 300 },
+            'circle-stroke-opacity-transition': { duration: 300 }
           }
         });
       }
@@ -51,6 +61,7 @@
     return () => {
       untrack(() => {
         if (map.getLayer(lid)) map.removeLayer(lid);
+        if (map.getLayer(shadowLayerId)) map.removeLayer(shadowLayerId);
         if (map.getSource(sid)) map.removeSource(sid);
       });
     };
@@ -71,9 +82,11 @@
     const lid = layerId;
     if (map && map.getLayer(lid)) {
       map.setPaintProperty(lid, 'circle-color', getColourExpression(config, 'marker'));
-
       map.setPaintProperty(lid, 'circle-radius', getCircleRadiusExpression(config));
       map.setPaintProperty(lid, 'circle-opacity', getCircleOpacityExpression(config));
+      map.setPaintProperty(lid, 'circle-stroke-width', getStrokeWidthExpression(config));
+      map.setPaintProperty(lid, 'circle-stroke-color', getColourExpression(config, 'stroke'));
+      map.setPaintProperty(lid, 'circle-stroke-opacity', getStrokeOpacityExpression(config));
     }
   });
 

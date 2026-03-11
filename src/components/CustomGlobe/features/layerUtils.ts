@@ -1,5 +1,5 @@
 import type { maplibregl } from '../../mapLibre/index';
-import type { ImageSourceConfig, GeoJsonConfig } from '../../../../../interactive-globey-maplibre/src/lib/marker';
+import type { ImageSourceConfig, GeoJsonConfig } from '$lib/marker';
 
 /**
  * Generates a stable ID for GeoJSON sources based on the URL.

@@ -1,12 +1,11 @@
 import {
-  getSequentialContinuousPaletteInterpolator,
   getDivergentContinuousPaletteInterpolator,
   SequentialPalette,
   DivergentPalette,
   ColourMode
 } from '@abcnews/palette';
 import { interpolateColour, getCustomPaletteInterpolator } from '$lib/colours';
-import type { GeoJsonConfig } from '../../../../../../interactive-globey-maplibre/src/lib/marker';
+import type { GeoJsonConfig } from '$lib/marker';
 import { getSequentialInterpolator } from '$lib/sequentialPalette';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layerUtils';
@@ -51,9 +50,6 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
   }
 
   if (config.colourMode === 'simple') {
-    if (context === 'stroke') {
-      return ['coalesce', ['get', 'stroke'], '#555555'];
-    }
     if (context === 'marker') {
       return [
         'coalesce',
@@ -61,10 +57,13 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
         ['get', 'stroke'],
         ['get', 'fill'],
         ['get', 'fill-color'],
-        '#7e7e7e'
+        '#00267E'
       ];
     }
-    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#555555'];
+    if (context === 'stroke') {
+      return ['coalesce', ['get', 'stroke'], '#00267E'];
+    }
+    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00267E'];
   }
 
   if (config.colourMode === 'scale' && config.colourProp) {
@@ -249,7 +248,7 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
     return [
       '*',
       baseOpacity,
-      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 1.0]
+      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 0.6]
     ];
   }
   return baseOpacity;
