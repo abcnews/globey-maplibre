@@ -1,6 +1,6 @@
 {
   "name": "interactive-globey-maplibre",
-  "version": "0.0.7-0",
+  "version": "0.1.0",
   "description": "A MapLibre globe scrollyteller and builder",
   "license": "MIT",
   "repository": {
