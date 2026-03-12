@@ -35,7 +35,7 @@ describe('GeoJson Utils', () => {
           }
         ]
       };
-      const expected = ['case', ['==', ['to-string', ['coalesce', ['get', 'id'], '']], '1'], 1, 0];
+      const expected = ['case', ['in', ['to-string', ['coalesce', ['get', 'id'], '']], ['literal', ['1', '2']]], 1, 0];
       assert.deepStrictEqual(getOpacityExpression(config), expected);
     });
 

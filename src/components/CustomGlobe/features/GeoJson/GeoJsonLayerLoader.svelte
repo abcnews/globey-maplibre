@@ -25,17 +25,6 @@
         }
       }
       data = geojson;
-      if (geojson?.features?.length > 0) {
-        console.log(`[GeoJSON] Loaded ${geojson.features.length} features from ${url}`);
-        const hitFeature = geojson.features.find(
-          (f: any) => f.properties?.status === 'hit' || f.properties?.name?.includes('mes')
-        );
-        if (hitFeature) {
-          console.log(`[GeoJSON] Found interesting feature:`, hitFeature.properties);
-        } else {
-          console.log(`[GeoJSON] Sample feature properties:`, geojson.features[0].properties);
-        }
-      }
     } catch (e) {
       console.error(e);
       data = null;
