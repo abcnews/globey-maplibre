@@ -123,7 +123,11 @@
           oninput={e => updateLabel(i, 'name', e.currentTarget.value)}
           placeholder="Label text"
         />
-        <select value={label.style} onchange={e => updateLabel(i, 'style', e.currentTarget.value)}>
+        <select
+          value={label.style}
+          onchange={e => updateLabel(i, 'style', e.currentTarget.value)}
+          style="max-width:8em"
+        >
           <option value="country-large">Country</option>
           <option value="country-small">Country (small)</option>
           <option value="water-large">Waterway</option>
