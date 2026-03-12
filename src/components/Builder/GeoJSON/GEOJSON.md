@@ -30,6 +30,8 @@ For instance if your GeoJSON features all have a "type" property, you can filter
 
 There are several options to style your GeoJSON features:
 
+1. _Basic_
+   Default values with the option to override with a custom colour.
 1. _Colour scale_
    If your GeoJSON data has numeric properties, you can use a colour scale to style your features.
 
@@ -39,9 +41,5 @@ There are several options to style your GeoJSON features:
 
    The **distribution graph** will appear, showing how your data is spread. This histogram helps you see where most of your data points lie. You can use the **draggable handles** or the numeric input boxes to set your `min` and `max` values:
 
-1. _Class Based_
-   If you process your GeoJSON to have class properties, you can specify standard ABC styles for each of your features TBD.
 1. _Simplestyle_
    Set bespoke colour and style properties in your GeoJSON file. If you're using geojson.io you can set simple style props in the gui by opening a feature and clicking "add simplestyle properties". This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.
-1. _Basic_
-   Completely override the style in your GeoJSON to do whatever you like from the builder. This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.

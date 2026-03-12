@@ -40,7 +40,7 @@
           },
           paint: {
             'line-color': '#ffffff',
-            'line-opacity': 0, //getStrokeOpacityExpression(config),
+            'line-opacity': getStrokeOpacityExpression(config),
             'line-width': ['+', getStrokeWidthExpression(config), 2]
           }
         });
@@ -69,13 +69,9 @@
     });
 
     return () => {
-      untrack(() => {
-        const lid = layerId;
-        const olid = outlineLayerId;
-        if (map.getLayer(lid)) map.removeLayer(lid);
-        if (map.getLayer(olid)) map.removeLayer(olid);
-        if (map.getSource(sid)) map.removeSource(sid);
-      });
+      if (map.getLayer(lid)) map.removeLayer(lid);
+      if (map.getLayer(olid)) map.removeLayer(olid);
+      if (map.getSource(sid)) map.removeSource(sid);
     };
   });
 
@@ -96,7 +92,7 @@
     const olid = outlineLayerId;
     if (map) {
       if (map.getLayer(olid)) {
-        map.setPaintProperty(olid, 'line-opacity', 0); //getStrokeOpacityExpression(config));
+        map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
         map.setPaintProperty(olid, 'line-width', ['+', getStrokeWidthExpression(config), 2]);
       }
       if (map.getLayer(lid)) {
