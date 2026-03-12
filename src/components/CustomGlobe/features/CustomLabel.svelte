@@ -1,6 +1,5 @@
 <script lang="ts">
   let { name, style, isDark = false } = $props<{ name: string; style: string; isDark?: boolean }>();
-  $effect(() => console.log({ isDark }));
 </script>
 
 <div class="globey__label globey__label--{style}" class:globey__label--dark={isDark}>

@@ -1,5 +1,14 @@
 import { describe, it, expect, assert } from 'vitest';
-import { getOpacityExpression, getColourExpression, generateId } from './utils.ts';
+import {
+  getOpacityExpression,
+  getColourExpression,
+  generateId,
+  getCircleRadiusExpression,
+  getCircleOpacityExpression,
+  getStrokeWidthExpression,
+  getStrokeOpacityExpression,
+  getFillOpacityExpression
+} from './utils.ts';
 import type { GeoJsonConfig } from '../../../../lib/marker';
 import { createExpression } from '@maplibre/maplibre-gl-style-spec';
 
@@ -72,6 +81,58 @@ describe('GeoJson Utils', () => {
     });
   });
 
+  describe('Radius and Stroke Expressions', () => {
+    it('should return preset radius (highlighted)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      assert.strictEqual(getCircleRadiusExpression(config), 8);
+    });
+
+    it('should return preset stroke width (highlighted)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      assert.strictEqual(getStrokeWidthExpression(config), 2);
+    });
+  });
+
+  describe('Opacity Expressions', () => {
+    it('should return preset circle opacity (highlighted)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      // baseOpacity 1 * 0.6 factor
+      assert.deepStrictEqual(getCircleOpacityExpression(config), ['*', 1, 0.6]);
+    });
+
+    it('should return preset fill opacity (highlighted)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      // baseOpacity 1 * 0.6 factor
+      assert.deepStrictEqual(getFillOpacityExpression(config), ['*', 1, 0.6]);
+    });
+
+    it('should return preset stroke opacity (highlighted)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'lines',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      // baseOpacity 1 * 1.0 factor
+      assert.deepStrictEqual(getStrokeOpacityExpression(config), ['*', 1, 1]);
+    });
+  });
+
   describe('getColourExpression (MapLibre Expressions)', () => {
     it('should return override colour', () => {
       const config: GeoJsonConfig = {
@@ -87,10 +148,26 @@ describe('GeoJson Utils', () => {
       assert.strictEqual(getColourExpression(config, 'fill'), '#00ff00');
     });
 
+    it('should return preset colours (normal/highlighted)', () => {
+      const normalConfig: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'normal' } }]
+      };
+      assert.strictEqual(getColourExpression(normalConfig, 'marker'), '#00267E');
+
+      const highlightedConfig: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+      };
+      assert.strictEqual(getColourExpression(highlightedConfig, 'marker'), '#FF3C27');
+    });
+
     it('should return stroke colour from property (simple mode)', () => {
       const config: GeoJsonConfig = { url: 'test', type: 'lines', styles: [{ colourMode: 'simple' }] };
       const expr = getColourExpression(config, 'stroke');
-      assert.deepStrictEqual(expr, ['coalesce', ['get', 'stroke'], '#00297E']);
+      assert.deepStrictEqual(expr, ['coalesce', ['get', 'stroke'], '#00267E']);
     });
 
     it('should return marker colour (simple mode)', () => {
@@ -102,7 +179,7 @@ describe('GeoJson Utils', () => {
         ['get', 'stroke'],
         ['get', 'fill'],
         ['get', 'fill-color'],
-        '#00297E'
+        '#00267E'
       ]);
     });
 

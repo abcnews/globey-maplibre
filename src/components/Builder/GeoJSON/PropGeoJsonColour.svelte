@@ -39,10 +39,18 @@
           minColour: '#ffffff',
           maxColour: '#ff0000',
           override: '#ff0000',
+          overrideType: 'custom',
           paletteType: 'sequential',
           paletteVariant: SequentialPalette.Blue
         };
       }
+    }
+  });
+
+  // Default overrideType if missing
+  $effect(() => {
+    if (style.colourMode === 'override' && style.colourConfig && !style.colourConfig.overrideType) {
+      style.colourConfig.overrideType = 'custom';
     }
   });
 
@@ -125,9 +133,23 @@
   {#if style.colourMode === 'simple'}
     <small>Uses <code>marker-color</code>, <code>fill</code>, <code>stroke</code> properties from GeoJSON.</small>
   {:else if style.colourMode === 'override'}
-    <label for="gj-colour-override">Colour</label>
     {#if style.colourConfig}
-      <input id="gj-colour-override" type="color" bind:value={style.colourConfig.override} />
+      <div class="gj-grid">
+        <div>
+          <label for="gj-override-type">Preset</label>
+          <select id="gj-override-type" bind:value={style.colourConfig.overrideType}>
+            <option value="normal">Normal</option>
+            <option value="highlighted">Highlighted</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        {#if style.colourConfig.overrideType === 'custom'}
+          <div>
+            <label for="gj-colour-override">Colour</label>
+            <input id="gj-colour-override" type="color" bind:value={style.colourConfig.override} />
+          </div>
+        {/if}
+      </div>
     {/if}
   {:else if style.colourMode === 'scale' && style.colourProp}
     {#if !isNumeric}

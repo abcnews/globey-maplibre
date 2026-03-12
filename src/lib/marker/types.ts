@@ -25,6 +25,7 @@ export interface GeoJsonStyleConfig {
     maxColour?: string;
     scale?: { [key: string]: string };
     override?: string;
+    overrideType?: 'normal' | 'highlighted' | 'custom';
     paletteType?: 'sequential' | 'divergent' | 'custom';
     paletteVariant?: string;
     customPalette?: string[];

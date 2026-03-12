@@ -7,6 +7,7 @@ import {
 import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours';
 import type { GeoJsonConfig, GeoJsonStyleConfig } from '../../../../lib/marker';
 import { getSequentialInterpolator } from '../../../../lib/sequentialPalette';
+import { THEMES } from './themes';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layerUtils';
 
@@ -80,6 +81,8 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
 
 function getSingleStyleColourExpression(style: GeoJsonStyleConfig, context: 'fill' | 'stroke' | 'marker'): any {
   if (style.colourMode === 'override') {
+    const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+    if (preset) return preset.color;
     return style.colourConfig?.override || '#ff0000';
   }
 
@@ -91,13 +94,13 @@ function getSingleStyleColourExpression(style: GeoJsonStyleConfig, context: 'fil
         ['get', 'stroke'],
         ['get', 'fill'],
         ['get', 'fill-color'],
-        '#00297E'
+        '#00267E'
       ];
     }
     if (context === 'stroke') {
-      return ['coalesce', ['get', 'stroke'], '#00297E'];
+      return ['coalesce', ['get', 'stroke'], '#00267E'];
     }
-    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00297E'];
+    return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00267E'];
   }
 
   if (style.colourMode === 'scale' && style.colourProp) {
@@ -278,6 +281,8 @@ function getSingleStyleStrokeWidthExpression(style: GeoJsonStyleConfig): any {
   if (style.colourMode === 'simple') {
     return ['coalesce', ['get', 'stroke-width'], 2];
   }
+  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (preset) return preset.strokeWidth;
   return 2;
 }
 
@@ -305,7 +310,7 @@ export function getCircleRadiusExpression(config: GeoJsonConfig): any {
     }
   }
 
-  if (!config.styles || config.styles.length === 0) return 6;
+  if (!config.styles || config.styles.length === 0) return THEMES.normal.radius;
 
   // Simple case for one style
   if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
@@ -344,13 +349,15 @@ function getSingleStyleCircleRadiusExpression(style: GeoJsonStyleConfig): any {
       ['coalesce', ['to-number', ['get', 'marker-size']], 6]
     ];
   }
-  return 6;
+  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (preset) return preset.radius;
+  return THEMES.normal.radius;
 }
 
 export function getCircleOpacityExpression(config: GeoJsonConfig): any {
   const baseOpacity = getOpacityExpression(config);
 
-  if (!config.styles || config.styles.length === 0) return ['*', baseOpacity, 0.6];
+  if (!config.styles || config.styles.length === 0) return ['*', baseOpacity, THEMES.normal.fillOpacity];
 
   // If one style with no filter, keep it simple
   if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
@@ -374,7 +381,7 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
   }
 
   // Final fallback (hidden if no rules match)
-  caseExpr.push(0.6); // Default circle factor
+  caseExpr.push(THEMES.normal.fillOpacity); // Default circle factor
   return ['*', baseOpacity, caseExpr];
 }
 
@@ -383,16 +390,18 @@ function getSingleStyleCircleOpacityExpression(style: GeoJsonStyleConfig, baseOp
     return [
       '*',
       baseOpacity,
-      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], 0.6]
+      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], THEMES.normal.fillOpacity]
     ];
   }
+  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (preset) return ['*', baseOpacity, preset.fillOpacity];
   return baseOpacity;
 }
 
 export function getFillOpacityExpression(config: GeoJsonConfig): any {
   const baseOpacity = getOpacityExpression(config);
 
-  if (!config.styles || config.styles.length === 0) return ['*', baseOpacity, 0.5];
+  if (!config.styles || config.styles.length === 0) return ['*', baseOpacity, THEMES.normal.fillOpacity];
 
   if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
     return getSingleStyleFillOpacityExpression(config.styles[0], baseOpacity);
@@ -415,7 +424,7 @@ export function getFillOpacityExpression(config: GeoJsonConfig): any {
   }
 
   // Final fallback
-  caseExpr.push(0.5);
+  caseExpr.push(THEMES.normal.fillOpacity);
   return ['*', baseOpacity, caseExpr];
 }
 
@@ -423,7 +432,9 @@ function getSingleStyleFillOpacityExpression(style: GeoJsonStyleConfig, baseOpac
   if (style.colourMode === 'simple') {
     return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
   }
-  return baseOpacity === 1 ? 0.5 : baseOpacity;
+  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (preset) return ['*', baseOpacity, preset.fillOpacity];
+  return baseOpacity === 1 ? THEMES.normal.fillOpacity : baseOpacity;
 }
 
 export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
@@ -460,6 +471,8 @@ function getSingleStyleStrokeOpacityExpression(style: GeoJsonStyleConfig, baseOp
   if (style.colourMode === 'simple') {
     return ['*', baseOpacity, ['coalesce', ['get', 'stroke-opacity'], 1.0]];
   }
+  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (preset) return ['*', baseOpacity, preset.strokeOpacity];
   return baseOpacity;
 }
 
