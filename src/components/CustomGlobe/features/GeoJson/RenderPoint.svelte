@@ -61,7 +61,6 @@
     return () => {
       untrack(() => {
         if (map.getLayer(lid)) map.removeLayer(lid);
-        if (map.getLayer(shadowLayerId)) map.removeLayer(shadowLayerId);
         if (map.getSource(sid)) map.removeSource(sid);
       });
     };
@@ -81,9 +80,15 @@
     const map = mapRoot.map;
     const lid = layerId;
     if (map && map.getLayer(lid)) {
-      map.setPaintProperty(lid, 'circle-color', getColourExpression(config, 'marker'));
-      map.setPaintProperty(lid, 'circle-radius', getCircleRadiusExpression(config));
-      map.setPaintProperty(lid, 'circle-opacity', getCircleOpacityExpression(config));
+      const colorExpr = getColourExpression(config, 'marker');
+      const radiusExpr = getCircleRadiusExpression(config);
+      const opacityExpr = getCircleOpacityExpression(config);
+
+      console.log(`[GeoJSON] Updating layer ${lid}`, { colorExpr, radiusExpr, opacityExpr });
+
+      map.setPaintProperty(lid, 'circle-color', colorExpr);
+      map.setPaintProperty(lid, 'circle-radius', radiusExpr);
+      map.setPaintProperty(lid, 'circle-opacity', opacityExpr);
       map.setPaintProperty(lid, 'circle-stroke-width', getStrokeWidthExpression(config));
       map.setPaintProperty(lid, 'circle-stroke-color', getColourExpression(config, 'stroke'));
       map.setPaintProperty(lid, 'circle-stroke-opacity', getStrokeOpacityExpression(config));
@@ -106,16 +111,22 @@
       const feature = e.features?.[0];
       if (!feature) return;
 
-      const title = feature.properties?.title;
-      const description = feature.properties?.description;
+      console.log('[GeoJSON] Feature clicked:', feature.properties);
 
-      if (title || description) {
-        let content = '';
-        if (title) content += `<strong>${title}</strong><br>`;
-        if (description) content += description;
+      const title = feature.properties?.title || feature.properties?.name || 'Feature';
+      const description = feature.properties?.description || '';
 
-        popup.setLngLat(e.lngLat).setHTML(content).addTo(map);
+      let content = `<strong>${title}</strong>`;
+      if (description) content += `<br>${description}`;
+
+      // Add a property list for debugging
+      content += `<hr><div style="font-size: 10px; font-family: monospace; max-height: 100px; overflow-y: auto;">`;
+      for (const [key, val] of Object.entries(feature.properties)) {
+        content += `<b>${key}:</b> ${val}<br>`;
       }
+      content += `</div>`;
+
+      popup.setLngLat(e.lngLat).setHTML(content).addTo(map);
     };
 
     map.on('click', lid, handleEvent);

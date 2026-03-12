@@ -25,7 +25,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "test": "node --test src/**/*.test.ts",
+    "test": "vitest run",
     "patch-style": "node src/components/CustomGlobe/mapStyle/node_patchStyleFromBen.js"
   },
   "files": [
@@ -85,7 +85,8 @@
     "throttle-debounce": "^5.0.2",
     "topojson-client": "^3.1.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
   },
   "keywords": [
     "svelte"

@@ -1,5 +1,4 @@
-import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import { describe, it, expect, assert } from 'vitest';
 import { parseKmlCoords, parseNearmapUrl, parseGeoTiffCoords } from './utils.ts';
 
 describe('ImageSource Utils', () => {
@@ -15,6 +14,7 @@ describe('ImageSource Utils', () => {
             `;
       const result = parseKmlCoords(input);
       assert.ok(result);
+      if (!result) return;
       assert.strictEqual(result.length, 4);
       assert.deepStrictEqual(result[0], [-7.789306640625001, 59.17592824927138]); // TL
       assert.deepStrictEqual(result[2], [-1.3623046875000002, 55.272857215315355]); // BR
@@ -29,6 +29,7 @@ describe('ImageSource Utils', () => {
             `;
       const result = parseKmlCoords(input);
       assert.ok(result);
+      if (!result) return;
       assert.strictEqual(result[0][1], 59.17592824927138);
     });
 
@@ -41,6 +42,7 @@ describe('ImageSource Utils', () => {
             `;
       const result = parseKmlCoords(input);
       assert.ok(result);
+      if (!result) return;
       assert.deepStrictEqual(result[0], [-7.7, 59.1]);
     });
 
@@ -79,6 +81,7 @@ describe('ImageSource Utils', () => {
             `;
       const result = parseKmlCoords(input);
       assert.ok(result);
+      if (!result) return;
       assert.deepStrictEqual(result[0], [40, 10]);
     });
   });
@@ -97,6 +100,7 @@ describe('ImageSource Utils', () => {
       // center: -27.4809010, 153.0041531
       const result = parseNearmapUrl(url, 1920, 1080);
       assert.ok(result);
+      if (!result) return;
       // Rough check for center
       const centerLon = (result.coordinates[0][0] + result.coordinates[1][0]) / 2;
       const centerLat = (result.coordinates[0][1] + result.coordinates[3][1]) / 2;
@@ -116,6 +120,7 @@ describe('ImageSource Utils', () => {
         'https://apps.nearmap.com/maps/#/wD1AwlSPT5q9e6b5KpoBvQ/@-27.3546586,153.4187044,17.00z,101d/V/20240611';
       const result = parseNearmapUrl(pitchUrl);
       assert.ok(result);
+      if (!result) return;
       assert.strictEqual(result.pitch, 101);
     });
 
@@ -131,6 +136,7 @@ describe('ImageSource Utils', () => {
       const geoKeys = { GeographicTypeGeoKey: 4326 };
       const result = parseGeoTiffCoords(bbox, geoKeys);
       assert.ok(result);
+      if (!result) return;
       assert.deepStrictEqual(result, [
         [140, -30], // TL
         [150, -30], // TR
@@ -145,6 +151,7 @@ describe('ImageSource Utils', () => {
       const geoKeys = { ProjectedCSTypeGeoKey: 3857 };
       const result = parseGeoTiffCoords(bbox, geoKeys);
       assert.ok(result);
+      if (!result) return;
       // Verify TL is NW of BR
       assert.ok(result[0][0] < result[2][0]); // Lon
       assert.ok(result[0][1] > result[2][1]); // Lat
