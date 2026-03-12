@@ -24,7 +24,7 @@ export function getGeoJsonLayerIds(config: GeoJsonConfig): string[] {
     case 'areas':
       return [`${sourceId}-fill`, `${sourceId}-outline`];
     case 'lines':
-      return [`${sourceId}-line`];
+      return [`${sourceId}-line`, `${sourceId}-line-outline`];
     case 'points':
       return [`${sourceId}-circle`];
     case 'spikes':

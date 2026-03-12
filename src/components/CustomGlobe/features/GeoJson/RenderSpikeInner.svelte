@@ -46,11 +46,12 @@
     map.on('zoom', onZoom);
     currentZoom = map.getZoom();
 
+    const lid = layerId;
     return () => {
       map.off('zoom', onZoom);
       cancelAnimationFrame(animationFrame);
-      if (map.getLayer(layerId)) {
-        map.removeLayer(layerId);
+      if (map.getLayer(lid)) {
+        map.removeLayer(lid);
       }
     };
   });

@@ -59,10 +59,8 @@
     });
 
     return () => {
-      untrack(() => {
-        if (map.getLayer(lid)) map.removeLayer(lid);
-        if (map.getSource(sid)) map.removeSource(sid);
-      });
+      if (map.getLayer(lid)) map.removeLayer(lid);
+      if (map.getSource(sid)) map.removeSource(sid);
     };
   });
 
