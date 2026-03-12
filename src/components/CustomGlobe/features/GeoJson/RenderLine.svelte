@@ -40,7 +40,7 @@
           },
           paint: {
             'line-color': '#ffffff',
-            'line-opacity': 0, //getStrokeOpacityExpression(config),
+            'line-opacity': getStrokeOpacityExpression(config),
             'line-width': ['+', getStrokeWidthExpression(config), 2]
           }
         });
@@ -96,7 +96,7 @@
     const olid = outlineLayerId;
     if (map) {
       if (map.getLayer(olid)) {
-        map.setPaintProperty(olid, 'line-opacity', 0); //getStrokeOpacityExpression(config));
+        map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
         map.setPaintProperty(olid, 'line-width', ['+', getStrokeWidthExpression(config), 2]);
       }
       if (map.getLayer(lid)) {
