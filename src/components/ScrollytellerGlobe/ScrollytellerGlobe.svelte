@@ -34,7 +34,7 @@
       {#if loading}
         <div class="loading"></div>
       {/if}
-      <CustomGlobe {options} rootElStyle="width:100%;height:100vh" interactive={false} />
+      <CustomGlobe {options} rootElStyle="width:100%;height:100%" interactive={false} />
     </div>
   </Scrollyteller>
 {/if}
@@ -42,5 +42,9 @@
 <style type="scss">
   :global(#webpack-dev-server-client-overlay) {
     display: none !important;
+  }
+  .container {
+    width: 100%;
+    height: 100%;
   }
 </style>
