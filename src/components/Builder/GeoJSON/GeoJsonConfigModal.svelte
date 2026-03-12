@@ -127,7 +127,7 @@
         delete (config as any).filter;
         delete (config as any).opacity;
       } else {
-        config.styles = [{ colourMode: 'override', opacity: 1 }];
+        config.styles = [{ colourMode: 'basic', opacity: 1 }];
       }
     }
   });
@@ -194,7 +194,7 @@
 
   function addStyle() {
     if (!config.styles) config.styles = [];
-    config.styles.push({ colourMode: 'override', opacity: 1 });
+    config.styles.push({ colourMode: 'basic', opacity: 1 });
   }
 
   function removeStyle(index: number) {

@@ -15,7 +15,7 @@ const CODE_TO_STYLE: Record<string, Country['style']> = Object.fromEntries(
 export const GEOHASH_PRECISION = 10;
 
 const GEOJSON_TYPES = ['areas', 'lines', 'points', 'spikes'] as const;
-const GEOJSON_MODES = ['scale', 'simple', 'override'] as const;
+const GEOJSON_MODES = ['scale', 'simple', 'basic'] as const;
 
 /**
  * Encodes hex colors into a compact base36 string.

@@ -80,10 +80,10 @@ export function getColourExpression(config: GeoJsonConfig, context: 'fill' | 'st
 }
 
 function getSingleStyleColourExpression(style: GeoJsonStyleConfig, context: 'fill' | 'stroke' | 'marker'): any {
-  if (style.colourMode === 'override') {
-    const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  if (style.colourMode === 'basic') {
+    const preset = THEMES[style.colourConfig?.basicType || 'custom'];
     if (preset) return preset.color;
-    return style.colourConfig?.override || '#ff0000';
+    return style.colourConfig?.basic || '#ff0000';
   }
 
   if (style.colourMode === 'simple') {
@@ -173,10 +173,10 @@ function getSingleStyleColourEvaluator(style: GeoJsonStyleConfig): (feature: any
     return feature => feature.cVal || '#888888';
   }
 
-  // Override Mode
-  if (mode === 'override') {
-    const override = colourConfig?.override || '#ff0000';
-    return () => override;
+  // Basic Mode
+  if (mode === 'basic') {
+    const basic = colourConfig?.basic || '#ff0000';
+    return () => basic;
   }
 
   // Scale (Continuous) Mode
@@ -281,7 +281,7 @@ function getSingleStyleStrokeWidthExpression(style: GeoJsonStyleConfig): any {
   if (style.colourMode === 'simple') {
     return ['coalesce', ['get', 'stroke-width'], 2];
   }
-  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  const preset = THEMES[style.colourConfig?.basicType || 'custom'];
   if (preset) return preset.strokeWidth;
   return 2;
 }
@@ -349,7 +349,7 @@ function getSingleStyleCircleRadiusExpression(style: GeoJsonStyleConfig): any {
       ['coalesce', ['to-number', ['get', 'marker-size']], 6]
     ];
   }
-  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  const preset = THEMES[style.colourConfig?.basicType || 'custom'];
   if (preset) return preset.radius;
   return THEMES.normal.radius;
 }
@@ -393,7 +393,7 @@ function getSingleStyleCircleOpacityExpression(style: GeoJsonStyleConfig, baseOp
       ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], THEMES.normal.fillOpacity]
     ];
   }
-  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  const preset = THEMES[style.colourConfig?.basicType || 'custom'];
   if (preset) return ['*', baseOpacity, preset.fillOpacity];
   return baseOpacity;
 }
@@ -432,7 +432,7 @@ function getSingleStyleFillOpacityExpression(style: GeoJsonStyleConfig, baseOpac
   if (style.colourMode === 'simple') {
     return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
   }
-  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  const preset = THEMES[style.colourConfig?.basicType || 'custom'];
   if (preset) return ['*', baseOpacity, preset.fillOpacity];
   return baseOpacity === 1 ? THEMES.normal.fillOpacity : baseOpacity;
 }
@@ -471,7 +471,7 @@ function getSingleStyleStrokeOpacityExpression(style: GeoJsonStyleConfig, baseOp
   if (style.colourMode === 'simple') {
     return ['*', baseOpacity, ['coalesce', ['get', 'stroke-opacity'], 1.0]];
   }
-  const preset = THEMES[style.colourConfig?.overrideType || 'custom'];
+  const preset = THEMES[style.colourConfig?.basicType || 'custom'];
   if (preset) return ['*', baseOpacity, preset.strokeOpacity];
   return baseOpacity;
 }

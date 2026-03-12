@@ -33,7 +33,7 @@ Define which features this rule applies to.
 - **Simple Style**: Uses `fill`, `stroke`, or `marker-color` properties directly from the GeoJSON features.
 - **Colour Scale**: Interpolates colours based on a numeric property value.
 - **Class Based**: Maps property values to predefined category colours.
-- **Override**: Applies a single fixed colour to all matching features.
+- **Basic**: Applies a single fixed colour to all matching features.
 
 ### 4. Size (Points & Lines)
 
@@ -51,4 +51,4 @@ For advanced rendering types like **Spikes**, Globey evaluates these rules in re
 
 - **Comparative Data**: Style US investments in blue and Chinese investments in red.
 - **Segmented Scales**: Apply a green-to-blue scale for "Low Risk" categories and a yellow-to-red scale for "High Risk" categories.
-- **Highlighting**: Create a filter for a specific feature by name and override its colour to make it stand out.
+- **Highlighting**: Create a filter for a specific feature by name and set its colour to "Basic" to make it stand out.

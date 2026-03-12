@@ -86,7 +86,7 @@ describe('GeoJson Utils', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'points',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       assert.strictEqual(getCircleRadiusExpression(config), 8);
     });
@@ -95,7 +95,7 @@ describe('GeoJson Utils', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'points',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       assert.strictEqual(getStrokeWidthExpression(config), 2);
     });
@@ -106,7 +106,7 @@ describe('GeoJson Utils', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'points',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       // baseOpacity 1 * 0.6 factor
       assert.deepStrictEqual(getCircleOpacityExpression(config), ['*', 1, 0.6]);
@@ -116,7 +116,7 @@ describe('GeoJson Utils', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'areas',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       // baseOpacity 1 * 0.6 factor
       assert.deepStrictEqual(getFillOpacityExpression(config), ['*', 1, 0.6]);
@@ -126,7 +126,7 @@ describe('GeoJson Utils', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'lines',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       // baseOpacity 1 * 1.0 factor
       assert.deepStrictEqual(getStrokeOpacityExpression(config), ['*', 1, 1]);
@@ -134,14 +134,14 @@ describe('GeoJson Utils', () => {
   });
 
   describe('getColourExpression (MapLibre Expressions)', () => {
-    it('should return override colour', () => {
+    it('should return basic colour', () => {
       const config: GeoJsonConfig = {
         url: 'test',
         type: 'areas',
         styles: [
           {
-            colourMode: 'override',
-            colourConfig: { override: '#00ff00' }
+            colourMode: 'basic',
+            colourConfig: { basic: '#00ff00' }
           }
         ]
       };
@@ -152,14 +152,14 @@ describe('GeoJson Utils', () => {
       const normalConfig: GeoJsonConfig = {
         url: 'test',
         type: 'points',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'normal' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'normal' } }]
       };
       assert.strictEqual(getColourExpression(normalConfig, 'marker'), '#00267E');
 
       const highlightedConfig: GeoJsonConfig = {
         url: 'test',
         type: 'points',
-        styles: [{ colourMode: 'override', colourConfig: { overrideType: 'highlighted' } }]
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
       assert.strictEqual(getColourExpression(highlightedConfig, 'marker'), '#FF3C27');
     });
@@ -263,13 +263,13 @@ describe('GeoJson Utils', () => {
         type: 'points',
         styles: [
           {
-            colourMode: 'override',
-            colourConfig: { override: '#ff0000' },
+            colourMode: 'basic',
+            colourConfig: { basic: '#ff0000' },
             filter: { prop: 'type', values: ['A'] }
           },
           {
-            colourMode: 'override',
-            colourConfig: { override: '#00ff00' }
+            colourMode: 'basic',
+            colourConfig: { basic: '#00ff00' }
           }
         ]
       };
@@ -287,13 +287,13 @@ describe('GeoJson Utils', () => {
         type: 'points',
         styles: [
           {
-            colourMode: 'override',
-            colourConfig: { override: '#ff0000' },
+            colourMode: 'basic',
+            colourConfig: { basic: '#ff0000' },
             filter: { prop: 'type', values: ['A'] }
           },
           {
-            colourMode: 'override',
-            colourConfig: { override: '#00ff00' }
+            colourMode: 'basic',
+            colourConfig: { basic: '#00ff00' }
           }
         ]
       };
@@ -349,13 +349,13 @@ describe('GeoJson Utils', () => {
         type: 'points',
         styles: [
           {
-            colourMode: 'override',
-            colourConfig: { override: '#004cff' }, // Blue
+            colourMode: 'basic',
+            colourConfig: { basic: '#004cff' }, // Blue
             filter: { prop: 'status', values: ['hit'] }
           },
           {
-            colourMode: 'override',
-            colourConfig: { override: '#ff0000' } // Red
+            colourMode: 'basic',
+            colourConfig: { basic: '#ff0000' } // Red
           }
         ]
       };

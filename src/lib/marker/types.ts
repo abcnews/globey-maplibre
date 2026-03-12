@@ -16,7 +16,7 @@ export interface GeoJsonSize {
 }
 
 export interface GeoJsonStyleConfig {
-  colourMode: 'scale' | 'simple' | 'override';
+  colourMode: 'scale' | 'simple' | 'basic';
   colourProp?: string;
   colourConfig?: {
     min?: number;
@@ -24,8 +24,8 @@ export interface GeoJsonStyleConfig {
     minColour?: string;
     maxColour?: string;
     scale?: { [key: string]: string };
-    override?: string;
-    overrideType?: 'normal' | 'highlighted' | 'custom';
+    basic?: string;
+    basicType?: 'normal' | 'highlighted' | 'custom';
     paletteType?: 'sequential' | 'divergent' | 'custom';
     paletteVariant?: string;
     customPalette?: string[];

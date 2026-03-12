@@ -43,5 +43,5 @@ There are several options to style your GeoJSON features:
    If you process your GeoJSON to have class properties, you can specify standard ABC styles for each of your features TBD.
 1. _Simplestyle_
    Set bespoke colour and style properties in your GeoJSON file. If you're using geojson.io you can set simple style props in the gui by opening a feature and clicking "add simplestyle properties". This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.
-1. _Override_
+1. _Basic_
    Completely override the style in your GeoJSON to do whatever you like from the builder. This feature should be used sparingly, because the default values have been designed with accessibility and contrast in mind.

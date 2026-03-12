@@ -33,13 +33,13 @@
   // Ensure the colour configuration object exists for override and scale modes
   $effect(() => {
     // Ensure nested objects exist based on mode/type
-    if (style.colourMode === 'override' || style.colourMode === 'scale') {
+    if (style.colourMode === 'basic' || style.colourMode === 'scale') {
       if (!style.colourConfig) {
         style.colourConfig = {
           minColour: '#ffffff',
           maxColour: '#ff0000',
-          override: '#ff0000',
-          overrideType: 'custom',
+          basic: '#ff0000',
+          basicType: 'normal',
           paletteType: 'sequential',
           paletteVariant: SequentialPalette.Blue
         };
@@ -47,10 +47,10 @@
     }
   });
 
-  // Default overrideType if missing
+  // Default basicType if missing
   $effect(() => {
-    if (style.colourMode === 'override' && style.colourConfig && !style.colourConfig.overrideType) {
-      style.colourConfig.overrideType = 'custom';
+    if (style.colourMode === 'basic' && style.colourConfig && !style.colourConfig.basicType) {
+      style.colourConfig.basicType = 'normal';
     }
   });
 
@@ -113,7 +113,7 @@
       <select id="gj-colour-mode" bind:value={style.colourMode}>
         <option value="simple">Simple Style</option>
         <option value="scale">Colour Scale</option>
-        <option value="override">Override</option>
+        <option value="basic">Basic</option>
       </select>
     </div>
 
@@ -131,22 +131,25 @@
   </div>
 
   {#if style.colourMode === 'simple'}
-    <small>Uses <code>marker-color</code>, <code>fill</code>, <code>stroke</code> properties from GeoJSON.</small>
-  {:else if style.colourMode === 'override'}
+    <small
+      >Uses <code>marker-color</code>, <code>fill</code>, <code>stroke</code> properties from GeoJSON. An editor like
+      <a href="https://geojson.io" target="_blank">geojson.io</a> supports these.</small
+    >
+  {:else if style.colourMode === 'basic'}
     {#if style.colourConfig}
       <div class="gj-grid">
         <div>
-          <label for="gj-override-type">Preset</label>
-          <select id="gj-override-type" bind:value={style.colourConfig.overrideType}>
+          <label for="gj-basic-type">Preset</label>
+          <select id="gj-basic-type" bind:value={style.colourConfig.basicType}>
             <option value="normal">Normal</option>
             <option value="highlighted">Highlighted</option>
             <option value="custom">Custom</option>
           </select>
         </div>
-        {#if style.colourConfig.overrideType === 'custom'}
+        {#if style.colourConfig.basicType === 'custom'}
           <div>
-            <label for="gj-colour-override">Colour</label>
-            <input id="gj-colour-override" type="color" bind:value={style.colourConfig.override} />
+            <label for="gj-colour-basic">Colour</label>
+            <input id="gj-colour-basic" type="color" bind:value={style.colourConfig.basic} />
           </div>
         {/if}
       </div>
