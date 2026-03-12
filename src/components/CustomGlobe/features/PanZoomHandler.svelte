@@ -74,7 +74,7 @@
     ];
 
     mapRoot.map.fitBounds(mapBounds, {
-      padding: 50,
+      padding: 0,
       essential: true,
       duration: animationDuration
     });
