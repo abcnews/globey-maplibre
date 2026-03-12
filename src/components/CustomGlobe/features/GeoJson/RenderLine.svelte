@@ -9,11 +9,13 @@
   let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
   const layerId = $derived(`${sourceId}-line`);
+  const outlineLayerId = $derived(`${sourceId}-line-outline`);
 
   $effect(() => {
     const map = mapRoot.map;
     const sid = sourceId;
     const lid = layerId;
+    const olid = outlineLayerId;
 
     if (!map || !data) return;
 
@@ -23,6 +25,24 @@
         map.addSource(sid, {
           type: 'geojson',
           data: data
+        });
+      }
+
+      // Initialize Outline Layer
+      if (map.getSource(sid) && !map.getLayer(olid)) {
+        map.addLayer({
+          id: olid,
+          type: 'line',
+          source: sid,
+          layout: {
+            'line-cap': 'round',
+            'line-join': 'round'
+          },
+          paint: {
+            'line-color': '#ffffff',
+            'line-opacity': getStrokeOpacityExpression(config),
+            'line-width': ['+', getStrokeWidthExpression(config), 2]
+          }
         });
       }
 
@@ -50,7 +70,10 @@
 
     return () => {
       untrack(() => {
+        const lid = layerId;
+        const olid = outlineLayerId;
         if (map.getLayer(lid)) map.removeLayer(lid);
+        if (map.getLayer(olid)) map.removeLayer(olid);
         if (map.getSource(sid)) map.removeSource(sid);
       });
     };
@@ -68,12 +91,20 @@
   // Update Styles
   $effect(() => {
     const map = mapRoot.map;
+    const sid = sourceId;
     const lid = layerId;
-    if (map && map.getLayer(lid)) {
-      map.setPaintProperty(lid, 'line-color', getColourExpression(config, 'stroke'));
+    const olid = outlineLayerId;
+    if (map) {
+      if (map.getLayer(olid)) {
+        map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
+        map.setPaintProperty(olid, 'line-width', ['+', getStrokeWidthExpression(config), 2]);
+      }
+      if (map.getLayer(lid)) {
+        map.setPaintProperty(lid, 'line-color', getColourExpression(config, 'stroke'));
 
-      map.setPaintProperty(lid, 'line-opacity', getStrokeOpacityExpression(config));
-      map.setPaintProperty(lid, 'line-width', getStrokeWidthExpression(config));
+        map.setPaintProperty(lid, 'line-opacity', getStrokeOpacityExpression(config));
+        map.setPaintProperty(lid, 'line-width', getStrokeWidthExpression(config));
+      }
     }
   });
 
