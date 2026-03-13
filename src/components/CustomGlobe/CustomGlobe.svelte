@@ -119,6 +119,9 @@
       -webkit-text-stroke-width: 2px;
       -webkit-text-stroke-color: #ffffff88;
       paint-order: stroke fill;
+      :global(a) {
+        color: currentColor !important;
+      }
     }
   }
 
