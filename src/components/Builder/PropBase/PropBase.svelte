@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { DecodedObject } from '../../../lib/marker';
-  import type { maplibregl } from '../../mapLibre/index';
   import { Modal } from '@abcnews/components-builder';
-  import { Pencil } from 'svelte-bootstrap-icons';
+  import { Pencil, X } from 'svelte-bootstrap-icons';
+  import { isOsmBase } from '../../CustomGlobe/mapStyle/utils';
   import PropBaseAdvancedLabels from './PropBaseAdvancedLabels.svelte';
 
   let { options = $bindable(), map } = $props<{ options: DecodedObject; map: maplibregl.Map }>();
@@ -39,13 +39,13 @@
     { value: 'state', label: 'State' }
   ];
 
-  const baseLabels = {
+  const baseLabels: Record<string, string> = {
     street: 'Street Map',
     countries: 'Countries',
     satellite: 'Satellite'
   };
 
-  const satelliteLabels = {
+  const satelliteLabels: Record<string, string> = {
     blue: 'Blue Marble',
     black: 'Black Marble'
   };
@@ -135,7 +135,7 @@
             </div>
           </fieldset>
         {/if}
-        {#if options.base === 'street' || !options.base}
+        {#if isOsmBase(options.base)}
           <fieldset class="sub-options">
             <legend>Boundaries</legend>
             <div class="radio-group">
@@ -159,6 +159,42 @@
         <fieldset>
           <legend>Labels</legend>
           <PropBaseAdvancedLabels bind:options />
+        </fieldset>
+        <fieldset>
+          <legend>Attribution</legend>
+
+          <div class="builder__inline">
+            <label class="builder__inline" style="flex:1"
+              >Text
+              <input
+                id="text_attribution"
+                type="text"
+                placeholder="e.g. Map data © ..."
+                value={options.attribution || ''}
+                oninput={e => update('attribution', e.currentTarget.value)}
+                style="flex:1;width:auto;"
+              />
+            </label>
+
+            <button
+              class="btn-icon"
+              title="Clear attribution"
+              aria-label="Clear attribution"
+              onclick={() => update('attribution', '')}
+            >
+              <X width="16" height="16" />
+            </button>
+          </div>
+          {#if isOsmBase(options.base)}
+            <label style="display: flex; align-items: center; gap: 0.5rem;">
+              <input
+                type="checkbox"
+                checked={options.hideOsm || false}
+                onchange={e => update('hideOsm', e.currentTarget.checked)}
+              />
+              Hide OpenStreetMap
+            </label>
+          {/if}
         </fieldset>
       </div>
     </div>

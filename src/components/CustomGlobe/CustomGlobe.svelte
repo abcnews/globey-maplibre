@@ -10,6 +10,7 @@
   import MapRasterHandler from './features/MapRasterHandler.svelte';
   import MapCountriesBaseHandler from './features/HighlightCountries/MapCountriesBaseHandler.svelte';
   import ProjectionHandler from './features/ProjectionHandler.svelte';
+  import AttributionHandler from './features/AttributionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
   import type { maplibregl } from '../mapLibre/index';
   import { isDarkBase } from './mapStyle/utils';
@@ -75,6 +76,7 @@
     }}
   >
     {#if mapInstance}
+      <AttributionHandler attribution={options.attribution} base={options.base} hideOsm={options.hideOsm} />
       <ProjectionHandler projection={options.projection} />
       <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} fitGlobe={options.fitGlobe} />
 
@@ -107,6 +109,17 @@
     height: 100%;
     overflow: hidden;
     position: relative;
+    font-family: ABCSans, sans-serif;
+    font-size: var(--od-font-size-xs, 0.75rem) !important;
+    line-height: 1.25rem;
+
+    /* MapLibre attribution control (see AttributionHandler.svelte). */
+    :global(.maplibregl-ctrl.maplibregl-ctrl-attrib) {
+      background: transparent;
+      -webkit-text-stroke-width: 2px;
+      -webkit-text-stroke-color: #ffffff88;
+      paint-order: stroke fill;
+    }
   }
 
   .custom-globe--satellite {

@@ -30,6 +30,8 @@ async function patchStyle() {
     // 1. Update asset URLs
     if (style.sources.openmaptiles) {
       style.sources.openmaptiles.url = OPENMAPTILES_URL;
+      // We handle attribution manually
+      style.sources.openmaptiles.attribution = '';
     }
     style.sprite = SPRITE_URL;
     style.glyphs = GLYPHS_URL;

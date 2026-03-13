@@ -11,9 +11,11 @@
   import PropBase from './PropBase/PropBase.svelte';
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
   import PropImageSource from './ImageSource/PropImageSource.svelte';
+  import { isOsmBase } from '../CustomGlobe/mapStyle/utils';
   import MarkerJson from './MarkerJson.svelte';
   import IframeUrl from './IframeUrl.svelte';
   import Favicon from './Favicon/Favicon.svelte';
+  import { X } from 'svelte-bootstrap-icons';
 
   let options = $state<DecodedObject>({});
   let map = $state<maplibregl.Map>();
@@ -100,6 +102,7 @@
     />
     <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
     <PropImageSource {map} imageSources={options.imageSources || []} onchange={list => (options.imageSources = list)} />
+
     <MarkerAdmin
       prefixes={{
         Mark: '#mark',

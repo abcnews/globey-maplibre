@@ -86,5 +86,15 @@ export const markerSchema = {
     key: 'fit',
     type: 'boolean',
     defaultValue: false
+  },
+  attribution: {
+    key: 'attr',
+    type: 'base36string',
+    defaultValue: ''
+  },
+  hideOsm: {
+    key: 'ho',
+    type: 'boolean',
+    defaultValue: false
   }
 };

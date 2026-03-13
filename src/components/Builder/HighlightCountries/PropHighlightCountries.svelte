@@ -15,11 +15,11 @@
   } = $props();
 </script>
 
-<fieldset>
-  <legend>Countries</legend>
-  {#if $options?.base === 'countries'}
+{#if $options?.base === 'countries'}
+  <fieldset>
+    <legend>Countries</legend>
     <PropHighlightCountriesEditor {map} {highlightCountries} {onchange} />
-  {:else}
-    <small>This feature is only available when the Map Base is set to <strong>Countries</strong>.</small>
-  {/if}
-</fieldset>
+  </fieldset>
+
+  <small>This feature is only available when the Map Base is set to <strong>Countries</strong>.</small>
+{/if}

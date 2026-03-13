@@ -123,6 +123,16 @@ describe('marker', () => {
       assert.ok(Math.abs(decoded.z! - input.z) < 0.00001);
     });
 
+    it('should handle custom attribution with special characters', async () => {
+      const input = {
+        attribution: 'Map data © OpenStreetMap contributors, Sources: Example? && other!'
+      };
+      const fragment = await encodeFragment(input);
+      const decoded = await decodeFragment(fragment);
+
+      assert.strictEqual(decoded.attribution, input.attribution);
+    });
+
     it('should round-trip bounds', async () => {
       const input = {
         bounds: [

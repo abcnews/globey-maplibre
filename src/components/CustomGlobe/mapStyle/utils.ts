@@ -25,6 +25,23 @@ export function isDarkBase(baseId: string): boolean {
 }
 
 /**
+ * Escapes HTML characters using native DOM methods to prevent injection.
+ */
+export function escapeHTML(str: string): string {
+  if (!str) return str;
+  const el = document.createElement('span');
+  el.textContent = str.trim();
+  return el.innerHTML;
+}
+
+/**
+ * Determines if a base layer uses OpenStreetMap data.
+ */
+export function isOsmBase(baseId?: string): boolean {
+  return baseId === 'street' || !baseId;
+}
+
+/**
  * Simple helper to extract a color (or other paint property) from a style layer.
  * Returns the first found property if multiple stops are defined, or the literal value.
  */
