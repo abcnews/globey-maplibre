@@ -31,7 +31,7 @@
         const el = document.createElement('div');
         mount(CustomLabel, {
           target: el,
-          props: { name: label.name, style: label.style, pointless: label.pointless, isDark }
+          props: { name: label.name, style: label.style, isDark }
         });
 
         const marker = new maplibregl.Marker({
@@ -48,40 +48,7 @@
 
     markers = currentMarkers;
 
-    const updatePositions = () => {
-      const container = map.getCanvasContainer();
-      if (!container) return;
-      const width = container.offsetWidth;
-
-      currentMarkers.forEach(marker => {
-        const pos = map.project(marker.getLngLat());
-        const el = marker.getElement().querySelector('.globey__label');
-        if (el) {
-          // Skip flipping for centered labels
-          if (el.classList.contains('globey__label--country') || el.classList.contains('globey__label--water')) {
-            return;
-          }
-
-          // If more than 60% across the screen, flip it to prevent overflow
-          if (pos.x > width * 0.6) {
-            el.classList.add('globey__domnode--reverse');
-          } else {
-            el.classList.remove('globey__domnode--reverse');
-          }
-        }
-      });
-    };
-
-    map.on('move', updatePositions);
-    map.on('moveend', updatePositions);
-    map.on('resize', updatePositions);
-
-    requestAnimationFrame(updatePositions);
-
     return () => {
-      map.off('move', updatePositions);
-      map.off('moveend', updatePositions);
-      map.off('resize', updatePositions);
       currentMarkers.forEach(m => m.remove());
     };
   });

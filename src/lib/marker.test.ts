@@ -154,13 +154,13 @@ describe('marker', () => {
           {
             name: 'Melbourne',
             coords: [144.9631, -37.8136] as [number, number],
-            style: 'level4',
+            style: 'country-small',
             number: 0
           },
           {
             name: 'Brisbane',
             coords: [153.0251, -27.4698] as [number, number],
-            style: 'city',
+            style: 'water-large',
             number: 2
           }
         ]
