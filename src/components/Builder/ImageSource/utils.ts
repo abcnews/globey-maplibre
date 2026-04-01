@@ -128,6 +128,32 @@ export function parseGeoTiffCoords(bbox: number[], geoKeys: any): [number, numbe
     [minX, maxY], // TL
     [maxX, maxY], // TR
     [maxX, minY], // BR
-    [minX, minY] // BL
+  ];
+}
+
+/**
+ * parseFilenameCoords
+ * Extracts map coordinates from a filename in the format `top,left,bottom,right.png`
+ * returns TL, TR, BR, BL coordinate array.
+ */
+export function parseFilenameCoords(filename: string): [number, number][] | null {
+  const decoded = decodeURIComponent(filename);
+  const name = decoded.split('/').pop() || decoded;
+  const match = name.match(/(-?\d+\.\d+),(-?\d+\.\d+),(-?\d+\.\d+),(-?\d+\.\d+)/);
+
+  if (!match) return null;
+
+  const top = Number(match[1]);
+  const left = Number(match[2]);
+  const bottom = Number(match[3]);
+  const right = Number(match[4]);
+
+  if (isNaN(top) || isNaN(left) || isNaN(bottom) || isNaN(right)) return null;
+
+  return [
+    [left, top], // TL
+    [right, top], // TR
+    [right, bottom], // BR
+    [left, bottom] // BL
   ];
 }

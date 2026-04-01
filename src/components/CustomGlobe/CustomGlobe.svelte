@@ -20,9 +20,10 @@
     interactive: boolean;
     onLoad?: (map: maplibregl.Map) => void;
     options: DecodedObject;
+    preserveDrawingBuffer?: boolean;
     children?: import('svelte').Snippet;
   };
-  let { rootElStyle, interactive, onLoad, options, children }: Props = $props();
+  let { rootElStyle, interactive, onLoad, options, preserveDrawingBuffer = false, children }: Props = $props();
 
   let mapInstance = $state<maplibregl.Map | null>(null);
 
@@ -63,7 +64,8 @@
         container: rootNode,
         interactive: !!interactive,
         center: options.coords,
-        projection: { type: options.projection || 'globe' }
+        projection: { type: options.projection || 'globe' },
+        preserveDrawingBuffer
       } as any);
 
       map.on('load', () => {

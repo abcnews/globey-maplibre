@@ -11,9 +11,9 @@
   import PropBase from './PropBase/PropBase.svelte';
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
   import PropImageSource from './ImageSource/PropImageSource.svelte';
-  import { isOsmBase } from '../CustomGlobe/mapStyle/utils';
   import MarkerJson from './MarkerJson.svelte';
   import IframeUrl from './IframeUrl.svelte';
+  import PropScreenshot from './PropScreenshotTool/PropScreenshot.svelte';
   import Favicon from './Favicon/Favicon.svelte';
   import { X } from 'svelte-bootstrap-icons';
 
@@ -63,7 +63,7 @@
 {#snippet Viz()}
   <div class="frame">
     {#if options.coords}
-      <CustomGlobe interactive={true} {options} onLoad={loadedMap => (map = loadedMap)} />
+      <CustomGlobe interactive={true} {options} preserveDrawingBuffer={true} onLoad={loadedMap => (map = loadedMap)} />
     {/if}
   </div>
 {/snippet}
@@ -124,6 +124,7 @@
       </div>
       <IframeUrl />
       <MarkerJson bind:options />
+      <PropScreenshot {map} bind:options={options} />
     </fieldset>
   {/if}
   <UpdateChecker />
