@@ -3,13 +3,19 @@ import { getMountValue, selectMounts } from '@abcnews/mount-utils';
 import { mount } from 'svelte';
 import ScrollytellerGlobe from './components/ScrollytellerGlobe/ScrollytellerGlobe.svelte';
 import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
+import acto from '@abcnews/alternating-case-to-object';
 
 const MARKER_NAME = 'globey';
 
 whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, { markAsUsed: false });
   mounts.forEach(mountEl => {
-    const scrollyName = getMountValue(mountEl, 'scrollytellerNAME');
+    const scrollyMountValue = getMountValue(mountEl, 'scrollytellerNAME');
+    const scrollyName = acto(scrollyMountValue).name;
+
+    if (typeof scrollyName !== 'string') {
+      return;
+    }
 
     try {
       const scrollyConfig = loadScrollyteller(scrollyName, 'u-full', 'mark');
