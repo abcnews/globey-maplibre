@@ -1,4 +1,13 @@
-import { sveltekit } from '@sveltejs/kit/vite';
+/**
+ * @file
+ * This config does two things:
+ * 1. resolve your Aunty certificates and serve via HTTPS on your ABC hostname
+ * 2. create a non-ESM entrypoint called coremedia.js, to bootstrap our ESM app
+ *
+ * The idea is that eventually these will be imported from @abcnews/aunty, but
+ * for now they're inline so we can test and modify.
+ */
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { defineConfig, type Plugin } from 'vite';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -24,13 +33,17 @@ const getServer = () => {
   const keyFile = join(certDir, 'server.key');
 
   // Use certs if they exist
-  const https =
-    existsSync(certFile) && existsSync(keyFile)
-      ? {
-          key: readFileSync(keyFile),
-          cert: readFileSync(certFile)
-        }
-      : undefined;
+  let https;
+  try {
+    if (existsSync(certFile) && existsSync(keyFile)) {
+      https = {
+        key: readFileSync(keyFile),
+        cert: readFileSync(certFile)
+      };
+    }
+  } catch (e) {
+    // Ignore permission errors etc
+  }
 
   return {
     https,
@@ -44,6 +57,9 @@ const getServer = () => {
   };
 };
 
+const isTS = existsSync(join(process.cwd(), 'tsconfig.json'));
+const coremediaEntry = isTS ? 'src/coremedia.ts' : 'src/coremedia.js';
+
 /**
  * Vite plugin to export a CoreMedia-compatible non-module entrypoint to
  * bootstrap the rest of the app as type="module".
@@ -53,20 +69,25 @@ const getServer = () => {
 const coremediaPlugin = (): Plugin => {
   let isBuild = false;
 
-  const getProxyScript = (entryPath: string, cssPaths: string[] = []) => `(function() {
+  const getProxyScript = (
+    entryPath: string,
+    cssPaths: string[] = [],
+    modulePreloadPaths: string[] = []
+  ) => `(function() {
   var src = document.currentScript ? document.currentScript.src : '';
   var base = src.substring(0, src.lastIndexOf('/') + 1);
   var cssPaths = ${JSON.stringify(cssPaths)};
-  cssPaths.forEach(function(path) {
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = base + path;
-    document.head.appendChild(link);
-  });
-  var script = document.createElement('script');
-  script.type = 'module';
-  script.src = base + '${entryPath}';
-  document.head.appendChild(script);
+  var modulePreloadPaths = ${JSON.stringify([...new Set([entryPath, ...modulePreloadPaths])])};
+
+  function crel(tag, props) {
+    var el = document.createElement(tag);
+    for (var key in props) el[key] = props[key];
+    return document.head.appendChild(el);
+  }
+
+  cssPaths.forEach(p => crel('link', { rel: 'stylesheet', href: base + p }));
+  modulePreloadPaths.forEach(p => crel('link', { rel: 'modulepreload', href: base + p }));
+  crel('script', { type: 'module', src: base + '${entryPath}' });
 })();`;
 
   return {
@@ -74,34 +95,26 @@ const coremediaPlugin = (): Plugin => {
     config(config, { command }) {
       isBuild = command === 'build';
     },
-    buildStart() {
-      if (isBuild) {
-        this.emitFile({
-          type: 'chunk',
-          id: 'src/coremedia.ts',
-          name: 'coremedia'
-        });
-      }
-    },
     generateBundle(options, bundle) {
       if (isBuild) {
         const entry = Object.values(bundle).find(chunk => chunk.type === 'chunk' && chunk.name === 'coremedia');
-        if (entry && 'fileName' in entry) {
-          const cssPaths = Array.from((entry as any).viteMetadata?.importedCss || []);
+        if (entry && entry.type === 'chunk') {
+          const cssPaths = Array.from(entry.viteMetadata?.importedCss || []);
+          const modulePreloadPaths = entry.imports;
           this.emitFile({
             type: 'asset',
             fileName: 'coremedia.js',
-            source: getProxyScript(entry.fileName, cssPaths as string[])
+            source: getProxyScript(entry.fileName, cssPaths as string[], modulePreloadPaths)
           });
         }
       }
     },
     configureServer(server) {
-      server.middlewares.use((req: any, res, next) => {
+      server.middlewares.use((req, res, next) => {
         if (req.url === '/coremedia.js') {
           res.setHeader('Access-Control-Allow-Origin', '*');
           res.setHeader('Content-Type', 'application/javascript');
-          res.end(getProxyScript('src/coremedia.ts'));
+          res.end(getProxyScript(coremediaEntry));
           return;
         }
         next();
@@ -111,6 +124,25 @@ const coremediaPlugin = (): Plugin => {
 };
 
 export default defineConfig({
-  plugins: [sveltekit(), coremediaPlugin()],
-  server: getServer()
+  base: '',
+  plugins: [svelte(), coremediaPlugin()],
+  server: getServer(),
+  build: {
+    rollupOptions: {
+      input: {
+        index: 'index.html',
+        coremedia: coremediaEntry,
+        scrollyteller: 'scrollyteller/index.html',
+        builder: 'builder/index.html'
+      },
+      output: {
+        // entry points don't get hashed so we can use them in future if we need
+        entryFileNames: 'modules/[name].js',
+
+        // the remainder of assets get hashed to avoid name collisions.
+        chunkFileNames: 'modules/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    }
+  }
 });

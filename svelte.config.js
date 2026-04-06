@@ -1,24 +1,6 @@
-import adapter from '@sveltejs/adapter-static';
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte';
 
-/** @type {import('@sveltejs/kit').Config} */
-const config = {
-  preprocess: vitePreprocess(),
-  compilerOptions: {
-    css: 'injected'
-  },
-  kit: {
-    adapter: adapter({
-      pages: 'dist-www',
-      assets: 'dist-www',
-      fallback: undefined,
-      precompress: false,
-      strict: true
-    }),
-    paths: {
-      relative: true
-    }
-  }
+/** @type {import("@sveltejs/vite-plugin-svelte").SvelteConfig} */
+export default {
+  preprocess: [vitePreprocess()]
 };
-
-export default config;
