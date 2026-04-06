@@ -20,7 +20,7 @@ const SPRITE_URL = 'https://www.abc.net.au/res/sites/news-projects/map-vector-st
 const GLYPHS_URL = 'https://www.abc.net.au/res/sites/news-projects/map-vector-fonts/{fontstack}/{range}.pbf';
 
 const EXCLUDED_LAYER_IDS = ['terrarium', 'natural_earth_shading'];
-const EXCLUDED_SOURCES = ['IndividualCountries', 'NaturalEarthShading', 'terrarium'];
+const EXCLUDED_SOURCES = ['IndividualCountries', 'NaturalEarthShading', 'terrarium', 'NaturalEarth', 'CountryTests'];
 
 async function patchStyle() {
   try {
