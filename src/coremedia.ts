@@ -10,8 +10,7 @@ const MARKER_NAME = 'globey';
 whenOdysseyLoaded.then(async () => {
   const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, { markAsUsed: false });
   mounts.forEach(mountEl => {
-    const scrollyMountValue = getMountValue(mountEl, 'scrollytellerNAME');
-    const scrollyName = acto(scrollyMountValue).name;
+    const scrollyName = acto(mountEl.id || '').name;
 
     if (typeof scrollyName !== 'string') {
       return;
