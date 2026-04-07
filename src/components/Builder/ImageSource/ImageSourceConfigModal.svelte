@@ -5,7 +5,9 @@
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
   import GeoTiffImportButton from './GeoTiffImportButton.svelte';
+  import FilenameImportButton from './FilenameImportButton.svelte';
   import { isValidUrl } from '../../../lib/marker';
+  import { parseFilenameCoords } from './utils';
 
   let {
     config,
@@ -13,13 +15,22 @@
     onclose
   }: {
     config: ImageSourceConfig;
-    onsave: (config: ImageSourceConfig) => void;
+    onsave: (config: ImageSourceConfig, goto?: boolean) => void;
     onclose: () => void;
   } = $props();
 
   let url = $state(untrack(() => $state.snapshot(config).url));
   let opacity = $state(untrack(() => $state.snapshot(config).opacity));
   let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config).coordinates)));
+
+  $effect(() => {
+    if (url) {
+      const extractedCoords = parseFilenameCoords(url);
+      if (extractedCoords) {
+        coordsString = JSON.stringify(extractedCoords, null, 2);
+      }
+    }
+  });
 
   let naturalWidth = $state(0);
   let naturalHeight = $state(0);
@@ -58,13 +69,7 @@
   }
 </script>
 
-{#snippet footerChildren()}
-  <button onclick={() => handleSave()}>Save</button>
-  <button onclick={() => handleSave(true)}>Save and Go To</button>
-  <button onclick={onclose}>Cancel</button>
-{/snippet}
-
-<Modal title="Edit Image Source" onClose={onclose} {footerChildren}>
+<Modal title="Edit Image Source" onClose={onclose}>
   <div class="modal-content-split">
     <div class="modal-form">
       <fieldset>
@@ -89,6 +94,7 @@
         <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
           <button type="button" onclick={setWholeWorld}>Whole World (Mercator)</button>
           <KmlImportButton onimport={handleKmlImport} />
+          <FilenameImportButton onimport={handleKmlImport} />
           <NearmapImportButton onimport={handleKmlImport} width={naturalWidth} height={naturalHeight} />
           <GeoTiffImportButton onimport={handleKmlImport} />
         </div>
@@ -110,6 +116,12 @@
       {/if}
     </div>
   </div>
+
+  {#snippet footerChildren()}
+    <button onclick={() => handleSave()}>Save</button>
+    <button onclick={() => handleSave(true)}>Save and Go To</button>
+    <button onclick={onclose}>Cancel</button>
+  {/snippet}
 </Modal>
 
 <style>

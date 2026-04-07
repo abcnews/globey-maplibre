@@ -1,5 +1,5 @@
 import { describe, it, expect, assert } from 'vitest';
-import { parseKmlCoords, parseNearmapUrl, parseGeoTiffCoords } from './utils.ts';
+import { parseKmlCoords, parseNearmapUrl, parseGeoTiffCoords, parseFilenameCoords } from './utils.ts';
 
 describe('ImageSource Utils', () => {
   describe('parseKmlCoords', () => {
@@ -92,6 +92,7 @@ describe('ImageSource Utils', () => {
     it('should extract lat, lon, zoom, and pitch from URL', () => {
       const result = parseNearmapUrl(url);
       assert.ok(result);
+      if (!result) return;
       assert.strictEqual(result.pitch, 0);
       assert.strictEqual(result.coordinates.length, 4);
     });
@@ -109,10 +110,7 @@ describe('ImageSource Utils', () => {
 
       // Verify width (should be halved from original 1:1 expectation because Nearmap export is double resolution)
       const widthDeg = Math.abs(result.coordinates[1][0] - result.coordinates[0][0]);
-      // At zoom 18, 1920 pixels / 2 (halved resolution) = 960 world pixels.
-      // 960 world pixels = 3.75 tiles of 256px.
-      // 3.75 * (360 / 2^18) = 0.0051498... degrees lon.
-      assert.ok(Math.abs(widthDeg - 0.0051498) < 0.0001, `Width ${widthDeg} is not roughly 0.00515`);
+      assert.ok(Math.abs(widthDeg - 0.0051498) < 0.0001);
     });
 
     it('should handle URL with pitch', () => {
@@ -155,6 +153,40 @@ describe('ImageSource Utils', () => {
       // Verify TL is NW of BR
       assert.ok(result[0][0] < result[2][0]); // Lon
       assert.ok(result[0][1] > result[2][1]); // Lat
+    });
+  });
+
+  describe('parseFilenameCoords', () => {
+    it('should parse coordinates from a simple filename', () => {
+      const filename = '-27.472667,153.023245,-27.481308,153.033005.png';
+      const result = parseFilenameCoords(filename);
+      assert.ok(result);
+      if (!result) return;
+      assert.strictEqual(result.length, 4);
+      assert.deepStrictEqual(result[0], [153.023245, -27.472667]); // TL (left, top)
+      assert.deepStrictEqual(result[2], [153.033005, -27.481308]); // BR (right, bottom)
+    });
+
+    it('should parse coordinates from a full URL', () => {
+      const url = 'https://example.com/images/-27.472667,153.023245,-27.481308,153.033005.png';
+      const result = parseFilenameCoords(url);
+      assert.ok(result);
+      if (!result) return;
+      assert.deepStrictEqual(result[0], [153.023245, -27.472667]);
+    });
+
+    it('should handle URL-encoded commas', () => {
+      const url =
+        'https://www.abc.net.au/res/sites/news-projects/interactive-bits-aky/builder--27.310706%2C152.534699%2C-27.713365%2C153.304517.webp';
+      const result = parseFilenameCoords(url);
+      assert.ok(result);
+      if (!result) return;
+      assert.deepStrictEqual(result[0], [152.534699, -27.310706]);
+    });
+
+    it('should return null for invalid formats', () => {
+      assert.strictEqual(parseFilenameCoords('map.png'), null);
+      assert.strictEqual(parseFilenameCoords('123,456.png'), null);
     });
   });
 });
