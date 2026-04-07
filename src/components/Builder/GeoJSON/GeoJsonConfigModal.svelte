@@ -276,12 +276,23 @@
       {#if status === 'loaded'}
         {#if config.styles}
           {#each config.styles as style, i}
+            {@const isBase = i === config.styles.length - 1}
             <Collapsible open={i === 0}>
               {#snippet header()}
-                <h4 style:margin="0" style:display="inline-block">
-                  Style {i + 1}
-                  {#if style.filter?.prop}
-                    <small class="stat">({style.filter.prop})</small>
+                <h4 style:margin="0" style:display="inline-block; font-size: 0.9em;">
+                  {#if isBase}
+                    Base style
+                  {:else if style.filter?.prop}
+                    <span style:font-family="monospace">{style.filter.prop}</span>
+                    {#if style.filter.values?.length > 0}
+                      <small class="stat"
+                        >: {style.filter.values.join(', ').slice(0, 30)}{style.filter.values.join(', ').length > 30
+                          ? '...'
+                          : ''}</small
+                      >
+                    {/if}
+                  {:else}
+                    Style {i + 1}
                   {/if}
                 </h4>
               {/snippet}
