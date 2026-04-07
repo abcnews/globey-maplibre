@@ -273,6 +273,10 @@
             <div style:display="flex" style:align-items="center" style:gap="1rem">
               <input type="range" min="0" max="1" step="0.05" bind:value={config.styles[i].opacity} style="flex: 1" />
               <span style:font-variant-numeric="tabular-nums">{(config.styles[i].opacity ?? 1).toFixed(2)}</span>
+              <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:cursor="pointer">
+                <input type="checkbox" bind:checked={config.styles[i].isOpaque} />
+                Fully Opaque
+              </label>
             </div>
           </fieldset>
         </div>

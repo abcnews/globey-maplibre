@@ -31,6 +31,7 @@ export interface GeoJsonStyleConfig {
     customPalette?: string[];
   };
   opacity?: number;
+  isOpaque?: boolean;
   filter?: { prop: string; values: string[] };
 }
 

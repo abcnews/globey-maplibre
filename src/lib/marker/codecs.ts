@@ -70,7 +70,7 @@ export function encodeGeoJsonSize(ps: GeoJsonSize | undefined): string | undefin
 import type { GeoJsonStyleConfig } from './types.ts';
 
 function encodeGeoJsonStyle(style: GeoJsonStyleConfig): any[] {
-  const { colourMode, colourProp, colourConfig, opacity, filter } = style;
+  const { colourMode, colourProp, colourConfig, opacity, isOpaque, filter } = style;
   const modeIdx = GEOJSON_MODES.indexOf(colourMode);
   let extras: any = undefined;
 
@@ -85,6 +85,7 @@ function encodeGeoJsonStyle(style: GeoJsonStyleConfig): any[] {
     }
     if (filter) extras.f = filter;
     if (opacity !== undefined) extras.o = Math.round(opacity * 100);
+    if (isOpaque) extras.io = 1;
   }
 
   const arr = [modeIdx, colourProp, extras];
@@ -113,6 +114,7 @@ function decodeGeoJsonStyle(arr: any): GeoJsonStyleConfig {
     }
     if (extras.f) style.filter = extras.f;
     if (extras.o !== undefined) style.opacity = extras.o / 100;
+    if (extras.io) style.isOpaque = true;
   }
   return style;
 }
