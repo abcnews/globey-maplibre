@@ -132,6 +132,44 @@ describe('GeoJson Utils', () => {
       assert.strictEqual(getStrokeOpacityExpression(config), 1);
     });
 
+    it('should return 1.0 if isOpaque is true (points)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'basic', isOpaque: true }]
+      };
+      assert.strictEqual(getCircleOpacityExpression(config), 1);
+    });
+
+    it('should factor baseOpacity into isOpaque (points)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'points',
+        styles: [{ colourMode: 'basic', isOpaque: true, opacity: 0.5 }]
+      };
+      // baseOpacity 0.5 * 1.0 (isOpaque) -> 0.5
+      assert.deepStrictEqual(getCircleOpacityExpression(config), ['*', 0.5, 1]);
+    });
+
+    it('should return 1.0 if isOpaque is true (areas)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [{ colourMode: 'basic', isOpaque: true }]
+      };
+      assert.strictEqual(getFillOpacityExpression(config), 1);
+    });
+
+    it('should factor baseOpacity into isOpaque (areas)', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [{ colourMode: 'basic', isOpaque: true, opacity: 0.5 }]
+      };
+      // baseOpacity 0.5 * 1.0 (isOpaque) -> 0.5
+      assert.deepStrictEqual(getFillOpacityExpression(config), ['*', 0.5, 1]);
+    });
+
     it('should scale opacity linearly for fill layers', () => {
       const config: GeoJsonConfig = {
         url: 'test',

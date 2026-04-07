@@ -407,14 +407,13 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
 
 function getSingleStyleCircleOpacityExpression(style: GeoJsonStyleConfig, baseOpacity: any): any {
   if (style.colourMode === 'simple') {
-    return [
-      '*',
-      baseOpacity,
-      ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], THEMES.normal.fillOpacity]
-    ];
+    const simpleFactor = ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], THEMES.normal.fillOpacity];
+    const factor = style.isOpaque ? 1.0 : simpleFactor;
+    return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
   }
   const preset = THEMES[style.colourConfig?.basicType || 'custom'];
-  const factor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  const themeFactor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  const factor = style.isOpaque ? 1.0 : themeFactor;
   return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
 }
 
@@ -467,10 +466,13 @@ export function getFillOpacityExpression(config: GeoJsonConfig): any {
 
 function getSingleStyleFillOpacityExpression(style: GeoJsonStyleConfig, baseOpacity: any): any {
   if (style.colourMode === 'simple') {
-    return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
+    const simpleFactor = ['coalesce', ['get', 'fill-opacity'], 0.5];
+    const factor = style.isOpaque ? 1.0 : simpleFactor;
+    return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
   }
   const preset = THEMES[style.colourConfig?.basicType || 'custom'];
-  const factor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  const themeFactor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  const factor = style.isOpaque ? 1.0 : themeFactor;
   return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
 }
 
