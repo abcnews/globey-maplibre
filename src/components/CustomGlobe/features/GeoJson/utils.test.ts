@@ -108,8 +108,8 @@ describe('GeoJson Utils', () => {
         type: 'points',
         styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
-      // baseOpacity 1 * 0.6 factor
-      assert.deepStrictEqual(getCircleOpacityExpression(config), ['*', 1, 0.6]);
+      // baseOpacity 1 * 0.6 factor -> optimized to 0.6
+      assert.strictEqual(getCircleOpacityExpression(config), 0.6);
     });
 
     it('should return preset fill opacity (highlighted)', () => {
@@ -118,8 +118,8 @@ describe('GeoJson Utils', () => {
         type: 'areas',
         styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
-      // baseOpacity 1 * 0.6 factor
-      assert.deepStrictEqual(getFillOpacityExpression(config), ['*', 1, 0.6]);
+      // baseOpacity 1 * 0.6 factor -> optimized to 0.6
+      assert.strictEqual(getFillOpacityExpression(config), 0.6);
     });
 
     it('should return preset stroke opacity (highlighted)', () => {
@@ -128,8 +128,55 @@ describe('GeoJson Utils', () => {
         type: 'lines',
         styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
       };
-      // baseOpacity 1 * 1.0 factor
-      assert.deepStrictEqual(getStrokeOpacityExpression(config), ['*', 1, 1]);
+      // baseOpacity 1 * 1.0 factor -> optimized to 1
+      assert.strictEqual(getStrokeOpacityExpression(config), 1);
+    });
+
+    it('should scale opacity linearly for fill layers', () => {
+      const config: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'normal' }, opacity: 0.5 }]
+      };
+      // CURRENT BUG: returns 0.5 instead of ['*', 0.5, 0.6]
+      // Fix will make it return ['*', 0.5, 0.6]
+      const expr = getFillOpacityExpression(config);
+      assert.deepStrictEqual(expr, ['*', 0.5, 0.6]);
+    });
+
+    it('should be consistent between single-style and multi-style opacity', () => {
+      const singleStyleConfig: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'normal' }, opacity: 0.5 }]
+      };
+      const multiStyleConfig: GeoJsonConfig = {
+        url: 'test',
+        type: 'areas',
+        styles: [
+          {
+            colourMode: 'basic',
+            colourConfig: { basicType: 'normal' },
+            opacity: 0.5,
+            filter: { prop: 'is_target', values: ['true'] }
+          },
+          {
+            colourMode: 'basic',
+            colourConfig: { basicType: 'normal' },
+            opacity: 0.5
+          }
+        ]
+      };
+
+      const singleExpr = getFillOpacityExpression(singleStyleConfig);
+      const multiExpr = getFillOpacityExpression(multiStyleConfig);
+
+      // They should both evaluate to the same thing for a matching feature
+      // singleExpr: ['*', 0.5, 0.6]
+      // multiExpr: ['*', ['case', ..., 0.5, 0.5], ['case', ..., 0.6, 0.6]]
+      assert.deepStrictEqual(singleExpr, ['*', 0.5, 0.6]);
+      assert.ok(Array.isArray(multiExpr), 'multiExpr should be an array');
+      assert.strictEqual(multiExpr[0], '*', 'multiExpr[0] should be *');
     });
   });
 

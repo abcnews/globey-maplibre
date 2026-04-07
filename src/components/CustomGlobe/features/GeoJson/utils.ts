@@ -375,13 +375,33 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
           : ['in', propExpr, ['literal', style.filter.values.map(String)]];
       caseExpr.push(matchExpr, expr);
     } else {
+      // Catch-all style (no filter)
       caseExpr.push(expr);
-      return caseExpr;
+      break;
     }
   }
 
-  // Final fallback (hidden if no rules match)
-  caseExpr.push(THEMES.normal.fillOpacity); // Default circle factor
+  if (!config.styles || config.styles.length === 0) {
+    const factor = THEMES.normal.fillOpacity;
+    return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
+  }
+
+  if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
+    return getSingleStyleCircleOpacityExpression(config.styles[0], baseOpacity);
+  }
+
+  // MapLibre 'case' expressions require an even number of elements: ['case', cond1, val1, ..., fallback]
+  // We need a fallback if the length is odd.
+  if (caseExpr.length % 2 !== 0) {
+    caseExpr.push(THEMES.normal.fillOpacity);
+  }
+
+  // If every style rule results in the same final opacity factor (e.g. they all use the 'normal' theme),
+  // the entire 'case' expression is redundant. We simplify it to a single multiplication
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
+  const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === THEMES.normal.fillOpacity);
+  if (allSame) return ['*', baseOpacity, THEMES.normal.fillOpacity];
+
   return ['*', baseOpacity, caseExpr];
 }
 
@@ -394,14 +414,17 @@ function getSingleStyleCircleOpacityExpression(style: GeoJsonStyleConfig, baseOp
     ];
   }
   const preset = THEMES[style.colourConfig?.basicType || 'custom'];
-  if (preset) return ['*', baseOpacity, preset.fillOpacity];
-  return baseOpacity;
+  const factor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
 }
 
 export function getFillOpacityExpression(config: GeoJsonConfig): any {
   const baseOpacity = getOpacityExpression(config);
 
-  if (!config.styles || config.styles.length === 0) return ['*', baseOpacity, THEMES.normal.fillOpacity];
+  if (!config.styles || config.styles.length === 0) {
+    const factor = THEMES.normal.fillOpacity;
+    return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
+  }
 
   if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
     return getSingleStyleFillOpacityExpression(config.styles[0], baseOpacity);
@@ -419,12 +442,26 @@ export function getFillOpacityExpression(config: GeoJsonConfig): any {
       caseExpr.push(matchExpr, expr);
     } else {
       caseExpr.push(expr);
-      return caseExpr;
+      break;
     }
   }
 
-  // Final fallback
-  caseExpr.push(THEMES.normal.fillOpacity);
+  if (caseExpr.length === 1) {
+    return ['*', baseOpacity, THEMES.normal.fillOpacity];
+  }
+
+  // MapLibre 'case' expressions require an even number of elements: ['case', cond1, val1, ..., fallback]
+  // Since 'case' is 1 and each filter is 2 elements, we need a fallback if the length is odd.
+  if (caseExpr.length % 2 !== 0) {
+    caseExpr.push(THEMES.normal.fillOpacity);
+  }
+
+  // If every style rule results in the same final opacity factor (e.g. they all use the 'normal' theme),
+  // the entire 'case' expression is redundant. We simplify it to a single multiplication
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
+  const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === THEMES.normal.fillOpacity);
+  if (allSame) return ['*', baseOpacity, THEMES.normal.fillOpacity];
+
   return ['*', baseOpacity, caseExpr];
 }
 
@@ -433,14 +470,16 @@ function getSingleStyleFillOpacityExpression(style: GeoJsonStyleConfig, baseOpac
     return ['*', baseOpacity, ['coalesce', ['get', 'fill-opacity'], 0.5]];
   }
   const preset = THEMES[style.colourConfig?.basicType || 'custom'];
-  if (preset) return ['*', baseOpacity, preset.fillOpacity];
-  return baseOpacity === 1 ? THEMES.normal.fillOpacity : baseOpacity;
+  const factor = preset?.fillOpacity ?? THEMES.normal.fillOpacity;
+  return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
 }
 
 export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
   const baseOpacity = getOpacityExpression(config);
 
-  if (!config.styles || config.styles.length === 0) return baseOpacity;
+  if (!config.styles || config.styles.length === 0) {
+    return baseOpacity;
+  }
 
   if (config.styles.length === 1 && !config.styles[0].filter?.prop) {
     return getSingleStyleStrokeOpacityExpression(config.styles[0], baseOpacity);
@@ -458,12 +497,26 @@ export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
       caseExpr.push(matchExpr, expr);
     } else {
       caseExpr.push(expr);
-      return caseExpr;
+      break;
     }
   }
 
-  // Final fallback
-  caseExpr.push(1);
+  if (caseExpr.length === 1) {
+    return baseOpacity;
+  }
+
+  // MapLibre 'case' expressions require an even number of elements: ['case', cond1, val1, ..., fallback]
+  // Since 'case' is 1 and each filter is 2 elements, we need a fallback if the length is odd.
+  if (caseExpr.length % 2 !== 0) {
+    caseExpr.push(1);
+  }
+
+  // If every style rule results in the same final stroke opacity factor (1.0),
+  // the entire 'case' expression is redundant. We return the base opacity directly
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
+  const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === 1);
+  if (allSame) return baseOpacity;
+
   return ['*', baseOpacity, caseExpr];
 }
 
@@ -472,8 +525,8 @@ function getSingleStyleStrokeOpacityExpression(style: GeoJsonStyleConfig, baseOp
     return ['*', baseOpacity, ['coalesce', ['get', 'stroke-opacity'], 1.0]];
   }
   const preset = THEMES[style.colourConfig?.basicType || 'custom'];
-  if (preset) return ['*', baseOpacity, preset.strokeOpacity];
-  return baseOpacity;
+  const factor = preset?.strokeOpacity ?? 1.0;
+  return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
 }
 
 /**
