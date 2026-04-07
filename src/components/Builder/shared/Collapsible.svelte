@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import { ChevronRight } from 'svelte-bootstrap-icons';
 
   let {
     open = $bindable(false),
@@ -17,6 +18,9 @@
 <details bind:open class="collapsible-root">
   <summary class="collapsible-summary">
     <div class="header-container" role="presentation">
+      <div class="chevron-wrapper" class:open>
+        <ChevronRight size="14" />
+      </div>
       {@render header()}
     </div>
     {#if actions}
@@ -66,7 +70,19 @@
   .header-container {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.8rem;
+  }
+
+  .chevron-wrapper {
+    display: flex;
+    align-items: center;
+    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.4;
+  }
+
+  .chevron-wrapper.open {
+    transform: rotate(90deg);
+    opacity: 0.8;
   }
 
   .actions-container {

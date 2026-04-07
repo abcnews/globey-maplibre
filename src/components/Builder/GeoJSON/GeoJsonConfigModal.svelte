@@ -8,6 +8,7 @@
   import PropGeoJsonHeight from './PropGeoJsonHeight.svelte';
   import VerticalTabs from '../shared/VerticalTabs.svelte';
   import Collapsible from '../shared/Collapsible.svelte';
+  import { ArrowUp, ArrowDown, Trash } from 'svelte-bootstrap-icons';
   import { untrack } from 'svelte';
   import { isValidUrl } from '../../../lib/marker';
 
@@ -197,14 +198,21 @@
   }
 
   function addStyle() {
-    if (!config.styles) config.styles = [];
-    config.styles.push({ colourMode: 'basic', opacity: 1 });
+    config.styles = [...(config.styles ?? []), { colourMode: 'basic', opacity: 1 }];
   }
 
   function removeStyle(index: number) {
     if (config.styles) {
-      config.styles.splice(index, 1);
+      config.styles = config.styles.filter((_, i) => i !== index);
     }
+  }
+
+  function moveStyle(from: number, to: number) {
+    if (!config.styles || to < 0 || to >= config.styles.length) return;
+    const newStyles = [...config.styles];
+    const [style] = newStyles.splice(from, 1);
+    newStyles.splice(to, 0, style);
+    config.styles = newStyles;
   }
 </script>
 
@@ -275,15 +283,15 @@
     {:else if activeTab === 'style'}
       {#if status === 'loaded'}
         {#if config.styles}
+          <p class="gj-note">Adjust how your GeoJSON displays. Styles are matched in order, from top to bottom.</p>
+
           {#each config.styles as style, i}
-            {@const isBase = i === config.styles.length - 1}
             <Collapsible open={i === 0}>
               {#snippet header()}
                 <h4 style:margin="0" style:display="inline-block; font-size: 0.9em;">
-                  {#if isBase}
-                    Base style
-                  {:else if style.filter?.prop}
-                    <span style:font-family="monospace">{style.filter.prop}</span>
+                  Style {i + 1}
+                  {#if style.filter?.prop}
+                    : <span style:font-family="monospace">{style.filter.prop}</span>
                     {#if style.filter.values?.length > 0}
                       <small class="stat"
                         >: {style.filter.values.join(', ').slice(0, 30)}{style.filter.values.join(', ').length > 30
@@ -291,15 +299,40 @@
                           : ''}</small
                       >
                     {/if}
-                  {:else}
-                    Style {i + 1}
                   {/if}
                 </h4>
               {/snippet}
               {#snippet actions()}
-                {#if config.styles && config.styles.length > 1}
-                  <button type="button" class="gj-btn-small" onclick={() => removeStyle(i)}>Remove</button>
-                {/if}
+                <div class="gj-actions">
+                  <button
+                    type="button"
+                    class="gj-btn-icon"
+                    disabled={i === 0}
+                    onclick={() => moveStyle(i, i - 1)}
+                    title="Move Up"
+                  >
+                    <ArrowUp size="12" />
+                  </button>
+                  <button
+                    type="button"
+                    class="gj-btn-icon"
+                    disabled={i === config.styles.length - 1}
+                    onclick={() => moveStyle(i, i + 1)}
+                    title="Move Down"
+                  >
+                    <ArrowDown size="12" />
+                  </button>
+                  {#if config.styles && config.styles.length > 1}
+                    <button
+                      type="button"
+                      class="gj-btn-icon gj-btn-danger"
+                      onclick={() => removeStyle(i)}
+                      title="Remove Style"
+                    >
+                      <Trash size="12" />
+                    </button>
+                  {/if}
+                </div>
               {/snippet}
 
               <PropGeoJsonFilter bind:style={config.styles[i]} {properties} {getUniqueValues} />
@@ -341,14 +374,53 @@
 </Modal>
 
 <style>
-  .gj-btn-small {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.8em;
+  .gj-btn-icon.gj-btn-danger:hover:not(:disabled) {
+    color: var(--builder-color-danger, #ff4444);
+    background-color: rgba(255, 68, 68, 0.1);
+    border-color: var(--builder-color-danger, #ff4444);
   }
 
   .stat {
     font-weight: normal;
     font-size: 0.8em;
     color: var(--text-light, #888);
+  }
+
+  .gj-note {
+    font-size: 0.85em;
+    color: var(--text-light, #888);
+    opacity: 0.8;
+    margin-bottom: 0.75rem;
+    padding: 0 0.25rem;
+  }
+
+  .gj-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .gj-btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    background: none;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: var(--text-light, #888);
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .gj-btn-icon:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text, #ccc);
+    border-color: var(--border, rgba(122, 123, 135, 0.5));
+  }
+
+  .gj-btn-icon:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
   }
 </style>
