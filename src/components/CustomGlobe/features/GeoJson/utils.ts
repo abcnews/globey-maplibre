@@ -396,7 +396,9 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
     caseExpr.push(THEMES.normal.fillOpacity);
   }
 
-  // Optimization: If the case expression is just ['case', ..., factor, factor], we can simplify it
+  // If every style rule results in the same final opacity factor (e.g. they all use the 'normal' theme),
+  // the entire 'case' expression is redundant. We simplify it to a single multiplication
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
   const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === THEMES.normal.fillOpacity);
   if (allSame) return ['*', baseOpacity, THEMES.normal.fillOpacity];
 
@@ -454,7 +456,9 @@ export function getFillOpacityExpression(config: GeoJsonConfig): any {
     caseExpr.push(THEMES.normal.fillOpacity);
   }
 
-  // Optimization
+  // If every style rule results in the same final opacity factor (e.g. they all use the 'normal' theme),
+  // the entire 'case' expression is redundant. We simplify it to a single multiplication
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
   const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === THEMES.normal.fillOpacity);
   if (allSame) return ['*', baseOpacity, THEMES.normal.fillOpacity];
 
@@ -507,7 +511,9 @@ export function getStrokeOpacityExpression(config: GeoJsonConfig): any {
     caseExpr.push(1);
   }
 
-  // Optimization
+  // If every style rule results in the same final stroke opacity factor (1.0),
+  // the entire 'case' expression is redundant. We return the base opacity directly
+  // to avoid the GPU overhead of evaluating redundant conditions for every feature.
   const allSame = caseExpr.slice(1).every((val, i) => i % 2 === 0 || val === 1);
   if (allSame) return baseOpacity;
 
