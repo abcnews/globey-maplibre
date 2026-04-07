@@ -6,6 +6,8 @@
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
   import PropGeoJsonSize from './PropGeoJsonSize.svelte';
   import PropGeoJsonHeight from './PropGeoJsonHeight.svelte';
+  import VerticalTabs from '../shared/VerticalTabs.svelte';
+  import Collapsible from '../shared/Collapsible.svelte';
   import { untrack } from 'svelte';
   import { isValidUrl } from '../../../lib/marker';
 
@@ -18,6 +20,8 @@
     onsave: (config: GeoJsonConfig, goto?: boolean, bounds?: [number, number][]) => void;
     onclose: () => void;
   }>();
+
+  let activeTab = $state<'config' | 'style'>('config');
 
   let config = $state<GeoJsonConfig>(untrack(() => $state.snapshot(initialConfig)));
   let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(
@@ -211,95 +215,129 @@
 {/snippet}
 
 <Modal onClose={onclose} title="Edit GeoJSON" {footerChildren}>
-  <fieldset style="min-width: 500px;">
-    <legend
-      >Data source
+  <VerticalTabs
+    tabs={[
+      { id: 'config', label: 'Config' },
+      { id: 'style', label: 'Style' }
+    ]}
+    bind:activeTab
+  >
+    {#if activeTab === 'config'}
+      <fieldset>
+        <legend
+          >Data source
+          {#if status === 'loaded'}
+            (<small class="stat">{featureCount} features</small>)
+          {/if}</legend
+        >
+        <label for="gj-url">URL</label>
+        <input id="gj-url" type="text" bind:value={config.url} placeholder="https://example.com/data.json" />
+
+        {#if status === 'loading'}
+          <div style:padding="0.5rem 0">Loading metadata...</div>
+        {/if}
+        {#if status === 'error'}
+          <div style:padding="0.5rem 0" style="color:var(--builder-color-danger, red)">{errorMessage}</div>
+        {/if}
+      </fieldset>
+
       {#if status === 'loaded'}
-        (<small class="stat">{featureCount} features</small>)
-      {/if}</legend
-    >
-    <label for="gj-url">URL</label>
-    <input id="gj-url" type="text" bind:value={config.url} placeholder="https://example.com/data.json" />
-
-    {#if status === 'loading'}
-      <div>Loading metadata...</div>
-    {/if}
-    {#if status === 'error'}
-      <div style="color:var(--builder-color-danger, red)">{errorMessage}</div>
-    {/if}
-  </fieldset>
-
-  {#if status === 'loaded'}
-    <fieldset>
-      <legend>Geometry Type</legend>
-      <div style:display="flex" style:gap="1rem">
-        {#each ['areas', 'lines', 'points', 'spikes'] as type}
-          <label
-            style:display="flex"
-            style:align-items="center"
-            style:gap="0.5rem"
-            style:cursor="pointer"
-            style:text-transform="capitalize"
-          >
-            <input type="radio" name="gj-type" value={type} bind:group={config.type} />
-            {type}
-          </label>
-        {/each}
-      </div>
-    </fieldset>
-
-    {#if config.styles}
-      {#each config.styles as style, i}
-        <div style:border="1px solid #ccc" style:padding="1rem" style:border-radius="4px" style:margin-bottom="1rem">
-          <div
-            style:display="flex"
-            style:justify-content="space-between"
-            style:align-items="center"
-            style:margin-bottom="1rem"
-          >
-            <h4 style:margin="0">Style {i + 1}</h4>
-            <div style:display="flex" style:gap="0.5rem">
-              {#if config.styles && config.styles.length > 1}
-                <button type="button" class="gj-btn-small" onclick={() => removeStyle(i)}>Remove</button>
-              {/if}
-            </div>
+        <fieldset>
+          <legend>Geometry Type</legend>
+          <div style:display="flex" style:gap="1rem">
+            {#each ['areas', 'lines', 'points', 'spikes'] as type}
+              <label
+                style:display="flex"
+                style:align-items="center"
+                style:gap="0.5rem"
+                style:cursor="pointer"
+                style:text-transform="capitalize"
+              >
+                <input type="radio" name="gj-type" value={type} bind:group={config.type} />
+                {type}
+              </label>
+            {/each}
           </div>
-          <PropGeoJsonFilter bind:style={config.styles[i]} {properties} {getUniqueValues} />
+        </fieldset>
 
-          <PropGeoJsonColour bind:style={config.styles[i]} {properties} features={rawFeatures} />
+        {#if config.type === 'points' || config.type === 'spikes'}
+          <PropGeoJsonSize bind:config prop="pointSize" legend="Point Size" />
+        {/if}
 
-          <fieldset>
-            <legend>Opacity</legend>
-            <div style:display="flex" style:align-items="center" style:gap="1rem">
-              <input type="range" min="0" max="1" step="0.05" bind:value={config.styles[i].opacity} style="flex: 1" />
-              <span style:font-variant-numeric="tabular-nums">{(config.styles[i].opacity ?? 1).toFixed(2)}</span>
-            </div>
-          </fieldset>
+        {#if config.type === 'lines'}
+          <PropGeoJsonSize bind:config prop="lineWidth" legend="Line Width" />
+        {/if}
+
+        {#if config.type === 'spikes'}
+          <PropGeoJsonHeight bind:config {properties} features={rawFeatures} />
+        {/if}
+      {/if}
+    {:else if activeTab === 'style'}
+      {#if status === 'loaded'}
+        {#if config.styles}
+          {#each config.styles as style, i}
+            <Collapsible open={i === 0}>
+              {#snippet header()}
+                <h4 style:margin="0" style:display="inline-block">
+                  Style {i + 1}
+                  {#if style.filter?.prop}
+                    <small class="stat">({style.filter.prop})</small>
+                  {/if}
+                </h4>
+              {/snippet}
+              {#snippet actions()}
+                {#if config.styles && config.styles.length > 1}
+                  <button type="button" class="gj-btn-small" onclick={() => removeStyle(i)}>Remove</button>
+                {/if}
+              {/snippet}
+
+              <PropGeoJsonFilter bind:style={config.styles[i]} {properties} {getUniqueValues} />
+
+              <PropGeoJsonColour bind:style={config.styles[i]} {properties} features={rawFeatures} />
+
+              <fieldset>
+                <legend>Opacity</legend>
+                <div style:display="flex" style:align-items="center" style:gap="1rem">
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    bind:value={config.styles[i].opacity}
+                    style="flex: 1"
+                  />
+                  <span style:font-variant-numeric="tabular-nums">{(config.styles[i].opacity ?? 1).toFixed(2)}</span>
+                  <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:cursor="pointer">
+                    <input type="checkbox" bind:checked={config.styles[i].isOpaque} />
+                    Make Opaque
+                  </label>
+                </div>
+              </fieldset>
+            </Collapsible>
+          {/each}
+
+          <div style:margin-bottom="1rem">
+            <button type="button" onclick={addStyle}>+ Add Another Style</button>
+          </div>
+        {/if}
+      {:else}
+        <div style:padding="1rem" style:text-align="center" style:color="var(--text-light, #888)">
+          Loading data to configure styles...
         </div>
-      {/each}
-
-      <div style:margin-bottom="1rem">
-        <button type="button" onclick={addStyle}>+ Add Another Style</button>
-      </div>
+      {/if}
     {/if}
-
-    {#if config.type === 'points' || config.type === 'spikes'}
-      <PropGeoJsonSize bind:config prop="pointSize" legend="Point Size" />
-    {/if}
-
-    {#if config.type === 'lines'}
-      <PropGeoJsonSize bind:config prop="lineWidth" legend="Line Width" />
-    {/if}
-
-    {#if config.type === 'spikes'}
-      <PropGeoJsonHeight bind:config {properties} features={rawFeatures} />
-    {/if}
-  {/if}
+  </VerticalTabs>
 </Modal>
 
 <style>
   .gj-btn-small {
     padding: 0.25rem 0.5rem;
     font-size: 0.8em;
+  }
+
+  .stat {
+    font-weight: normal;
+    font-size: 0.8em;
+    color: var(--text-light, #888);
   }
 </style>
