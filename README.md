@@ -11,4 +11,4 @@ This is a work-in-progress as of 2026-01-28
 
 ## Builder
 
-- https://www.abc.net.au/res/sites/news-projects/interactive-globey-maplibre/0.1.6/builder/
+- https://www.abc.net.au/res/sites/news-projects/interactive-globey-maplibre/0.1.8/builder/
