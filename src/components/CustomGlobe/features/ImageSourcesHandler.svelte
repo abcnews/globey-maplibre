@@ -12,6 +12,15 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
+  // Track which images have successfully pre-loaded in the browser cache
+  let loadedUrls = $state<Set<string>>(new Set());
+
+  // Wait for all images in the config to be ready
+  const allLoaded = $derived.by(() => {
+    if (config.length === 0) return true;
+    return config.every(item => loadedUrls.has(item.url));
+  });
+
   const beforeId = $derived.by(() => {
     const map = mapRoot.map;
     if (!map) return undefined;
@@ -32,12 +41,31 @@
     return id;
   });
 
+  // Pre-load images to prevent flickering/races
+  $effect(() => {
+    config.forEach(item => {
+      if (!loadedUrls.has(item.url)) {
+        const img = new Image();
+        img.onload = () => {
+          loadedUrls.add(item.url);
+          loadedUrls = new Set(loadedUrls); // Trigger reactivity
+        };
+        img.onerror = () => {
+          // Even if it fails, mark it so we can proceed (MapLibre will handle the error too)
+          console.error(`[ImageSourcesHandler] Failed to pre-load image: ${item.url}`);
+          loadedUrls.add(item.url);
+          loadedUrls = new Set(loadedUrls);
+        };
+        img.src = item.url;
+      }
+    });
+  });
+
   $effect(() => {
     const map = mapRoot.map;
-    if (!map || config.length === 0) return;
+    if (!map || !allLoaded || config.length === 0) return;
 
-    // This effect ensures that as image sources are added/removed/reordered,
-    // they maintain their relative order and their position below beforeId.
+    // We MUST re-calculate layerIds here to ensure reactivity picks up everything
     const layerIds = config.map((item: ImageSourceConfig) => getImageLayerId(item));
 
     const restack = () => {
@@ -46,17 +74,21 @@
       stackLayers(map, layerIds, beforeId);
     };
 
-    restack();
-    map.on('styledata', restack);
-    map.on('load', restack);
-
-    return () => {
-      map.off('styledata', restack);
-      map.off('load', restack);
-    };
+    if (map.isStyleLoaded()) {
+      restack();
+    } else {
+      map.on('styledata', restack);
+      map.on('load', restack);
+      return () => {
+        map.off('styledata', restack);
+        map.off('load', restack);
+      };
+    }
   });
 </script>
 
-{#each config as item (item.id)}
-  <ImageSourceHandler config={item} {beforeId} />
-{/each}
+{#if allLoaded}
+  {#each config.slice().reverse() as item (item.id)}
+    <ImageSourceHandler config={item} {beforeId} />
+  {/each}
+{/if}

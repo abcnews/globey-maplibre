@@ -88,17 +88,4 @@
       source.setCoordinates(currentCoords);
     }
   });
-
-  // STACKING EFFECT: Moves layer when beforeId changes.
-  $effect(() => {
-    const map = mapRoot.map;
-    const currentBeforeId = beforeId;
-    if (!map || !map.getLayer(currentLid)) return;
-
-    if (currentBeforeId && map.getLayer(currentBeforeId)) {
-      map.moveLayer(currentLid, currentBeforeId);
-    } else {
-      map.moveLayer(currentLid, undefined);
-    }
-  });
 </script>
