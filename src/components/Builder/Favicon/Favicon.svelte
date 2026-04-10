@@ -4,7 +4,6 @@
 
   const isProduction = typeof window !== 'undefined' && window.location.hostname === 'www.abc.net.au';
   const faviconUrl = isProduction ? favicon : faviconLocal;
-  console.log({ faviconUrl });
 </script>
 
 <svelte:head>
