@@ -66,7 +66,7 @@
       if (!map.isStyleLoaded()) return;
 
       const beforeId = getLabelAnchor(map);
-      const allLayerIds = currentConfig.flatMap(item => getGeoJsonLayerIds(item));
+      const allLayerIds = currentConfig.flatMap((item: GeoJsonConfig) => getGeoJsonLayerIds(item));
       stackLayers(map, allLayerIds, beforeId);
     };
 

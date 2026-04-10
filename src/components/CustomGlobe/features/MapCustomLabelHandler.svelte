@@ -27,7 +27,7 @@
     const activeLabels = untrack(() => labels);
 
     if (activeLabels) {
-      activeLabels.forEach(label => {
+      activeLabels.slice().reverse().forEach(label => {
         const el = document.createElement('div');
         mount(CustomLabel, {
           target: el,
