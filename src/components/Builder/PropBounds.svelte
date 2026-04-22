@@ -155,18 +155,25 @@
   {#if points.length > 0}
     <small>{points.length} points</small>
     <button type="button" onclick={clearPoints} style:font-size="0.8rem">Clear</button>
-    <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:margin-left="auto">
-      <input
-        type="checkbox"
-        bind:checked={$options.constrainView}
-        onchange={() => {
-          $options = { ...$options };
-        }}
-      />
-      <small>Never view outside bounds</small>
-    </label>
   {/if}
 </div>
+{#if points.length > 0}
+  <label
+    style:display="flex"
+    style:align-items="center"
+    style:gap="0.25rem"
+    style:margin-top="0.5rem"
+  >
+    <input
+      type="checkbox"
+      bind:checked={$options.constrainView}
+      onchange={() => {
+        $options = { ...$options };
+      }}
+    />
+    <small>Never view outside bounds</small>
+  </label>
+{/if}
 {#if isPicking}
   <small style:display="block" style:margin-top="0.5rem">
     Click on map to add points. Click a point to remove it.

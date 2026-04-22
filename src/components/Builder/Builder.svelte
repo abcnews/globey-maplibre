@@ -101,7 +101,7 @@
       onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
     />
     <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
-    <PropImageSource {map} imageSources={options.imageSources || []} onchange={list => (options.imageSources = list)} />
+    <PropImageSource {map} bind:options onchange={list => (options.imageSources = list)} />
 
     <MarkerAdmin
       prefixes={{

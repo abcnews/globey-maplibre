@@ -2,16 +2,17 @@
   import type { ImageSourceConfig } from '../../../lib/marker';
   import ImageSourceConfigModal from './ImageSourceConfigModal.svelte';
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
+  import { safeFitBounds } from '../utils';
   import PropList from '../PropList.svelte';
 
-  import type { maplibregl } from '../../mapLibre/index';
+  import type { maplibregl, DecodedObject } from '../../mapLibre/index';
 
   let {
-    imageSources = [],
+    options = $bindable(),
     map,
     onchange
   } = $props<{
-    imageSources: ImageSourceConfig[];
+    options: DecodedObject;
     map: maplibregl.Map;
     onchange: (list: ImageSourceConfig[]) => void;
   }>();
@@ -20,33 +21,42 @@
   let isAdding = $state(false);
 
   function saveConfig(config: ImageSourceConfig, goto = false) {
-    const newList = [...imageSources];
+    const newList = [...(options.imageSources || [])];
     if (editingIndex !== null) {
       newList[editingIndex] = config;
     } else if (isAdding) {
       newList.push(config);
     }
+    options.imageSources = newList;
     onchange(newList);
 
     if (goto && config.coordinates.length > 0) {
+      options.bounds = config.coordinates;
+      options.constrainView = true;
+      options.fitGlobe = false;
+
       const bounds = config.coordinates.reduce(
         (acc, coord) => {
           acc.extend(coord as [number, number]);
           return acc;
         },
-        new window.maplibregl.LngLatBounds(
+        new (window as any).maplibregl.LngLatBounds(
           config.coordinates[0] as [number, number],
           config.coordinates[0] as [number, number]
         )
       );
-      map.fitBounds(bounds, { padding: 50 });
+
+      safeFitBounds(map, bounds, { padding: 50 });
     }
 
     closeModal();
   }
 
   function removeConfig(index: number) {
-    const newList = imageSources.filter((_val: ImageSourceConfig, i: number) => i !== index);
+    const newList = (options.imageSources || []).filter(
+      (_val: ImageSourceConfig, i: number) => i !== index
+    );
+    options.imageSources = newList;
     onchange(newList);
   }
 
@@ -83,10 +93,10 @@
     </button>
   </legend>
 
-  {#if imageSources.length === 0}
+  {#if (options.imageSources || []).length === 0}
     <small>Click <code>+</code> to add an image overlay</small>
   {:else}
-    <PropList items={imageSources} {onchange}>
+    <PropList items={options.imageSources || []} {onchange}>
       {#snippet name(config: ImageSourceConfig)}
         {@const filename = config.url.split('?')[0].split('/').pop() || config.url}
         <span title={config.url}>{filename}</span>
@@ -104,7 +114,7 @@
   {#if editingIndex !== null || isAdding}
     <ImageSourceConfigModal
       config={editingIndex !== null
-        ? imageSources[editingIndex]
+        ? options.imageSources?.[editingIndex]!
         : { id: Date.now().toString(), url: '', opacity: 1, coordinates: [] }}
       onsave={saveConfig}
       onclose={closeModal}

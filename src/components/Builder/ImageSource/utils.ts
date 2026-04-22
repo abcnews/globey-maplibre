@@ -157,3 +157,105 @@ export function parseFilenameCoords(filename: string): [number, number][] | null
     [left, bottom] // BL
   ];
 }
+
+/**
+ * parseCoordinates
+ * Extracts both Lat and Lng from a single string.
+ * Supports:
+ * - DMS: 22°58'13.85" S 145°14'32.84" E
+ * - Decimal: -22.9705, 145.2424
+ */
+export function parseCoordinates(input: string): { lat: number; lng: number } | null {
+  // 1. Try DMS matches
+  const dmsRegex = /(\d+)°\s*(\d+)'\s*(\d+\.?\d*)"\s*([NSEW])/gi;
+  const dmsMatches = Array.from(input.matchAll(dmsRegex));
+
+  if (dmsMatches.length >= 2) {
+    const parseMatch = (match: RegExpMatchArray) => {
+      const [_, d, m, s, dir] = match;
+      let deg = Number(d) + Number(m) / 60 + Number(s) / 3600;
+      if (dir.toUpperCase() === 'S' || dir.toUpperCase() === 'W') deg = -deg;
+      return deg;
+    };
+    return {
+      lat: parseMatch(dmsMatches[0]),
+      lng: parseMatch(dmsMatches[1])
+    };
+  }
+
+  // 2. Try Decimal pair (latitude: -90 to 90, longitude: -180 to 180)
+  const decimalRegex = /(-?\d+\.\d+)\s*[,\s]\s*(-?\d+\.\d+)/;
+  const decMatch = input.match(decimalRegex);
+  if (decMatch) {
+    const lat = Number(decMatch[1]);
+    const lng = Number(decMatch[2]);
+    // Basic bounds check
+    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) {
+      return { lat, lng };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * parseDMS
+ * Converts a DMS string to decimal degrees.
+ * Matches formats like: 22°58'12.31" S or 145°14'35.45" E
+ */
+export function parseDMS(dms: string): number | null {
+  const dmsRegex = /(\d+)°\s*(\d+)'\s*(\d+\.?\d*)"\s*([NSEW])/i;
+  const match = dms.match(dmsRegex);
+  if (!match) return null;
+
+  const [_, d, m, s, dir] = match;
+  let deg = Number(d) + Number(m) / 60 + Number(s) / 3600;
+  if (dir.toUpperCase() === 'S' || dir.toUpperCase() === 'W') deg = -deg;
+  return deg;
+}
+
+/**
+ * calculateBoundsFromWidth
+ * Calculates bounding box coordinates from a center point and a measured ground width.
+ */
+export function calculateBoundsFromWidth(
+  lat: number,
+  lng: number,
+  widthKm: number,
+  aspectRatio: number,
+  heading: number = 0
+): [number, number][] {
+  const latMetersPerDegree = 111319.9;
+  const lngMetersPerDegree = latMetersPerDegree * Math.cos((lat * Math.PI) / 180);
+
+  const groundWidth = widthKm * 1000;
+  const groundHeight = groundWidth / aspectRatio;
+
+  const halfW = groundWidth / 2;
+  const halfH = groundHeight / 2;
+
+  // Clockwise rotation from North (heading)
+  const angleRad = (heading * Math.PI) / 180;
+  const cosH = Math.cos(angleRad);
+  const sinH = Math.sin(angleRad);
+
+  // Corners in relative meters [x, y]
+  const corners = [
+    [-halfW, halfH], // TL
+    [halfW, halfH], // TR
+    [halfW, -halfH], // BR
+    [-halfW, -halfH] // BL
+  ];
+
+  return corners.map(([x, y]) => {
+    // Standard rotation: x' = x cos θ + y sin θ, y' = -x sin θ + y cos θ
+    // (θ is clockwise from North)
+    const xRot = x * cosH + y * sinH;
+    const yRot = -x * sinH + y * cosH;
+
+    return [lng + xRot / lngMetersPerDegree, lat + yRot / latMetersPerDegree] as [
+      number,
+      number
+    ];
+  });
+}

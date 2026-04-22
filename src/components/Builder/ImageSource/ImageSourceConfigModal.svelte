@@ -7,7 +7,7 @@
   import GeoTiffImportButton from './GeoTiffImportButton.svelte';
   import FilenameImportButton from './FilenameImportButton.svelte';
   import { isValidUrl } from '../../../lib/marker';
-  import { parseFilenameCoords } from './utils';
+  import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils';
 
   let {
     config,
@@ -40,12 +40,16 @@
       alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
       return;
     }
+
+    let coordinates;
     try {
-      const coordinates = JSON.parse(coordsString);
-      onsave({ ...config, url, opacity, coordinates }, goto);
+      coordinates = JSON.parse(coordsString);
     } catch (e) {
       alert('Invalid coordinates format. Must be [[lng, lat], [lng, lat], [lng, lat], [lng, lat]]');
+      return;
     }
+
+    onsave({ ...config, url, opacity, coordinates }, goto);
   }
 
   function handleImageLoad(e: Event) {
@@ -66,6 +70,38 @@
 
   function handleKmlImport(coordinates: [number, number][]) {
     coordsString = JSON.stringify(coordinates);
+  }
+
+  function importFromGoogleEarth() {
+    if (naturalWidth === 0) {
+      alert('Please wait for the image to load first to determine its aspect ratio.');
+      return;
+    }
+
+    const coordInput = window.prompt(
+      'Enter Center Coordinates (DMS or Decimal, e.g. -22.97, 145.24)'
+    );
+    if (!coordInput) return;
+    const coords = parseCoordinates(coordInput);
+    if (!coords) {
+      alert(
+        'Could not parse coordinates. Please ensure both Lat and Lng are included in DMS format.'
+      );
+      return;
+    }
+
+    const widthInput = window.prompt('Enter ground width in km (e.g. 3.61km)');
+    if (!widthInput) return;
+    const widthKm = Number(widthInput.replace(/[^0-9.]/g, ''));
+    if (isNaN(widthKm) || widthKm <= 0) {
+      alert('Invalid width');
+      return;
+    }
+
+    const aspectRatio = naturalWidth / naturalHeight;
+    const coordinates = calculateBoundsFromWidth(coords.lat, coords.lng, widthKm, aspectRatio, 0);
+
+    coordsString = JSON.stringify(coordinates, null, 2);
   }
 </script>
 
@@ -97,6 +133,7 @@
           <FilenameImportButton onimport={handleKmlImport} />
           <NearmapImportButton onimport={handleKmlImport} width={naturalWidth} height={naturalHeight} />
           <GeoTiffImportButton onimport={handleKmlImport} />
+          <button type="button" onclick={importFromGoogleEarth}>Import from coord + width</button>
         </div>
       </fieldset>
     </div>
