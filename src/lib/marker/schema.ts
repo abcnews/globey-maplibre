@@ -87,6 +87,11 @@ export const markerSchema = {
     type: 'boolean',
     defaultValue: false
   },
+  constrainView: {
+    key: 'cv',
+    type: 'boolean',
+    defaultValue: false
+  },
   attribution: {
     key: 'attr',
     type: 'base36string',

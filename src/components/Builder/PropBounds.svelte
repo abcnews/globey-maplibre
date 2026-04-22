@@ -155,6 +155,16 @@
   {#if points.length > 0}
     <small>{points.length} points</small>
     <button type="button" onclick={clearPoints} style:font-size="0.8rem">Clear</button>
+    <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:margin-left="auto">
+      <input
+        type="checkbox"
+        bind:checked={$options.constrainView}
+        onchange={() => {
+          $options = { ...$options };
+        }}
+      />
+      <small>Never view outside bounds</small>
+    </label>
   {/if}
 </div>
 {#if isPicking}

@@ -79,6 +79,7 @@ export interface DecodedObject {
   projection?: 'globe' | 'mercator';
   satelliteVariant?: 'blue' | 'black';
   fitGlobe?: boolean;
+  constrainView?: boolean;
   attribution?: string;
   hideOsm?: boolean;
 }
@@ -93,6 +94,7 @@ export interface DecodeProps {
   gj?: string;
   p?: string;
   is?: string;
+  cv?: string;
   attr?: string;
   ho?: string;
 }

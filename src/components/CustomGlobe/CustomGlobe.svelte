@@ -80,7 +80,13 @@
     {#if mapInstance}
       <AttributionHandler attribution={options.attribution} base={options.base} hideOsm={options.hideOsm} />
       <ProjectionHandler projection={options.projection} />
-      <PanZoomHandler coords={options.coords} z={options.z} bounds={options.bounds} fitGlobe={options.fitGlobe} />
+      <PanZoomHandler
+        coords={options.coords}
+        z={options.z}
+        bounds={options.bounds}
+        fitGlobe={options.fitGlobe}
+        constrainView={options.constrainView}
+      />
 
       <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
 

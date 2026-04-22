@@ -10,12 +10,14 @@
     coords,
     bounds,
     z,
-    fitGlobe = false
+    fitGlobe = false,
+    constrainView
   } = $props<{
     coords?: [number, number];
     bounds?: [number, number][];
     z?: number;
     fitGlobe?: boolean;
+    constrainView?: boolean;
   }>();
 
   let isFirstRun = $state(true);
@@ -176,5 +178,28 @@
     if (fitGlobe && coords) {
       fitTheGlobe();
     }
+  });
+
+  // Constrain view to bounds
+  $effect(() => {
+    if (!mapRoot.map) return;
+
+    if (!constrainView || !bounds || bounds.length === 0) {
+      mapRoot.map.setMaxBounds(null);
+      return;
+    }
+
+    const lats = bounds.map(p => p[1]);
+    const lngs = bounds.map(p => p[0]);
+    const mapBounds: [[number, number], [number, number]] = [
+      [Math.min(...lngs), Math.min(...lats)],
+      [Math.max(...lngs), Math.max(...lats)]
+    ];
+
+    mapRoot.map.setMaxBounds(mapBounds);
+
+    return () => {
+      mapRoot.map?.setMaxBounds(null);
+    };
   });
 </script>
