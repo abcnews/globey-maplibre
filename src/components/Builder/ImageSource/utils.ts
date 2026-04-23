@@ -128,6 +128,7 @@ export function parseGeoTiffCoords(bbox: number[], geoKeys: any): [number, numbe
     [minX, maxY], // TL
     [maxX, maxY], // TR
     [maxX, minY], // BR
+    [minX, minY] // BL
   ];
 }
 
