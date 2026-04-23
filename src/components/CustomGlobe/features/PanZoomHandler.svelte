@@ -48,40 +48,69 @@
     }
   });
 
-  // Zoom to coord
-  $effect(() => {
-    if (!mapRoot.map || !coords || (bounds && bounds.length > 0) || fitGlobe) {
-      return;
+  /** Calculate precise {center, zoom} for bounds based on container ratio */
+  function calculateTargetView(
+    points: [number, number][],
+    width: number,
+    height: number,
+    mode: 'fit' | 'fill' = 'fit'
+  ) {
+    if (!points || points.length === 0) return null;
+
+    const lats = points.map(p => p[1]);
+    const lngs = points.map(p => p[0]);
+    const minLng = Math.min(...lngs);
+    const maxLng = Math.max(...lngs);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+
+    const center = [(minLng + maxLng) / 2, (minLat + maxLat) / 2] as [number, number];
+
+    // Mercator zoom math
+    const deltaLng = Math.abs(maxLng - minLng) || 0.0001; // prevent div by zero
+    const latRadMin = (minLat * Math.PI) / 180;
+    const latRadMax = (maxLat * Math.PI) / 180;
+    const yMin = Math.log(Math.tan(Math.PI / 4 + latRadMin / 2));
+    const yMax = Math.log(Math.tan(Math.PI / 4 + latRadMax / 2));
+    const deltaY = Math.abs(yMax - yMin) || 0.0001;
+
+    // MapLibre zoom: world is 512px at zoom 0
+    const zoomLng = Math.log2((width * 360) / (512 * deltaLng));
+    const zoomLat = Math.log2((height * 2 * Math.PI) / (512 * deltaY));
+
+    const zoom = mode === 'fit' ? Math.min(zoomLng, zoomLat) : Math.max(zoomLng, zoomLat);
+
+    return { center, zoom };
+  }
+
+  // Snap-back handler for constrained views
+  function handleSnapBack() {
+    const map = mapRoot.map;
+    if (!map || !constrainView || !bounds || bounds.length === 0) return;
+
+    const container = map.getContainer();
+    const target = calculateTargetView(bounds, container.clientWidth, container.clientHeight, 'fill');
+    if (!target) return;
+
+    // Check if current view is outside the safe range (simplified center check)
+    const currentCenter = map.getCenter();
+    const currentZoom = map.getZoom();
+
+    const centerDiff =
+      Math.abs(currentCenter.lng - target.center[0]) + Math.abs(currentCenter.lat - target.center[1]);
+    const zoomDiff = Math.abs(currentZoom - target.zoom);
+
+    // If offset is significant, snap back
+    if (centerDiff > 0.001 || zoomDiff > 0.1) {
+      console.log('[PanZoomHandler] Constraint violated, snapping back...');
+      map.flyTo({
+        center: target.center,
+        zoom: target.zoom,
+        duration: 800,
+        essential: true
+      });
     }
-
-    mapRoot.map.flyTo({
-      center: coords,
-      essential: true,
-      duration: animationDuration,
-      zoom: z
-    });
-    isFirstRun = false;
-  });
-
-  // Fit to bounds
-  $effect(() => {
-    if (!mapRoot.map || !bounds || bounds.length === 0) {
-      return;
-    }
-    const lats = (bounds || []).map((p: [number, number]) => p[1]);
-    const lngs = (bounds || []).map((p: [number, number]) => p[0]);
-    const mapBounds: [[number, number], [number, number]] = [
-      [Math.min(...lngs), Math.min(...lats)],
-      [Math.max(...lngs), Math.max(...lats)]
-    ];
-
-    mapRoot.map.fitBounds(mapBounds, {
-      padding: 0,
-      essential: true,
-      duration: animationDuration
-    });
-    isFirstRun = false;
-  });
+  }
 
   /** Logic to fit the globe to screen based on current latitude and container size */
   function fitTheGlobe() {
@@ -132,7 +161,55 @@
     }
   }
 
-  // Fit globe on resize and coord changes if enabled.
+  // Navigation Logic
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map) return;
+
+    // Clean up previous event listeners
+    map.off('moveend', handleSnapBack);
+
+    if (fitGlobe) {
+      fitTheGlobe();
+    } else if (bounds && bounds.length > 0) {
+      const container = map.getContainer();
+      const target = calculateTargetView(
+        bounds,
+        container.clientWidth,
+        container.clientHeight,
+        constrainView ? 'fill' : 'fit'
+      );
+
+      if (target) {
+        map.flyTo({
+          center: target.center,
+          zoom: target.zoom,
+          duration: animationDuration,
+          essential: true
+        });
+      }
+    } else if (coords) {
+      map.flyTo({
+        center: coords,
+        essential: true,
+        duration: animationDuration,
+        zoom: z
+      });
+    }
+
+    // Register snap-back if constrained
+    if (constrainView) {
+      map.on('moveend', handleSnapBack);
+    }
+
+    isFirstRun = false;
+
+    return () => {
+      map?.off('moveend', handleSnapBack);
+    };
+  });
+
+  // Fit globe on resize/lock interactions
   $effect(() => {
     if (!mapRoot.map || !fitGlobe) return;
 
@@ -170,36 +247,6 @@
       if (originalZooms.keyboard) map.keyboard.enable();
       if (originalZooms.doubleClickZoom) map.doubleClickZoom.enable();
       if (originalZooms.touchZoomRotate) map.touchZoomRotate.enable();
-    };
-  });
-
-  // Re-run fit if coords change while fitGlobe is enabled
-  $effect(() => {
-    if (fitGlobe && coords) {
-      fitTheGlobe();
-    }
-  });
-
-  // Constrain view to bounds
-  $effect(() => {
-    if (!mapRoot.map) return;
-
-    if (!constrainView || !bounds || bounds.length === 0) {
-      mapRoot.map.setMaxBounds(null);
-      return;
-    }
-
-    const lats = bounds.map(p => p[1]);
-    const lngs = bounds.map(p => p[0]);
-    const mapBounds: [[number, number], [number, number]] = [
-      [Math.min(...lngs), Math.min(...lats)],
-      [Math.max(...lngs), Math.max(...lats)]
-    ];
-
-    mapRoot.map.setMaxBounds(mapBounds);
-
-    return () => {
-      mapRoot.map?.setMaxBounds(null);
     };
   });
 </script>
