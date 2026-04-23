@@ -158,21 +158,39 @@
   {/if}
 </div>
 {#if points.length > 0}
-  <label
-    style:display="flex"
-    style:align-items="center"
-    style:gap="0.25rem"
-    style:margin-top="0.5rem"
-  >
-    <input
-      type="checkbox"
-      bind:checked={$options.constrainView}
-      onchange={() => {
-        $options = { ...$options };
-      }}
-    />
-    <small>Never view outside bounds</small>
-  </label>
+  <div style:margin-top="0.5rem">
+    <small style:display="block" style:margin-bottom="0.25rem" style:color="var(--text-light)">Zoom Type</small>
+    <div style:display="flex" style:gap="1rem">
+      <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:cursor="pointer">
+        <input
+          type="radio"
+          name="zoom-type"
+          checked={!$options.constrainView}
+          onchange={() => {
+            $options.constrainView = false;
+            $options = { ...$options };
+          }}
+        />
+        <small>Fit</small>
+      </label>
+      <label style:display="flex" style:align-items="center" style:gap="0.25rem" style:cursor="pointer">
+        <input
+          type="radio"
+          name="zoom-type"
+          checked={$options.constrainView}
+          onchange={() => {
+            $options.constrainView = true;
+            $options = { ...$options };
+          }}
+        />
+        <small>Fill</small>
+      </label>
+    </div>
+    <small style:display="block" style:margin-top="0.25rem" style:color="var(--text-light)">
+      Fit makes sure all the points will be visible on the screen. Fill makes sure we never go outside those points, and
+      is useful to fill the screen with satellite imagery.
+    </small>
+  </div>
 {/if}
 {#if isPicking}
   <small style:display="block" style:margin-top="0.5rem">

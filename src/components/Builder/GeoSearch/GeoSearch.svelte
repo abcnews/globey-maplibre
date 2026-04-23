@@ -1,88 +1,44 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
-  import type { Label } from '../../lib/marker';
   import { Search } from 'svelte-bootstrap-icons';
   import { debounce } from 'throttle-debounce';
+  import { searchGeoNames, type GeoNameResult } from './utils';
 
   let { onselect } = $props<{ onselect?: (value: { name: string; coords: [number, number] }) => void }>();
 
   let isOpen = $state(false);
   let searchTerm = $state('');
   let isSearching = $state(false);
-  let results = $state<any[]>([]);
+  let results = $state<GeoNameResult[]>([]);
   let searchBox = $state<HTMLInputElement>();
 
   async function performSearch(keyword: string) {
-    results = [];
     if (!keyword) {
+      results = [];
       return;
     }
-    const searchResults = (await search(keyword)).slice(0, 100);
-    searchResults.sort((a, b) => {
-      if (a.population === b.population) return 0;
-      return a.population < b.population ? 1 : -1;
-    });
-    results = searchResults;
+
+    isSearching = true;
+    const currentSearchTerm = keyword;
+
+    try {
+      const searchResults = await searchGeoNames(keyword, (progressResults) => {
+        // Abortive update check: if the user has typed something else, don't update
+        if (searchTerm !== currentSearchTerm) return;
+        results = progressResults.sort((a, b) => b.population - a.population).slice(0, 100);
+      });
+
+      if (searchTerm === currentSearchTerm) {
+        results = searchResults.sort((a, b) => b.population - a.population).slice(0, 100);
+        isSearching = false;
+      }
+    } catch (error) {
+      console.error('GeoSearch error:', error);
+      isSearching = false;
+    }
   }
 
   const debouncedPerformSearch = debounce(400, performSearch);
-
-  function search(keyword: string): Promise<any[]> {
-    isSearching = true;
-    return fetch(`https://www.abc.net.au/res/sites/news-projects/placenames/1.0.0/placeNames.tsv.gz`, {
-      cache: 'force-cache'
-    }).then(async res => {
-      const blob = await res.blob();
-
-      // Create a stream to read text as it comes in
-      const stream = blob.stream().pipeThrough(new TextDecoderStream());
-      const reader = stream.getReader();
-      let partialLine = '';
-      const found: any[] = [];
-
-      const currentSearchTerm = keyword; // Capture for abortion check
-
-      while (true) {
-        // read through until we have one or more entire lines
-        const { done, value } = await reader.read();
-
-        // Simple cancellation check (not perfect but matches original intent)
-        if (searchTerm !== currentSearchTerm) {
-          // console.info('aborting search', keyword);
-          // In a real refined version we might use AbortController, but let's stick to logic provided.
-        }
-
-        if (done) break;
-
-        const theseLines = partialLine + value;
-        const split = theseLines.split('\n');
-
-        // put the remainder on the stack
-        partialLine = split.pop() || '';
-
-        // perform the actual keyword search
-        found.push(
-          ...split
-            .filter(line => line.split('\t')[0].toLowerCase().includes(keyword.toLowerCase()))
-            .map(line => {
-              const [name, latitude, longitude, countrycode, population] = line.split('\t');
-              return {
-                id: name + population + latitude + longitude,
-                name,
-                latitude,
-                longitude,
-                countrycode,
-                population: Number(population)
-              };
-            })
-        );
-      }
-      if (searchTerm === keyword) {
-        isSearching = false;
-      }
-      return found;
-    });
-  }
 
   function openModal() {
     isOpen = true;
@@ -93,7 +49,7 @@
     }, 100);
   }
 
-  function handleSelect(row: any) {
+  function handleSelect(row: GeoNameResult) {
     const value = {
       coords: [Number(row.longitude), Number(row.latitude)] as [number, number],
       name: row.name
@@ -153,14 +109,15 @@
       {/if}
 
       <p class="credits">
-        Geonames dataset by <a href="https://geonames.org/" target="_blank">geonames.org</a>, licensed
-        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">CC BY 4.0</a>
+        Geonames dataset by <a href="https://geonames.org/" target="_blank" rel="noopener noreferrer">geonames.org</a>,
+        licensed
+        <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a>
       </p>
     </div>
   {/snippet}
 
   {#snippet modalFooter()}
-    <button onclick={() => (isOpen = false)}>Close</button>
+    <button type="button" onclick={() => (isOpen = false)}>Close</button>
   {/snippet}
 
   <Modal title="Find a place" children={modalContent} footerChildren={modalFooter} />
@@ -174,6 +131,8 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
+    background: white;
+    color: black;
   }
 
   .loading {
@@ -206,6 +165,7 @@
 
   .result-row:hover {
     background-color: #f5f5f5;
+    color: black;
   }
 
   .credits {

@@ -3,6 +3,8 @@
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
   import PropBounds from './PropBounds.svelte';
+  import GeoSearch from './GeoSearch/GeoSearch.svelte';
+  import { QuestionCircle } from 'svelte-bootstrap-icons';
 
   import { disableMapAnimation } from '../../lib/stores';
 
@@ -23,6 +25,64 @@
 
   const hasBounds = $derived(($options?.bounds?.length ?? 0) > 0);
 
+  type NavMode = 'pan-zoom' | 'fit-globe' | 'fit-bounds';
+
+  /**
+   * Explicit navigation mode state. This acts as the source of truth for the UI
+   * and is initialised from the current store options.
+   */
+  let navMode = $state<NavMode>(
+    $options.fitGlobe ? 'fit-globe' : hasBounds ? 'fit-bounds' : 'pan-zoom'
+  );
+
+  /**
+   * Transitions between navigation modes and updates the store accordingly.
+   * This handles the side effects of clearing bounds or enabling globe fitting.
+   *
+   * @param mode - The target navigation mode.
+   */
+  function setNavMode(mode: NavMode) {
+    navMode = mode;
+
+    if (mode === 'fit-globe') {
+      $options = { ...$options, fitGlobe: true, bounds: [] };
+      onFitGlobeChange?.(true);
+      onBoundsChange?.([]);
+    } else if (mode === 'fit-bounds') {
+      $options = { ...$options, fitGlobe: false };
+      onFitGlobeChange?.(false);
+      // Note: We don't clear bounds here so users can switch into fit-bounds and keep their points.
+    } else {
+      $options = { ...$options, fitGlobe: false, bounds: [] };
+      onFitGlobeChange?.(false);
+      onBoundsChange?.([]);
+    }
+  }
+
+  // Sync navMode if options change externally (e.g. from a preset or reset)
+  $effect(() => {
+    if ($options.fitGlobe) {
+      navMode = 'fit-globe';
+    } else if (hasBounds) {
+      navMode = 'fit-bounds';
+    }
+  });
+
+  function onGeoSelect(result: { name: string; coords: [number, number] }) {
+    // Zoom to location (zoom level 10 is usually a good city-level view as a starter)
+    update(result.coords, 10, true);
+
+    // Clear bounds as requested
+    $options = {
+      ...$options,
+      bounds: []
+    };
+    onBoundsChange?.([]);
+
+    // Switch to pan-zoom mode UI
+    navMode = 'pan-zoom';
+  }
+
   // Sync store -> input
   $effect(() => {
     const coords = $options?.coords;
@@ -38,7 +98,7 @@
 
   // Sync map -> store
   $effect(() => {
-    if (!map || hasBounds) {
+    if (!map || navMode !== 'pan-zoom') {
       return;
     }
 
@@ -67,7 +127,6 @@
    */
   function parseInput(text: string): { coords: [number, number]; z?: number } | null {
     // Google Maps URL
-    // Matches @lat,lng,zoomz or @lat,lng
     const gmapsMatch = text.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)(?:,(\d+\.?\d*)z)?/);
     if (gmapsMatch) {
       return {
@@ -82,8 +141,7 @@
       const a = Number(coordsMatch[1]);
       const b = Number(coordsMatch[2]);
 
-      // Heuristic: if it looks like lat,lng (first is lat), swap it to lng,lat
-      // Google Maps "Copy coordinates" gives "lat, lng"
+      // Heuristic: swap if it looks like lat,lng
       if (Math.abs(a) <= 90 && Math.abs(b) > 90) {
         return { coords: [b, a] };
       }
@@ -91,7 +149,6 @@
         return { coords: [a, b] };
       }
 
-      // Default to lng,lat (as displayed in input)
       return { coords: [a, b] };
     }
 
@@ -104,7 +161,6 @@
   function update(coords: [number, number], z?: number, smooth = false) {
     const newZ = z ?? $options.z;
 
-    // Guard: check if anything has actually changed meaningfully
     const dLng = Math.abs(($options.coords?.[0] ?? 0) - coords[0]);
     const dLat = Math.abs(($options.coords?.[1] ?? 0) - coords[1]);
     const dZ = Math.abs(($options.z ?? 0) - (newZ ?? 0));
@@ -113,7 +169,6 @@
       return;
     }
 
-    // Disable animation for this update unless explicitly smooth
     if (!smooth) {
       $disableMapAnimation = true;
     }
@@ -125,7 +180,6 @@
     };
     onchange?.(coords, newZ);
 
-    // Re-enable animation in the next tick
     if (!smooth) {
       setTimeout(() => {
         $disableMapAnimation = false;
@@ -138,7 +192,6 @@
     const result = parseInput(inputValue);
     if (result) {
       update(result.coords, result.z);
-      // Blur to trigger the effect and sync the formatted value back
       inputElement?.blur();
     }
   }
@@ -153,7 +206,6 @@
     if (result) {
       e.preventDefault();
       update(result.coords, result.z);
-      // Blur to trigger the effect and sync the formatted value back
       inputElement?.blur();
     }
   }
@@ -171,32 +223,47 @@
 
 <form {onsubmit}>
   <fieldset>
-    <legend>Coord</legend>
+    <legend>
+      Positioning
+      <button
+        class="btn-icon"
+        type="button"
+        aria-label="Help"
+        title="Help"
+        onclick={() =>
+          window.open(
+            'https://loop.cloud.microsoft/p/eyJ3Ijp7InUiOiJodHRwczovL2FiY3BvcnRhbC5zaGFyZXBvaW50LmNvbS8%2FbmF2PWN6MGxNa1ltWkQxaUlWWlNNMGd0UVZOc2FHdFhjRzlCTUVKMWVITTNXV3czWDJ4aVUyNXRZMFpNYURCa1JXOXRkelppU0RSb2VXeEVVbTlvUjFSUmNrbHhZaTE0ZURGelRta21aajB3TVV4TlJWWlpRakkxVlU5UFJVUklSVU5CVWtoWlFVTXpSemRKVGtKRlV6Tk5KbU05Sm1ac2RXbGtQVEUlM0QiLCJyIjpmYWxzZX0sInAiOnsidSI6Imh0dHBzOi8vYWJjcG9ydGFsLnNoYXJlcG9pbnQuY29tLzpmbDovci9jb250ZW50c3RvcmFnZS9DU1BfZjhjNzFkNTUtYTUwNC00NTg2LWE5YTAtMGQwMWJiMWIzYjYyL0RvY3VtZW50JTIwTGlicmFyeS9Mb29wQXBwRGF0YS9VbnRpdGxlZC5sb29wP2Q9dzY1YTQ2YzA3ZGI4MjQ2NjhiMzQwYzAzNWJmOTNmY2I4JmNzZj0xJndlYj0xJm5hdj1jejBsTWtaamIyNTBaVzUwYzNSdmNtRm5aU1V5UmtOVFVGOW1PR00zTVdRMU5TMWhOVEEwTFRRMU9EWXRZVGxoTUMwd1pEQXhZbUl4WWpOaU5qSW1aRDFpSVZaU00wZ3RRVk5zYUd0WGNHOUJNRUoxZUhNM1dXdzNYMnhpVTI1dFkwWk1hREJrUlc5dGR6WmlTRFJvZVd4RVVtOW9SMVJSY2tseFlpMTRlREZ6VG1rbVpqMHdNVXhOUlZaWlFsbElUbE5UUjB4QlZ6Tk9Ra1JNUjFGSFFVZFhOMXBJTjBaWkptTTlKVEpHSm1ac2RXbGtQVEVtWVQxTWIyOXdRWEJ3Sm5BOUpUUXdabXgxYVdSNEpUSkdiRzl2Y0Mxd1lXZGxMV052Ym5SaGFXNWxjaVo0UFNVM1FpVXlNbmNsTWpJbE0wRWxNakpVTUZKVVZVaDRhRmx0VG5kaU0wb3dXVmQzZFdNeWFHaGpiVlozWWpKc2RXUkROV3BpTWpFNFdXbEdWMVZxVGtsTVZVWlVZa2RvY2xZelFuWlJWRUpEWkZob2VrNHhiSE5PTVRseldXeE9kV0pYVGtkVVIyZDNXa1ZXZG1KWVl6SlphMmN3WVVoc2MxSkdTblpoUldSVlZWaEtTbU5YU1hSbFNHZDRZekExY0daRVFYaFVSVEZHVm14c1EwMXFWbFpVTURsR1VrVm9SbEV3UmxOVFJteENVWHBPU0U0d2JFOVJhMVpVVFRBd0pUTkVKVEl5SlRKREpUSXlhU1V5TWlVelFTVXlNbVk1TldaaE1tWTNMVFF6T0dRdE5ETTNaQzA0WmpsaExXTXhNelF5TXpNNFltTmlPQ1V5TWlVM1JBJTNEJTNEIiwiciI6ZmFsc2V9LCJpIjp7ImkiOiJmOTVmYTJmNy00MzhkLTQzN2QtOGY5YS1jMTM0MjMzOGJjYjgifX0%3D'
+          )
+        }
+      >
+        <QuestionCircle />
+      </button>
+    </legend>
 
-    <input type="text" style:width="100%" bind:this={inputElement} bind:value={inputValue} {onpaste} />
+    <div style:display="flex" style:gap="0.5rem" style:align-items="center" style:margin-bottom="0.5rem">
+      <input
+        type="text"
+        style:flex="1"
+        bind:this={inputElement}
+        bind:value={inputValue}
+        {onpaste}
+        placeholder="Paste lat,lng or Google Maps URL"
+      />
+      <GeoSearch onselect={onGeoSelect} />
+    </div>
 
-    <details>
-      <summary>Advanced</summary>
+    <select
+      style:width="100%"
+      style:margin-bottom="0.5rem"
+      value={navMode}
+      onchange={e => setNavMode(e.currentTarget.value as NavMode)}
+    >
+      <option value="pan-zoom">Pan and zoom to coord</option>
+      <option value="fit-globe">Fit globe to screen</option>
+      <option value="fit-bounds">Fit bounds</option>
+    </select>
 
-      <hr />
-
-      <label for="fit-globe-checkbox">
-        <input
-          type="checkbox"
-          id="fit-globe-checkbox"
-          bind:checked={$options.fitGlobe}
-          onchange={() => {
-            onFitGlobeChange?.(!!$options.fitGlobe);
-            if ($options.fitGlobe) {
-              $options = {
-                ...$options,
-                bounds: []
-              };
-              onBoundsChange?.([]);
-            }
-          }}
-        /> Fit globe to screen
-      </label>
+    {#if navMode === 'pan-zoom'}
 
       <div class="coord-grid">
         <label for="zoom-slider">Zoom</label>
@@ -206,12 +273,8 @@
           min="-1"
           max="13"
           step="0.1"
-          disabled={$options.fitGlobe}
           value={$options?.z ?? 3}
           oninput={e => update($options.coords!, parseFloat(e.currentTarget.value))}
-          aria-valuemin={-1}
-          aria-valuemax={13}
-          aria-valuenow={$options?.z ?? 3}
           onmousedown={() => ($disableMapAnimation = true)}
           onmouseup={() => ($disableMapAnimation = false)}
         />
@@ -226,9 +289,6 @@
           step="0.1"
           value={$options?.coords?.[0] ?? 0}
           oninput={e => updateLng(parseFloat(e.currentTarget.value))}
-          aria-valuemin={-180}
-          aria-valuemax={180}
-          aria-valuenow={$options?.coords?.[0] ?? 0}
           onmousedown={() => ($disableMapAnimation = true)}
           onmouseup={() => ($disableMapAnimation = false)}
         />
@@ -243,23 +303,33 @@
           step="0.1"
           value={$options?.coords?.[1] ?? 0}
           oninput={e => updateLat(parseFloat(e.currentTarget.value))}
-          aria-valuemin={-90}
-          aria-valuemax={90}
-          aria-valuenow={$options?.coords?.[1] ?? 0}
           onmousedown={() => ($disableMapAnimation = true)}
           onmouseup={() => ($disableMapAnimation = false)}
         />
         <span class="value">{$options?.coords?.[1]?.toFixed(1) ?? '0.0'}</span>
       </div>
 
-      <hr />
-
+      <small style:display="block" style:margin-top="0.5rem" style:color="var(--text-light)">
+        This is best used for exploring the builder. Fit bounds or fit globe work better to handle all the various
+        screen sizes.
+      </small>
+    {:else if navMode === 'fit-globe'}
+      <p style:margin="0" style:font-size="0.9rem" style:color="var(--text-light)">
+        The map will automatically zoom to fit the full globe circle in the viewport.
+      </p>
+    {:else if navMode === 'fit-bounds'}
       <PropBounds {map} onchange={onBoundsChange} {onFitGlobeChange} />
-    </details>
+    {/if}
   </fieldset>
 </form>
 
 <style>
+  legend {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
   .coord-grid {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -270,7 +340,7 @@
 
   .coord-grid label {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-light);
   }
 
   .coord-grid input[type='range'] {

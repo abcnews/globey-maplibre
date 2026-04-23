@@ -2,7 +2,7 @@
   import { options } from './store';
   import type { maplibregl } from '../mapLibre/index';
   import type { Label } from '../../lib/marker';
-  import GeoSearch from './GeoSearch.svelte';
+  import GeoSearch from './GeoSearch/GeoSearch.svelte';
   import { Trash, GeoAlt, Plus, X } from 'svelte-bootstrap-icons';
   import { safeFlyTo } from './utils';
 
