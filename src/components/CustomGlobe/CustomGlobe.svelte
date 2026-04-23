@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PanZoomHandler from './features/PanZoomHandler.svelte';
+  import PanZoomHandler from './features/PanZoom/PanZoomHandler.svelte';
   import MapVectorHandler from './features/MapVectorHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
   import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
