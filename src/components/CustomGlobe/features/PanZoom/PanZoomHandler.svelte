@@ -74,7 +74,6 @@
 
     // If offset is significant, snap back
     if (centerDiff > 0.001 || zoomDiff > 0.1) {
-      console.log('[PanZoomHandler] Constraint violated, snapping back...');
       map.flyTo({
         center: target.center,
         zoom: target.zoom,

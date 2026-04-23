@@ -43,7 +43,7 @@
     {rootElStyle}
     onLoad={async ({ rootNode, maplibregl }) => {
       if (!rootNode) {
-        console.log('no root node', rootNode, maplibregl);
+        console.error('CustomGlobe: Map root node is missing.');
         return;
       }
       rootNode.style.opacity = '0';

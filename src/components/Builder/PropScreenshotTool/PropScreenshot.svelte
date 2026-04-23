@@ -22,7 +22,6 @@
       if (shouldSwitch) {
         options.projection = 'mercator';
         // Wait for the next idle event after the projection change
-        console.log('Switching to mercator, waiting for map to settle...');
         await new Promise(resolve => map.once('idle', resolve));
       }
     }
@@ -31,12 +30,9 @@
   }
 
   function capture() {
-    console.log('Taking screenshot, waiting for idle...');
-
     // Trigger a repaint and wait for idle to ensure the buffer is populated
     map.triggerRepaint();
     map.once('idle', () => {
-      console.log('Map idle, capturing canvas...');
       const canvas = map.getCanvas();
       const bounds = map.getBounds();
 
@@ -53,7 +49,6 @@
           console.error('Failed to create blob from canvas');
           return;
         }
-        console.log('Blob created, downloading:', filename);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;

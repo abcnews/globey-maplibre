@@ -20,7 +20,7 @@
 
   onMount(async () => {
     await loadMapLibre().catch(e => {
-      console.log('caught error');
+      console.error('Failed to load MapLibre library:', e);
       status = 'error';
     });
     if (status === 'error') {

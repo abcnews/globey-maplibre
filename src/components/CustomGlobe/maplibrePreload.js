@@ -270,7 +270,7 @@ export default class MaplibrePreload {
             try {
               fetchArray.push(fetch(url, { signal: this.controller[uuid].signal }));
             } catch (e) {
-              console.log(e);
+              console.error(e);
             }
           }
         }
@@ -289,7 +289,7 @@ export default class MaplibrePreload {
           cleanup();
           resolve();
         } catch (e) {
-          console.log(e);
+          console.error(e);
           cleanup();
           resolve();
         }
