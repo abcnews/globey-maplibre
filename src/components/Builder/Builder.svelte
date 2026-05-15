@@ -124,7 +124,7 @@
       </div>
       <IframeUrl />
       <MarkerJson bind:options />
-      <PropScreenshot {map} bind:options={options} />
+      <PropScreenshot {map} bind:options />
     </fieldset>
   {/if}
   <UpdateChecker />

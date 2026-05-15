@@ -101,5 +101,10 @@ export const markerSchema = {
     key: 'ho',
     type: 'boolean',
     defaultValue: false
+  },
+  animationDuration: {
+    key: 'ad',
+    type: 'number',
+    defaultValue: 2000
   }
 };

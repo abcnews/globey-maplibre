@@ -86,6 +86,7 @@
         bounds={options.bounds}
         fitGlobe={options.fitGlobe}
         constrainView={options.constrainView}
+        animationDuration={options.animationDuration}
       />
 
       <MapVectorHandler base={options.base} labels={options.mapLabels} {isSatellite} />
