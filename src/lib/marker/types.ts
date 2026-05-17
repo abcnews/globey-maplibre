@@ -82,6 +82,7 @@ export interface DecodedObject {
   constrainView?: boolean;
   attribution?: string;
   hideOsm?: boolean;
+  animationDuration?: number;
 }
 
 export interface DecodeProps {

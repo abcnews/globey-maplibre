@@ -5,17 +5,15 @@
   import type { PanZoomProps } from './types';
   import { calculateTargetView, calculateGlobeFitZoom } from './utils';
 
-  const ANIMATION_DURATION = 2000;
-
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const { coords, bounds, z, fitGlobe = false, constrainView }: PanZoomProps = $props();
+  const { coords, bounds, z, fitGlobe = false, constrainView, animationDuration = 2000 }: PanZoomProps = $props();
 
   let isFirstRun = $state(true);
   let isReducedMotionActive = $derived($prefersReducedMotion || $disableMapAnimation);
 
-  let animationDuration = $derived.by(() => {
+  let animationDurationWithReducedMotion = $derived.by(() => {
     if (isFirstRun || isReducedMotionActive) return 0;
-    return ANIMATION_DURATION;
+    return animationDuration;
   });
 
   /**
@@ -41,14 +39,13 @@
     const currentZoom = map.getZoom();
 
     const needsCentering =
-      coords &&
-      (Math.abs(currentCenter.lng - coords[0]) > 0.0001 || Math.abs(currentCenter.lat - coords[1]) > 0.0001);
+      coords && (Math.abs(currentCenter.lng - coords[0]) > 0.0001 || Math.abs(currentCenter.lat - coords[1]) > 0.0001);
 
     if (Math.abs(currentZoom - targetZoom) > 0.01 || needsCentering) {
       map.flyTo({
         center: coords || currentCenter,
         zoom: targetZoom,
-        duration: animationDuration,
+        duration: animationDurationWithReducedMotion,
         essential: true
       });
     }
@@ -117,7 +114,7 @@
         map.flyTo({
           center: target.center,
           zoom: target.zoom,
-          duration: animationDuration,
+          duration: animationDurationWithReducedMotion,
           essential: true
         });
       }
@@ -125,7 +122,7 @@
       map.flyTo({
         center: coords,
         essential: true,
-        duration: animationDuration,
+        duration: animationDurationWithReducedMotion,
         zoom: z
       });
     }

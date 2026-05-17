@@ -31,4 +31,6 @@ export interface PanZoomProps {
   fitGlobe?: boolean;
   /** Whether to enforce boundary constraints (snapping). */
   constrainView?: boolean;
+  /** Animation duration in milliseconds. */
+  animationDuration?: number;
 }

@@ -196,6 +196,13 @@
             </label>
           {/if}
         </fieldset>
+        <fieldset class="sub-options">
+          <legend>Animation</legend>
+          <label>
+            <input type="number" bind:value={options.animationDuration} />
+            Duration (ms)
+          </label>
+        </fieldset>
       </div>
     </div>
 
