@@ -1,5 +1,5 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import { defineConfig, type Plugin } from 'vite';
+import { defineConfig, type Plugin, type CommonServerOptions } from 'vite';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { homedir, hostname } from 'node:os';
@@ -8,7 +8,7 @@ import { homedir, hostname } from 'node:os';
  * Get SSL config from the Aunty dir, if exists. See DEVELOPING.md
  * @returns {import('vite').CommonServerOptions}
  */
-const getServer = () => {
+const getServer = (): CommonServerOptions => {
   const HOME_DIR = homedir();
   const SSL_DIR = join(HOME_DIR, '.aunty/ssl');
   const INTERNAL_SUFFIX = '.aus.aunty.abc.net.au';
