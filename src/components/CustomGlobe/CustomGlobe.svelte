@@ -72,7 +72,6 @@
         onLoad?.(map);
         rootNode.style.opacity = '1';
         mapInstance = map;
-        // (window as any).__map = map;
       });
 
       return map;
