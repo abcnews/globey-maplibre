@@ -1,4 +1,5 @@
 import { parse, stringify } from '@abcnews/alternating-case-to-object';
+// @ts-ignore: hash-codec doesn't export types (yet)
 import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
 import type { DecodedObject, DecodeProps } from './marker/types.ts';
 export * from './marker/types.ts';

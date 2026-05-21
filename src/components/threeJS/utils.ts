@@ -1,6 +1,6 @@
 export const THREE_URL = 'https://www.abc.net.au/res/sites/news-projects/threejs/0.182.0/three.module.min.js';
 
-let promise: Promise<THREE> | null = null;
+let promise: Promise<typeof THREE> | null = null;
 
 export type * from 'three';
 import type * as THREE from 'three';
@@ -32,13 +32,13 @@ function importModule(url: string): Promise<void> {
   });
 }
 
-export async function loadThreeJS(): Promise<THREE> {
+export async function loadThreeJS(): Promise<typeof THREE> {
   if (promise) return promise;
 
   promise = (async () => {
-    if (window.THREE) return window.THREE as THREE;
+    if (window.THREE) return window.THREE as typeof THREE;
     await importModule(THREE_URL);
-    return window.THREE as THREE;
+    return window.THREE as typeof THREE;
   })();
 
   return promise;

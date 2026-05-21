@@ -105,9 +105,6 @@
     gap: 1rem;
   }
 
-  fieldset {
-  }
-
   .field {
     display: flex;
     flex-direction: column;
