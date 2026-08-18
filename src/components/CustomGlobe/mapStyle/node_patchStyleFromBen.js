@@ -42,29 +42,30 @@ async function patchStyle() {
     }
 
     // 3. Process layers
-    style.layers = style.layers.filter(layer => {
-      // Remove excluded layers
-      if (EXCLUDED_LAYER_IDS.includes(layer.id)) return false;
-      if (EXCLUDED_SOURCES.includes(layer.source)) return false;
-      return true;
-    }).map(layer => {
-      // 4. Fix Font 404s: Ensure all symbol layers have a valid font stack
-      if (layer.type === 'symbol') {
-        layer.layout = layer.layout || {};
+    style.layers = style.layers
+      .filter(layer => {
+        // Remove excluded layers
+        if (EXCLUDED_LAYER_IDS.includes(layer.id)) return false;
+        if (EXCLUDED_SOURCES.includes(layer.source)) return false;
+        return true;
+      })
+      .map(layer => {
+        // 4. Fix Font 404s: Ensure all symbol layers have a valid font stack
+        if (layer.type === 'symbol') {
+          layer.layout = layer.layout || {};
 
-        // If text-field is present but text-font is missing, MapLibre defaults
-        // to Open Sans which causes 404s on our server.
-        if (layer.layout['text-field'] && !layer.layout['text-font']) {
-          layer.layout['text-font'] = ['ABC Sans Regular'];
+          // If text-field is present but text-font is missing, MapLibre defaults
+          // to Open Sans which causes 404s on our server.
+          if (layer.layout['text-field'] && !layer.layout['text-font']) {
+            layer.layout['text-font'] = ['ABC Sans Regular'];
+          }
         }
-      }
-      return layer;
-    });
+        return layer;
+      });
 
     // 5. Write the patched style
     await fs.writeFile(OUTPUT_FILE, JSON.stringify(style, null, 2), 'utf-8');
     console.log(`Successfully patched style and saved to ${OUTPUT_FILE}`);
-
   } catch (error) {
     console.error('Error patching style:', error);
     process.exit(1);

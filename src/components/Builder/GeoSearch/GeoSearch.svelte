@@ -22,7 +22,7 @@
     const currentSearchTerm = keyword;
 
     try {
-      const searchResults = await searchGeoNames(keyword, (progressResults) => {
+      const searchResults = await searchGeoNames(keyword, progressResults => {
         // Abortive update check: if the user has typed something else, don't update
         if (searchTerm !== currentSearchTerm) return;
         results = progressResults.sort((a, b) => b.population - a.population).slice(0, 100);

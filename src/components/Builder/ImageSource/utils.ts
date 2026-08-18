@@ -254,9 +254,6 @@ export function calculateBoundsFromWidth(
     const xRot = x * cosH + y * sinH;
     const yRot = -x * sinH + y * cosH;
 
-    return [lng + xRot / lngMetersPerDegree, lat + yRot / latMetersPerDegree] as [
-      number,
-      number
-    ];
+    return [lng + xRot / lngMetersPerDegree, lat + yRot / latMetersPerDegree] as [number, number];
   });
 }

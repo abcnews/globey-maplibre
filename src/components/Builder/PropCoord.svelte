@@ -31,9 +31,7 @@
    * Explicit navigation mode state. This acts as the source of truth for the UI
    * and is initialised from the current store options.
    */
-  let navMode = $state<NavMode>(
-    $options.fitGlobe ? 'fit-globe' : hasBounds ? 'fit-bounds' : 'pan-zoom'
-  );
+  let navMode = $state<NavMode>($options.fitGlobe ? 'fit-globe' : hasBounds ? 'fit-bounds' : 'pan-zoom');
 
   /**
    * Transitions between navigation modes and updates the store accordingly.
@@ -233,8 +231,7 @@
         onclick={() =>
           window.open(
             'https://loop.cloud.microsoft/p/eyJ3Ijp7InUiOiJodHRwczovL2FiY3BvcnRhbC5zaGFyZXBvaW50LmNvbS8%2FbmF2PWN6MGxNa1ltWkQxaUlWWlNNMGd0UVZOc2FHdFhjRzlCTUVKMWVITTNXV3czWDJ4aVUyNXRZMFpNYURCa1JXOXRkelppU0RSb2VXeEVVbTlvUjFSUmNrbHhZaTE0ZURGelRta21aajB3TVV4TlJWWlpRakkxVlU5UFJVUklSVU5CVWtoWlFVTXpSemRKVGtKRlV6Tk5KbU05Sm1ac2RXbGtQVEUlM0QiLCJyIjpmYWxzZX0sInAiOnsidSI6Imh0dHBzOi8vYWJjcG9ydGFsLnNoYXJlcG9pbnQuY29tLzpmbDovci9jb250ZW50c3RvcmFnZS9DU1BfZjhjNzFkNTUtYTUwNC00NTg2LWE5YTAtMGQwMWJiMWIzYjYyL0RvY3VtZW50JTIwTGlicmFyeS9Mb29wQXBwRGF0YS9VbnRpdGxlZC5sb29wP2Q9dzY1YTQ2YzA3ZGI4MjQ2NjhiMzQwYzAzNWJmOTNmY2I4JmNzZj0xJndlYj0xJm5hdj1jejBsTWtaamIyNTBaVzUwYzNSdmNtRm5aU1V5UmtOVFVGOW1PR00zTVdRMU5TMWhOVEEwTFRRMU9EWXRZVGxoTUMwd1pEQXhZbUl4WWpOaU5qSW1aRDFpSVZaU00wZ3RRVk5zYUd0WGNHOUJNRUoxZUhNM1dXdzNYMnhpVTI1dFkwWk1hREJrUlc5dGR6WmlTRFJvZVd4RVVtOW9SMVJSY2tseFlpMTRlREZ6VG1rbVpqMHdNVXhOUlZaWlFsbElUbE5UUjB4QlZ6Tk9Ra1JNUjFGSFFVZFhOMXBJTjBaWkptTTlKVEpHSm1ac2RXbGtQVEVtWVQxTWIyOXdRWEJ3Sm5BOUpUUXdabXgxYVdSNEpUSkdiRzl2Y0Mxd1lXZGxMV052Ym5SaGFXNWxjaVo0UFNVM1FpVXlNbmNsTWpJbE0wRWxNakpVTUZKVVZVaDRhRmx0VG5kaU0wb3dXVmQzZFdNeWFHaGpiVlozWWpKc2RXUkROV3BpTWpFNFdXbEdWMVZxVGtsTVZVWlVZa2RvY2xZelFuWlJWRUpEWkZob2VrNHhiSE5PTVRseldXeE9kV0pYVGtkVVIyZDNXa1ZXZG1KWVl6SlphMmN3WVVoc2MxSkdTblpoUldSVlZWaEtTbU5YU1hSbFNHZDRZekExY0daRVFYaFVSVEZHVm14c1EwMXFWbFpVTURsR1VrVm9SbEV3UmxOVFJteENVWHBPU0U0d2JFOVJhMVpVVFRBd0pUTkVKVEl5SlRKREpUSXlhU1V5TWlVelFTVXlNbVk1TldaaE1tWTNMVFF6T0dRdE5ETTNaQzA0WmpsaExXTXhNelF5TXpNNFltTmlPQ1V5TWlVM1JBJTNEJTNEIiwiciI6ZmFsc2V9LCJpIjp7ImkiOiJmOTVmYTJmNy00MzhkLTQzN2QtOGY5YS1jMTM0MjMzOGJjYjgifX0%3D'
-          )
-        }
+          )}
       >
         <QuestionCircle />
       </button>
@@ -264,7 +261,6 @@
     </select>
 
     {#if navMode === 'pan-zoom'}
-
       <div class="coord-grid">
         <label for="zoom-slider">Zoom</label>
         <input

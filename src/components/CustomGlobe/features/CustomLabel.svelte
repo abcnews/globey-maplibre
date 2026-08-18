@@ -16,18 +16,19 @@
     --land-stroke: #444c55;
     --land-stroke-width: 0.6px;
 
-    // regular labels
+    /* regular labels */
     --text-stroke: #fff;
     --text-color: #d6dde4;
 
-    // country labels
+    /* country labels */
     --country-text: #7d8794;
     --country-large-text-stroke: rgba(255, 255, 255, 0.5);
     --country-small-text-stroke: rgba(255, 255, 255, 0.8);
 
-    // ocean/water labels
+    /* ocean/water labels */
     --water-text: #295ca3;
     --water-text-stroke: rgba(255, 255, 255, 0.7);
+
 
     --light-ambient-colour: #ffffff;
     --light-ambient-intensity: 1;
@@ -37,8 +38,9 @@
     --light-point-distance: 0;
     --light-point-decay: 2;
 
-    // GlobeyDomManager
+    /* GlobeyDomManager */
     --point-border: #1f2225;
+
 
     &--dark {
       --text-stroke: rgba(0, 0, 0, 0.8);
