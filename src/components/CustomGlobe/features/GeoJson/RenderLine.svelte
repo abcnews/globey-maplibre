@@ -3,10 +3,27 @@
   import { Popup, type Map, type GeoJSONSource } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { getColourExpression, getStrokeOpacityExpression, getStrokeWidthExpression } from './utils';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON,
+    SUB_LAYER_OUTLINE_OFFSET
+  } from '../layerUtils';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
-  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
+  let {
+    data,
+    config,
+    sourceId,
+    zIndex = Z_INDEX_GEOJSON
+  }: {
+    data: any;
+    config: GeoJsonConfig;
+    sourceId: string;
+    zIndex?: number;
+  } = $props();
 
   const layerId = $derived(`${sourceId}-line`);
   const outlineLayerId = $derived(`${sourceId}-line-outline`);
@@ -28,49 +45,58 @@
         });
       }
 
-      // Initialize Outline Layer
+      const targetZ = zIndex ?? Z_INDEX_GEOJSON;
+
+      // Initialize Outline Layer (placed slightly below main stroke)
       if (map.getSource(sid) && !map.getLayer(olid)) {
-        map.addLayer({
-          id: olid,
-          type: 'line',
-          source: sid,
-          layout: {
-            'line-cap': 'round',
-            'line-join': 'round'
+        addLayerWithZIndex(
+          map,
+          {
+            id: olid,
+            type: 'line',
+            source: sid,
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': '#ffffff',
+              'line-opacity': getStrokeOpacityExpression(config),
+              'line-width': ['+', getStrokeWidthExpression(config), 2]
+            }
           },
-          paint: {
-            'line-color': '#ffffff',
-            'line-opacity': getStrokeOpacityExpression(config),
-            'line-width': ['+', getStrokeWidthExpression(config), 2]
-          }
-        });
+          targetZ - SUB_LAYER_OUTLINE_OFFSET
+        );
       }
 
-      // Initialize Layer
+      // Initialize Main Line Layer
       if (map.getSource(sid) && !map.getLayer(lid)) {
-        map.addLayer({
-          id: lid,
-          type: 'line',
-          source: sid,
-          layout: {
-            'line-cap': 'round',
-            'line-join': 'round'
+        addLayerWithZIndex(
+          map,
+          {
+            id: lid,
+            type: 'line',
+            source: sid,
+            layout: {
+              'line-cap': 'round',
+              'line-join': 'round'
+            },
+            paint: {
+              'line-color': getColourExpression(config, 'stroke'),
+              'line-opacity': getStrokeOpacityExpression(config),
+              'line-width': getStrokeWidthExpression(config),
+              'line-color-transition': { duration: 300 },
+              'line-opacity-transition': { duration: 300 }
+            }
           },
-          paint: {
-            'line-color': getColourExpression(config, 'stroke'),
-
-            'line-opacity': getStrokeOpacityExpression(config),
-            'line-width': getStrokeWidthExpression(config),
-            'line-color-transition': { duration: 300 },
-            'line-opacity-transition': { duration: 300 }
-          }
-        });
+          targetZ
+        );
       }
     });
 
     return () => {
-      if (map.getLayer(lid)) map.removeLayer(lid);
-      if (map.getLayer(olid)) map.removeLayer(olid);
+      removeLayerWithZIndex(map, lid);
+      removeLayerWithZIndex(map, olid);
       if (map.getSource(sid)) map.removeSource(sid);
     };
   });
@@ -87,7 +113,6 @@
   // Update Styles
   $effect(() => {
     const map = mapRoot.map;
-    const sid = sourceId;
     const lid = layerId;
     const olid = outlineLayerId;
     if (map) {
@@ -97,11 +122,22 @@
       }
       if (map.getLayer(lid)) {
         map.setPaintProperty(lid, 'line-color', getColourExpression(config, 'stroke'));
-
         map.setPaintProperty(lid, 'line-opacity', getStrokeOpacityExpression(config));
         map.setPaintProperty(lid, 'line-width', getStrokeWidthExpression(config));
       }
     }
+  });
+
+  // Update Z-Index when changed
+  $effect(() => {
+    const map = mapRoot.map;
+    const targetZ = zIndex;
+    const lid = layerId;
+    const olid = outlineLayerId;
+    if (!map || targetZ === undefined) return;
+
+    if (map.getLayer(olid)) setLayerZIndex(map, olid, targetZ - SUB_LAYER_OUTLINE_OFFSET);
+    if (map.getLayer(lid)) setLayerZIndex(map, lid, targetZ);
   });
 
   // Popups

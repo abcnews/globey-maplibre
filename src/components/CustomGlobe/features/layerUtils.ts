@@ -1,6 +1,8 @@
 import type * as maplibregl from 'maplibre-gl';
 import type { ImageSourceConfig, GeoJsonConfig } from '$lib/marker';
 
+export * from './layerManager';
+
 /**
  * Generates a stable ID for GeoJSON sources based on the URL.
  */

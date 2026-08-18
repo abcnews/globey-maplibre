@@ -1,6 +1,7 @@
 <script lang="ts">
   import type * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
+  import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_BASE_RASTER } from './layerUtils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -41,11 +42,8 @@
       }
 
       if (!map.getLayer(id)) {
-        const currentLayers = map.getStyle()?.layers || [];
-        const firstNonBackground = currentLayers.find(l => l.id !== 'background');
-        const insertBefore = firstNonBackground ? firstNonBackground.id : undefined;
-
-        map.addLayer(
+        addLayerWithZIndex(
+          map,
           {
             id,
             type: 'raster',
@@ -54,7 +52,7 @@
               'raster-fade-duration': 0
             }
           },
-          insertBefore
+          Z_INDEX_BASE_RASTER
         );
       }
     };
@@ -67,9 +65,7 @@
 
     return () => {
       map.off('styledata', addLayer);
-      if (map.getLayer(id)) {
-        map.removeLayer(id);
-      }
+      removeLayerWithZIndex(map, id);
       if (map.getSource(sourceId)) {
         map.removeSource(sourceId);
       }

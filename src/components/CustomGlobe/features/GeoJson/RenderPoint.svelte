@@ -9,10 +9,26 @@
     getStrokeWidthExpression,
     getStrokeOpacityExpression
   } from './utils';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON
+  } from '../layerUtils';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
-  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
+  let {
+    data,
+    config,
+    sourceId,
+    zIndex = Z_INDEX_GEOJSON
+  }: {
+    data: any;
+    config: GeoJsonConfig;
+    sourceId: string;
+    zIndex?: number;
+  } = $props();
 
   const layerId = $derived(`${sourceId}-circle`);
 
@@ -34,32 +50,38 @@
         });
       }
 
+      const targetZ = zIndex ?? Z_INDEX_GEOJSON;
+
       // Add layer if source exists and layer doesn't
       if (map.getSource(sid) && !map.getLayer(lid)) {
-        map.addLayer({
-          id: lid,
-          type: 'circle',
-          source: sid,
-          paint: {
-            'circle-color': getColourExpression(config, 'marker'),
-            'circle-radius': getCircleRadiusExpression(config),
-            'circle-opacity': getCircleOpacityExpression(config),
-            'circle-stroke-width': getStrokeWidthExpression(config),
-            'circle-stroke-color': getColourExpression(config, 'stroke'),
-            'circle-stroke-opacity': getStrokeOpacityExpression(config),
-            'circle-pitch-scale': 'map',
-            'circle-color-transition': { duration: 300 },
-            'circle-radius-transition': { duration: 300 },
-            'circle-opacity-transition': { duration: 300 },
-            'circle-stroke-color-transition': { duration: 300 },
-            'circle-stroke-opacity-transition': { duration: 300 }
-          }
-        });
+        addLayerWithZIndex(
+          map,
+          {
+            id: lid,
+            type: 'circle',
+            source: sid,
+            paint: {
+              'circle-color': getColourExpression(config, 'marker'),
+              'circle-radius': getCircleRadiusExpression(config),
+              'circle-opacity': getCircleOpacityExpression(config),
+              'circle-stroke-width': getStrokeWidthExpression(config),
+              'circle-stroke-color': getColourExpression(config, 'stroke'),
+              'circle-stroke-opacity': getStrokeOpacityExpression(config),
+              'circle-pitch-scale': 'map',
+              'circle-color-transition': { duration: 300 },
+              'circle-radius-transition': { duration: 300 },
+              'circle-opacity-transition': { duration: 300 },
+              'circle-stroke-color-transition': { duration: 300 },
+              'circle-stroke-opacity-transition': { duration: 300 }
+            }
+          },
+          targetZ
+        );
       }
     });
 
     return () => {
-      if (map.getLayer(lid)) map.removeLayer(lid);
+      removeLayerWithZIndex(map, lid);
       if (map.getSource(sid)) map.removeSource(sid);
     };
   });
@@ -85,6 +107,16 @@
       map.setPaintProperty(lid, 'circle-stroke-color', getColourExpression(config, 'stroke'));
       map.setPaintProperty(lid, 'circle-stroke-opacity', getStrokeOpacityExpression(config));
     }
+  });
+
+  // Update Z-Index when changed
+  $effect(() => {
+    const map = mapRoot.map;
+    const targetZ = zIndex;
+    const lid = layerId;
+    if (!map || targetZ === undefined || !map.getLayer(lid)) return;
+
+    setLayerZIndex(map, lid, targetZ);
   });
 
   // Popups

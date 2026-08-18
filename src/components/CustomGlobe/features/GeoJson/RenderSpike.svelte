@@ -3,7 +3,17 @@
   import RenderSpikeInner from './RenderSpikeInner.svelte';
   import type { GeoJsonConfig } from '../../../../lib/marker';
 
-  let { data, config, sourceId }: { data: any; config: GeoJsonConfig; sourceId: string } = $props();
+  let {
+    data,
+    config,
+    sourceId,
+    zIndex
+  }: {
+    data: any;
+    config: GeoJsonConfig;
+    sourceId: string;
+    zIndex?: number;
+  } = $props();
 
   let SpikeLayerClass = $state<any>();
 
@@ -15,5 +25,5 @@
 </script>
 
 {#if SpikeLayerClass}
-  <RenderSpikeInner {data} {config} {sourceId} {SpikeLayerClass} />
+  <RenderSpikeInner {data} {config} {sourceId} {SpikeLayerClass} {zIndex} />
 {/if}

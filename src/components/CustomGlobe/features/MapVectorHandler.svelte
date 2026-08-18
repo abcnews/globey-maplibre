@@ -19,110 +19,115 @@
   import type * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
   import {
-    OPENMAPTILES_SOURCE_ID,
-    OPENMAPTILES_SOURCE_DEF,
-    getStreetBaseLayers,
-    getLabelLayers,
-    getBaseStyleSource
-  } from '../mapStyle/streetMap';
+  OPENMAPTILES_SOURCE_ID,
+  OPENMAPTILES_SOURCE_DEF,
+  getStreetBaseLayers,
+  getLabelLayers,
+  getBaseStyleSource
+} from '../mapStyle/streetMap';
+import {
+  addLayerWithZIndex,
+  removeLayerWithZIndex,
+  Z_INDEX_BASE_VECTOR,
+  Z_INDEX_BASE_LABELS
+} from './layerUtils';
 
-  const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
+const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let {
-    base,
-    labels = {
-      countries: 3,
-      states: false,
-      cities: false,
-      towns: false,
-      oceans: false,
-      continents: false,
-      boundaries: 'national'
-    },
-    isSatellite = false
-  }: {
-    base?: string;
-    labels?: {
-      countries: number;
-      states: boolean;
-      cities: boolean;
-      towns: boolean;
-      oceans: boolean;
-      continents: boolean;
-      boundaries: 'none' | 'national' | 'state';
-    };
-    isSatellite?: boolean;
-  } = $props();
+let {
+  base,
+  labels = {
+    countries: 3,
+    states: false,
+    cities: false,
+    towns: false,
+    oceans: false,
+    continents: false,
+    boundaries: 'national'
+  },
+  isSatellite = false
+}: {
+  base?: string;
+  labels?: {
+    countries: number;
+    states: boolean;
+    cities: boolean;
+    towns: boolean;
+    oceans: boolean;
+    continents: boolean;
+    boundaries: 'none' | 'national' | 'state';
+  };
+  isSatellite?: boolean;
+} = $props();
 
-  // Determine if we need to show labels at all
-  const hasLabels = $derived(
-    labels.countries > 0 || labels.states || labels.cities || labels.towns || labels.oceans || labels.continents
-  );
+// Determine if we need to show labels at all
+const hasLabels = $derived(
+  labels.countries > 0 || labels.states || labels.cities || labels.towns || labels.oceans || labels.continents
+);
 
-  // Determine if we need to show base layers (only in street mode)
-  const showBase = $derived(base === 'street' || !base);
+// Determine if we need to show base layers (only in street mode)
+const showBase = $derived(base === 'street' || !base);
 
-  // Determine if we need the vector source at all
-  const needsSource = $derived(showBase || hasLabels);
+// Determine if we need the vector source at all
+const needsSource = $derived(showBase || hasLabels);
 
-  // Effect for Source and Layer lifecycle
-  $effect(() => {
-    if (!mapRoot.map) return;
-    const map = mapRoot.map;
+// Effect for Source and Layer lifecycle
+$effect(() => {
+  if (!mapRoot.map) return;
+  const map = mapRoot.map;
 
-    if (!needsSource) return;
+  if (!needsSource) return;
 
-    // Use current values to trigger reactivity
-    const s_isSatellite = isSatellite;
-    const s_showBase = showBase;
-    const s_hasLabels = hasLabels;
+  // Use current values to trigger reactivity
+  const s_isSatellite = isSatellite;
+  const s_showBase = showBase;
+  const s_hasLabels = hasLabels;
 
-    const baseLayers = s_showBase ? getStreetBaseLayers() : [];
-    const labelLayers = s_hasLabels ? getLabelLayers(s_isSatellite) : [];
-    const allLayers = [...baseLayers, ...labelLayers];
+  const baseLayers = s_showBase ? getStreetBaseLayers() : [];
+  const labelLayers = s_hasLabels ? getLabelLayers(s_isSatellite) : [];
+  const allLayers = [...baseLayers, ...labelLayers];
 
-    const addLayers = () => {
-      if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
-        map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
-      }
-
-      // Update background color for street map
-      if (s_showBase && map.getLayer('background')) {
-        const defaultBackground = getBaseStyleSource().layers.find(layer => layer.id === 'background')?.paint?.[
-          'background-color'
-        ];
-        map.setPaintProperty('background', 'background-color', defaultBackground);
-      }
-
-      const currentStyle = map.getStyle();
-      const firstNonBackground = currentStyle?.layers?.find(l => l.id !== 'background')?.id;
-
-      allLayers.forEach(layer => {
-        if (!map.getLayer(layer.id)) {
-          const insertBefore = s_showBase && baseLayers.includes(layer) ? firstNonBackground : undefined;
-          map.addLayer(layer as any, insertBefore);
-        } else if (labelLayers.includes(layer) && layer.paint) {
-          // Update paint properties if they already exist (e.g. theme change)
-          Object.keys(layer.paint).forEach(prop => {
-            map.setPaintProperty(layer.id, prop, (layer.paint as any)[prop]);
-          });
-        }
-      });
-    };
-
-    if (map.isStyleLoaded()) {
-      addLayers();
-    } else {
-      map.once('styledata', addLayers);
+  const addLayers = () => {
+    if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
+      map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
     }
 
-    return () => {
-      map.off('styledata', addLayers);
-      allLayers.forEach(layer => {
-        if (map.getLayer(layer.id)) map.removeLayer(layer.id);
-      });
-    };
-  });
+    // Update background color for street map
+    if (s_showBase && map.getLayer('background')) {
+      const defaultBackground = getBaseStyleSource().layers.find(layer => layer.id === 'background')?.paint?.[
+        'background-color'
+      ];
+      map.setPaintProperty('background', 'background-color', defaultBackground);
+    }
+
+    allLayers.forEach(layer => {
+      const isBase = baseLayers.includes(layer);
+      const zIndex = isBase ? Z_INDEX_BASE_VECTOR : Z_INDEX_BASE_LABELS;
+
+      if (!map.getLayer(layer.id)) {
+        addLayerWithZIndex(map, layer as any, zIndex);
+      } else if (labelLayers.includes(layer) && layer.paint) {
+        // Update paint properties if they already exist (e.g. theme change)
+        Object.keys(layer.paint).forEach(prop => {
+          map.setPaintProperty(layer.id, prop, (layer.paint as any)[prop]);
+        });
+      }
+    });
+  };
+
+  if (map.isStyleLoaded()) {
+    addLayers();
+  } else {
+    map.once('styledata', addLayers);
+  }
+
+  return () => {
+    map.off('styledata', addLayers);
+    allLayers.forEach(layer => {
+      removeLayerWithZIndex(map, layer.id);
+    });
+  };
+});
 
   // Effect for dynamic visibility - this is much more reactive
   $effect(() => {

@@ -3,6 +3,12 @@
   import type * as maplibregl from 'maplibre-gl';
   import { safeFitBounds } from './utils';
 
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    Z_INDEX_UI_OVERLAYS
+  } from '../CustomGlobe/features/layerUtils';
+
   let {
     map,
     onchange,
@@ -54,17 +60,21 @@
         }
       });
 
-      map.addLayer({
-        id: layerId,
-        type: 'circle',
-        source: sourceId,
-        paint: {
-          'circle-radius': 8,
-          'circle-color': '#ff0000',
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#ffffff'
-        }
-      });
+      addLayerWithZIndex(
+        map,
+        {
+          id: layerId,
+          type: 'circle',
+          source: sourceId,
+          paint: {
+            'circle-radius': 8,
+            'circle-color': '#ff0000',
+            'circle-stroke-width': 2,
+            'circle-stroke-color': '#ffffff'
+          }
+        },
+        Z_INDEX_UI_OVERLAYS
+      );
     }
 
     updateSource();
@@ -90,7 +100,7 @@
       if (map.getCanvas()) {
         map.getCanvas().style.cursor = '';
       }
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      removeLayerWithZIndex(map, layerId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
     };
   });

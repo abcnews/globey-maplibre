@@ -8,10 +8,27 @@
     getStrokeOpacityExpression,
     getStrokeWidthExpression
   } from './utils';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON,
+    SUB_LAYER_OUTLINE_OFFSET
+  } from '../layerUtils';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
-  let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
+  let {
+    data,
+    config,
+    sourceId,
+    zIndex = Z_INDEX_GEOJSON
+  }: {
+    data: any;
+    config: GeoJsonConfig;
+    sourceId: string;
+    zIndex?: number;
+  } = $props();
 
   const layerId = $derived(`${sourceId}-fill`);
   const outlineLayerId = $derived(`${sourceId}-outline`);
@@ -33,45 +50,56 @@
         });
       }
 
+      const targetZ = zIndex ?? Z_INDEX_GEOJSON;
+
       // Initialize Layers
       if (map.getSource(sid)) {
+        // Fill layer sits slightly below the stroke outline
         if (!map.getLayer(lid)) {
-          map.addLayer({
-            id: lid,
-            type: 'fill',
-            source: sid,
-            paint: {
-              'fill-color': getColourExpression(config, 'fill'),
-              'fill-opacity': getFillOpacityExpression(config),
+          addLayerWithZIndex(
+            map,
+            {
+              id: lid,
+              type: 'fill',
+              source: sid,
+              paint: {
+                'fill-color': getColourExpression(config, 'fill'),
+                'fill-opacity': getFillOpacityExpression(config),
 
-              'fill-color-transition': { duration: 300 },
-              'fill-opacity-transition': { duration: 300 }
-            }
-          });
+                'fill-color-transition': { duration: 300 },
+                'fill-opacity-transition': { duration: 300 }
+              }
+            },
+            targetZ - SUB_LAYER_OUTLINE_OFFSET
+          );
         }
 
         if (!map.getLayer(olid)) {
-          map.addLayer({
-            id: olid,
-            type: 'line',
-            source: sid,
-            paint: {
-              'line-color': getColourExpression(config, 'stroke'),
+          addLayerWithZIndex(
+            map,
+            {
+              id: olid,
+              type: 'line',
+              source: sid,
+              paint: {
+                'line-color': getColourExpression(config, 'stroke'),
 
-              'line-width': getStrokeWidthExpression(config),
-              'line-opacity': getStrokeOpacityExpression(config),
-              'line-width-transition': { duration: 300 },
-              'line-color-transition': { duration: 300 },
-              'line-opacity-transition': { duration: 300 }
-            }
-          });
+                'line-width': getStrokeWidthExpression(config),
+                'line-opacity': getStrokeOpacityExpression(config),
+                'line-width-transition': { duration: 300 },
+                'line-color-transition': { duration: 300 },
+                'line-opacity-transition': { duration: 300 }
+              }
+            },
+            targetZ
+          );
         }
       }
     });
 
     return () => {
-      if (map.getLayer(lid)) map.removeLayer(lid);
-      if (map.getLayer(olid)) map.removeLayer(olid);
+      removeLayerWithZIndex(map, lid);
+      removeLayerWithZIndex(map, olid);
       if (map.getSource(sid)) map.removeSource(sid);
     };
   });
@@ -101,6 +129,18 @@
       map.setPaintProperty(olid, 'line-width', getStrokeWidthExpression(config));
       map.setPaintProperty(olid, 'line-opacity', getStrokeOpacityExpression(config));
     }
+  });
+
+  // Update Z-Index when changed
+  $effect(() => {
+    const map = mapRoot.map;
+    const targetZ = zIndex;
+    const lid = layerId;
+    const olid = outlineLayerId;
+    if (!map || targetZ === undefined) return;
+
+    if (map.getLayer(lid)) setLayerZIndex(map, lid, targetZ - SUB_LAYER_OUTLINE_OFFSET);
+    if (map.getLayer(olid)) setLayerZIndex(map, olid, targetZ);
   });
 
   // Popups

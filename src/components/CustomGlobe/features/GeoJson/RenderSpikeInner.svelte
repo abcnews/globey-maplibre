@@ -4,13 +4,26 @@
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { parseColor } from '../../../../lib/colours';
   import { getColourEvaluator, getHeightEvaluator } from './utils';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON
+  } from '../layerUtils';
 
   let {
     data,
     config,
     sourceId,
-    SpikeLayerClass
-  }: { data: any; config: GeoJsonConfig; sourceId: string; SpikeLayerClass: any } = $props();
+    SpikeLayerClass,
+    zIndex = Z_INDEX_GEOJSON
+  }: {
+    data: any;
+    config: GeoJsonConfig;
+    sourceId: string;
+    SpikeLayerClass: any;
+    zIndex?: number;
+  } = $props();
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const layerId = $derived(`${sourceId}-spike`);
@@ -39,7 +52,7 @@
       baseDiameter: 15000
     });
 
-    map.addLayer(layer);
+    addLayerWithZIndex(map, layer, zIndex ?? Z_INDEX_GEOJSON);
 
     // Zoom listener for pixel-based sizing
     const onZoom = () => (currentZoom = map.getZoom());
@@ -50,9 +63,7 @@
     return () => {
       map.off('zoom', onZoom);
       cancelAnimationFrame(animationFrame);
-      if (map.getLayer(lid)) {
-        map.removeLayer(lid);
-      }
+      removeLayerWithZIndex(map, lid);
     };
   });
 
@@ -137,6 +148,16 @@
     cancelAnimationFrame(animationFrame);
     startTime = performance.now();
     animate();
+  });
+
+  // Update Z-Index when changed
+  $effect(() => {
+    const map = mapRoot.map;
+    const targetZ = zIndex;
+    const lid = layerId;
+    if (!map || targetZ === undefined || !map.getLayer(lid)) return;
+
+    setLayerZIndex(map, lid, targetZ);
   });
 
   function animate() {

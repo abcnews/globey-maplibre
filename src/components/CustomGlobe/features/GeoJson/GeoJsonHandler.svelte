@@ -1,14 +1,10 @@
 <script lang="ts">
-  import { getContext } from 'svelte';
   import { feature } from 'topojson-client';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import type { Map } from 'maplibre-gl';
-  import { getGeoJsonLayerIds, getLabelAnchor, stackLayers, generateGeoJsonSourceId } from '../layerUtils';
+  import { generateGeoJsonSourceId, Z_INDEX_GEOJSON } from '../layerUtils';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
 
   let { config = [] } = $props<{ config?: GeoJsonConfig[] }>();
-
-  const mapRoot = getContext<{ map: Map }>('mapInstance');
 
   // Local state to store parsed JSON, persisting across prop changes
   let dataMap = $state<Record<string, any>>({});
@@ -52,35 +48,15 @@
       }
     });
   });
-
-  // Re-stack layers whenever config changes or children are ready
-  $effect(() => {
-    const map = mapRoot.map;
-    if (!map || !allLoaded) return;
-
-    // Track config dependency at the top level of the effect
-    const currentConfig = config;
-
-    const arrangeLayers = () => {
-      // Style must be loaded to move layers
-      if (!map.isStyleLoaded()) return;
-
-      const beforeId = getLabelAnchor(map);
-      const allLayerIds = currentConfig.flatMap(item => getGeoJsonLayerIds(item));
-      stackLayers(map, allLayerIds, beforeId);
-    };
-
-    if (map.isStyleLoaded()) {
-      arrangeLayers();
-    } else {
-      map.on('styledata', arrangeLayers);
-      return () => map.off('styledata', arrangeLayers);
-    }
-  });
 </script>
 
 {#if allLoaded}
-  {#each config.slice().reverse() as item (item.url)}
-    <GeoJsonRenderer data={dataMap[item.url]} config={item} sourceId={generateGeoJsonSourceId(item.url)} />
+  {#each config as item, index (item.url)}
+    <GeoJsonRenderer
+      data={dataMap[item.url]}
+      config={item}
+      sourceId={generateGeoJsonSourceId(item.url)}
+      zIndex={Z_INDEX_GEOJSON + index * 0.1}
+    />
   {/each}
 {/if}

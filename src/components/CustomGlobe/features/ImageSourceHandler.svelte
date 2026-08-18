@@ -2,9 +2,21 @@
   import type { ImageSourceConfig } from '../../../lib/marker';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_IMAGE_LAYERS
+  } from './layerUtils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const { config, beforeId }: { config: ImageSourceConfig; beforeId?: string } = $props();
+  const {
+    config,
+    zIndex = Z_INDEX_IMAGE_LAYERS
+  }: {
+    config: ImageSourceConfig;
+    zIndex?: number;
+  } = $props();
 
   // Stabilize essential IDs and URLs.
   // These are derived from config, but will only trigger downstream if the literal value changes.
@@ -33,7 +45,7 @@
           [0, 0]
         ];
         const initialOpacity = untrack(() => config.opacity) ?? 1;
-        const targetBeforeId = untrack(() => beforeId);
+        const currentZIndex = untrack(() => zIndex);
 
         map.addSource(currentSid, {
           type: 'image',
@@ -41,14 +53,15 @@
           coordinates: initialCoords as any
         });
 
-        map.addLayer(
+        addLayerWithZIndex(
+          map,
           {
             id: currentLid,
             type: 'raster',
             source: currentSid,
             paint: { 'raster-opacity': initialOpacity }
           },
-          targetBeforeId && map.getLayer(targetBeforeId) ? targetBeforeId : undefined
+          currentZIndex
         );
       } catch (e) {
         // Failing to add source/layer is usually expected during style transitions
@@ -63,7 +76,7 @@
       map.off('styledata', setup);
       map.off('load', setup);
 
-      if (map.getLayer(currentLid)) map.removeLayer(currentLid);
+      removeLayerWithZIndex(map, currentLid);
       if (map.getSource(currentSid)) map.removeSource(currentSid);
     };
   });
@@ -89,16 +102,12 @@
     }
   });
 
-  // STACKING EFFECT: Moves layer when beforeId changes.
+  // Z-INDEX STACKING EFFECT: Updates layer stacking position when zIndex changes.
   $effect(() => {
     const map = mapRoot.map;
-    const currentBeforeId = beforeId;
-    if (!map || !map.getLayer(currentLid)) return;
+    const targetZ = zIndex;
+    if (!map || !map.getLayer(currentLid) || targetZ === undefined) return;
 
-    if (currentBeforeId && map.getLayer(currentBeforeId)) {
-      map.moveLayer(currentLid, currentBeforeId);
-    } else {
-      map.moveLayer(currentLid, undefined);
-    }
+    setLayerZIndex(map, currentLid, targetZ);
   });
 </script>
