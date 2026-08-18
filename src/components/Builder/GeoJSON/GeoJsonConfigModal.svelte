@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import * as topojson from 'topojson-client';
+  import { feature } from 'topojson-client';
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
   import PropGeoJsonSize from './PropGeoJsonSize.svelte';
@@ -55,7 +55,7 @@
       if (data.type === 'Topology') {
         const key = Object.keys(data.objects)[0];
         if (key) {
-          geojson = topojson.feature(data, data.objects[key]);
+          geojson = feature(data, data.objects[key]);
         }
       }
 

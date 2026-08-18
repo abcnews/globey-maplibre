@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type * as maplibregl from 'maplibre-gl';
+  import { Popup, type Map, type GeoJSONSource } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import {
     getColourExpression,
@@ -10,7 +10,7 @@
     getStrokeOpacityExpression
   } from './utils';
 
-  const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
+  const mapRoot = getContext<{ map: Map }>('mapInstance');
 
   let { data, config, sourceId } = $props<{ data: any; config: GeoJsonConfig; sourceId: string }>();
 
@@ -69,7 +69,7 @@
     const map = mapRoot.map;
     const sid = sourceId;
     if (map && map.getSource(sid) && data) {
-      (map.getSource(sid) as maplibregl.GeoJSONSource).setData(data);
+      (map.getSource(sid) as GeoJSONSource).setData(data);
     }
   });
 
@@ -93,7 +93,7 @@
     const lid = layerId;
     if (!map || !map.getLayer(lid)) return;
 
-    const popup = new window.maplibregl.Popup({
+    const popup = new Popup({
       closeButton: true,
       closeOnClick: true,
       offset: 15

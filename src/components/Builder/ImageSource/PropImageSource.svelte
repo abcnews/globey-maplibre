@@ -5,7 +5,7 @@
   import { safeFitBounds } from '../utils';
   import PropList from '../PropList.svelte';
 
-  import * as maplibregl from 'maplibre-gl';
+  import { LngLatBounds, type Map } from 'maplibre-gl';
   import type { DecodedObject } from '../../../lib/marker';
 
   let {
@@ -14,7 +14,7 @@
     onchange
   } = $props<{
     options: DecodedObject;
-    map: maplibregl.Map;
+    map: Map;
     onchange: (list: ImageSourceConfig[]) => void;
   }>();
 
@@ -41,7 +41,7 @@
           acc.extend(coord as [number, number]);
           return acc;
         },
-        new maplibregl.LngLatBounds(
+        new LngLatBounds(
           config.coordinates[0] as [number, number],
           config.coordinates[0] as [number, number]
         )

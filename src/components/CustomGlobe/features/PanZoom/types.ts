@@ -1,4 +1,3 @@
-import type * as maplibregl from 'maplibre-gl';
 
 /**
  * Geographic state representing a camera position.

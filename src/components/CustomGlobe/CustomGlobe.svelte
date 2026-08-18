@@ -9,7 +9,7 @@
   import ProjectionHandler from './features/ProjectionHandler.svelte';
   import AttributionHandler from './features/AttributionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
-  import * as maplibregl from 'maplibre-gl';
+  import { Map } from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { isDarkBase } from './mapStyle/utils';
   import { onMount, setContext } from 'svelte';
@@ -17,7 +17,7 @@
   type Props = {
     rootElStyle?: string;
     interactive: boolean;
-    onLoad?: (map: maplibregl.Map) => void;
+    onLoad?: (map: Map) => void;
     options: DecodedObject;
     preserveDrawingBuffer?: boolean;
     children?: import('svelte').Snippet;
@@ -25,7 +25,7 @@
   let { rootElStyle, interactive, onLoad, options, preserveDrawingBuffer = false, children }: Props = $props();
 
   let mapContainer = $state<HTMLDivElement>();
-  let mapInstance = $state<{ map: maplibregl.Map | null }>({ map: null });
+  let mapInstance = $state<{ map: Map | null }>({ map: null });
   setContext('mapInstance', mapInstance);
 
   const isDark = $derived(isDarkBase(options.base || 'street'));
@@ -36,7 +36,7 @@
     if (!mapContainer) return;
 
     mapContainer.style.opacity = '0';
-    const map = new maplibregl.Map({
+    const map = new Map({
       zoom: options.z || 3,
       minZoom: -1,
       maxZoom: MAX_ZOOM,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import * as maplibregl from 'maplibre-gl';
+  import { AttributionControl, type Map } from 'maplibre-gl';
   import { getContext } from 'svelte';
   import { isOsmBase, escapeHTML } from '../mapStyle/utils';
 
@@ -13,9 +13,9 @@
     hideOsm?: boolean;
   } = $props();
 
-  const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
+  const mapRoot = getContext<{ map: Map }>('mapInstance');
 
-  let attributionControl: maplibregl.AttributionControl | null = null;
+  let attributionControl: AttributionControl | null = null;
 
   $effect(() => {
     if (!mapRoot.map) return;
@@ -43,7 +43,7 @@
     }
 
     if (finalAttribution) {
-      attributionControl = new maplibregl.AttributionControl({
+      attributionControl = new AttributionControl({
         customAttribution: finalAttribution,
         compact: false
       });

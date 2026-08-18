@@ -4,7 +4,7 @@
    * Component that allows users to pick or drag & drop a GeoTIFF file
    * to extract its bounding box.
    */
-  import * as GeoTIFF from 'geotiff';
+  import { fromBlob } from 'geotiff';
   import { parseGeoTiffCoords } from './utils';
 
   let { onimport }: { onimport: (coords: [number, number][]) => void } = $props();
@@ -14,7 +14,7 @@
 
   async function handleFile(file: File) {
     try {
-      const tiff = await GeoTIFF.fromBlob(file);
+      const tiff = await fromBlob(file);
       const image = await tiff.getImage();
       const bbox = image.getBoundingBox(); // [minX, minY, maxX, maxY]
       const geoKeys = image.getGeoKeys();
