@@ -1,4 +1,4 @@
-import type { maplibregl } from '../mapLibre/index';
+import type * as maplibregl from 'maplibre-gl';
 
 /**
  * Triggers a map.flyTo event and let the builder know it should update the

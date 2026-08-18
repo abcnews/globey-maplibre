@@ -1,7 +1,6 @@
 import {
   geohashCodec,
   boundsCodec,
-  countriesCodec,
   customLabelsCodec,
   geoJsonCodec,
   mapLabelsCodec,
@@ -31,12 +30,6 @@ export const markerSchema = {
     codec: boundsCodec,
     defaultValue: []
   },
-  highlightCountries: {
-    key: 'c',
-    type: 'custom',
-    codec: countriesCodec,
-    defaultValue: []
-  },
   z: {
     key: 'z',
     type: 'custom',
@@ -55,7 +48,7 @@ export const markerSchema = {
   base: {
     key: 'base',
     type: 'enum',
-    values: ['street', 'countries', 'satellite'],
+    values: ['street', 'satellite'],
     defaultValue: 'street'
   },
   mapLabels: {

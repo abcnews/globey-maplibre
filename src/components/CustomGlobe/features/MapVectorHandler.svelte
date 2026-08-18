@@ -16,7 +16,7 @@
    *   isSatellite={true}
    * />
    */
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
   import {
     OPENMAPTILES_SOURCE_ID,

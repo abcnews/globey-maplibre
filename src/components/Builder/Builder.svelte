@@ -3,11 +3,10 @@
   import { onMount } from 'svelte';
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
-  import type { maplibregl } from '../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { options as optionsStore } from './store';
   import PropCoord from './PropCoord.svelte';
   import PropLabels from './PropLabels.svelte';
-  import PropHighlightCountries from './HighlightCountries/PropHighlightCountries.svelte';
   import PropBase from './PropBase/PropBase.svelte';
   import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
   import PropImageSource from './ImageSource/PropImageSource.svelte';
@@ -95,11 +94,6 @@
       }}
     />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
-    <PropHighlightCountries
-      {map}
-      highlightCountries={options.highlightCountries}
-      onchange={highlightCountries => (options.highlightCountries = highlightCountries)}
-    />
     <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
     <PropImageSource {map} bind:options onchange={list => (options.imageSources = list)} />
 

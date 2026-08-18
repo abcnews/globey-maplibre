@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { DecodedObject } from '../../../lib/marker';
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
 
   let { map, options = $bindable() }: { map: maplibregl.Map; options: DecodedObject } = $props();
 

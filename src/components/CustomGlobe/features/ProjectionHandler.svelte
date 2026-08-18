@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
 
   let { projection = 'globe' }: { projection?: 'globe' | 'mercator' } = $props();

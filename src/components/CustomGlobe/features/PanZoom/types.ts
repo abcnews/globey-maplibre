@@ -1,4 +1,3 @@
-import type { maplibregl } from '../../../mapLibre/index';
 
 /**
  * Geographic state representing a camera position.

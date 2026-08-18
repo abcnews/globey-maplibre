@@ -1,14 +1,14 @@
 <script lang="ts">
   import { getContext } from 'svelte';
-  import * as topojson from 'topojson-client';
+  import { feature } from 'topojson-client';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import type { maplibregl } from '../../../mapLibre/index';
+  import type { Map } from 'maplibre-gl';
   import { getGeoJsonLayerIds, getLabelAnchor, stackLayers, generateGeoJsonSourceId } from '../layerUtils';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
 
   let { config = [] } = $props<{ config?: GeoJsonConfig[] }>();
 
-  const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
+  const mapRoot = getContext<{ map: Map }>('mapInstance');
 
   // Local state to store parsed JSON, persisting across prop changes
   let dataMap = $state<Record<string, any>>({});
@@ -30,7 +30,7 @@
       if (rawData.type === 'Topology') {
         const key = Object.keys(rawData.objects)[0];
         if (key) {
-          geojson = topojson.feature(rawData, rawData.objects[key]);
+          geojson = feature(rawData, rawData.objects[key]);
         }
       }
       return geojson;

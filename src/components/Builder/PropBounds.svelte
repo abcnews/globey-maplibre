@@ -1,6 +1,6 @@
 <script lang="ts">
   import { options } from './store';
-  import type { maplibregl } from '../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { safeFitBounds } from './utils';
 
   let {

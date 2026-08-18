@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContext } from 'svelte';
-  import type { maplibregl } from '../../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { parseColor } from '../../../../lib/colours';
   import { getColourEvaluator, getHeightEvaluator } from './utils';

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');

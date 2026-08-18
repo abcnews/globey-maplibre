@@ -1,16 +1,7 @@
 import Geohash from 'latlon-geohash';
 import { decode, encode } from '@abcnews/base-36-text';
-import type { Label, Country, GeoJsonConfig, DecodedObject, ImageSourceConfig, GeoJsonSize } from './types.ts';
+import type { Label, GeoJsonConfig, DecodedObject, ImageSourceConfig, GeoJsonSize } from './types.ts';
 import { isValidUrl, compressUrl, decompressUrl } from './utils.ts';
-
-const STYLE_TO_CODE: Record<string, string> = {
-  primary: 'p',
-  secondary: 's'
-};
-
-const CODE_TO_STYLE: Record<string, Country['style']> = Object.fromEntries(
-  Object.entries(STYLE_TO_CODE).map(([style, code]) => [code, style as Country['style']])
-);
 
 export const GEOHASH_PRECISION = 10;
 
@@ -203,35 +194,6 @@ export const boundsCodec = {
     return (hash.match(regex) || []).map(part => {
       const { lat, lon } = Geohash.decode(part);
       return [Number(lon), Number(lat)];
-    });
-  }
-};
-
-/**
- * Custom codec for country codes.
- * Encodes each country into 3 characters: 2 for the lowercase code,
- * plus 'p' or 's' for primary or secondary styling.
- * e.g. [{code: 'AU', style: 'primary'}] -> "aup"
- */
-export const countriesCodec = {
-  encode: (countries: Country[]) =>
-    countries
-      ? countries
-          .map(c => {
-            const styleChar = STYLE_TO_CODE[c.style] || 'p';
-            return c.code.toLowerCase() + styleChar;
-          })
-          .join('')
-      : undefined,
-  decode: (hash: string) => {
-    if (!hash) return [];
-    return (hash.match(/.{3}/g) || []).map(part => {
-      const code = part.slice(0, 2).toUpperCase();
-      const styleChar = part.slice(2, 3);
-      return {
-        code,
-        style: CODE_TO_STYLE[styleChar] || 'primary'
-      };
     });
   }
 };

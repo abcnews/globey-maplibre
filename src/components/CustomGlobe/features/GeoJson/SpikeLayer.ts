@@ -3,7 +3,7 @@
  * Render a dataset as a spike layer in ThreeJS.
  */
 
-import type { CustomRenderMethodInput } from 'maplibre-gl';
+import type { CustomLayerInterface, CustomRenderMethodInput, Map } from 'maplibre-gl';
 import type { THREE } from '../../../../components/threeJS';
 import { loadThreeJS } from '../../../../components/threeJS/utils';
 
@@ -16,12 +16,12 @@ interface SpikeLayerOptions {
 export async function getSpikeLayer() {
   const THREE = await loadThreeJS();
 
-  return class SpikeLayer implements maplibregl.CustomLayerInterface {
+  return class SpikeLayer implements CustomLayerInterface {
     id: string;
     type: 'custom' = 'custom';
     renderingMode: '3d' = '3d';
 
-    protected map?: maplibregl.Map;
+    protected map?: Map;
     protected camera?: THREE.Camera;
     protected scene?: THREE.Scene;
     protected renderer?: THREE.WebGLRenderer;

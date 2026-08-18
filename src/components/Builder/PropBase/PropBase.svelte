@@ -41,7 +41,6 @@
 
   const baseLabels: Record<string, string> = {
     street: 'Street Map',
-    countries: 'Countries',
     satellite: 'Satellite'
   };
 
@@ -78,7 +77,6 @@
             <legend>Base Layer</legend>
             <select value={options.base || 'street'} onchange={e => update('base', e.currentTarget.value)}>
               <option value="street">Street Map</option>
-              <option value="countries">Countries</option>
               <option value="satellite">Satellite</option>
             </select>
           </fieldset>

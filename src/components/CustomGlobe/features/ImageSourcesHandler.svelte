@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getContext } from 'svelte';
   import type { ImageSourceConfig } from '../../../lib/marker';
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getImageLayerId, getLabelAnchor, stackLayers, getGeoJsonLayerIds } from './layerUtils';
   import ImageSourceHandler from './ImageSourceHandler.svelte';
 

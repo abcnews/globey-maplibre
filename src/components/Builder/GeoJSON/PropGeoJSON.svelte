@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { maplibregl } from '../../mapLibre/index';
   import type { GeoJsonConfig } from '../../../lib/marker';
+  import type * as maplibregl from 'maplibre-gl';
   import GeoJsonConfigModal from './GeoJsonConfigModal.svelte';
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
   import PropList from '../PropList.svelte';
