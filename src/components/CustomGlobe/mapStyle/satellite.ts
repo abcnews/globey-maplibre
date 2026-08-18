@@ -1,4 +1,4 @@
-import type { maplibregl } from '../../mapLibre/index';
+import type * as maplibregl from 'maplibre-gl';
 import { styleSource } from './streetMap';
 
 const getBaseStyle = () => JSON.parse(JSON.stringify(styleSource)) as maplibregl.StyleSpecification;

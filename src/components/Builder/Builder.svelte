@@ -3,7 +3,7 @@
   import { onMount } from 'svelte';
   import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
-  import type { maplibregl } from '../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { options as optionsStore } from './store';
   import PropCoord from './PropCoord.svelte';
   import PropLabels from './PropLabels.svelte';

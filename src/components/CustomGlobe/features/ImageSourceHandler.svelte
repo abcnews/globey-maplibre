@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ImageSourceConfig } from '../../../lib/marker';
-  import type { maplibregl } from '../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');

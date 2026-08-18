@@ -1,7 +1,7 @@
 <script lang="ts">
+  import * as maplibregl from 'maplibre-gl';
   import { getContext } from 'svelte';
   import { isOsmBase, escapeHTML } from '../mapStyle/utils';
-  import type { maplibregl } from '../../mapLibre/index';
 
   let {
     attribution,
@@ -43,7 +43,7 @@
     }
 
     if (finalAttribution) {
-      attributionControl = new window.maplibregl.AttributionControl({
+      attributionControl = new maplibregl.AttributionControl({
         customAttribution: finalAttribution,
         compact: false
       });

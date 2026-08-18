@@ -2,7 +2,7 @@
   import { getContext } from 'svelte';
   import * as topojson from 'topojson-client';
   import type { GeoJsonConfig } from '../../../../lib/marker';
-  import type { maplibregl } from '../../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { getGeoJsonLayerIds, getLabelAnchor, stackLayers, generateGeoJsonSourceId } from '../layerUtils';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
 

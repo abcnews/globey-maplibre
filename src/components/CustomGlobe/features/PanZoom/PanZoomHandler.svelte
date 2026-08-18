@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { maplibregl } from '../../../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import { disableMapAnimation, prefersReducedMotion } from '../../../../lib/stores';
   import { getContext } from 'svelte';
   import type { PanZoomProps } from './types';

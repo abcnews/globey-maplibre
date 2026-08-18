@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { options } from './store';
-  import type { maplibregl } from '../mapLibre/index';
+  import type * as maplibregl from 'maplibre-gl';
   import PropBounds from './PropBounds.svelte';
   import GeoSearch from './GeoSearch/GeoSearch.svelte';
   import { QuestionCircle } from 'svelte-bootstrap-icons';

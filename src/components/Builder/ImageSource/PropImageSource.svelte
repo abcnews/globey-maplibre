@@ -5,7 +5,8 @@
   import { safeFitBounds } from '../utils';
   import PropList from '../PropList.svelte';
 
-  import type { maplibregl, DecodedObject } from '../../mapLibre/index';
+  import * as maplibregl from 'maplibre-gl';
+  import type { DecodedObject } from '../../../lib/marker';
 
   let {
     options = $bindable(),
@@ -40,7 +41,7 @@
           acc.extend(coord as [number, number]);
           return acc;
         },
-        new (window as any).maplibregl.LngLatBounds(
+        new maplibregl.LngLatBounds(
           config.coordinates[0] as [number, number],
           config.coordinates[0] as [number, number]
         )

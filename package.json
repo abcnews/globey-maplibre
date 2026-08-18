@@ -38,7 +38,7 @@
     "geotiff": "^3.0.0",
     "latlon-geohash": "^2.0.0",
     "layercake": "^10.0.2",
-    "maplibre-gl": "^5.16.0",
+    "maplibre-gl": "^6.4.0",
     "marked": "^17.0.1",
     "prettier": "^3.8.1",
     "prettier-plugin-svelte": "^3.5.1",
