@@ -24,11 +24,7 @@
       {@render header()}
     </div>
     {#if actions}
-      <div
-        class="actions-container"
-        role="presentation"
-        onclick={(e) => e.stopPropagation()}
-      >
+      <div class="actions-container" role="presentation" onclick={e => e.stopPropagation()}>
         {@render actions()}
       </div>
     {/if}

@@ -78,15 +78,11 @@
       return;
     }
 
-    const coordInput = window.prompt(
-      'Enter Center Coordinates (DMS or Decimal, e.g. -22.97, 145.24)'
-    );
+    const coordInput = window.prompt('Enter Center Coordinates (DMS or Decimal, e.g. -22.97, 145.24)');
     if (!coordInput) return;
     const coords = parseCoordinates(coordInput);
     if (!coords) {
-      alert(
-        'Could not parse coordinates. Please ensure both Lat and Lng are included in DMS format.'
-      );
+      alert('Could not parse coordinates. Please ensure both Lat and Lng are included in DMS format.');
       return;
     }
 

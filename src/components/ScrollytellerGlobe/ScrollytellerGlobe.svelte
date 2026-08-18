@@ -40,9 +40,6 @@
 {/if}
 
 <style type="scss">
-  :global(#webpack-dev-server-client-overlay) {
-    display: none !important;
-  }
   .container {
     width: 100%;
     height: 100%;

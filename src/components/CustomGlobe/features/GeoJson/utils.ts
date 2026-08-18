@@ -407,7 +407,13 @@ export function getCircleOpacityExpression(config: GeoJsonConfig): any {
 
 function getSingleStyleCircleOpacityExpression(style: GeoJsonStyleConfig, baseOpacity: any): any {
   if (style.colourMode === 'simple') {
-    const simpleFactor = ['coalesce', ['get', 'opacity'], ['get', 'fill-opacity'], ['get', 'stroke-opacity'], THEMES.normal.fillOpacity];
+    const simpleFactor = [
+      'coalesce',
+      ['get', 'opacity'],
+      ['get', 'fill-opacity'],
+      ['get', 'stroke-opacity'],
+      THEMES.normal.fillOpacity
+    ];
     const factor = style.isOpaque ? 1.0 : simpleFactor;
     return baseOpacity === 1 ? factor : ['*', baseOpacity, factor];
   }

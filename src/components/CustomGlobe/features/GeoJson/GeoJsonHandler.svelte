@@ -81,10 +81,6 @@
 
 {#if allLoaded}
   {#each config.slice().reverse() as item (item.url)}
-    <GeoJsonRenderer 
-      data={dataMap[item.url]} 
-      config={item} 
-      sourceId={generateGeoJsonSourceId(item.url)} 
-    />
+    <GeoJsonRenderer data={dataMap[item.url]} config={item} sourceId={generateGeoJsonSourceId(item.url)} />
   {/each}
 {/if}

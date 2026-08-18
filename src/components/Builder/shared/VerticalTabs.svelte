@@ -20,11 +20,7 @@
 <div class="tabs-root">
   <aside class="tabs-sidebar">
     {#each tabs as tab}
-      <button
-        class="tab-btn"
-        class:selected={activeTab === tab.id}
-        onclick={() => (activeTab = tab.id)}
-      >
+      <button class="tab-btn" class:selected={activeTab === tab.id} onclick={() => (activeTab = tab.id)}>
         {tab.label}
       </button>
     {/each}

@@ -143,7 +143,4 @@
     border: 0;
     position: relative;
   }
-  // :global(#webpack-dev-server-client-overlay) {
-  //   display: none !important;
-  // }
 </style>

@@ -5,10 +5,8 @@
   import type { Snippet } from 'svelte';
   type Props = {
     rootElStyle?: string;
-    onLoad: ({}: {
-      rootNode: HTMLDivElement;
-      maplibregl: typeof maplibregl;
-    }) => maplibregl.Map | void | Promise<maplibregl.Map | void>;
+    onLoad: ({}: { rootNode: HTMLDivElement; maplibregl: typeof maplibregl }) =>
+      maplibregl.Map | void | Promise<maplibregl.Map | void>;
     onTeardown?: () => void | Promise<void>;
     children?: Snippet;
   };

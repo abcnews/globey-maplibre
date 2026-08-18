@@ -53,9 +53,7 @@
   }
 
   function removeConfig(index: number) {
-    const newList = (options.imageSources || []).filter(
-      (_val: ImageSourceConfig, i: number) => i !== index
-    );
+    const newList = (options.imageSources || []).filter((_val: ImageSourceConfig, i: number) => i !== index);
     options.imageSources = newList;
     onchange(newList);
   }

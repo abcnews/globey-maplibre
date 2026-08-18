@@ -39,10 +39,7 @@
     "openmaptiles:version": "3.x",
     "maputnik:renderer": "mlgljs"
   },
-  "center": [
-    0,
-    0
-  ],
+  "center": [0, 0],
   "zoom": 1,
   "bearing": 0,
   "pitch": 0,
@@ -74,14 +71,7 @@
       "type": "fill",
       "source": "openmaptiles",
       "source-layer": "landcover",
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "ice"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "ice"]],
       "layout": {
         "visibility": "visible"
       },
@@ -89,14 +79,8 @@
         "fill-color": "#F6FCFE",
         "fill-opacity": {
           "stops": [
-            [
-              0,
-              0.9
-            ],
-            [
-              10,
-              0.3
-            ]
+            [0, 0.9],
+            [10, 0.3]
           ]
         },
         "fill-antialias": true
@@ -110,11 +94,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "landcover",
-      "filter": [
-        "==",
-        "class",
-        "sand"
-      ],
+      "filter": ["==", "class", "sand"],
       "layout": {
         "visibility": "visible"
       },
@@ -122,14 +102,8 @@
         "fill-color": "#E0DED1",
         "fill-opacity": {
           "stops": [
-            [
-              6,
-              0.1
-            ],
-            [
-              10,
-              0.5
-            ]
+            [6, 0.1],
+            [10, 0.5]
           ]
         },
         "fill-antialias": true
@@ -140,14 +114,7 @@
       "type": "fill",
       "source": "openmaptiles",
       "source-layer": "landcover",
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "rock"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "rock"]],
       "layout": {
         "visibility": "visible"
       },
@@ -155,14 +122,8 @@
         "fill-color": "#D1CDC7",
         "fill-opacity": {
           "stops": [
-            [
-              6,
-              0.1
-            ],
-            [
-              10,
-              0.3
-            ]
+            [6, 0.1],
+            [10, 0.3]
           ]
         },
         "fill-antialias": true
@@ -176,11 +137,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "landcover",
-      "filter": [
-        "==",
-        "class",
-        "wood"
-      ],
+      "filter": ["==", "class", "wood"],
       "layout": {
         "visibility": "visible"
       },
@@ -189,14 +146,8 @@
         "fill-color": "#C5D9D4",
         "fill-opacity": {
           "stops": [
-            [
-              6,
-              0.1
-            ],
-            [
-              10,
-              0.3
-            ]
+            [6, 0.1],
+            [10, 0.3]
           ]
         }
       }
@@ -209,11 +160,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "landcover",
-      "filter": [
-        "==",
-        "class",
-        "grass"
-      ],
+      "filter": ["==", "class", "grass"],
       "layout": {
         "visibility": "visible"
       },
@@ -232,16 +179,7 @@
       "source": "openmaptiles",
       "source-layer": "landuse",
       "minzoom": 5,
-      "filter": [
-        "all",
-        [
-          "in",
-          "class",
-          "residential",
-          "suburb",
-          "neighbourhood"
-        ]
-      ],
+      "filter": ["all", ["in", "class", "residential", "suburb", "neighbourhood"]],
       "layout": {
         "visibility": "visible"
       },
@@ -250,22 +188,10 @@
         "fill-opacity": {
           "base": 1,
           "stops": [
-            [
-              5,
-              0
-            ],
-            [
-              6,
-              0.5
-            ],
-            [
-              12,
-              0.2
-            ],
-            [
-              14,
-              0
-            ]
+            [5, 0],
+            [6, 0.5],
+            [12, 0.2],
+            [14, 0]
           ],
           "type": "exponential"
         },
@@ -280,19 +206,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "water",
-      "filter": [
-        "all",
-        [
-          "!=",
-          "intermittent",
-          1
-        ],
-        [
-          "!=",
-          "brunnel",
-          "tunnel"
-        ]
-      ],
+      "filter": ["all", ["!=", "intermittent", 1], ["!=", "brunnel", "tunnel"]],
       "layout": {
         "visibility": "visible"
       },
@@ -337,20 +251,11 @@
         "fill-opacity": {
           "base": 1,
           "stops": [
-            [
-              13,
-              0
-            ],
-            [
-              13.5,
-              0.75
-            ]
+            [13, 0],
+            [13.5, 0.75]
           ]
         },
-        "fill-translate": [
-          0,
-          0
-        ],
+        "fill-translate": [0, 0],
         "fill-antialias": true
       }
     },
@@ -362,14 +267,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "==",
-          "brunnel",
-          "tunnel"
-        ]
-      ],
+      "filter": ["all", ["==", "brunnel", "tunnel"]],
       "layout": {
         "line-join": "round",
         "visibility": "visible",
@@ -380,18 +278,9 @@
         "line-width": {
           "base": 1.2,
           "stops": [
-            [
-              6.5,
-              0
-            ],
-            [
-              7,
-              0.5
-            ],
-            [
-              20,
-              18
-            ]
+            [6.5, 0],
+            [7, 0.5],
+            [20, 18]
           ]
         },
         "line-opacity": 0.5
@@ -403,19 +292,7 @@
       "metadata": {},
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "Polygon"
-        ],
-        [
-          "==",
-          "class",
-          "pier"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "class", "pier"]],
       "layout": {
         "visibility": "visible"
       },
@@ -429,19 +306,7 @@
       "type": "fill",
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "Polygon"
-        ],
-        [
-          "==",
-          "brunnel",
-          "bridge"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "brunnel", "bridge"]],
       "layout": {
         "visibility": "visible"
       },
@@ -461,25 +326,9 @@
       "minzoom": 11,
       "filter": [
         "all",
-        [
-          "!in",
-          "brunnel",
-          "tunnel"
-        ],
-        [
-          "in",
-          "class",
-          "secondary",
-          "tertiary",
-          "minor",
-          "service",
-          "track"
-        ],
-        [
-          "==",
-          "$type",
-          "LineString"
-        ]
+        ["!in", "brunnel", "tunnel"],
+        ["in", "class", "secondary", "tertiary", "minor", "service", "track"],
+        ["==", "$type", "LineString"]
       ],
       "layout": {
         "line-cap": "butt",
@@ -491,26 +340,14 @@
         "line-width": {
           "base": 1.2,
           "stops": [
-            [
-              12,
-              0.5
-            ],
-            [
-              20,
-              20
-            ]
+            [12, 0.5],
+            [20, 20]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              12,
-              0.3
-            ],
-            [
-              14,
-              1
-            ]
+            [12, 0.3],
+            [14, 1]
           ]
         }
       }
@@ -526,23 +363,9 @@
       "minzoom": 9,
       "filter": [
         "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ],
-        [
-          "!in",
-          "brunnel",
-          "tunnel"
-        ],
-        [
-          "in",
-          "class",
-          "motorway",
-          "trunk",
-          "primary"
-        ]
+        ["==", "$type", "LineString"],
+        ["!in", "brunnel", "tunnel"],
+        ["in", "class", "motorway", "trunk", "primary"]
       ],
       "layout": {
         "line-cap": "butt",
@@ -554,26 +377,14 @@
         "line-width": {
           "base": 1.2,
           "stops": [
-            [
-              9,
-              0.5
-            ],
-            [
-              20,
-              30
-            ]
+            [9, 0.5],
+            [20, 30]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              9,
-              0.5
-            ],
-            [
-              11,
-              1
-            ]
+            [9, 0.5],
+            [11, 1]
           ]
         }
       }
@@ -586,24 +397,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "!in",
-          "brunnel",
-          "tunnel"
-        ],
-        [
-          "in",
-          "class",
-          "path"
-        ],
-        [
-          "==",
-          "$type",
-          "LineString"
-        ]
-      ],
+      "filter": ["all", ["!in", "brunnel", "tunnel"], ["in", "class", "path"], ["==", "$type", "LineString"]],
       "layout": {
         "line-cap": "butt",
         "line-join": "round",
@@ -614,18 +408,9 @@
         "line-width": {
           "base": 1.2,
           "stops": [
-            [
-              6.5,
-              0
-            ],
-            [
-              8,
-              0.2
-            ],
-            [
-              20,
-              8
-            ]
+            [6.5, 0],
+            [8, 0.2],
+            [20, 8]
           ]
         }
       }
@@ -638,24 +423,7 @@
       },
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ],
-        [
-          "!in",
-          "brunnel",
-          "tunnel"
-        ],
-        [
-          "==",
-          "class",
-          "rail"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "LineString"], ["!in", "brunnel", "tunnel"], ["==", "class", "rail"]],
       "layout": {
         "visibility": "visible",
         "line-join": "round"
@@ -665,30 +433,15 @@
         "line-width": {
           "base": 1.4,
           "stops": [
-            [
-              14,
-              0.4
-            ],
-            [
-              15,
-              0.75
-            ],
-            [
-              20,
-              2
-            ]
+            [14, 0.4],
+            [15, 0.75],
+            [20, 2]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              11,
-              0
-            ],
-            [
-              13,
-              1
-            ]
+            [11, 0],
+            [13, 1]
           ],
           "base": 1
         }
@@ -702,61 +455,26 @@
       },
       "source": "openmaptiles",
       "source-layer": "transportation",
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ],
-        [
-          "!in",
-          "brunnel",
-          "tunnel"
-        ],
-        [
-          "==",
-          "class",
-          "rail"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "LineString"], ["!in", "brunnel", "tunnel"], ["==", "class", "rail"]],
       "layout": {
         "visibility": "visible",
         "line-join": "round"
       },
       "paint": {
         "line-color": "#A1A9B2",
-        "line-dasharray": [
-          0.2,
-          8
-        ],
+        "line-dasharray": [0.2, 8],
         "line-width": {
           "base": 1.4,
           "stops": [
-            [
-              14.5,
-              0
-            ],
-            [
-              15,
-              3
-            ],
-            [
-              20,
-              8
-            ]
+            [14.5, 0],
+            [15, 3],
+            [20, 8]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              11,
-              0
-            ],
-            [
-              13,
-              1
-            ]
+            [11, 0],
+            [13, 1]
           ]
         }
       }
@@ -770,14 +488,7 @@
       "source": "openmaptiles",
       "source-layer": "aeroway",
       "minzoom": 5,
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "LineString"]],
       "layout": {
         "line-cap": "butt",
         "line-join": "round",
@@ -788,18 +499,9 @@
         "line-width": {
           "base": 1.2,
           "stops": [
-            [
-              6.5,
-              0
-            ],
-            [
-              7,
-              0.5
-            ],
-            [
-              20,
-              18
-            ]
+            [6.5, 0],
+            [7, 0.5],
+            [20, 18]
           ]
         }
       }
@@ -810,19 +512,7 @@
       "source": "openmaptiles",
       "source-layer": "boundary",
       "minzoom": 4,
-      "filter": [
-        "all",
-        [
-          "==",
-          "admin_level",
-          4
-        ],
-        [
-          "!=",
-          "maritime",
-          1
-        ]
-      ],
+      "filter": ["all", ["==", "admin_level", 4], ["!=", "maritime", 1]],
       "layout": {
         "line-join": "round",
         "visibility": "visible"
@@ -832,30 +522,15 @@
         "line-width": {
           "base": 1.4,
           "stops": [
-            [
-              0,
-              0
-            ],
-            [
-              5,
-              0.5
-            ],
-            [
-              12,
-              2
-            ]
+            [0, 0],
+            [5, 0.5],
+            [12, 2]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              4,
-              0
-            ],
-            [
-              5,
-              1
-            ]
+            [4, 0],
+            [5, 1]
           ]
         }
       }
@@ -865,24 +540,7 @@
       "type": "line",
       "source": "openmaptiles",
       "source-layer": "boundary",
-      "filter": [
-        "all",
-        [
-          "==",
-          "admin_level",
-          2
-        ],
-        [
-          "!=",
-          "maritime",
-          1
-        ],
-        [
-          "!=",
-          "disputed",
-          1
-        ]
-      ],
+      "filter": ["all", ["==", "admin_level", 2], ["!=", "maritime", 1], ["!=", "disputed", 1]],
       "layout": {
         "line-cap": "round",
         "line-join": "round",
@@ -892,30 +550,15 @@
         "line-color": "#788799",
         "line-width": {
           "stops": [
-            [
-              0,
-              0.5
-            ],
-            [
-              4,
-              0.5
-            ],
-            [
-              8,
-              1
-            ]
+            [0, 0.5],
+            [4, 0.5],
+            [8, 1]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              2,
-              0.5
-            ],
-            [
-              3,
-              1
-            ]
+            [2, 0.5],
+            [3, 1]
           ]
         }
       }
@@ -925,19 +568,7 @@
       "type": "line",
       "source": "openmaptiles",
       "source-layer": "boundary",
-      "filter": [
-        "all",
-        [
-          "!=",
-          "maritime",
-          1
-        ],
-        [
-          "==",
-          "disputed",
-          1
-        ]
-      ],
+      "filter": ["all", ["!=", "maritime", 1], ["==", "disputed", 1]],
       "layout": {
         "line-cap": "round",
         "line-join": "round",
@@ -945,36 +576,18 @@
       },
       "paint": {
         "line-color": "#788799",
-        "line-dasharray": [
-          1,
-          3
-        ],
+        "line-dasharray": [1, 3],
         "line-width": {
           "stops": [
-            [
-              0,
-              0.5
-            ],
-            [
-              4,
-              0.5
-            ],
-            [
-              5,
-              1.5
-            ]
+            [0, 0.5],
+            [4, 0.5],
+            [5, 1.5]
           ]
         },
         "line-opacity": {
           "stops": [
-            [
-              2,
-              0.5
-            ],
-            [
-              3,
-              1
-            ]
+            [2, 0.5],
+            [3, 1]
           ]
         }
       }
@@ -985,21 +598,12 @@
       "source": "openmaptiles",
       "source-layer": "waterway",
       "minzoom": 13,
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "LineString"]],
       "layout": {
         "symbol-placement": "line",
         "symbol-spacing": 350,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-letter-spacing": 0.2,
         "text-max-width": 5,
         "text-rotation-alignment": "map",
@@ -1017,37 +621,19 @@
       "type": "symbol",
       "source": "openmaptiles",
       "source-layer": "water_name",
-      "filter": [
-        "in",
-        "Sea",
-        [
-          "string",
-          [
-            "get",
-            "name"
-          ]
-        ]
-      ],
+      "filter": ["in", "Sea", ["string", ["get", "name"]]],
       "layout": {
         "symbol-placement": "point",
         "symbol-spacing": 350,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-letter-spacing": 0.15,
         "text-max-width": 5,
         "text-rotation-alignment": "map",
         "text-size": {
           "stops": [
-            [
-              0,
-              10
-            ],
-            [
-              5,
-              14
-            ]
+            [0, 10],
+            [5, 14]
           ]
         },
         "visibility": "visible"
@@ -1063,37 +649,19 @@
       "type": "symbol",
       "source": "openmaptiles",
       "source-layer": "water_name",
-      "filter": [
-        "in",
-        "Ocean",
-        [
-          "string",
-          [
-            "get",
-            "name"
-          ]
-        ]
-      ],
+      "filter": ["in", "Ocean", ["string", ["get", "name"]]],
       "layout": {
         "symbol-placement": "point",
         "symbol-spacing": 350,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-letter-spacing": 0.15,
         "text-max-width": 5,
         "text-rotation-alignment": "map",
         "text-size": {
           "stops": [
-            [
-              0,
-              12
-            ],
-            [
-              5,
-              16
-            ]
+            [0, 12],
+            [5, 16]
           ]
         },
         "visibility": "visible"
@@ -1110,22 +678,12 @@
       "source": "openmaptiles",
       "source-layer": "water_name",
       "minzoom": 5,
-      "filter": [
-        "all",
-        [
-          "in",
-          "class",
-          "bay",
-          "strait"
-        ]
-      ],
+      "filter": ["all", ["in", "class", "bay", "strait"]],
       "layout": {
         "symbol-placement": "point",
         "symbol-spacing": 100,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-max-width": 5,
         "text-rotation-alignment": "map",
         "text-size": 12,
@@ -1152,33 +710,18 @@
       "source-layer": "water_name",
       "minzoom": 5,
       "maxzoom": 24,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "lake"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "lake"]],
       "layout": {
         "symbol-placement": "point",
         "symbol-spacing": 100,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-max-width": 5,
         "text-rotation-alignment": "map",
         "text-size": {
           "stops": [
-            [
-              8,
-              10
-            ],
-            [
-              12,
-              14
-            ]
+            [8, 10],
+            [12, 14]
           ]
         },
         "text-ignore-placement": false,
@@ -1202,31 +745,19 @@
       "type": "symbol",
       "source": "openmaptiles",
       "source-layer": "water_name",
-      "filter": [
-        "==",
-        "$type",
-        "LineString"
-      ],
+      "filter": ["==", "$type", "LineString"],
       "layout": {
         "symbol-placement": "line",
         "symbol-spacing": 350,
         "text-field": "{name:en}",
-        "text-font": [
-          "ABCSerif RegularItalic"
-        ],
+        "text-font": ["ABCSerif RegularItalic"],
         "text-letter-spacing": 0.15,
         "text-max-width": 5,
         "text-rotation-alignment": "map",
         "text-size": {
           "stops": [
-            [
-              8,
-              12
-            ],
-            [
-              13,
-              12
-            ]
+            [8, 12],
+            [13, 12]
           ]
         },
         "visibility": "visible"
@@ -1243,25 +774,11 @@
       "source": "openmaptiles",
       "source-layer": "transportation_name",
       "minzoom": 12,
-      "filter": [
-        "all",
-        [
-          "==",
-          "$type",
-          "LineString"
-        ],
-        [
-          "!=",
-          "class",
-          "ferry"
-        ]
-      ],
+      "filter": ["all", ["==", "$type", "LineString"], ["!=", "class", "ferry"]],
       "layout": {
         "symbol-placement": "line",
         "text-field": "{name}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-rotation-alignment": "map",
         "text-size": 10,
         "visibility": "visible",
@@ -1284,30 +801,16 @@
       "source": "openmaptiles",
       "source-layer": "aerodrome_label",
       "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "has",
-          "iata"
-        ]
-      ],
+      "filter": ["all", ["has", "iata"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              11,
-              12
-            ],
-            [
-              15,
-              14
-            ]
+            [11, 12],
+            [15, 14]
           ]
         },
         "visibility": "visible",
@@ -1329,19 +832,10 @@
       "source-layer": "mountain_peak",
       "minzoom": 7,
       "maxzoom": 24,
-      "filter": [
-        "all",
-        [
-          "==",
-          "rank",
-          1
-        ]
-      ],
+      "filter": ["all", ["==", "rank", 1]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-letter-spacing": 0.2,
         "text-max-width": 9,
         "text-size": 9,
@@ -1365,32 +859,16 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "in",
-          "class",
-          "borough",
-          "suburb"
-        ]
-      ],
+      "filter": ["all", ["in", "class", "borough", "suburb"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              11,
-              12
-            ],
-            [
-              15,
-              14
-            ]
+            [11, 12],
+            [15, 14]
           ]
         },
         "visibility": "visible",
@@ -1411,37 +889,16 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "in",
-          "class",
-          "village",
-          "hamlet"
-        ],
-        [
-          "<=",
-          "rank",
-          12
-        ]
-      ],
+      "filter": ["all", ["in", "class", "village", "hamlet"], ["<=", "rank", 12]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              11,
-              12
-            ],
-            [
-              15,
-              14
-            ]
+            [11, 12],
+            [15, 14]
           ]
         },
         "visibility": "visible",
@@ -1462,24 +919,10 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 11,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "island"
-        ],
-        [
-          ">",
-          "rank",
-          3
-        ]
-      ],
+      "filter": ["all", ["==", "class", "island"], [">", "rank", 3]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-size": 9,
         "visibility": "visible",
         "text-letter-spacing": 0.2,
@@ -1501,24 +944,10 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 7,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "island"
-        ],
-        [
-          "<=",
-          "rank",
-          3
-        ]
-      ],
+      "filter": ["all", ["==", "class", "island"], ["<=", "rank", 3]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-size": 9,
         "visibility": "visible",
         "text-letter-spacing": 0.2,
@@ -1540,28 +969,16 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 10,
-      "filter": [
-        "==",
-        "class",
-        "town"
-      ],
+      "filter": ["==", "class", "town"],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              10,
-              12
-            ],
-            [
-              15,
-              16
-            ]
+            [10, 12],
+            [15, 16]
           ]
         },
         "visibility": "visible",
@@ -1582,41 +999,16 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 7,
-      "filter": [
-        "all",
-        [
-          "!=",
-          "capital",
-          2
-        ],
-        [
-          "==",
-          "class",
-          "city"
-        ],
-        [
-          ">",
-          "rank",
-          4
-        ]
-      ],
+      "filter": ["all", ["!=", "capital", 2], ["==", "class", "city"], [">", "rank", 4]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              7,
-              12
-            ],
-            [
-              13,
-              16
-            ]
+            [7, 12],
+            [13, 16]
           ]
         },
         "visibility": "visible",
@@ -1630,18 +1022,9 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              13,
-              1
-            ],
-            [
-              14,
-              0.75
-            ],
-            [
-              15,
-              0
-            ]
+            [13, 1],
+            [14, 0.75],
+            [15, 0]
           ]
         }
       }
@@ -1655,61 +1038,27 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 5,
-      "filter": [
-        "all",
-        [
-          "!=",
-          "capital",
-          2
-        ],
-        [
-          "==",
-          "class",
-          "city"
-        ],
-        [
-          "<=",
-          "rank",
-          3
-        ]
-      ],
+      "filter": ["all", ["!=", "capital", 2], ["==", "class", "city"], ["<=", "rank", 3]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              5,
-              14
-            ],
-            [
-              11,
-              16
-            ]
+            [5, 14],
+            [11, 16]
           ]
         },
         "visibility": "visible",
         "text-letter-spacing": 0.05,
         "icon-image": "circle_11",
         "icon-anchor": "center",
-        "text-offset": [
-          0.5,
-          0.1
-        ],
+        "text-offset": [0.5, 0.1],
         "text-anchor": {
           "stops": [
-            [
-              6,
-              "left"
-            ],
-            [
-              7,
-              "center"
-            ]
+            [6, "left"],
+            [7, "center"]
           ]
         },
         "icon-size": 0.5,
@@ -1721,38 +1070,17 @@
         "text-halo-width": 1.5,
         "icon-opacity": {
           "stops": [
-            [
-              6.9,
-              1
-            ],
-            [
-              7,
-              0
-            ]
+            [6.9, 1],
+            [7, 0]
           ]
         },
         "text-opacity": {
           "stops": [
-            [
-              5,
-              0.5
-            ],
-            [
-              5.5,
-              1
-            ],
-            [
-              13,
-              1
-            ],
-            [
-              14,
-              0.5
-            ],
-            [
-              15,
-              0
-            ]
+            [5, 0.5],
+            [5.5, 1],
+            [13, 1],
+            [14, 0.5],
+            [15, 0]
           ]
         }
       }
@@ -1766,54 +1094,25 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 5,
-      "filter": [
-        "all",
-        [
-          "==",
-          "capital",
-          4
-        ],
-        [
-          "==",
-          "class",
-          "city"
-        ]
-      ],
+      "filter": ["all", ["==", "capital", 4], ["==", "class", "city"]],
       "layout": {
         "icon-image": "circle_11",
         "icon-size": 0.5,
         "text-anchor": {
           "stops": [
-            [
-              6,
-              "left"
-            ],
-            [
-              7,
-              "center"
-            ]
+            [6, "left"],
+            [7, "center"]
           ]
         },
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-max-width": 8,
-        "text-offset": [
-          0.5,
-          0.1
-        ],
+        "text-offset": [0.5, 0.1],
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              5,
-              14
-            ],
-            [
-              11,
-              16
-            ]
+            [5, 14],
+            [11, 16]
           ]
         },
         "visibility": "visible",
@@ -1826,38 +1125,17 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              5,
-              0.5
-            ],
-            [
-              5.5,
-              1
-            ],
-            [
-              13,
-              1
-            ],
-            [
-              14,
-              0.5
-            ],
-            [
-              15,
-              0
-            ]
+            [5, 0.5],
+            [5.5, 1],
+            [13, 1],
+            [14, 0.5],
+            [15, 0]
           ]
         },
         "icon-opacity": {
           "stops": [
-            [
-              6.9,
-              1
-            ],
-            [
-              7,
-              0
-            ]
+            [6.9, 1],
+            [7, 0]
           ]
         }
       }
@@ -1871,58 +1149,26 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "minzoom": 4,
-      "filter": [
-        "all",
-        [
-          "==",
-          "capital",
-          2
-        ],
-        [
-          "==",
-          "class",
-          "city"
-        ]
-      ],
+      "filter": ["all", ["==", "capital", 2], ["==", "class", "city"]],
       "layout": {
         "icon-image": "circle_11",
         "icon-size": 0.75,
         "text-anchor": {
           "stops": [
-            [
-              6,
-              "left"
-            ],
-            [
-              7,
-              "center"
-            ]
+            [6, "left"],
+            [7, "center"]
           ]
         },
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Bold"
-        ],
+        "text-font": ["ABC Sans Bold"],
         "text-max-width": 8,
-        "text-offset": [
-          0.5,
-          0.05
-        ],
+        "text-offset": [0.5, 0.05],
         "text-size": {
           "base": 1.2,
           "stops": [
-            [
-              4,
-              11
-            ],
-            [
-              5,
-              14
-            ],
-            [
-              9,
-              18
-            ]
+            [4, 11],
+            [5, 14],
+            [9, 18]
           ]
         },
         "visibility": "visible",
@@ -1933,14 +1179,8 @@
       "paint": {
         "text-color": {
           "stops": [
-            [
-              6,
-              "#47566B"
-            ],
-            [
-              7,
-              "#626F84"
-            ]
+            [6, "#47566B"],
+            [7, "#626F84"]
           ]
         },
         "text-halo-color": "rgba(255,255,255,0.75)",
@@ -1948,22 +1188,10 @@
         "icon-color": "#fff",
         "icon-opacity": {
           "stops": [
-            [
-              4,
-              0.5
-            ],
-            [
-              5,
-              1
-            ],
-            [
-              6.9,
-              1
-            ],
-            [
-              7,
-              0
-            ]
+            [4, 0.5],
+            [5, 1],
+            [6.9, 1],
+            [7, 0]
           ]
         },
         "icon-halo-color": "rgba(0, 0, 0, 1)",
@@ -1971,26 +1199,11 @@
         "icon-translate-anchor": "map",
         "text-opacity": {
           "stops": [
-            [
-              4,
-              0.5
-            ],
-            [
-              4.5,
-              1
-            ],
-            [
-              13,
-              1
-            ],
-            [
-              14,
-              0.5
-            ],
-            [
-              15,
-              0
-            ]
+            [4, 0.5],
+            [4.5, 1],
+            [13, 1],
+            [14, 0.5],
+            [15, 0]
           ]
         }
       }
@@ -2007,27 +1220,12 @@
       "maxzoom": 8,
       "filter": [
         "all",
-        [
-          "==",
-          "class",
-          "state"
-        ],
-        [
-          "in",
-          "name",
-          "Queensland",
-          "New South Wales",
-          "Victoria",
-          "Tasmania",
-          "South Australia",
-          "Western Australia"
-        ]
+        ["==", "class", "state"],
+        ["in", "name", "Queensland", "New South Wales", "Victoria", "Tasmania", "South Australia", "Western Australia"]
       ],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-letter-spacing": 0.15,
         "text-max-width": 9,
         "text-size": 12,
@@ -2040,14 +1238,8 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              2,
-              0
-            ],
-            [
-              3,
-              1
-            ]
+            [2, 0],
+            [3, 1]
           ]
         }
       }
@@ -2062,19 +1254,10 @@
       "source-layer": "place",
       "minzoom": 6,
       "maxzoom": 8,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "state"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "state"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Regular"
-        ],
+        "text-font": ["ABC Sans Regular"],
         "text-letter-spacing": 0.15,
         "text-max-width": 9,
         "text-size": 12,
@@ -2087,14 +1270,8 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              3.5,
-              0
-            ],
-            [
-              4,
-              1
-            ]
+            [3.5, 0],
+            [4, 1]
           ]
         }
       }
@@ -2109,43 +1286,16 @@
       "source-layer": "place",
       "minzoom": 5,
       "maxzoom": 10,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "country"
-        ],
-        [
-          ">=",
-          "rank",
-          3
-        ],
-        [
-          "has",
-          "iso_a2"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "country"], [">=", "rank", 3], ["has", "iso_a2"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Bold"
-        ],
+        "text-font": ["ABC Sans Bold"],
         "text-max-width": 6.25,
         "text-size": {
           "stops": [
-            [
-              5,
-              8
-            ],
-            [
-              6,
-              14
-            ],
-            [
-              9,
-              16
-            ]
+            [5, 8],
+            [6, 14],
+            [9, 16]
           ]
         },
         "text-transform": "uppercase",
@@ -2159,22 +1309,10 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              5,
-              0.5
-            ],
-            [
-              6,
-              1
-            ],
-            [
-              8,
-              1
-            ],
-            [
-              10,
-              0
-            ]
+            [5, 0.5],
+            [6, 1],
+            [8, 1],
+            [10, 0]
           ]
         }
       }
@@ -2189,43 +1327,16 @@
       "source-layer": "place",
       "minzoom": 3,
       "maxzoom": 10,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "country"
-        ],
-        [
-          "==",
-          "rank",
-          2
-        ],
-        [
-          "has",
-          "iso_a2"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "country"], ["==", "rank", 2], ["has", "iso_a2"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Bold"
-        ],
+        "text-font": ["ABC Sans Bold"],
         "text-max-width": 6.25,
         "text-size": {
           "stops": [
-            [
-              3,
-              8
-            ],
-            [
-              5,
-              14
-            ],
-            [
-              7,
-              16
-            ]
+            [3, 8],
+            [5, 14],
+            [7, 16]
           ]
         },
         "text-transform": "uppercase",
@@ -2239,22 +1350,10 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              3,
-              0.5
-            ],
-            [
-              4,
-              1
-            ],
-            [
-              8,
-              1
-            ],
-            [
-              10,
-              0
-            ]
+            [3, 0.5],
+            [4, 1],
+            [8, 1],
+            [10, 0]
           ]
         }
       }
@@ -2269,44 +1368,17 @@
       "source-layer": "place",
       "minzoom": 1,
       "maxzoom": 10,
-      "filter": [
-        "all",
-        [
-          "==",
-          "class",
-          "country"
-        ],
-        [
-          "==",
-          "rank",
-          1
-        ],
-        [
-          "has",
-          "iso_a2"
-        ]
-      ],
+      "filter": ["all", ["==", "class", "country"], ["==", "rank", 1], ["has", "iso_a2"]],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Bold"
-        ],
+        "text-font": ["ABC Sans Bold"],
         "text-max-width": 9,
         "text-size": {
           "base": 1,
           "stops": [
-            [
-              1,
-              10
-            ],
-            [
-              4,
-              14
-            ],
-            [
-              6,
-              16
-            ]
+            [1, 10],
+            [4, 14],
+            [6, 16]
           ],
           "type": "exponential"
         },
@@ -2322,22 +1394,10 @@
         "text-halo-width": 1.5,
         "text-opacity": {
           "stops": [
-            [
-              1,
-              0.5
-            ],
-            [
-              1.5,
-              1
-            ],
-            [
-              8,
-              1
-            ],
-            [
-              10,
-              0
-            ]
+            [1, 0.5],
+            [1.5, 1],
+            [8, 1],
+            [10, 0]
           ]
         }
       }
@@ -2351,16 +1411,10 @@
       "source": "openmaptiles",
       "source-layer": "place",
       "maxzoom": 1,
-      "filter": [
-        "==",
-        "class",
-        "continent"
-      ],
+      "filter": ["==", "class", "continent"],
       "layout": {
         "text-field": "{name:en}",
-        "text-font": [
-          "ABC Sans Bold"
-        ],
+        "text-font": ["ABC Sans Bold"],
         "text-max-width": 6.25,
         "text-size": 12,
         "text-transform": "uppercase",
