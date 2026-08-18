@@ -31,7 +31,9 @@
    * Explicit navigation mode state. This acts as the source of truth for the UI
    * and is initialised from the current store options.
    */
-  let navMode = $state<NavMode>($options.fitGlobe ? 'fit-globe' : hasBounds ? 'fit-bounds' : 'pan-zoom');
+  let navMode = $state<NavMode>(
+    untrack(() => ($options.fitGlobe ? 'fit-globe' : hasBounds ? 'fit-bounds' : 'pan-zoom'))
+  );
 
   /**
    * Transitions between navigation modes and updates the store accordingly.

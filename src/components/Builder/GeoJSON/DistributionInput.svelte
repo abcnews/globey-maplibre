@@ -98,6 +98,25 @@
     window.addEventListener('pointermove', onPointerMove);
     window.addEventListener('pointerup', onPointerUp);
   }
+
+  function onHandleKeyDown(e: KeyboardEvent, type: 'min' | 'max') {
+    const step = 1;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (type === 'min' && min !== undefined) {
+        min = Math.max(dataDomain[0], min - step);
+      } else if (type === 'max' && max !== undefined) {
+        max = Math.max(min ?? dataDomain[0], max - step);
+      }
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (type === 'min' && min !== undefined) {
+        min = Math.min(max ?? dataDomain[1], min + step);
+      } else if (type === 'max' && max !== undefined) {
+        max = Math.min(dataDomain[1], max + step);
+      }
+    }
+  }
 </script>
 
 <div class="distribution-container" style="touch-action: none">
@@ -142,13 +161,33 @@
             />
 
             <!-- Min handle -->
-            <g class="handle-group" onpointerdown={e => startDragging(e, 'min', xScale)}>
+            <g
+              class="handle-group"
+              role="slider"
+              tabindex="0"
+              aria-label="Minimum value"
+              aria-valuenow={min}
+              aria-valuemin={dataDomain[0]}
+              aria-valuemax={max ?? dataDomain[1]}
+              onpointerdown={e => startDragging(e, 'min', xScale)}
+              onkeydown={e => onHandleKeyDown(e, 'min')}
+            >
               <line {x1} y1="0" x2={x1} y2={height} class="handle-line" />
               <line {x1} y1="0" x2={x1} y2={height} class="hit-area" />
             </g>
 
             <!-- Max handle -->
-            <g class="handle-group" onpointerdown={e => startDragging(e, 'max', xScale)}>
+            <g
+              class="handle-group"
+              role="slider"
+              tabindex="0"
+              aria-label="Maximum value"
+              aria-valuenow={max}
+              aria-valuemin={min ?? dataDomain[0]}
+              aria-valuemax={dataDomain[1]}
+              onpointerdown={e => startDragging(e, 'max', xScale)}
+              onkeydown={e => onHandleKeyDown(e, 'max')}
+            >
               <line x1={x2} y1="0" {x2} y2={height} class="handle-line" />
               <line x1={x2} y1="0" {x2} y2={height} class="hit-area" />
             </g>
