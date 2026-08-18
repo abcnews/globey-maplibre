@@ -20,7 +20,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
-    "@abcnews/aunty": "^17.0.0-next.8",
+    "@abcnews/aunty": "^17.0.0-next.9",
     "@abcnews/base-36-text": "^1.0.1",
     "@abcnews/components-storylab": "^0.0.2",
     "@abcnews/hash-codec": "^2.0.0",
