@@ -2,13 +2,11 @@
   import PanZoomHandler from './features/PanZoom/PanZoomHandler.svelte';
   import MapVectorHandler from './features/MapVectorHandler.svelte';
   import MapCustomLabelHandler from './features/MapCustomLabelHandler.svelte';
-  import HighlightCountriesHandler from './features/HighlightCountries/HighlightCountriesHandler.svelte';
   import GeoJsonHandler from './features/GeoJson/GeoJsonHandler.svelte';
   import ImageSourcesHandler from './features/ImageSourcesHandler.svelte';
   import type { DecodedObject } from '../../lib/marker';
   import { MapLibreLoader } from '../mapLibre/index';
   import MapRasterHandler from './features/MapRasterHandler.svelte';
-  import MapCountriesBaseHandler from './features/HighlightCountries/MapCountriesBaseHandler.svelte';
   import ProjectionHandler from './features/ProjectionHandler.svelte';
   import AttributionHandler from './features/AttributionHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
@@ -29,7 +27,7 @@
 
   const isDark = $derived(isDarkBase(options.base || 'street'));
   const isSatellite = $derived(options.base === 'satellite');
-  const isVectorLight = $derived(options.base === 'street' || options.base === 'countries');
+  const isVectorLight = $derived(options.base === 'street');
 </script>
 
 <div
@@ -93,10 +91,7 @@
 
       <MapCustomLabelHandler labels={options.labels} {isDark} />
 
-      {#if options.base === 'countries'}
-        <MapCountriesBaseHandler />
-        <HighlightCountriesHandler highlightCountries={options.highlightCountries} />
-      {:else if options.base === 'satellite'}
+      {#if options.base === 'satellite'}
         <MapRasterHandler
           url={`https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${options.satelliteVariant || 'blue'}-marble/{z}/{x}/{y}.webp`}
           maxZoom={7}

@@ -172,22 +172,6 @@ describe('marker', () => {
       assert.strictEqual(decoded.labels![0].name, 'Melbourne');
       assert.strictEqual(decoded.labels![1].name, 'Brisbane');
     });
-    it('should handle highlightCountries with ISO_A2', async () => {
-      const input = {
-        highlightCountries: [
-          { code: 'AU', style: 'primary' as const },
-          { code: 'NZ', style: 'secondary' as const }
-        ]
-      };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
-
-      assert.strictEqual(decoded.highlightCountries?.length, 2);
-      assert.strictEqual(decoded.highlightCountries![0].code, 'AU');
-      assert.strictEqual(decoded.highlightCountries![0].style, 'primary');
-      assert.strictEqual(decoded.highlightCountries![1].code, 'NZ');
-      assert.strictEqual(decoded.highlightCountries![1].style, 'secondary');
-    });
 
     it('should round-trip geoJson config', async () => {
       const input = {
@@ -328,12 +312,12 @@ describe('marker', () => {
 
     it('should round-trip base style', async () => {
       const input = {
-        base: 'countries' as const
+        base: 'satellite' as const
       };
       const fragment = await encodeFragment(input);
       const decoded = await decodeFragment(fragment);
 
-      assert.strictEqual(decoded.base, 'countries');
+      assert.strictEqual(decoded.base, 'satellite');
     });
 
     it('should round-trip map labels config', async () => {

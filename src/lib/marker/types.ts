@@ -5,66 +5,14 @@ export interface Label {
   number: number;
 }
 
-export interface Country {
-  code: string;
-  style: 'primary' | 'secondary';
-}
-
-export interface GeoJsonSize {
-  value: number;
-  unit: 'p' | 'k';
-}
-
-export interface GeoJsonStyleConfig {
-  colourMode: 'scale' | 'simple' | 'basic';
-  colourProp?: string;
-  colourConfig?: {
-    min?: number;
-    max?: number;
-    minColour?: string;
-    maxColour?: string;
-    scale?: { [key: string]: string };
-    basic?: string;
-    basicType?: 'normal' | 'highlighted' | 'custom';
-    paletteType?: 'sequential' | 'divergent' | 'custom';
-    paletteVariant?: string;
-    customPalette?: string[];
-  };
-  opacity?: number;
-  isOpaque?: boolean;
-  filter?: { prop: string; values: string[] };
-}
-
-export interface GeoJsonConfig {
-  url: string;
-  type: 'areas' | 'lines' | 'points' | 'spikes';
-  styles?: GeoJsonStyleConfig[];
-  spike?: {
-    heightProp: string;
-    scalar: number;
-    min?: number;
-    max?: number;
-  };
-  pointSize?: GeoJsonSize;
-  lineWidth?: GeoJsonSize;
-}
-
-export interface ImageSourceConfig {
-  id: string;
-  url: string;
-  opacity: number;
-  coordinates: [number, number][];
-}
-
 export interface DecodedObject {
   z?: number;
   /** coordinate in [longitude, latutude] */
   coords?: [number, number];
   bounds?: [number, number][];
-  highlightCountries?: Country[];
   labels?: Label[];
   legend?: any[];
-  base?: 'street' | 'countries' | 'satellite';
+  base?: 'street' | 'satellite';
   mapLabels?: {
     countries: number;
     states: boolean;

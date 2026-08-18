@@ -13,7 +13,6 @@ export interface BaseLayerConfig {
  */
 export const BASE_LAYERS: Record<string, BaseLayerConfig> = {
   street: { id: 'street', theme: 'light' },
-  countries: { id: 'countries', theme: 'light' },
   satellite: { id: 'satellite', theme: 'dark' }
 };
 
