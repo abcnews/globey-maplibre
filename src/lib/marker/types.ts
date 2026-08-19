@@ -26,21 +26,3 @@ export type MapLabelsConfig = Infer<typeof mapLabelsSchema>;
 
 export type Marker = Infer<typeof markerSchema>;
 export type DecodedObject = Partial<Marker>;
-
-export interface DecodeProps {
-  z?: string | number;
-  geohash?: string;
-  b?: string;
-  labels?: string | string[];
-  base?: string | number;
-  ml?: string | number;
-  gj?: string;
-  p?: string | number;
-  sv?: string | number;
-  is?: string;
-  fit?: string | number | boolean;
-  cv?: string | number | boolean;
-  attr?: string;
-  ho?: string | number | boolean;
-  ad?: string | number;
-}
