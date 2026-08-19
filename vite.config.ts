@@ -19,7 +19,7 @@ const entryPoint = isTS ? 'src/index.ts' : 'src/index.js';
 export default defineConfig({
   base: '',
   plugins: [svelte(), es5EntryPlugin(), abcCorsPlugin()],
-  server: getServer(),
+  server: process.env.NODE_ENV === 'test' || process.env.VITEST ? {} : getServer(),
   optimizeDeps: {
     exclude: ['maplibre-gl']
   },

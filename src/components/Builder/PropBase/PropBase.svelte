@@ -17,13 +17,16 @@
 
   function updateMapLabel(key: string, value: any) {
     const current = options.mapLabels || {
-      countries: 3,
+      countriesMajor: true,
+      countriesMedium: true,
+      countriesMinor: true,
+      continents: false,
       states: false,
       cities: false,
       towns: false,
       oceans: false,
-      continents: false,
-      boundaries: 'national'
+      nationalBoundaries: true,
+      stateBoundaries: false
     };
     const next = { ...current };
     (next as any)[key] = value;
@@ -32,12 +35,6 @@
       mapLabels: next
     };
   }
-
-  const boundaryOptions: { value: 'none' | 'national' | 'state'; label: string }[] = [
-    { value: 'none', label: 'None' },
-    { value: 'national', label: 'National' },
-    { value: 'state', label: 'State' }
-  ];
 
   const baseLabels: Record<string, string> = {
     street: 'Street Map',
@@ -136,19 +133,23 @@
         {#if isOsmBase(options.base)}
           <fieldset class="sub-options">
             <legend>Boundaries</legend>
-            <div class="radio-group">
-              {#each boundaryOptions as opt}
-                <label>
-                  <input
-                    type="radio"
-                    name="ml-boundaries"
-                    value={opt.value}
-                    checked={(options.mapLabels?.boundaries ?? 'national') === opt.value}
-                    onchange={e => updateMapLabel('boundaries', e.currentTarget.value)}
-                  />
-                  {opt.label}
-                </label>
-              {/each}
+            <div class="checkbox-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={options.mapLabels?.nationalBoundaries ?? true}
+                  onchange={e => updateMapLabel('nationalBoundaries', e.currentTarget.checked)}
+                />
+                National
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={options.mapLabels?.stateBoundaries ?? false}
+                  onchange={e => updateMapLabel('stateBoundaries', e.currentTarget.checked)}
+                />
+                State
+              </label>
             </div>
           </fieldset>
         {/if}
@@ -232,13 +233,15 @@
   .value {
     flex: 1;
   }
-  .radio-group {
+  .radio-group,
+  .checkbox-group {
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
     margin-top: 0.25rem;
   }
-  .radio-group label {
+  .radio-group label,
+  .checkbox-group label {
     display: flex;
     align-items: center;
     gap: 0.35rem;

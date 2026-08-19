@@ -1,27 +1,87 @@
+export type LabelStyle = 'country-large' | 'country-small' | 'water-large' | 'water-small';
+
 export interface Label {
   name: string;
   coords: [number, number];
-  style: string;
+  style: LabelStyle;
   number: number;
+}
+
+export interface GeoJsonSize {
+  value: number;
+  unit: 'p' | 'k';
+}
+
+export interface GeoJsonColourConfig {
+  min?: number;
+  max?: number;
+  minColour?: string;
+  maxColour?: string;
+  basic?: string;
+  basicType?: 'normal' | 'inverse';
+  paletteType?: 'sequential' | 'divergent' | 'ramp' | 'threshold' | 'category' | 'custom';
+  paletteVariant?: string;
+  customPalette?: string[];
+}
+
+export interface GeoJsonFilter {
+  prop: string;
+  values: (string | number)[];
+}
+
+export interface GeoJsonSpike {
+  heightProp?: string;
+  scalar?: number;
+  maxHeight?: number;
+  radius?: number;
+}
+
+export interface GeoJsonStyleConfig {
+  colourMode: 'scale' | 'simple' | 'basic';
+  colourProp?: string;
+  colourConfig?: GeoJsonColourConfig;
+  opacity?: number;
+  isOpaque?: boolean;
+  filter?: GeoJsonFilter;
+}
+
+export interface GeoJsonConfig {
+  url: string;
+  type: 'areas' | 'lines' | 'points' | 'spikes';
+  styles: GeoJsonStyleConfig[];
+  pointSize?: GeoJsonSize;
+  lineWidth?: GeoJsonSize;
+  spike?: GeoJsonSpike;
+}
+
+export interface ImageSourceConfig {
+  id?: string;
+  url: string;
+  opacity: number;
+  coordinates: [number, number][];
+}
+
+export interface MapLabelsConfig {
+  countriesMajor: boolean;
+  countriesMedium: boolean;
+  countriesMinor: boolean;
+  continents: boolean;
+  states: boolean;
+  cities: boolean;
+  towns: boolean;
+  oceans: boolean;
+  nationalBoundaries: boolean;
+  stateBoundaries: boolean;
 }
 
 export interface DecodedObject {
   z?: number;
-  /** coordinate in [longitude, latutude] */
+  /** coordinate in [longitude, latitude] */
   coords?: [number, number];
   bounds?: [number, number][];
   labels?: Label[];
-  legend?: any[];
   base?: 'street' | 'satellite';
-  mapLabels?: {
-    countries: number;
-    states: boolean;
-    cities: boolean;
-    towns: boolean;
-    oceans: boolean;
-    continents: boolean;
-    boundaries: 'none' | 'national' | 'state';
-  };
+  mapLabels?: MapLabelsConfig;
   geoJson?: GeoJsonConfig[];
   imageSources?: ImageSourceConfig[];
   projection?: 'globe' | 'mercator';
@@ -38,12 +98,15 @@ export interface DecodeProps {
   geohash?: string;
   b?: string;
   labels?: string | string[];
-  legend?: string;
-  c?: string;
+  base?: string | number;
+  ml?: string | number;
   gj?: string;
-  p?: string;
+  p?: string | number;
+  sv?: string | number;
   is?: string;
-  cv?: string;
+  fit?: string | number | boolean;
+  cv?: string | number | boolean;
   attr?: string;
-  ho?: string;
+  ho?: string | number | boolean;
+  ad?: string | number;
 }

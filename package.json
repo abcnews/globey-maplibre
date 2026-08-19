@@ -16,6 +16,7 @@
   "scripts": {
     "dev": "vite serve",
     "build": "vite build",
+    "test": "vitest run",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "format": "prettier --write ."
   },
@@ -52,7 +53,7 @@
     "topojson-client": "^3.1.0",
     "typescript": "~5.9.3",
     "vite": "^8.0.1",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.10"
   },
   "dependencies": {
     "@abcnews/alternating-case-to-object": "^3.2.0",

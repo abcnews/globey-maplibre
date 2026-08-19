@@ -12,11 +12,12 @@
    * @example
    * <MapVectorHandler
    *   base="satellite"
-   *   labels={{ countries: 3, states: true, boundaries: 'national', ... }}
+   *   labels={{ countriesMajor: true, countriesMedium: true, countriesMinor: true, ... }}
    *   isSatellite={true}
    * />
    */
   import type * as maplibregl from 'maplibre-gl';
+  import type { MapLabelsConfig } from '../../../lib/marker/types';
   import { getContext } from 'svelte';
   import {
   OPENMAPTILES_SOURCE_ID,
@@ -37,32 +38,36 @@ const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 let {
   base,
   labels = {
-    countries: 3,
+    countriesMajor: true,
+    countriesMedium: true,
+    countriesMinor: true,
+    continents: false,
     states: false,
     cities: false,
     towns: false,
     oceans: false,
-    continents: false,
-    boundaries: 'national'
+    nationalBoundaries: true,
+    stateBoundaries: false
   },
   isSatellite = false
 }: {
   base?: string;
-  labels?: {
-    countries: number;
-    states: boolean;
-    cities: boolean;
-    towns: boolean;
-    oceans: boolean;
-    continents: boolean;
-    boundaries: 'none' | 'national' | 'state';
-  };
+  labels?: MapLabelsConfig;
   isSatellite?: boolean;
 } = $props();
 
 // Determine if we need to show labels at all
 const hasLabels = $derived(
-  labels.countries > 0 || labels.states || labels.cities || labels.towns || labels.oceans || labels.continents
+  Boolean(
+    labels.countriesMajor ||
+      labels.countriesMedium ||
+      labels.countriesMinor ||
+      labels.continents ||
+      labels.states ||
+      labels.cities ||
+      labels.towns ||
+      labels.oceans
+  )
 );
 
 // Determine if we need to show base layers (only in street mode)
@@ -88,6 +93,7 @@ $effect(() => {
   const allLayers = [...baseLayers, ...labelLayers];
 
   const addLayers = () => {
+    // Check if source exists before adding layers
     if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
       map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
     }
@@ -134,52 +140,79 @@ $effect(() => {
     if (!mapRoot.map) return;
     const map = mapRoot.map;
 
-    // Track all individual label properties to ensure reactivity
-    const deps = [
-      labels.countries,
+    // React to reactive state changes
+    const _ = [
+      labels.countriesMajor,
+      labels.countriesMedium,
+      labels.countriesMinor,
       labels.continents,
       labels.states,
       labels.cities,
       labels.towns,
       labels.oceans,
-      labels.boundaries
+      labels.nationalBoundaries,
+      labels.stateBoundaries
     ];
 
     const syncVisibility = () => {
       // COUNTRIES
-      // We map layers to the minimum level required for them to be visible
-      const countryLayers: Record<string, number> = {
-        'place-country-1': 1,
-        'place-country-2': 2,
-        'place-country-3': 3,
-        'place-country-other': 3
+      const countryLayers: Record<string, boolean> = {
+        'place-country-1': labels.countriesMajor,
+        'place-country-rank1-symbol': labels.countriesMajor,
+        'place-country-2': labels.countriesMedium,
+        'place-country-rank2-symbol': labels.countriesMedium,
+        'place-country-3': labels.countriesMinor,
+        'place-country-rank>=3-symbol': labels.countriesMinor,
+        'place-country-other': labels.countriesMinor
       };
 
-      Object.entries(countryLayers).forEach(([id, minLevel]) => {
+      Object.entries(countryLayers).forEach(([id, isVisible]) => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.countries >= minLevel ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', isVisible ? 'visible' : 'none');
         }
       });
 
       // CONTINENTS
-      if (map.getLayer('place-continent')) {
-        map.setLayoutProperty('place-continent', 'visibility', labels.continents ? 'visible' : 'none');
-      }
+      ['place-continent', 'place-continent-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', labels.continents ? 'visible' : 'none');
+        }
+      });
 
       // STATES
-      if (map.getLayer('place-state')) {
-        map.setLayoutProperty('place-state', 'visibility', labels.states ? 'visible' : 'none');
-      }
+      ['place-state', 'place-state-symbol', 'place-state-AU-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', labels.states ? 'visible' : 'none');
+        }
+      });
 
       // CITIES
-      ['place-city', 'place-city-important', 'place-city-capital', 'place-city-capital-state'].forEach(id => {
+      [
+        'place-city',
+        'place-city-symbol',
+        'place-city-important',
+        'place-city-important-symbol',
+        'place-city-capital',
+        'place-city-capital-symbol',
+        'place-city-capital-state',
+        'place-city-capital_state-symbol'
+      ].forEach(id => {
         if (map.getLayer(id)) {
           map.setLayoutProperty(id, 'visibility', labels.cities ? 'visible' : 'none');
         }
       });
 
       // TOWNS
-      ['place-town', 'place-village', 'place-other'].forEach(id => {
+      [
+        'place-town',
+        'place-town-symbol',
+        'place-village',
+        'place-village_hamlet-symbol',
+        'place-borough_suburb-symbol',
+        'place-island-major-symbol',
+        'place-island-minor-symbol',
+        'place-other'
+      ].forEach(id => {
         if (map.getLayer(id)) {
           map.setLayoutProperty(id, 'visibility', labels.towns ? 'visible' : 'none');
         }
@@ -188,13 +221,26 @@ $effect(() => {
       // OCEANS
       [
         'water-name-ocean1',
+        'water_name-ocean-symbol',
         'water-name-sea',
+        'water_name-sea-symbol',
         'water-name-lake',
+        'water_name-lake-symbol',
         'water-name-lakeline',
-        'water-name-bay-straight'
+        'water_name-lakeline-symbol',
+        'water-name-bay-straight',
+        'water_name-bay_strait-symbol',
+        'waterway-name-symbol'
       ].forEach(id => {
         if (map.getLayer(id)) {
           map.setLayoutProperty(id, 'visibility', labels.oceans ? 'visible' : 'none');
+        }
+      });
+
+      // OTHER UNMANAGED SYMBOLS
+      ['mountain_peak-symbol', 'aerodrome_label-major-symbol', 'transportation_name-road-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', 'none');
         }
       });
 
@@ -203,21 +249,21 @@ $effect(() => {
         map.setLayoutProperty(
           'boundary-land-level-2',
           'visibility',
-          labels.boundaries === 'national' || labels.boundaries === 'state' ? 'visible' : 'none'
+          labels.nationalBoundaries ? 'visible' : 'none'
         );
       }
       if (map.getLayer('boundary-land-disputed')) {
         map.setLayoutProperty(
           'boundary-land-disputed',
           'visibility',
-          labels.boundaries === 'national' || labels.boundaries === 'state' ? 'visible' : 'none'
+          labels.nationalBoundaries ? 'visible' : 'none'
         );
       }
       if (map.getLayer('boundary-land-level-4')) {
         map.setLayoutProperty(
           'boundary-land-level-4',
           'visibility',
-          labels.boundaries === 'state' ? 'visible' : 'none'
+          labels.stateBoundaries ? 'visible' : 'none'
         );
       }
       if (map.getLayer('boundary-land-level-6')) {

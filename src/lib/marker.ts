@@ -1,41 +1,49 @@
 import { parse, stringify } from '@abcnews/alternating-case-to-object';
-// @ts-ignore: hash-codec doesn't export types (yet)
-import { decodeSchema, encodeSchema } from '@abcnews/hash-codec';
 import type { DecodedObject, DecodeProps } from './marker/types.ts';
-export * from './marker/types.ts';
-import { markerSchema } from './marker/schema.ts';
-export { markerSchema };
-export { compressUrl, decompressUrl, isValidUrl } from './marker/utils.ts';
-export {
-  geohashCodec,
+import {
+  markerSchema,
+  mapLabelsSchema,
+  coordsCodec,
   boundsCodec,
-  GEOHASH_PRECISION,
-  customLabelsCodec,
-  geoJsonCodec,
-  mapLabelsCodec,
-  defaultMapLabels
-} from './marker/codecs.ts';
+  twoDecimalCodec,
+  compressPalette,
+  decompressPalette,
+  GEOHASH_PRECISION
+} from './marker/schema.ts';
+
+export * from './marker/types.ts';
+export {
+  markerSchema,
+  mapLabelsSchema,
+  coordsCodec,
+  boundsCodec,
+  twoDecimalCodec,
+  compressPalette,
+  decompressPalette,
+  GEOHASH_PRECISION
+};
+export { compressUrl, decompressUrl, isValidUrl } from './marker/utils.ts';
+
 /**
- * Encode globey props into a hash string for the url or fragment
+ * Encode globey props into an ACTO hash string for the URL or fragment.
  */
-export async function encodeFragment(data: DecodedObject) {
-  const encoded = await encodeSchema({ data: data, schema: markerSchema });
-  return stringify(encoded);
+export async function encodeFragment(data: DecodedObject): Promise<string> {
+  const encoded = await markerSchema.encode(data as any);
+  return stringify(encoded || {});
 }
 
 /**
- * Decode globey props in an object.
+ * Decode globey props from an ACTO object.
  */
-export async function decodeObject(props: DecodeProps, isLive = false): Promise<DecodedObject> {
-  const normalisedProps = props || {};
-  const decoded = await decodeSchema({ data: normalisedProps, schema: markerSchema });
+export async function decodeObject(props: DecodeProps = {}, isLive = false): Promise<DecodedObject> {
+  const decoded = await markerSchema.decode(props || {});
   return decoded as DecodedObject;
 }
 
 /**
- * Decode globey props back
+ * Decode globey props from an ACTO hash string fragment.
  */
 export async function decodeFragment(fragment: string): Promise<DecodedObject> {
   const props = fragment ? parse(fragment) : {};
-  return decodeObject(props);
+  return decodeObject(props as DecodeProps);
 }

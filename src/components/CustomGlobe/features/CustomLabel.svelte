@@ -1,5 +1,7 @@
 <script lang="ts">
-  let { name, style, isDark = false } = $props<{ name: string; style: string; isDark?: boolean }>();
+  import type { LabelStyle } from '$lib/marker';
+
+  let { name, style, isDark = false } = $props<{ name: string; style: LabelStyle | string; isDark?: boolean }>();
 </script>
 
 <div class="globey__label globey__label--{style}" class:globey__label--dark={isDark}>
