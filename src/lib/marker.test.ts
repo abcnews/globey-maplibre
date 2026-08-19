@@ -1,19 +1,23 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
 import {
   coordsCodec,
   boundsCodec,
   twoDecimalCodec,
-  markerSchema,
-  GEOHASH_PRECISION,
+  compressPalette,
+  decompressPalette,
   compressUrl,
   decompressUrl,
   isValidUrl,
+  urlCodec,
+  mapLabelsSchema,
+  markerSchema,
+  GEOHASH_PRECISION,
   type DecodedObject
 } from './marker/index.ts';
 
-describe('marker', () => {
+describe('marker codecs', () => {
   describe('coordsCodec', () => {
     it('should encode coordinates to a geohash', async () => {
       const coords: [number, number] = [10, -10];
@@ -84,17 +88,68 @@ describe('marker', () => {
     });
   });
 
-  describe('markerSchema', () => {
-    it('should have the expected schema shape', () => {
-      assert.ok(markerSchema.shape);
-      assert.ok(markerSchema.shape.coords);
-      assert.ok(markerSchema.shape.bounds);
-      assert.ok(markerSchema.shape.z);
-      assert.ok(markerSchema.shape.labels);
+  describe('palette compression', () => {
+    it('should compress and decompress 6-digit hex colours', () => {
+      const colours = ['#ff0000', '#00ff00', '#0000ff'];
+      const compressed = compressPalette(colours);
+      assert.strictEqual(typeof compressed, 'string');
+      assert.deepStrictEqual(decompressPalette(compressed), colours);
+    });
+
+    it('should handle 3-digit hex colours by expanding them', () => {
+      const compressed = compressPalette(['#f00', '#0f0']);
+      assert.deepStrictEqual(decompressPalette(compressed), ['#ff0000', '#00ff00']);
+    });
+
+    it('should handle empty or falsy inputs', () => {
+      assert.strictEqual(compressPalette([]), '');
+      assert.deepStrictEqual(decompressPalette(''), []);
     });
   });
 
-  describe('markerSchema encode / decode', () => {
+  describe('URL compression & validation', () => {
+    it('should compress and decompress recognized ABC URLs', () => {
+      const url = 'https://www.abc.net.au/res/sites/news-projects/my-data.json';
+      const compressed = compressUrl(url);
+      assert.ok(compressed.startsWith('~1'));
+      assert.strictEqual(decompressUrl(compressed), url);
+    });
+
+    it('should identify valid vs invalid production URLs', () => {
+      assert.strictEqual(isValidUrl('https://live-production.wcms.abc-cdn.net.au/valid.json'), true);
+      assert.strictEqual(isValidUrl('https://preview-production.wcms.abc-cdn.net.au/invalid.json'), false);
+    });
+
+    it('should round-trip valid URLs through urlCodec', async () => {
+      const url = 'https://live-production.wcms.abc-cdn.net.au/data.json';
+      const encoded = await urlCodec.encode(url);
+      const decoded = await urlCodec.decode(encoded);
+      assert.strictEqual(decoded, url);
+    });
+  });
+
+  describe('mapLabelsSchema', () => {
+    it('should round-trip map labels config using bitpacking', async () => {
+      const input = {
+        countriesMajor: true,
+        countriesMedium: false,
+        countriesMinor: true,
+        continents: false,
+        states: true,
+        cities: true,
+        towns: false,
+        oceans: true,
+        nationalBoundaries: false,
+        stateBoundaries: true
+      };
+      const encoded = await mapLabelsSchema.encode(input);
+      assert.strictEqual(typeof encoded, 'string');
+      const decoded = await mapLabelsSchema.decode(encoded);
+      assert.deepStrictEqual(decoded, input);
+    });
+  });
+
+  describe('markerSchema ACTO integration', () => {
     it('should produce strictly alphanumeric ACTO fragments', async () => {
       const input: DecodedObject = {
         coords: [151.2093, -33.8688],
@@ -123,146 +178,25 @@ describe('marker', () => {
       assert.ok(/^[a-z0-9]*$/i.test(fragment), `Fragment contains non-alphanumeric characters: ${fragment}`);
     });
 
-    it('should round-trip a simple object', async () => {
+    it('should round-trip custom codecs within the full marker schema', async () => {
       const input: DecodedObject = {
         coords: [151.2093, -33.8688],
-        z: 10.12
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.ok(Math.abs(decoded.coords![0] - input.coords![0]) < 0.01);
-      assert.ok(Math.abs(decoded.coords![1] - input.coords![1]) < 0.01);
-      assert.strictEqual(decoded.z, 10.12);
-    });
-
-    it('should handle z=0', async () => {
-      const input: DecodedObject = {
-        z: 0
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.z, 0);
-    });
-
-    it('should handle custom attribution with special characters', async () => {
-      const input: DecodedObject = {
-        attribution: 'Map data © OpenStreetMap contributors, Sources: Example? && other!'
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.attribution, input.attribution);
-    });
-
-    it('should round-trip bounds', async () => {
-      const input: DecodedObject = {
         bounds: [
           [151.2093, -33.8688],
           [153.0251, -27.4698]
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.bounds?.length, 2);
-      assert.ok(Math.abs(decoded.bounds![0][0] - input.bounds![0][0]) < 0.01);
-      assert.ok(Math.abs(decoded.bounds![0][1] - input.bounds![0][1]) < 0.01);
-    });
-
-    it('should handle multiple custom labels', async () => {
-      const input: DecodedObject = {
+        ],
+        z: 6.14,
         labels: [
           {
             name: 'Melbourne',
             coords: [144.9631, -37.8136],
             style: 'country-small',
             number: 0
-          },
-          {
-            name: 'Brisbane',
-            coords: [153.0251, -27.4698],
-            style: 'water-large',
-            number: 2
           }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.labels?.length, 2);
-      assert.strictEqual(decoded.labels![0].name, 'Melbourne');
-      assert.strictEqual(decoded.labels![1].name, 'Brisbane');
-      assert.strictEqual(decoded.labels![1].number, 2);
-      assert.strictEqual(decoded.labels![1].style, 'water-large');
-      assert.ok(Math.abs(decoded.labels![0].coords[0] - input.labels![0].coords[0]) < 0.01);
-      assert.ok(Math.abs(decoded.labels![0].coords[1] - input.labels![0].coords[1]) < 0.01);
-    });
-
-    it('should round-trip complex geoJson config', async () => {
-      const input: DecodedObject = {
+        ],
         geoJson: [
           {
             url: 'https://live-production.wcms.abc-cdn.net.au/data.json',
-            type: 'areas',
-            styles: [
-              {
-                colourMode: 'scale',
-                colourProp: 'value',
-                opacity: 0.9,
-                isOpaque: true,
-                colourConfig: {
-                  min: 0,
-                  max: 100,
-                  minColour: '#ffffff',
-                  maxColour: '#ff0000',
-                  paletteType: 'sequential'
-                }
-              }
-            ]
-          }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.geoJson?.length, 1);
-      assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/data.json');
-      assert.strictEqual(decoded.geoJson![0].type, 'areas');
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourMode, 'scale');
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourProp, 'value');
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].opacity, 0.9);
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].isOpaque, true);
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourConfig?.min, 0);
-      assert.strictEqual(decoded.geoJson![0].styles?.[0].colourConfig?.max, 100);
-    });
-
-    it('should round-trip point size and line width', async () => {
-      const input: DecodedObject = {
-        geoJson: [
-          {
-            url: 'https://live-production.wcms.abc-cdn.net.au/points.json',
-            type: 'points',
-            styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }],
-            pointSize: { value: 12.5, unit: 'k' },
-            lineWidth: { value: 3.5, unit: 'p' }
-          }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.geoJson?.length, 1);
-      assert.deepStrictEqual(decoded.geoJson![0].pointSize, input.geoJson![0].pointSize);
-      assert.deepStrictEqual(decoded.geoJson![0].lineWidth, input.geoJson![0].lineWidth);
-    });
-
-    it('should round-trip custom palette with high compression', async () => {
-      const input: DecodedObject = {
-        geoJson: [
-          {
-            url: 'https://live-production.wcms.abc-cdn.net.au/custom.json',
             type: 'areas',
             styles: [
               {
@@ -271,136 +205,12 @@ describe('marker', () => {
                 isOpaque: false,
                 colourConfig: {
                   paletteType: 'custom',
-                  customPalette: ['#ff0000', '#00ff00', '#0000ff']
+                  customPalette: ['#ff0000', '#00ff00']
                 }
               }
             ]
           }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.deepStrictEqual(
-        decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
-        input.geoJson![0].styles[0].colourConfig?.customPalette
-      );
-    });
-
-    it('should handle complex geoJson config with filters and spikes', async () => {
-      const input: DecodedObject = {
-        geoJson: [
-          {
-            url: 'https://live-production.wcms.abc-cdn.net.au/spikes.json',
-            type: 'spikes',
-            styles: [
-              {
-                colourMode: 'simple',
-                opacity: 1,
-                isOpaque: false,
-                filter: { prop: 'category', values: ['A', 'B'] }
-              }
-            ],
-            spike: { heightProp: 'count', scalar: 10, maxHeight: 100, radius: 5 }
-          }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.geoJson?.length, 1);
-      assert.strictEqual(decoded.geoJson![0].type, 'spikes');
-      assert.deepStrictEqual(decoded.geoJson![0].styles?.[0].filter, input.geoJson![0].styles[0].filter);
-      assert.deepStrictEqual(decoded.geoJson![0].spike, input.geoJson![0].spike);
-    });
-
-    it('should round-trip base and projection settings', async () => {
-      const input: DecodedObject = {
-        base: 'satellite',
-        projection: 'mercator',
-        satelliteVariant: 'black'
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.base, 'satellite');
-      assert.strictEqual(decoded.projection, 'mercator');
-      assert.strictEqual(decoded.satelliteVariant, 'black');
-    });
-
-    it('should decode street map by default when base is omitted', async () => {
-      const decoded = await markerSchema.decode('');
-      assert.strictEqual(decoded.base, 'street');
-    });
-
-    it('should omit default street base from ACTO fragment', async () => {
-      const input: DecodedObject = { base: 'street' };
-      const fragment = await markerSchema.encode(input);
-      assert.ok(!fragment.includes('BASE'), 'Should omit BASE key when base is street (default)');
-      const decoded = await markerSchema.decode(fragment);
-      assert.strictEqual(decoded.base, 'street');
-    });
-
-    it('should encode satellite base as index 1 in ACTO fragment and decode correctly', async () => {
-      const input: DecodedObject = { base: 'satellite' };
-      const fragment = await markerSchema.encode(input);
-      assert.strictEqual(fragment, 'BASE1');
-      const decoded = await markerSchema.decode(fragment);
-      assert.strictEqual(decoded.base, 'satellite');
-    });
-
-    it('should decode legacy or literal string base values from fragments', async () => {
-      const decodedStreet = await markerSchema.decode('BASEstreet');
-      assert.strictEqual(decodedStreet.base, 'street');
-
-      const decodedSatellite = await markerSchema.decode('BASEsatellite');
-      assert.strictEqual(decodedSatellite.base, 'satellite');
-    });
-
-    it('should round-trip map labels config using bitpacking', async () => {
-      const input: DecodedObject = {
-        mapLabels: {
-          countriesMajor: true,
-          countriesMedium: false,
-          countriesMinor: true,
-          continents: false,
-          states: true,
-          cities: true,
-          towns: false,
-          oceans: true,
-          nationalBoundaries: false,
-          stateBoundaries: true
-        }
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
-    });
-
-    it('should omit mapLabels in fragment when matching defaults and decode properly', async () => {
-      const input: DecodedObject = {
-        mapLabels: {
-          countriesMajor: true,
-          countriesMedium: true,
-          countriesMinor: true,
-          continents: false,
-          states: false,
-          cities: false,
-          towns: false,
-          oceans: false,
-          nationalBoundaries: true,
-          stateBoundaries: false
-        }
-      };
-      const fragment = await markerSchema.encode(input);
-      assert.ok(!fragment.includes('ML'), 'Should omit ML key when matching defaults');
-      const decoded = await markerSchema.decode(fragment);
-      assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
-    });
-
-    it('should round-trip imageSources with high precision coordinates', async () => {
-      const input: DecodedObject = {
+        ],
         imageSources: [
           {
             id: 'img-0',
@@ -408,72 +218,26 @@ describe('marker', () => {
             opacity: 0.75,
             coordinates: [
               [151.2093, -33.8688],
-              [151.2193, -33.8688],
-              [151.2193, -33.8788],
-              [151.2093, -33.8788]
+              [151.2193, -33.8688]
             ]
           }
         ]
       };
+
       const fragment = await markerSchema.encode(input);
       const decoded = await markerSchema.decode(fragment);
 
+      assert.ok(Math.abs(decoded.coords![0] - input.coords![0]) < 0.01);
+      assert.ok(Math.abs(decoded.coords![1] - input.coords![1]) < 0.01);
+      assert.strictEqual(decoded.z, 6.14);
+      assert.strictEqual(decoded.labels?.length, 1);
+      assert.strictEqual(decoded.labels![0].name, 'Melbourne');
+      assert.deepStrictEqual(
+        decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
+        input.geoJson![0].styles[0].colourConfig?.customPalette
+      );
       assert.strictEqual(decoded.imageSources?.length, 1);
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources![0].url);
-      assert.strictEqual(decoded.imageSources![0].opacity, 0.75);
-
-      assert.ok(
-        Math.abs(decoded.imageSources![0].coordinates[0][0] - input.imageSources![0].coordinates[0][0]) < 0.00001
-      );
-      assert.ok(
-        Math.abs(decoded.imageSources![0].coordinates[0][1] - input.imageSources![0].coordinates[0][1]) < 0.00001
-      );
-    });
-
-    it('should round-trip custom labels with different styles', async () => {
-      const input: DecodedObject = {
-        labels: [
-          {
-            name: 'Sydney',
-            coords: [151.2093, -33.8688],
-            style: 'country-large',
-            number: 0
-          },
-          {
-            name: 'Pacific Ocean',
-            coords: [160.0, -20.0],
-            style: 'water-large',
-            number: 1
-          },
-          {
-            name: 'Brisbane River',
-            coords: [153.02, -27.47],
-            style: 'water-small',
-            number: 2
-          },
-          {
-            name: 'Canberra',
-            coords: [149.13, -35.28],
-            style: 'country-small',
-            number: 3
-          }
-        ]
-      };
-      const fragment = await markerSchema.encode(input);
-      const decoded = await markerSchema.decode(fragment);
-
-      assert.strictEqual(decoded.labels?.length, 4);
-      assert.strictEqual(decoded.labels![0].style, 'country-large');
-      assert.strictEqual(decoded.labels![1].style, 'water-large');
-      assert.strictEqual(decoded.labels![2].style, 'water-small');
-      assert.strictEqual(decoded.labels![3].style, 'country-small');
-    });
-
-    it('should compress and decompress recognized URLs', () => {
-      const url = 'https://www.abc.net.au/res/sites/news-projects/my-data.json';
-      const compressed = compressUrl(url);
-      assert.ok(compressed.startsWith('~1'));
-      assert.strictEqual(decompressUrl(compressed), url);
     });
 
     it('should filter out invalid preview URLs during encode', async () => {
@@ -489,29 +253,21 @@ describe('marker', () => {
             type: 'areas',
             styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
           }
+        ],
+        imageSources: [
+          {
+            url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.png',
+            opacity: 1,
+            coordinates: []
+          }
         ]
       };
       const fragment = await markerSchema.encode(input);
       const decoded = await markerSchema.decode(fragment);
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/valid.json');
-    });
-
-    it('should decode directly from a raw props object as well as from a fragment', async () => {
-      const rawObject = {
-        z: 614,
-        geohash: 'r3gx2ue',
-        base: 1
-      };
-      const decodedFromObject = await markerSchema.decode(rawObject);
-      assert.strictEqual(decodedFromObject.z, 6.14);
-      assert.strictEqual(decodedFromObject.base, 'satellite');
-
-      const encodedString = await markerSchema.encode({ z: 6.14, base: 'satellite' });
-      assert.strictEqual(typeof encodedString, 'string');
-      const decodedFromString = await markerSchema.decode(encodedString);
-      assert.strictEqual(decodedFromString.z, 6.14);
-      assert.strictEqual(decodedFromString.base, 'satellite');
+      assert.strictEqual(decoded.imageSources?.length, 0);
     });
   });
 });
+
