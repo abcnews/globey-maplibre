@@ -2,7 +2,7 @@
   import type { DecodedObject } from '../../../lib/marker';
   import type * as maplibregl from 'maplibre-gl';
   import { Modal } from '@abcnews/components-builder';
-  import { Pencil, X } from 'svelte-bootstrap-icons';
+  import { Pencil, Trash, X } from 'svelte-bootstrap-icons';
   import { isOsmBase } from '../../CustomGlobe/mapStyle/utils';
   import PropBaseAdvancedLabels from './PropBaseAdvancedLabels.svelte';
 
@@ -34,6 +34,24 @@
     options = {
       ...options,
       mapLabels: next
+    };
+  }
+
+  function clearLabels() {
+    options = {
+      ...options,
+      mapLabels: {
+        countriesMajor: false,
+        countriesMedium: false,
+        countriesMinor: false,
+        continents: false,
+        states: false,
+        cities: false,
+        towns: false,
+        oceans: false,
+        nationalBoundaries: options.mapLabels?.nationalBoundaries ?? true,
+        stateBoundaries: options.mapLabels?.stateBoundaries ?? false
+      }
     };
   }
 
@@ -157,7 +175,17 @@
       </div>
       <div>
         <fieldset>
-          <legend>Labels</legend>
+          <legend
+            >Labels
+            <button
+              class="btn-icon"
+              aria-label="Clear all labels"
+              title="Clear all labels"
+              onclick={clearLabels}
+            >
+              <Trash />
+            </button></legend
+          >
           <PropBaseAdvancedLabels bind:options />
         </fieldset>
         <fieldset>
