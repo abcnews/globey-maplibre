@@ -387,7 +387,7 @@ describe('GeoJson Utils', () => {
       const colorSpec = { type: 'color' } as any;
 
       // Verification using MapLibre style-spec validator
-      const result = createExpression(expr, colorSpec);
+      const result = createExpression(expr, 'paint.circle-color', colorSpec);
       if (result.result === 'error') {
         console.error('Expression failed validation:', JSON.stringify(expr, null, 2));
         console.error('Errors:', result.value);
@@ -453,7 +453,7 @@ describe('GeoJson Utils', () => {
         '#ff0000'
       ]);
 
-      const result = createExpression(expr, { type: 'color' } as any);
+      const result = createExpression(expr, 'paint.circle-color', { type: 'color' } as any);
       assert.strictEqual(result.result, 'success');
 
       const expression = (result as any).value;
@@ -494,7 +494,7 @@ describe('GeoJson Utils', () => {
       };
       const expr = getColourExpression(config, 'marker');
       const colorSpec = { type: 'color' } as any;
-      const result = createExpression(expr, colorSpec);
+      const result = createExpression(expr, 'paint.circle-color', colorSpec);
       if (result.result === 'error') {
         console.error('Expression failed validation:', JSON.stringify(expr, null, 2));
         console.error('Errors:', result.value);
@@ -540,7 +540,7 @@ describe('GeoJson Utils', () => {
       };
       const expr = getColourExpression(config, 'marker');
       const colorSpec = { type: 'color' } as any;
-      const result = createExpression(expr, colorSpec);
+      const result = createExpression(expr, 'paint.circle-color', colorSpec);
       if (result.result === 'error') {
         console.error('Expression failed validation:', JSON.stringify(expr, null, 2));
         console.error('Errors:', result.value);
