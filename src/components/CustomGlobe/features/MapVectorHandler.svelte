@@ -52,18 +52,7 @@
   } = $props();
 
   // Determine if we need to show labels at all
-  const hasLabels = $derived(
-    Boolean(
-      labels.countriesMajor ||
-      labels.countriesMedium ||
-      labels.countriesMinor ||
-      labels.continents ||
-      labels.states ||
-      labels.cities ||
-      labels.towns ||
-      labels.oceans
-    )
-  );
+  const hasLabels = $derived(Object.values(labels).filter(Boolean).length > 0);
 
   // Determine if we need to show base layers (only in street mode)
   const showBase = $derived(base === 'street' || !base);
@@ -136,30 +125,18 @@
     if (!mapRoot.map) return;
     const map = mapRoot.map;
 
-    // React to reactive state changes
-    const _ = [
-      labels.countriesMajor,
-      labels.countriesMedium,
-      labels.countriesMinor,
-      labels.continents,
-      labels.states,
-      labels.cities,
-      labels.towns,
-      labels.oceans,
-      labels.nationalBoundaries,
-      labels.stateBoundaries
-    ];
+    const currentLabels = $state.snapshot(labels);
 
     const syncVisibility = () => {
       // COUNTRIES
       const countryLayers: Record<string, boolean> = {
-        'place-country-1': labels.countriesMajor,
-        'place-country-rank1-symbol': labels.countriesMajor,
-        'place-country-2': labels.countriesMedium,
-        'place-country-rank2-symbol': labels.countriesMedium,
-        'place-country-3': labels.countriesMinor,
-        'place-country-rank>=3-symbol': labels.countriesMinor,
-        'place-country-other': labels.countriesMinor
+        'place-country-1': currentLabels.countriesMajor,
+        'place-country-rank1-symbol': currentLabels.countriesMajor,
+        'place-country-2': currentLabels.countriesMedium,
+        'place-country-rank2-symbol': currentLabels.countriesMedium,
+        'place-country-3': currentLabels.countriesMinor,
+        'place-country-rank>=3-symbol': currentLabels.countriesMinor,
+        'place-country-other': currentLabels.countriesMinor
       };
 
       Object.entries(countryLayers).forEach(([id, isVisible]) => {
@@ -171,14 +148,14 @@
       // CONTINENTS
       ['place-continent', 'place-continent-symbol'].forEach(id => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.continents ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', currentLabels.continents ? 'visible' : 'none');
         }
       });
 
       // STATES
       ['place-state', 'place-state-symbol', 'place-state-AU-symbol'].forEach(id => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.states ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', currentLabels.states ? 'visible' : 'none');
         }
       });
 
@@ -194,7 +171,7 @@
         'place-city-capital_state-symbol'
       ].forEach(id => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.cities ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', currentLabels.cities ? 'visible' : 'none');
         }
       });
 
@@ -210,7 +187,7 @@
         'place-other'
       ].forEach(id => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.towns ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', currentLabels.towns ? 'visible' : 'none');
         }
       });
 
@@ -229,7 +206,7 @@
         'waterway-name-symbol'
       ].forEach(id => {
         if (map.getLayer(id)) {
-          map.setLayoutProperty(id, 'visibility', labels.oceans ? 'visible' : 'none');
+          map.setLayoutProperty(id, 'visibility', currentLabels.oceans ? 'visible' : 'none');
         }
       });
 
@@ -242,13 +219,13 @@
 
       // BOUNDARIES
       if (map.getLayer('boundary-land-level-2')) {
-        map.setLayoutProperty('boundary-land-level-2', 'visibility', labels.nationalBoundaries ? 'visible' : 'none');
+        map.setLayoutProperty('boundary-land-level-2', 'visibility', currentLabels.nationalBoundaries ? 'visible' : 'none');
       }
       if (map.getLayer('boundary-land-disputed')) {
-        map.setLayoutProperty('boundary-land-disputed', 'visibility', labels.nationalBoundaries ? 'visible' : 'none');
+        map.setLayoutProperty('boundary-land-disputed', 'visibility', currentLabels.nationalBoundaries ? 'visible' : 'none');
       }
       if (map.getLayer('boundary-land-level-4')) {
-        map.setLayoutProperty('boundary-land-level-4', 'visibility', labels.stateBoundaries ? 'visible' : 'none');
+        map.setLayoutProperty('boundary-land-level-4', 'visibility', currentLabels.stateBoundaries ? 'visible' : 'none');
       }
       if (map.getLayer('boundary-land-level-6')) {
         map.setLayoutProperty('boundary-land-level-6', 'visibility', 'none');
