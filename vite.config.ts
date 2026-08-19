@@ -20,6 +20,9 @@ export default defineConfig({
   base: '',
   plugins: [svelte(), es5EntryPlugin(), abcCorsPlugin()],
   server: getServer(),
+  optimizeDeps: {
+    exclude: ['maplibre-gl']
+  },
   build: {
     rollupOptions: {
       input: {
