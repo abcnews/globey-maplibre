@@ -88,7 +88,7 @@
     const coords = $options?.coords;
     if (!coords) return;
 
-    const formatted = coords.map(coord => coord.toFixed(6)).join(',');
+    const formatted = coords.map((coord: number) => coord.toFixed(6)).join(',');
 
     // Only update if not focused to avoid jumping while typing
     if (document.activeElement !== inputElement) {

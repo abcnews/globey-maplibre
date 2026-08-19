@@ -1,7 +1,7 @@
 <script lang="ts">
   import { BuilderStyleRoot, UpdateChecker, MarkerAdmin, Loader, BuilderFrame } from '@abcnews/components-builder';
   import { onMount } from 'svelte';
-  import { decodeFragment, encodeFragment, type DecodedObject } from '../../lib/marker';
+  import { markerSchema, type DecodedObject } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import type * as maplibregl from 'maplibre-gl';
   import { options as optionsStore } from './store';
@@ -27,13 +27,13 @@
     if (!options) {
       return;
     }
-    encodeFragment(options).then(hash => {
-      window.location.hash = hash;
+    markerSchema.encode(options).then(hash => {
+      window.location.hash = hash || '';
     });
   });
 
   async function updateHash() {
-    const urlOptions = await decodeFragment(window.location.hash.slice(1));
+    const urlOptions = await markerSchema.decode(window.location.hash.slice(1));
     options = urlOptions;
   }
   onMount(updateHash);

@@ -4,12 +4,7 @@
   import type { GeoJsonConfig } from '../../../../lib/marker';
   import { parseColor } from '../../../../lib/colours';
   import { getColourEvaluator, getHeightEvaluator } from './utils';
-  import {
-    addLayerWithZIndex,
-    removeLayerWithZIndex,
-    setLayerZIndex,
-    Z_INDEX_GEOJSON
-  } from '../layerUtils';
+  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../layerUtils';
 
   let {
     data,

@@ -1,4 +1,3 @@
-
 /**
  * Geographic state representing a camera position.
  */

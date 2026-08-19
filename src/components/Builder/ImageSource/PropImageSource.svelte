@@ -38,16 +38,13 @@
 
       const bounds = config.coordinates.reduce(
         (acc, coord) => {
-          acc.extend(coord as [number, number]);
+          acc.extend(coord);
           return acc;
         },
-        new LngLatBounds(
-          config.coordinates[0] as [number, number],
-          config.coordinates[0] as [number, number]
-        )
+        new LngLatBounds(config.coordinates[0], config.coordinates[0])
       );
 
-      safeFitBounds(map, bounds, { padding: 50 });
+      safeFitBounds(map, bounds.toArray(), { padding: 50 });
     }
 
     closeModal();

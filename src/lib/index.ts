@@ -1,2 +1,2 @@
 export { default as CustomGlobe } from '../components/CustomGlobe/CustomGlobe.svelte';
-export * from './marker';
+export * from './marker/index.ts';

@@ -35,7 +35,7 @@
   }
 
   function removeConfig(index: number) {
-    const newList = geoJsonList.filter((_, i) => i !== index);
+    const newList = geoJsonList.filter((_: any, i: number) => i !== index);
     onchange(newList);
   }
 

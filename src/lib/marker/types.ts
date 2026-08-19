@@ -1,97 +1,31 @@
+import type { infer as Infer } from '@abcnews/hash-codec';
+import type {
+  sizeSchema,
+  geoJsonFilterSchema,
+  geoJsonColourConfigSchema,
+  geoJsonStyleSchema,
+  geoJsonSpikeSchema,
+  geoJsonItemSchema,
+  labelSchema,
+  imageSourceItemSchema,
+  mapLabelsSchema,
+  markerSchema
+} from './schema.ts';
+
 export type LabelStyle = 'country-large' | 'country-small' | 'water-large' | 'water-small';
 
-export interface Label {
-  name: string;
-  coords: [number, number];
-  style: LabelStyle;
-  number: number;
-}
+export type Label = Infer<typeof labelSchema>;
+export type GeoJsonSize = Infer<typeof sizeSchema>;
+export type GeoJsonColourConfig = Infer<typeof geoJsonColourConfigSchema>;
+export type GeoJsonFilter = Infer<typeof geoJsonFilterSchema>;
+export type GeoJsonSpike = Infer<typeof geoJsonSpikeSchema>;
+export type GeoJsonStyleConfig = Infer<typeof geoJsonStyleSchema>;
+export type GeoJsonConfig = Infer<typeof geoJsonItemSchema>;
+export type ImageSourceConfig = Infer<typeof imageSourceItemSchema>;
+export type MapLabelsConfig = Infer<typeof mapLabelsSchema>;
 
-export interface GeoJsonSize {
-  value: number;
-  unit: 'p' | 'k';
-}
-
-export interface GeoJsonColourConfig {
-  min?: number;
-  max?: number;
-  minColour?: string;
-  maxColour?: string;
-  basic?: string;
-  basicType?: 'normal' | 'inverse';
-  paletteType?: 'sequential' | 'divergent' | 'ramp' | 'threshold' | 'category' | 'custom';
-  paletteVariant?: string;
-  customPalette?: string[];
-}
-
-export interface GeoJsonFilter {
-  prop: string;
-  values: (string | number)[];
-}
-
-export interface GeoJsonSpike {
-  heightProp?: string;
-  scalar?: number;
-  maxHeight?: number;
-  radius?: number;
-}
-
-export interface GeoJsonStyleConfig {
-  colourMode: 'scale' | 'simple' | 'basic';
-  colourProp?: string;
-  colourConfig?: GeoJsonColourConfig;
-  opacity?: number;
-  isOpaque?: boolean;
-  filter?: GeoJsonFilter;
-}
-
-export interface GeoJsonConfig {
-  url: string;
-  type: 'areas' | 'lines' | 'points' | 'spikes';
-  styles: GeoJsonStyleConfig[];
-  pointSize?: GeoJsonSize;
-  lineWidth?: GeoJsonSize;
-  spike?: GeoJsonSpike;
-}
-
-export interface ImageSourceConfig {
-  id?: string;
-  url: string;
-  opacity: number;
-  coordinates: [number, number][];
-}
-
-export interface MapLabelsConfig {
-  countriesMajor: boolean;
-  countriesMedium: boolean;
-  countriesMinor: boolean;
-  continents: boolean;
-  states: boolean;
-  cities: boolean;
-  towns: boolean;
-  oceans: boolean;
-  nationalBoundaries: boolean;
-  stateBoundaries: boolean;
-}
-
-export interface DecodedObject {
-  z?: number;
-  /** coordinate in [longitude, latitude] */
-  coords?: [number, number];
-  bounds?: [number, number][];
-  labels?: Label[];
-  base?: 'street' | 'satellite';
-  mapLabels?: MapLabelsConfig;
-  geoJson?: GeoJsonConfig[];
-  imageSources?: ImageSourceConfig[];
-  projection?: 'globe' | 'mercator';
-  satelliteVariant?: 'blue' | 'black';
-  fitGlobe?: boolean;
-  constrainView?: boolean;
-  attribution?: string;
-  hideOsm?: boolean;
-  animationDuration?: number;
-}
+export type Marker = Infer<typeof markerSchema>;
+export type DecodedObject = Partial<Marker>;
 
 export interface DecodeProps {
   z?: string | number;

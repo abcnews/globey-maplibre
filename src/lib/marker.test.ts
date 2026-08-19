@@ -6,14 +6,12 @@ import {
   boundsCodec,
   twoDecimalCodec,
   markerSchema,
-  encodeFragment,
-  decodeFragment,
   GEOHASH_PRECISION,
   compressUrl,
   decompressUrl,
   isValidUrl,
   type DecodedObject
-} from './marker.ts';
+} from './marker/index.ts';
 
 describe('marker', () => {
   describe('coordsCodec', () => {
@@ -96,7 +94,7 @@ describe('marker', () => {
     });
   });
 
-  describe('encodeFragment / decodeFragment', () => {
+  describe('markerSchema encode / decode', () => {
     it('should produce strictly alphanumeric ACTO fragments', async () => {
       const input: DecodedObject = {
         coords: [151.2093, -33.8688],
@@ -120,7 +118,7 @@ describe('marker', () => {
         ]
       };
 
-      const fragment = await encodeFragment(input);
+      const fragment = await markerSchema.encode(input);
       // Verify no punctuation, brackets, quotes or commas exist in the fragment
       assert.ok(/^[a-z0-9]*$/i.test(fragment), `Fragment contains non-alphanumeric characters: ${fragment}`);
     });
@@ -130,8 +128,8 @@ describe('marker', () => {
         coords: [151.2093, -33.8688],
         z: 10.12
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.ok(Math.abs(decoded.coords![0] - input.coords![0]) < 0.01);
       assert.ok(Math.abs(decoded.coords![1] - input.coords![1]) < 0.01);
@@ -142,8 +140,8 @@ describe('marker', () => {
       const input: DecodedObject = {
         z: 0
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.z, 0);
     });
@@ -152,8 +150,8 @@ describe('marker', () => {
       const input: DecodedObject = {
         attribution: 'Map data © OpenStreetMap contributors, Sources: Example? && other!'
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.attribution, input.attribution);
     });
@@ -165,8 +163,8 @@ describe('marker', () => {
           [153.0251, -27.4698]
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.bounds?.length, 2);
       assert.ok(Math.abs(decoded.bounds![0][0] - input.bounds![0][0]) < 0.01);
@@ -190,8 +188,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.labels?.length, 2);
       assert.strictEqual(decoded.labels![0].name, 'Melbourne');
@@ -226,8 +224,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/data.json');
@@ -252,8 +250,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.deepStrictEqual(decoded.geoJson![0].pointSize, input.geoJson![0].pointSize);
@@ -280,8 +278,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.deepStrictEqual(
         decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
@@ -307,8 +305,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].type, 'spikes');
@@ -322,8 +320,8 @@ describe('marker', () => {
         projection: 'mercator',
         satelliteVariant: 'black'
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.base, 'satellite');
       assert.strictEqual(decoded.projection, 'mercator');
@@ -331,34 +329,33 @@ describe('marker', () => {
     });
 
     it('should decode street map by default when base is omitted', async () => {
-      const decoded = await decodeFragment('');
+      const decoded = await markerSchema.decode('');
       assert.strictEqual(decoded.base, 'street');
     });
 
     it('should omit default street base from ACTO fragment', async () => {
       const input: DecodedObject = { base: 'street' };
-      const fragment = await encodeFragment(input);
+      const fragment = await markerSchema.encode(input);
       assert.ok(!fragment.includes('BASE'), 'Should omit BASE key when base is street (default)');
-      const decoded = await decodeFragment(fragment);
+      const decoded = await markerSchema.decode(fragment);
       assert.strictEqual(decoded.base, 'street');
     });
 
     it('should encode satellite base as index 1 in ACTO fragment and decode correctly', async () => {
       const input: DecodedObject = { base: 'satellite' };
-      const fragment = await encodeFragment(input);
+      const fragment = await markerSchema.encode(input);
       assert.strictEqual(fragment, 'BASE1');
-      const decoded = await decodeFragment(fragment);
+      const decoded = await markerSchema.decode(fragment);
       assert.strictEqual(decoded.base, 'satellite');
     });
 
     it('should decode legacy or literal string base values from fragments', async () => {
-      const decodedStreet = await decodeFragment('BASEstreet');
+      const decodedStreet = await markerSchema.decode('BASEstreet');
       assert.strictEqual(decodedStreet.base, 'street');
 
-      const decodedSatellite = await decodeFragment('BASEsatellite');
+      const decodedSatellite = await markerSchema.decode('BASEsatellite');
       assert.strictEqual(decodedSatellite.base, 'satellite');
     });
-
 
     it('should round-trip map labels config using bitpacking', async () => {
       const input: DecodedObject = {
@@ -375,8 +372,8 @@ describe('marker', () => {
           stateBoundaries: true
         }
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
     });
@@ -396,9 +393,9 @@ describe('marker', () => {
           stateBoundaries: false
         }
       };
-      const fragment = await encodeFragment(input);
+      const fragment = await markerSchema.encode(input);
       assert.ok(!fragment.includes('ML'), 'Should omit ML key when matching defaults');
-      const decoded = await decodeFragment(fragment);
+      const decoded = await markerSchema.decode(fragment);
       assert.deepStrictEqual(decoded.mapLabels, input.mapLabels);
     });
 
@@ -418,8 +415,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.imageSources?.length, 1);
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources![0].url);
@@ -462,8 +459,8 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
 
       assert.strictEqual(decoded.labels?.length, 4);
       assert.strictEqual(decoded.labels![0].style, 'country-large');
@@ -494,10 +491,27 @@ describe('marker', () => {
           }
         ]
       };
-      const fragment = await encodeFragment(input);
-      const decoded = await decodeFragment(fragment);
+      const fragment = await markerSchema.encode(input);
+      const decoded = await markerSchema.decode(fragment);
       assert.strictEqual(decoded.geoJson?.length, 1);
       assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/valid.json');
+    });
+
+    it('should decode directly from a raw props object as well as from a fragment', async () => {
+      const rawObject = {
+        z: 614,
+        geohash: 'r3gx2ue',
+        base: 1
+      };
+      const decodedFromObject = await markerSchema.decode(rawObject);
+      assert.strictEqual(decodedFromObject.z, 6.14);
+      assert.strictEqual(decodedFromObject.base, 'satellite');
+
+      const encodedString = await markerSchema.encode({ z: 6.14, base: 'satellite' });
+      assert.strictEqual(typeof encodedString, 'string');
+      const decodedFromString = await markerSchema.decode(encodedString);
+      assert.strictEqual(decodedFromString.z, 6.14);
+      assert.strictEqual(decodedFromString.base, 'satellite');
     });
   });
 });

@@ -91,12 +91,7 @@ describe('layerManager', () => {
 
     // The layers array in the map should be ordered strictly by z-index:
     // [raster-base (100), image-overlay (300), geojson-layer (400), labels (500)]
-    expect(layers.map(l => l.id)).toEqual([
-      'raster-base',
-      'image-overlay',
-      'geojson-layer',
-      'labels'
-    ]);
+    expect(layers.map(l => l.id)).toEqual(['raster-base', 'image-overlay', 'geojson-layer', 'labels']);
   });
 
   it('should ignore unindexed layers during Z-Index calculation', () => {
@@ -112,12 +107,7 @@ describe('layerManager', () => {
     // Adding GeoJSON (400) should find 'labels' (500), ignoring 'unindexed-layer'
     addLayerWithZIndex(map, { id: 'geojson-layer' } as any, Z_INDEX_GEOJSON);
 
-    expect(layers.map(l => l.id)).toEqual([
-      'raster-base',
-      'unindexed-layer',
-      'geojson-layer',
-      'labels'
-    ]);
+    expect(layers.map(l => l.id)).toEqual(['raster-base', 'unindexed-layer', 'geojson-layer', 'labels']);
   });
 
   it('should reorder existing layers when setLayerZIndex is called', () => {

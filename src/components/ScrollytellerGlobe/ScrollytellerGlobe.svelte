@@ -1,14 +1,14 @@
 <script lang="ts">
   import Scrollyteller from '@abcnews/svelte-scrollyteller';
-  import { decodeObject } from '../../lib/marker';
+  import { markerSchema } from '../../lib/marker';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import { onMount } from 'svelte';
 
   let { panels } = $props();
   let options = $state();
 
-  const setConfig = async d => {
-    const decoded = await decodeObject(d, true);
+  const setConfig = async (d: any) => {
+    const decoded = await markerSchema.decode(d);
     if (JSON.stringify(options) === JSON.stringify(decoded)) {
       return;
     }
@@ -17,7 +17,7 @@
 
   let loading = $state(false);
   onMount(() => {
-    decodeObject(panels[0]?.data, true).then(decodedOptions => {
+    markerSchema.decode(panels[0]?.data).then(decodedOptions => {
       options = decodedOptions;
     });
 

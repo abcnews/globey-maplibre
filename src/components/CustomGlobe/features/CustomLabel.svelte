@@ -31,7 +31,6 @@
     --water-text: #295ca3;
     --water-text-stroke: rgba(255, 255, 255, 0.7);
 
-
     --light-ambient-colour: #ffffff;
     --light-ambient-intensity: 1;
 
@@ -42,7 +41,6 @@
 
     /* GlobeyDomManager */
     --point-border: #1f2225;
-
 
     &--dark {
       --text-stroke: rgba(0, 0, 0, 0.8);

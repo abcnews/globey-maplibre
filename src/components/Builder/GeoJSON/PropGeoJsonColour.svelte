@@ -21,10 +21,10 @@
     const prop = style.colourProp;
     if (!prop) return [];
     return features
-      .map(f => f.properties?.[prop])
-      .filter(v => v !== undefined && v !== null && v !== '')
+      .map((f: any) => f.properties?.[prop])
+      .filter((v: any) => v !== undefined && v !== null && v !== '')
       .map(Number)
-      .filter(v => !isNaN(v));
+      .filter((v: number) => !isNaN(v));
   });
 
   // Determine if the selected property contains numeric values for the colour scale
@@ -96,8 +96,8 @@
     if (style.colourConfig?.paletteType === 'custom') {
       const colours = customPaletteStr
         .split(',')
-        .map(s => s.trim())
-        .filter(s => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s));
+        .map((s: string) => s.trim())
+        .filter((s: string) => /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(s));
 
       style.colourConfig.customPalette = colours;
     }

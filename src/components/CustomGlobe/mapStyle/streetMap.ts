@@ -1,3 +1,4 @@
+import type * as maplibregl from 'maplibre-gl';
 import _styleSource from './styleStoryLab.json';
 import { getStyleColor } from './utils';
 //@ts-ignore

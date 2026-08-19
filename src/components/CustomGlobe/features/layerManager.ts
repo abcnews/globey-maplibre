@@ -1,4 +1,4 @@
-import type { Map, AddLayerObject, CustomLayerInterface } from 'maplibre-gl';
+import type { Map as MapLibreMap, AddLayerObject, CustomLayerInterface } from 'maplibre-gl';
 
 /**
  * Standard default Z-Index constants for MapLibre visual layers.
@@ -56,12 +56,12 @@ export const SUB_LAYER_OUTLINE_OFFSET = 0.001;
  * Registry mapping Map instance -> Map<layerId, zIndex>.
  * Using WeakMap ensures layer registries are automatically garbage-collected when the map is destroyed.
  */
-const layerRegistry = new WeakMap<Map, Map<string, number>>();
+const layerRegistry = new WeakMap<MapLibreMap, Map<string, number>>();
 
 /**
  * Retrieves the internal layer-to-z-index map for a specific MapLibre instance.
  */
-function getMapRegistry(map: Map): Map<string, number> {
+function getMapRegistry(map: MapLibreMap): Map<string, number> {
   let mapLayers = layerRegistry.get(map);
   if (!mapLayers) {
     mapLayers = new Map<string, number>();
@@ -77,7 +77,7 @@ function getMapRegistry(map: Map): Map<string, number> {
  * @param map MapLibre Map instance
  * @param layerId The ID of the layer
  */
-export function getLayerZIndex(map: Map, layerId: string): number | undefined {
+export function getLayerZIndex(map: MapLibreMap, layerId: string): number | undefined {
   if (!map) return undefined;
   return getMapRegistry(map).get(layerId);
 }
@@ -93,7 +93,7 @@ export function getLayerZIndex(map: Map, layerId: string): number | undefined {
  * @param targetZIndex The desired Z-Index for the incoming or moved layer
  * @returns The ID of the layer to insert before, or undefined if it should be placed at the top
  */
-export function findBeforeIdForZIndex(map: Map, targetZIndex: number): string | undefined {
+export function findBeforeIdForZIndex(map: MapLibreMap, targetZIndex: number): string | undefined {
   if (!map) return undefined;
   const style = map.getStyle();
   if (!style?.layers) return undefined;
@@ -123,7 +123,7 @@ export function findBeforeIdForZIndex(map: Map, targetZIndex: number): string | 
  * @param fallbackBeforeId Optional beforeId to use when no higher Z-Index layer is found
  */
 export function addLayerWithZIndex(
-  map: Map,
+  map: MapLibreMap,
   layer: AddLayerObject | CustomLayerInterface,
   zIndex?: number,
   fallbackBeforeId?: string
@@ -156,7 +156,7 @@ export function addLayerWithZIndex(
  * @param layerId The ID of the existing layer to reorder
  * @param zIndex The new numeric Z-Index
  */
-export function setLayerZIndex(map: Map, layerId: string, zIndex: number): void {
+export function setLayerZIndex(map: MapLibreMap, layerId: string, zIndex: number): void {
   if (!map || !layerId || !map.getLayer(layerId)) return;
 
   const registry = getMapRegistry(map);
@@ -174,7 +174,7 @@ export function setLayerZIndex(map: Map, layerId: string, zIndex: number): void 
  * @param map MapLibre Map instance
  * @param layerId The ID of the layer to remove
  */
-export function removeLayerWithZIndex(map: Map, layerId: string): void {
+export function removeLayerWithZIndex(map: MapLibreMap, layerId: string): void {
   if (!map || !layerId) return;
 
   const registry = getMapRegistry(map);
@@ -190,7 +190,7 @@ export function removeLayerWithZIndex(map: Map, layerId: string): void {
  *
  * @param map MapLibre Map instance
  */
-export function clearMapLayerRegistry(map: Map): void {
+export function clearMapLayerRegistry(map: MapLibreMap): void {
   if (!map) return;
   layerRegistry.delete(map);
 }

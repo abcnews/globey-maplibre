@@ -9,12 +9,7 @@
     getStrokeWidthExpression,
     getStrokeOpacityExpression
   } from './utils';
-  import {
-    addLayerWithZIndex,
-    removeLayerWithZIndex,
-    setLayerZIndex,
-    Z_INDEX_GEOJSON
-  } from '../layerUtils';
+  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../layerUtils';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 

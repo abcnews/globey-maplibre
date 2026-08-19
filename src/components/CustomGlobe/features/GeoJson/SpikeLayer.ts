@@ -40,7 +40,7 @@ export async function getSpikeLayer() {
       if (coords) this.pendingCoords = coords;
     }
 
-    onAdd(map: maplibregl.Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
+    onAdd(map: Map, gl: WebGLRenderingContext | WebGL2RenderingContext): void {
       this.map = map;
       this.camera = new THREE.Camera();
       this.scene = new THREE.Scene();
@@ -93,7 +93,7 @@ export async function getSpikeLayer() {
 
       this.count = coords.length;
       this.baseMatrices = coords.map(lngLat => {
-        const modelMatrixArray = this.map!.transform.getMatrixForModel(lngLat, 0);
+        const modelMatrixArray = (this.map as any).transform.getMatrixForModel(lngLat, 0);
         return new THREE.Matrix4().fromArray(modelMatrixArray);
       });
 

@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
-  import { decodeFragment } from '../../lib/marker.ts';
+  import { markerSchema, type DecodedObject } from '../../lib/marker';
   import { emitResize } from '../../lib/iframe.ts';
-  import type { DecodedObject } from '../../lib/marker/types.ts';
 
   let settings = $state<DecodedObject | null>(null);
   let container = $state<HTMLElement | null>(null);
@@ -30,7 +29,7 @@
     const init = async () => {
       // Initialise settings from hash
       const hash = window.location.hash.slice(1);
-      settings = await decodeFragment(hash);
+      settings = await markerSchema.decode(hash);
     };
 
     init();
@@ -38,7 +37,7 @@
     // Listen for hash changes if needed, though usually iframe is static
     const handleHashChange = async () => {
       const newHash = window.location.hash.slice(1);
-      settings = await decodeFragment(newHash);
+      settings = await markerSchema.decode(newHash);
     };
 
     window.addEventListener('hashchange', handleHashChange);

@@ -132,7 +132,7 @@
         delete (config as any).filter;
         delete (config as any).opacity;
       } else {
-        config.styles = [{ colourMode: 'basic', opacity: 1 }];
+        config.styles = [{ colourMode: 'basic', opacity: 1, isOpaque: false }];
       }
     }
   });
@@ -198,7 +198,7 @@
   }
 
   function addStyle() {
-    config.styles = [...(config.styles ?? []), { colourMode: 'basic', opacity: 1 }];
+    config.styles = [...(config.styles ?? []), { colourMode: 'basic', opacity: 1, isOpaque: false }];
   }
 
   function removeStyle(index: number) {
@@ -311,16 +311,16 @@
                     onclick={() => moveStyle(i, i - 1)}
                     title="Move Up"
                   >
-                    <ArrowUp size="12" />
+                    <ArrowUp width="12" height="12" />
                   </button>
                   <button
                     type="button"
                     class="gj-btn-icon"
-                    disabled={i === config.styles.length - 1}
+                    disabled={i === (config.styles?.length ?? 0) - 1}
                     onclick={() => moveStyle(i, i + 1)}
                     title="Move Down"
                   >
-                    <ArrowDown size="12" />
+                    <ArrowDown width="12" height="12" />
                   </button>
                   {#if config.styles && config.styles.length > 1}
                     <button
@@ -329,7 +329,7 @@
                       onclick={() => removeStyle(i)}
                       title="Remove Style"
                     >
-                      <Trash size="12" />
+                      <Trash width="12" height="12" />
                     </button>
                   {/if}
                 </div>

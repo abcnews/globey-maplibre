@@ -1,6 +1,7 @@
 import Geohash from 'latlon-geohash';
+import { parse, stringify } from '@abcnews/alternating-case-to-object';
 import { object, array, oneOf, decimal, boolean, base36String, string, wrap, z, packBits } from '@abcnews/hash-codec';
-import { compressUrl, decompressUrl } from './utils.ts';
+import { compressUrl, decompressUrl, isValidUrl } from './utils.ts';
 
 export const GEOHASH_PRECISION = 10;
 
@@ -87,7 +88,7 @@ export const urlCodec = wrap(z.string()).transform(
  */
 export const sizeSchema = object({
   value: decimal(1).key('v'),
-  unit: oneOf(['p', 'k']).key('u')
+  unit: oneOf(['p', 'k'] as const).key('u')
 }).asArray();
 
 /**
@@ -107,8 +108,12 @@ export const geoJsonColourConfigSchema = object({
   minColour: string().key('mc').optional(),
   maxColour: string().key('xc').optional(),
   basic: string().key('b').optional(),
-  basicType: oneOf(['normal', 'inverse']).key('bt').optional(),
-  paletteType: oneOf(['sequential', 'divergent', 'ramp', 'threshold', 'category', 'custom']).key('pt').optional(),
+  basicType: oneOf(['normal', 'inverse'] as const)
+    .key('bt')
+    .optional(),
+  paletteType: oneOf(['sequential', 'divergent', 'ramp', 'threshold', 'category', 'custom'] as const)
+    .key('pt')
+    .optional(),
   paletteVariant: string().key('pv').optional(),
   customPalette: wrap(z.array(z.string()))
     .transform(
@@ -123,7 +128,9 @@ export const geoJsonColourConfigSchema = object({
  * Style configuration schema for a GeoJSON layer.
  */
 export const geoJsonStyleSchema = object({
-  colourMode: oneOf(['scale', 'simple', 'basic']).key('cm').default('scale'),
+  colourMode: oneOf(['scale', 'simple', 'basic'] as const)
+    .key('cm')
+    .default('scale'),
   colourProp: string().key('cp').optional(),
   colourConfig: geoJsonColourConfigSchema.key('cc').optional(),
   opacity: decimal(2).key('o').default(1),
@@ -138,7 +145,9 @@ export const geoJsonSpikeSchema = object({
   heightProp: string().key('hp').optional(),
   scalar: decimal(2).key('sc').optional(),
   maxHeight: decimal().key('mh').optional(),
-  radius: decimal().key('r').optional()
+  radius: decimal().key('r').optional(),
+  min: decimal(2).key('mn').optional(),
+  max: decimal(2).key('mx').optional()
 }).asArray();
 
 /**
@@ -146,7 +155,9 @@ export const geoJsonSpikeSchema = object({
  */
 export const geoJsonItemSchema = object({
   url: urlCodec.key('u'),
-  type: oneOf(['areas', 'lines', 'points', 'spikes']).key('t').default('areas'),
+  type: oneOf(['areas', 'lines', 'points', 'spikes'] as const)
+    .key('t')
+    .default('areas'),
   styles: array(geoJsonStyleSchema).key('s').default([]),
   pointSize: sizeSchema.key('ps').optional(),
   lineWidth: sizeSchema.key('lw').optional(),
@@ -159,7 +170,9 @@ export const geoJsonItemSchema = object({
 export const labelSchema = object({
   name: string().key('n'),
   coords: coordsCodec.key('c'),
-  style: oneOf(['country-large', 'country-small', 'water-large', 'water-small']).key('s').default('country-large'),
+  style: oneOf(['country-large', 'country-small', 'water-large', 'water-small'] as const)
+    .key('s')
+    .default('country-large'),
   number: decimal().key('num').default(0)
 }).asArray();
 
@@ -198,9 +211,15 @@ export const markerSchema = object({
   coords: coordsCodec.key('geohash').default([0, 0]),
   bounds: boundsCodec.key('b').default([]),
   z: twoDecimalCodec.key('z').default(2),
-  base: oneOf(['street', 'satellite']).key('base').default('street'),
-  projection: oneOf(['globe', 'mercator']).key('p').default('globe'),
-  satelliteVariant: oneOf(['blue', 'black']).key('sv').default('blue'),
+  base: oneOf(['street', 'satellite'] as const)
+    .key('base')
+    .default('street'),
+  projection: oneOf(['globe', 'mercator'] as const)
+    .key('p')
+    .default('globe'),
+  satelliteVariant: oneOf(['blue', 'black'] as const)
+    .key('sv')
+    .default('blue'),
   mapLabels: mapLabelsSchema.key('ml').default({
     countriesMajor: true,
     countriesMedium: true,
@@ -213,12 +232,34 @@ export const markerSchema = object({
     nationalBoundaries: true,
     stateBoundaries: false
   }),
-  geoJson: array(geoJsonItemSchema).asBase36().key('gj').default([]),
-  imageSources: array(imageSourceItemSchema).asBase36().key('is').default([]),
+  geoJson: array(geoJsonItemSchema)
+    .transform(
+      (items: any[]) => items?.filter(item => isValidUrl(Array.isArray(item) ? item[0] : item?.url || item?.u)) ?? [],
+      (items: any) => items
+    )
+    .asBase36()
+    .key('gj')
+    .default([]),
+  imageSources: array(imageSourceItemSchema)
+    .transform(
+      (items: any[]) => items?.filter(item => isValidUrl(Array.isArray(item) ? item[1] : item?.url || item?.u)) ?? [],
+      (items: any) => items
+    )
+    .asBase36()
+    .key('is')
+    .default([]),
   labels: array(labelSchema).asBase36().key('labels').default([]),
   fitGlobe: boolean().key('fit').default(false),
   constrainView: boolean().key('cv').default(false),
   attribution: base36String().key('attr').default(''),
   hideOsm: boolean().key('ho').default(false),
   animationDuration: decimal().key('ad').default(2000)
-});
+}).transform(
+  (encoded: any) => stringify(encoded || {}),
+  (input: any) => {
+    if (typeof input === 'string') {
+      return input ? parse(input) : {};
+    }
+    return input || {};
+  }
+);

@@ -18,10 +18,10 @@
     const prop = config.spike?.heightProp;
     if (!prop || !features) return [];
     return features
-      .map(f => f.properties?.[prop])
-      .filter(v => v !== undefined && v !== null && v !== '')
+      .map((f: any) => f.properties?.[prop])
+      .filter((v: any) => v !== undefined && v !== null && v !== '')
       .map(Number)
-      .filter(v => !isNaN(v));
+      .filter((v: number) => !isNaN(v));
   });
 
   let isNumeric = $derived(numericValues.length > 0);

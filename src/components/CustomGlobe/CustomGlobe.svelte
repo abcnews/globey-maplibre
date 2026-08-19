@@ -32,10 +32,6 @@
   const isSatellite = $derived(options.base === 'satellite');
   const isVectorLight = $derived(options.base === 'street');
 
-  $effect(() => {
-    console.log('[CustomGlobe] received options:\n' + JSON.stringify(options, null, 2));
-  });
-
   onMount(() => {
     if (!mapContainer) return;
 
@@ -66,7 +62,6 @@
     });
 
     map.on('load', () => {
-      console.log('[CustomGlobe] map loaded');
       onLoad?.(map);
       if (mapContainer) {
         mapContainer.style.opacity = '1';

@@ -2,12 +2,7 @@
   import type { ImageSourceConfig } from '../../../lib/marker';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import {
-    addLayerWithZIndex,
-    removeLayerWithZIndex,
-    setLayerZIndex,
-    Z_INDEX_IMAGE_LAYERS
-  } from './layerUtils';
+  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_IMAGE_LAYERS } from './layerUtils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const {

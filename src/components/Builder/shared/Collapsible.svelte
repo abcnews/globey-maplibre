@@ -19,7 +19,7 @@
   <summary class="collapsible-summary">
     <div class="header-container" role="presentation">
       <div class="chevron-wrapper" class:open>
-        <ChevronRight size="14" />
+        <ChevronRight width="14" height="14" />
       </div>
       {@render header()}
     </div>

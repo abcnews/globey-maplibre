@@ -16,7 +16,7 @@
   let allValues = $derived(style.filter?.prop ? getUniqueValues(style.filter.prop) : []);
   let isTooMany = $derived(allValues.length > 1000);
 
-  let filterOptions = $derived(allValues.map(v => ({ label: v, value: v })));
+  let filterOptions = $derived(allValues.map((v: string) => ({ label: v, value: v })));
 
   let manualText = $state('');
 

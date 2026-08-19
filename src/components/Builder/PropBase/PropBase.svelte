@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { DecodedObject } from '../../../lib/marker';
+  import type * as maplibregl from 'maplibre-gl';
   import { Modal } from '@abcnews/components-builder';
   import { Pencil, X } from 'svelte-bootstrap-icons';
   import { isOsmBase } from '../../CustomGlobe/mapStyle/utils';
