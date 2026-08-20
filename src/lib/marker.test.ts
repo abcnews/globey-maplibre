@@ -198,6 +198,7 @@ describe('marker codecs', () => {
           {
             cmid: 12345678,
             type: 'areas',
+            zIndex: 400,
             styles: [
               {
                 colourMode: 'scale',
@@ -216,6 +217,7 @@ describe('marker codecs', () => {
             id: 'img-0',
             url: 'https://live-production.wcms.abc-cdn.net.au/map.png',
             opacity: 0.75,
+            zIndex: 300,
             coordinates: [
               [151.2093, -33.8688],
               [151.2193, -33.8688]
@@ -233,12 +235,14 @@ describe('marker codecs', () => {
       assert.strictEqual(decoded.labels?.length, 1);
       assert.strictEqual(decoded.labels![0].name, 'Melbourne');
       assert.strictEqual(decoded.geoJson![0].cmid, 12345678);
+      assert.strictEqual(decoded.geoJson![0].zIndex, 400);
       assert.deepStrictEqual(
         decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
         input.geoJson![0].styles[0].colourConfig?.customPalette
       );
       assert.strictEqual(decoded.imageSources?.length, 1);
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources![0].url);
+      assert.strictEqual(decoded.imageSources![0].zIndex, 300);
     });
 
     it('should filter out invalid preview URLs and zero CMIDs during encode', async () => {

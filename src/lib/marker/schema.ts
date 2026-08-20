@@ -161,7 +161,8 @@ export const geoJsonItemSchema = object({
   styles: array(geoJsonStyleSchema).key('s').default([]),
   pointSize: sizeSchema.key('ps').optional(),
   lineWidth: sizeSchema.key('lw').optional(),
-  spike: geoJsonSpikeSchema.key('sp').optional()
+  spike: geoJsonSpikeSchema.key('sp').optional(),
+  zIndex: decimal(2).key('z').optional()
 }).asArray();
 
 /**
@@ -183,7 +184,8 @@ export const imageSourceItemSchema = object({
   id: string().key('id').optional(),
   url: urlCodec.key('u'),
   opacity: decimal(2).key('o').default(1),
-  coordinates: boundsCodec.key('c')
+  coordinates: boundsCodec.key('c'),
+  zIndex: decimal(2).key('z').optional()
 }).asArray();
 
 /**

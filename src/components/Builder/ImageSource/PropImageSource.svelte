@@ -4,6 +4,7 @@
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
   import { safeFitBounds } from '../utils';
   import PropList from '../PropList.svelte';
+  import { Z_INDEX_IMAGE_LAYERS } from '../../CustomGlobe/features/layerUtils';
 
   import { LngLatBounds, type Map } from 'maplibre-gl';
   import type { DecodedObject } from '../../../lib/marker';
@@ -26,7 +27,8 @@
     if (editingIndex !== null) {
       newList[editingIndex] = config;
     } else if (isAdding) {
-      newList.push(config);
+      const zIndex = config.zIndex ?? Z_INDEX_IMAGE_LAYERS;
+      newList.push({ ...config, zIndex });
     }
     options.imageSources = newList;
     onchange(newList);
@@ -111,7 +113,7 @@
     <ImageSourceConfigModal
       config={editingIndex !== null
         ? options.imageSources?.[editingIndex]!
-        : { id: Date.now().toString(), url: '', opacity: 1, coordinates: [] }}
+        : { id: Date.now().toString(), url: '', opacity: 1, coordinates: [], zIndex: Z_INDEX_IMAGE_LAYERS }}
       onsave={saveConfig}
       onclose={closeModal}
     />

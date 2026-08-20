@@ -140,6 +140,9 @@
   });
 
   function handleSave(goto = false) {
+    if (config.cmid !== undefined && config.cmid !== null && config.cmid !== '') {
+      config.cmid = Number(config.cmid);
+    }
     let bounds: [number, number][] | undefined = undefined;
     if (goto && rawFeatures.length > 0) {
       let minX = Infinity,
@@ -253,7 +256,11 @@
           type="text"
           inputmode="numeric"
           pattern="[0-9]*"
-          bind:value={config.cmid}
+          value={config.cmid || ''}
+          oninput={(e) => {
+            const val = e.currentTarget.value.trim();
+            config.cmid = val === '' ? 0 : Number(val);
+          }}
           placeholder="e.g. 12345678"
         />
 

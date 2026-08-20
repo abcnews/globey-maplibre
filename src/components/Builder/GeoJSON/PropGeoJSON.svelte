@@ -4,6 +4,7 @@
   import GeoJsonConfigModal from './GeoJsonConfigModal.svelte';
   import { Pencil, Trash, QuestionCircle, Plus } from 'svelte-bootstrap-icons';
   import PropList from '../PropList.svelte';
+  import { Z_INDEX_GEOJSON } from '../../CustomGlobe/features/layerUtils';
 
   let {
     geoJsonList = [],
@@ -23,7 +24,8 @@
     if (editingIndex !== null) {
       newList[editingIndex] = config;
     } else if (isAdding) {
-      newList.push(config);
+      const zIndex = config.zIndex ?? Z_INDEX_GEOJSON;
+      newList.push({ ...config, zIndex });
     }
     onchange(newList);
 
@@ -93,7 +95,7 @@
     <GeoJsonConfigModal
       config={editingIndex !== null
         ? geoJsonList[editingIndex]
-        : ({ cmid: '' as any, type: 'areas', colourMode: 'simple' } as any)}
+        : ({ cmid: '' as any, type: 'areas', colourMode: 'simple', zIndex: Z_INDEX_GEOJSON } as any)}
       onsave={saveConfig}
       onclose={closeModal}
     />
