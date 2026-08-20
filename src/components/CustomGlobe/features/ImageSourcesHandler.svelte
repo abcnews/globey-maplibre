@@ -6,6 +6,6 @@
   let { config = [] }: { config?: ImageSourceConfig[]; geoJsonConfig?: any[] } = $props();
 </script>
 
-{#each config as item, index (item.id)}
-  <ImageSourceHandler config={item} zIndex={Z_INDEX_IMAGE_LAYERS + index * 0.1} />
+{#each config as item, index (item.id || item.url || index)}
+  <ImageSourceHandler config={item} zIndex={item.zIndex ?? Z_INDEX_IMAGE_LAYERS + index * 0.1} />
 {/each}

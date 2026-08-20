@@ -22,7 +22,7 @@
     data,
     config,
     sourceId,
-    zIndex = Z_INDEX_GEOJSON
+    zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
     config: GeoJsonConfig;
@@ -134,7 +134,7 @@
   // Update Z-Index when changed
   $effect(() => {
     const map = mapRoot.map;
-    const targetZ = zIndex;
+    const targetZ = zIndex ?? config.zIndex;
     const lid = layerId;
     const olid = outlineLayerId;
     if (!map || targetZ === undefined) return;

@@ -5,9 +5,9 @@
   import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_IMAGE_LAYERS } from './layerUtils';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const {
+  let {
     config,
-    zIndex = Z_INDEX_IMAGE_LAYERS
+    zIndex = config.zIndex ?? Z_INDEX_IMAGE_LAYERS
   }: {
     config: ImageSourceConfig;
     zIndex?: number;
@@ -15,8 +15,8 @@
 
   // Stabilize essential IDs and URLs.
   // These are derived from config, but will only trigger downstream if the literal value changes.
-  const currentSid = $derived(`image-source-${config.id}`);
-  const currentLid = $derived(`image-layer-${config.id}`);
+  const currentSid = $derived(`image-source-${config.id || config.url}`);
+  const currentLid = $derived(`image-layer-${config.id || config.url}`);
   const currentUrl = $derived(config.url);
 
   // LIFECYCLE EFFECT: Only manages adding/removing the source/layer from the map.
@@ -100,7 +100,7 @@
   // Z-INDEX STACKING EFFECT: Updates layer stacking position when zIndex changes.
   $effect(() => {
     const map = mapRoot.map;
-    const targetZ = zIndex;
+    const targetZ = zIndex ?? config.zIndex;
     if (!map || !map.getLayer(currentLid) || targetZ === undefined) return;
 
     setLayerZIndex(map, currentLid, targetZ);

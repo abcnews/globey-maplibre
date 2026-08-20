@@ -8,8 +8,7 @@
   import PropCoord from './PropCoord.svelte';
   import PropLabels from './PropLabels.svelte';
   import PropBase from './PropBase/PropBase.svelte';
-  import PropGeoJSON from './GeoJSON/PropGeoJSON.svelte';
-  import PropImageSource from './ImageSource/PropImageSource.svelte';
+  import PropLayers from './Layers/PropLayers.svelte';
   import MarkerJson from './MarkerJson.svelte';
   import IframeUrl from './IframeUrl.svelte';
   import PropScreenshot from './PropScreenshotTool/PropScreenshot.svelte';
@@ -94,8 +93,7 @@
       }}
     />
     <PropLabels {map} onchange={labels => (options.labels = labels)} />
-    <PropGeoJSON {map} geoJsonList={options.geoJson || []} onchange={list => (options.geoJson = list)} />
-    <PropImageSource {map} bind:options onchange={list => (options.imageSources = list)} />
+    <PropLayers {map} bind:options />
 
     <MarkerAdmin
       prefixes={{

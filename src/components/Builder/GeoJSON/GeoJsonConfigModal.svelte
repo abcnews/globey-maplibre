@@ -13,28 +13,28 @@
   import { untrack } from 'svelte';
 
   let {
-    config: initialConfig,
-    onsave,
+    config: initialConfig = $bindable(),
     onclose
-  } = $props<{
+  }: {
     config: GeoJsonConfig;
-    onsave: (config: GeoJsonConfig, goto?: boolean, bounds?: [number, number][]) => void;
-    onclose: () => void;
-  }>();
+    onclose: (bounds?: [number, number][]) => void;
+  } = $props();
 
   let activeTab = $state<'config' | 'style'>('config');
 
   let config = $state<GeoJsonConfig>(
     untrack(() => {
-      const snap = $state.snapshot(initialConfig);
+      const snap = $state.snapshot(initialConfig) || ({} as any);
       return {
         ...snap,
+        type: snap.type ?? 'areas',
+        colourMode: snap.colourMode ?? 'simple',
         cmid: snap.cmid ? snap.cmid : ('' as any)
       };
     })
   );
   let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(
-    untrack(() => ($state.snapshot(initialConfig).cmid ? 'loading' : 'no-data'))
+    untrack(() => ($state.snapshot(initialConfig)?.cmid ? 'loading' : 'no-data'))
   );
   let errorMessage = $state<string | undefined>();
   let properties = $state<string[]>([]);
@@ -199,14 +199,11 @@
         ];
       }
     }
-    onsave(
-      {
-        ...config,
-        cmid: Number(config.cmid) || 0
-      },
-      goto,
-      bounds
-    );
+    initialConfig = {
+      ...config,
+      cmid: Number(config.cmid) || 0
+    };
+    onclose(bounds);
   }
 
   function addStyle() {

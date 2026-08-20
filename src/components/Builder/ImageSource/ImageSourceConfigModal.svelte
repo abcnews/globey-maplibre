@@ -10,18 +10,16 @@
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils';
 
   let {
-    config,
-    onsave,
+    config = $bindable(),
     onclose
   }: {
     config: ImageSourceConfig;
-    onsave: (config: ImageSourceConfig, goto?: boolean) => void;
-    onclose: () => void;
+    onclose: (bounds?: [number, number][]) => void;
   } = $props();
 
-  let url = $state(untrack(() => $state.snapshot(config).url));
-  let opacity = $state(untrack(() => $state.snapshot(config).opacity));
-  let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config).coordinates)));
+  let url = $state(untrack(() => $state.snapshot(config)?.url || ''));
+  let opacity = $state(untrack(() => $state.snapshot(config)?.opacity ?? 1));
+  let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config)?.coordinates || [])));
 
   $effect(() => {
     if (url) {
@@ -49,7 +47,15 @@
       return;
     }
 
-    onsave({ ...config, url, opacity, coordinates }, goto);
+    config = {
+      id: config?.id || Date.now().toString(),
+      ...config,
+      url,
+      opacity,
+      coordinates
+    };
+    const bounds = goto && coordinates?.length > 0 ? (coordinates as [number, number][]) : undefined;
+    onclose(bounds);
   }
 
   function handleImageLoad(e: Event) {

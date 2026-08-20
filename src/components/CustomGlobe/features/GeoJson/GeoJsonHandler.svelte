@@ -55,7 +55,7 @@
       data={dataMap[item.cmid]}
       config={item}
       sourceId={generateGeoJsonSourceId(item.cmid)}
-      zIndex={Z_INDEX_GEOJSON + index * 0.1}
+      zIndex={item.zIndex ?? Z_INDEX_GEOJSON + index * 0.1}
     />
   {/each}
 {/if}
