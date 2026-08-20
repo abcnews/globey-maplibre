@@ -63,7 +63,7 @@
     "@abcnews/env-utils": "^6.0.0",
     "@abcnews/mount-utils": "^3.0.1",
     "@abcnews/svelte-scrollyteller": "^3.0.0",
-    "@abcnews/terminus-fetch": "^7.0.0"
+    "@abcnews/terminus-fetch": "^7.1.0"
   },
   "contributors": [
     {

@@ -91,7 +91,9 @@
 
   {#if editingIndex !== null || isAdding}
     <GeoJsonConfigModal
-      config={editingIndex !== null ? geoJsonList[editingIndex] : ({ cmid: 0, type: 'areas', colourMode: 'simple' } as any)}
+      config={editingIndex !== null
+        ? geoJsonList[editingIndex]
+        : ({ cmid: '' as any, type: 'areas', colourMode: 'simple' } as any)}
       onsave={saveConfig}
       onclose={closeModal}
     />

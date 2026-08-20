@@ -24,7 +24,15 @@
 
   let activeTab = $state<'config' | 'style'>('config');
 
-  let config = $state<GeoJsonConfig>(untrack(() => $state.snapshot(initialConfig)));
+  let config = $state<GeoJsonConfig>(
+    untrack(() => {
+      const snap = $state.snapshot(initialConfig);
+      return {
+        ...snap,
+        cmid: snap.cmid ? snap.cmid : ('' as any)
+      };
+    })
+  );
   let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(
     untrack(() => ($state.snapshot(initialConfig).cmid ? 'loading' : 'no-data'))
   );
@@ -79,10 +87,11 @@
   }
 
   $effect(() => {
-    if (config.cmid && config.cmid !== lastCmid) {
-      lastCmid = config.cmid;
-      fetchAndParse(config.cmid);
-    } else if (!config.cmid) {
+    const numericCmid = Number(config.cmid);
+    if (numericCmid && numericCmid !== lastCmid && numericCmid > 0) {
+      lastCmid = numericCmid;
+      fetchAndParse(numericCmid);
+    } else if (!numericCmid) {
       status = 'no-data';
     }
   });
@@ -187,7 +196,14 @@
         ];
       }
     }
-    onsave(config, goto, bounds);
+    onsave(
+      {
+        ...config,
+        cmid: Number(config.cmid) || 0
+      },
+      goto,
+      bounds
+    );
   }
 
   function addStyle() {
