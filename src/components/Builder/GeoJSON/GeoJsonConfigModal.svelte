@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type { GeoJsonConfig } from '../../../lib/marker';
+  import { fetchDownloadObject } from '../../../lib/fetchDownloadObject';
   import { feature } from 'topojson-client';
   import PropGeoJsonFilter from './PropGeoJsonFilter.svelte';
   import PropGeoJsonColour from './PropGeoJsonColour.svelte';
@@ -10,7 +11,6 @@
   import Collapsible from '../shared/Collapsible.svelte';
   import { ArrowUp, ArrowDown, Trash } from 'svelte-bootstrap-icons';
   import { untrack } from 'svelte';
-  import { isValidUrl } from '../../../lib/marker';
 
   let {
     config: initialConfig,
@@ -26,30 +26,23 @@
 
   let config = $state<GeoJsonConfig>(untrack(() => $state.snapshot(initialConfig)));
   let status = $state<'no-data' | 'loading' | 'loaded' | 'error'>(
-    untrack(() => ($state.snapshot(initialConfig).url ? 'loading' : 'no-data'))
+    untrack(() => ($state.snapshot(initialConfig).cmid ? 'loading' : 'no-data'))
   );
   let errorMessage = $state<string | undefined>();
   let properties = $state<string[]>([]);
   let featureCount = $state(0);
   let rawFeatures = $state<any[]>([]);
-  let lastUrl = '';
+  let lastCmid = 0;
 
-  async function fetchAndParse(url: string) {
-    if (!url) {
+  async function fetchAndParse(cmid: number) {
+    if (!cmid || isNaN(cmid) || cmid <= 0) {
       status = 'no-data';
-      return;
-    }
-    if (!isValidUrl(url)) {
-      status = 'error';
-      errorMessage = 'Preview URLs are not allowed. Please use a live-production or res/sites URL.';
       return;
     }
     status = 'loading';
     errorMessage = undefined;
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const data = await res.json();
+      const data = await fetchDownloadObject(cmid);
 
       let geojson: any = data;
       if (data.type === 'Topology') {
@@ -86,10 +79,10 @@
   }
 
   $effect(() => {
-    if (config.url && config.url !== lastUrl) {
-      lastUrl = config.url;
-      fetchAndParse(config.url);
-    } else if (!config.url) {
+    if (config.cmid && config.cmid !== lastCmid) {
+      lastCmid = config.cmid;
+      fetchAndParse(config.cmid);
+    } else if (!config.cmid) {
       status = 'no-data';
     }
   });
@@ -238,8 +231,15 @@
             (<small class="stat">{featureCount} features</small>)
           {/if}</legend
         >
-        <label for="gj-url">URL</label>
-        <input id="gj-url" type="text" bind:value={config.url} placeholder="https://example.com/data.json" />
+        <label for="gj-cmid">CMID</label>
+        <input
+          id="gj-cmid"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          bind:value={config.cmid}
+          placeholder="e.g. 12345678"
+        />
 
         {#if status === 'loading'}
           <div style:padding="0.5rem 0">Loading metadata...</div>

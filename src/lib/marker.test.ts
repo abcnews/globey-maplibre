@@ -166,7 +166,7 @@ describe('marker codecs', () => {
         ],
         geoJson: [
           {
-            url: 'https://live-production.wcms.abc-cdn.net.au/sample.json',
+            cmid: 12345678,
             type: 'areas',
             styles: [{ colourMode: 'simple', opacity: 0.8 }]
           }
@@ -196,7 +196,7 @@ describe('marker codecs', () => {
         ],
         geoJson: [
           {
-            url: 'https://live-production.wcms.abc-cdn.net.au/data.json',
+            cmid: 12345678,
             type: 'areas',
             styles: [
               {
@@ -232,6 +232,7 @@ describe('marker codecs', () => {
       assert.strictEqual(decoded.z, 6.14);
       assert.strictEqual(decoded.labels?.length, 1);
       assert.strictEqual(decoded.labels![0].name, 'Melbourne');
+      assert.strictEqual(decoded.geoJson![0].cmid, 12345678);
       assert.deepStrictEqual(
         decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
         input.geoJson![0].styles[0].colourConfig?.customPalette
@@ -240,16 +241,16 @@ describe('marker codecs', () => {
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources![0].url);
     });
 
-    it('should filter out invalid preview URLs during encode', async () => {
+    it('should filter out invalid preview URLs and zero CMIDs during encode', async () => {
       const input: DecodedObject = {
         geoJson: [
           {
-            url: 'https://live-production.wcms.abc-cdn.net.au/valid.json',
+            cmid: 12345678,
             type: 'areas',
             styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
           },
           {
-            url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.json',
+            cmid: 0,
             type: 'areas',
             styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
           }
@@ -265,9 +266,10 @@ describe('marker codecs', () => {
       const fragment = await markerSchema.encode(input);
       const decoded = await markerSchema.decode(fragment);
       assert.strictEqual(decoded.geoJson?.length, 1);
-      assert.strictEqual(decoded.geoJson![0].url, 'https://live-production.wcms.abc-cdn.net.au/valid.json');
+      assert.strictEqual(decoded.geoJson![0].cmid, 12345678);
       assert.strictEqual(decoded.imageSources?.length, 0);
     });
   });
 });
+
 

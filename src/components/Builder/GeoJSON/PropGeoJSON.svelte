@@ -80,8 +80,7 @@
         <strong>{config.type}</strong>
       {/snippet}
       {#snippet description(config: GeoJsonConfig)}
-        {@const filename = config.url.split('?')[0].split('/').pop() || config.url}
-        <span title={config.url}>{filename}</span>
+        <span>CMID: {config.cmid}</span>
       {/snippet}
       {#snippet actions(_, i)}
         <button class="btn-icon" aria-label="Edit" onclick={() => openEdit(i)}><Pencil /></button>
@@ -92,7 +91,7 @@
 
   {#if editingIndex !== null || isAdding}
     <GeoJsonConfigModal
-      config={editingIndex !== null ? geoJsonList[editingIndex] : { url: '', type: 'areas', colourMode: 'simple' }}
+      config={editingIndex !== null ? geoJsonList[editingIndex] : ({ cmid: 0, type: 'areas', colourMode: 'simple' } as any)}
       onsave={saveConfig}
       onclose={closeModal}
     />

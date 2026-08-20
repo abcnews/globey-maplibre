@@ -10,7 +10,7 @@ The GeoJSON system is designed to handle multiple, prioritized styling rules for
 
 ### 1. Data Models (`src/lib/marker/types.ts`)
 
-- **`GeoJsonConfig`**: The root configuration for a GeoJSON layer. It contains a `url`, a `type` (points, lines, areas), and an array of `styles`.
+- **`GeoJsonConfig`**: The root configuration for a GeoJSON layer. It contains a `cmid` (CoreMedia ID), a `type` (points, lines, areas), and an array of `styles`.
 - **`GeoJsonStyleConfig`**: A single styling rule.
   - `filter`: Optional property-based filter (e.g., `status == "hit"`).
   - `colourMode`: `simple`, `scale`, or `basic`.

@@ -154,7 +154,7 @@ export const geoJsonSpikeSchema = object({
  * Item schema for a single GeoJSON source dataset.
  */
 export const geoJsonItemSchema = object({
-  url: urlCodec.key('u'),
+  cmid: decimal().key('c'),
   type: oneOf(['areas', 'lines', 'points', 'spikes'] as const)
     .key('t')
     .default('areas'),
@@ -234,7 +234,11 @@ export const markerSchema = object({
   }),
   geoJson: array(geoJsonItemSchema)
     .transform(
-      (items: any[]) => items?.filter(item => isValidUrl(Array.isArray(item) ? item[0] : item?.url || item?.u)) ?? [],
+      (items: any[]) =>
+        items?.filter(item => {
+          const id = Array.isArray(item) ? item[0] : item?.cmid ?? item?.c;
+          return typeof id === 'number' ? id > 0 : Boolean(id && !isNaN(Number(id)) && Number(id) > 0);
+        }) ?? [],
       (items: any) => items
     )
     .asBase36()
