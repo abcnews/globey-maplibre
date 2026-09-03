@@ -1,19 +1,17 @@
 <script lang="ts">
   import type * as maplibregl from 'maplibre-gl';
-  import { getContext, untrack } from 'svelte';
-  import { disableMapAnimation, prefersReducedMotion } from '../../../lib/stores';
-  import type { PanZoomScrollProps } from './types';
+  import { getContext } from 'svelte';
   import { resolveAllPanelViews, createZoomInterpolator } from './utils';
-  import { Tween } from 'svelte/motion';
-  import { cubicOut } from 'svelte/easing';
+  import { getTween } from '../Tween/context.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const { panels, currentPanel = 0, virtualPanel = 0, panelPct = 0, scrollDelta = 0 }: PanZoomScrollProps = $props();
 
-  let isReducedMotionActive = $derived($prefersReducedMotion || $disableMapAnimation);
+  // Shared tween clock (mode, timing and panel pair all live here now).
+  const tween = getTween();
+
   let containerDimensions = $state({ width: 0, height: 0 });
 
-  // Observe map container dimensions reactively
+  // Panel view resolution depends on container size, so observe it reactively.
   $effect(() => {
     const map = mapRoot.map;
     if (!map) return;
@@ -34,54 +32,29 @@
     return () => observer.disconnect();
   });
 
-  // Reactive view resolution pipeline
+  // Resolve every panel to an absolute camera view, with forward inheritance for
+  // panels that omit geographic options.
   let views = $derived.by(() => {
     const map = mapRoot.map;
     if (!map) return [];
-    containerDimensions; // Re-evaluate when container size changes
-    return resolveAllPanelViews(map, panels);
+    containerDimensions; // re-resolve when the container resizes
+    return resolveAllPanelViews(map, tween.panels);
   });
 
-  /** Mouse wheel property tween */
-  const WHEEL_TWEEN = { duration: 350, easing: cubicOut };
+  let startView = $derived(views[tween.fromPanel]);
+  let targetView = $derived(views[tween.toPanel] ?? startView);
+  let interpolator = $derived(
+    startView && targetView && startView !== targetView ? createZoomInterpolator(startView, targetView) : null
+  );
 
-  // Directly index start and target views using pre-clamped currentPanel
-  let startView = $derived(views[currentPanel]);
-  let targetView = $derived(virtualPanel < 0 ? startView : (views[currentPanel + 1] ?? startView));
-
-  let interpolator = $derived(startView && targetView ? createZoomInterpolator(startView, targetView) : null);
-
-  // Tweened camera state
-  const zoomTween = new Tween(untrack(() => startView?.zoom ?? 0));
-  const lngTween = new Tween(untrack(() => startView?.center[0] ?? 0));
-  const latTween = new Tween(untrack(() => startView?.center[1] ?? 0));
-
-  $effect(() => {
-    if (!startView) return;
-
-    const target =
-      isReducedMotionActive || startView === targetView || panelPct === 0 || !interpolator
-        ? { center: startView.center, zoom: startView.zoom }
-        : interpolator(panelPct);
-
-    /** touch decives like phones/tablets, excluding devices like Windows touchscreens */
-    const isTouchDevice = window.matchMedia('(pointer: coarse) and (hover: none)').matches;
-    const isWheel = !isReducedMotionActive && !isTouchDevice;
-    const opts = isWheel ? WHEEL_TWEEN : { duration: 0 };
-
-    zoomTween.set(target.zoom, opts);
-    lngTween.set(target.center[0], opts);
-    latTween.set(target.center[1], opts);
-  });
-
-  // Apply camera position to map
+  // Apply the blended camera position each time the tween advances. The central
+  // position tween already provides wheel smoothing and reduced-motion snapping,
+  // so this just reads `tween.t` and jumps the map there.
   $effect(() => {
     const map = mapRoot.map;
-    if (!map) return;
+    if (!map || !startView) return;
 
-    map.jumpTo({
-      center: [lngTween.current, latTween.current],
-      zoom: zoomTween.current
-    });
+    const view = interpolator ? interpolator(tween.t) : startView;
+    map.jumpTo({ center: view.center, zoom: view.zoom });
   });
 </script>

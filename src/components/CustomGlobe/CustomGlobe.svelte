@@ -18,6 +18,10 @@
   import { isDarkBase } from './mapStyle/utils';
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
+  import type { DecodedObject } from '../../lib/marker';
+  import { TweenController } from '../features/Tween/TweenController.svelte.ts';
+  import { setTween } from '../features/Tween/context.ts';
+  import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
 
   setWorkerUrl(workerUrl);
 
@@ -53,6 +57,28 @@
   let mapContainer = $state<HTMLDivElement>();
   let mapInstance = $state<{ map: Map | null }>({ map: null });
   setContext('mapInstance', mapInstance);
+
+  // Shared tween clock for every scrollyteller feature (camera today; GeoJSON and
+  // labels next). Only driven on the scrollyteller path — the builder/static path
+  // leaves it idle and keeps using PanZoomHandler's flyTo.
+  // Seeded at panel 0 (scrollyteller always opens on the prelude); sync() takes over.
+  const tweenController = new TweenController();
+  setTween(tweenController);
+
+  const isTouchDevice =
+    typeof window !== 'undefined' && window.matchMedia('(pointer: coarse) and (hover: none)').matches;
+
+  $effect(() => {
+    if (!panels || panelPct === undefined) return;
+    tweenController.sync({
+      panels,
+      currentPanel: currentPanel ?? 0,
+      virtualPanel: virtualPanel ?? -1,
+      panelPct,
+      reducedMotion: $prefersReducedMotion || $disableMapAnimation,
+      isTouch: isTouchDevice
+    });
+  });
 
   const hasRasterSatellite = $derived(
     (options.rasterLayers || []).some(
@@ -118,7 +144,7 @@
       <AttributionHandler attribution={options.attribution} base={options.base} hideOsm={options.hideOsm} />
       <ProjectionHandler projection={options.projection} />
       {#if panels && panelPct !== undefined}
-        <PanZoomScrollHandler {panels} currentPanel={currentPanel ?? 0} {virtualPanel} {panelPct} {scrollDelta} />
+        <PanZoomScrollHandler />
       {:else}
         <PanZoomHandler
           coords={options.coords}

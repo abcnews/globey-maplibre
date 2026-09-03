@@ -311,7 +311,11 @@ export const markerSchema = object({
   constrainView: boolean().key('cv').default(false),
   attribution: base36String().key('attr').default(''),
   hideOsm: boolean().key('ho').default(false),
-  animationDuration: decimal().key('ad').default(2000)
+  animationDuration: decimal().key('ad').default(2000),
+  /** How the transition *into* this panel plays: scroll-scrubbed or a fixed-duration play. */
+  animationMode: oneOf(['scroll', 'immediate'] as const)
+    .key('am')
+    .default('scroll')
 }).transform(
   (encoded: any) => stringify(encoded || {}),
   (input: any) => {
