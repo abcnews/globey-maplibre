@@ -7,6 +7,11 @@ import {
   getPaletteInterpolator,
   getKilometreZoomScaleExpression,
   fetchGeoJsonData,
+  buildFeatureClasses,
+  classPaintExpression,
+  FEATURE_CLASS_PROP,
+  HIDDEN_FEATURE_STATE,
+  COLOUR_SCALE_STEPS,
   EARTH_CIRCUMFERENCE_KM,
   TILE_SIZE_PX
 } from './utils.ts';
@@ -232,6 +237,90 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       assert.strictEqual(inactiveState.opacity, 0);
       assert.strictEqual(inactiveState.fillOpacity, 0);
       assert.strictEqual(inactiveState.strokeOpacity, 0);
+    });
+  });
+
+  describe('buildFeatureClasses', () => {
+    const fc = (values: number[]) => ({
+      type: 'FeatureCollection',
+      features: values.map((v, i) => ({ type: 'Feature', id: i, properties: { val: v }, geometry: null }))
+    });
+
+    it('collapses a constant-colour layer that never changes to a single class', () => {
+      const cfg: GeoJsonConfig = { cmid: 1, type: 'areas', styles: [{ colourMode: 'basic', colourConfig: { basic: '#00ff00' } }] };
+      const data = fc([1, 2, 3]);
+
+      const { classCount, classStates } = buildFeatureClasses(data, [cfg, cfg, cfg]);
+
+      expect(classCount).toBe(1);
+      expect(classStates[0]).toHaveLength(3); // one state per panel
+      expect(data.features.every((f: any) => f.properties[FEATURE_CLASS_PROP] === 0)).toBe(true);
+      expect(classStates[0][0].fillColor).toBe('#00ff00');
+    });
+
+    it('bounds a continuous choropleth to at most COLOUR_SCALE_STEPS + 1 classes', () => {
+      const cfg: GeoJsonConfig = {
+        cmid: 1,
+        type: 'areas',
+        styles: [
+          {
+            colourMode: 'scale',
+            colourProp: 'val',
+            colourConfig: { min: 0, max: 100, paletteType: 'sequential', paletteVariant: 'blue' }
+          }
+        ]
+      };
+      // 500 distinct values → without quantisation this would be ~500 classes.
+      const data = fc(Array.from({ length: 500 }, (_, i) => (i / 499) * 100));
+
+      const { classCount } = buildFeatureClasses(data, [cfg, cfg]);
+
+      expect(classCount).toBeLessThanOrEqual(COLOUR_SCALE_STEPS + 1);
+      expect(classCount).toBeGreaterThan(1);
+    });
+
+    it('gives features hidden in one panel a distinct trajectory ending in HIDDEN_FEATURE_STATE', () => {
+      const cfg: GeoJsonConfig = { cmid: 1, type: 'areas', styles: [{ colourMode: 'basic', colourConfig: { basic: '#00ff00' } }] };
+      const data = fc([1, 2]);
+
+      const { classCount, classStates } = buildFeatureClasses(data, [cfg, undefined]);
+
+      expect(classCount).toBe(1);
+      expect(classStates[0][0].fillOpacity).toBeGreaterThan(0);
+      expect(classStates[0][1]).toEqual(HIDDEN_FEATURE_STATE);
+    });
+
+    it('splits into separate classes when a filter matches only some features', () => {
+      const cfg: GeoJsonConfig = {
+        cmid: 1,
+        type: 'areas',
+        styles: [{ colourMode: 'basic', colourConfig: { basic: '#004cff' }, filter: { prop: 'val', values: [1] } }]
+      };
+      const data = fc([1, 2, 1]);
+
+      const { classCount } = buildFeatureClasses(data, [cfg, cfg]);
+
+      expect(classCount).toBe(2); // matched vs hidden
+      expect(data.features[0].properties[FEATURE_CLASS_PROP]).toBe(data.features[2].properties[FEATURE_CLASS_PROP]);
+      expect(data.features[1].properties[FEATURE_CLASS_PROP]).not.toBe(data.features[0].properties[FEATURE_CLASS_PROP]);
+    });
+  });
+
+  describe('classPaintExpression', () => {
+    const state = (fillColor: string, fillOpacity: number): any => ({ ...HIDDEN_FEATURE_STATE, fillColor, fillOpacity });
+
+    it('returns a bare constant for a single-panel (builder) class', () => {
+      expect(classPaintExpression([state('#123456', 0.5)], 'fillColor')).toBe('#123456');
+      expect(classPaintExpression([state('#123456', 0.5)], 'fillOpacity')).toBe(0.5);
+    });
+
+    it('builds a pure global-state interpolate with one stop per panel', () => {
+      const expr = classPaintExpression([state('#000000', 0), state('#ffffff', 1), state('#ff0000', 0.5)], 'fillColor');
+
+      expect(expr[0]).toBe('interpolate');
+      expect(expr[1]).toEqual(['linear']);
+      expect(expr[2]).toEqual(['number', ['global-state', 'gjPos'], 0]);
+      expect(expr.slice(3)).toEqual([0, '#000000', 1, '#ffffff', 2, '#ff0000']);
     });
   });
 

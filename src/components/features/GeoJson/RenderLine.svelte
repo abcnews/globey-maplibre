@@ -1,8 +1,13 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type { Map, GeoJSONSource } from 'maplibre-gl';
+  import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import { applyFeatureStates, getKilometreZoomScaleExpression } from './utils.ts';
+  import {
+    classPaintExpression,
+    classFilterExpression,
+    getKilometreZoomScaleExpression,
+    type GeoJsonFeatureState
+  } from './utils.ts';
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,
@@ -14,118 +19,91 @@
 
   let {
     data,
+    classStates,
     config,
     sourceId,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
+    /** `classStates[classIndex][panelIndex]` — one class's resolved state per panel. */
+    classStates: GeoJsonFeatureState[][];
     config: GeoJsonConfig;
     sourceId: string;
     zIndex?: number;
   } = $props();
 
-  const layerId = $derived(`${sourceId}-line`);
-  const outlineLayerId = $derived(`${sourceId}-line-outline`);
+  const LINE_LAYOUT = { 'line-cap': 'round', 'line-join': 'round' } as const;
 
-  // Layer lifecycle: add/remove layer only on mount, unmount, and when map, sourceId, or zIndex changes
+  // Fixed real-world width keeps its zoom expression; the fade is opacity-only.
+  const kmWidth = $derived(
+    config.lineWidth?.unit === 'k' ? getKilometreZoomScaleExpression(config.lineWidth.value) : null
+  );
+
+  // One main + outline line layer per class, added once. See RenderArea for why
+  // nothing here reacts to scroll.
   $effect(() => {
     const map = mapRoot.map;
     const sid = sourceId;
-    const lid = layerId;
-    const olid = outlineLayerId;
-    const targetZ = zIndex;
+    const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
+    const classes = classStates;
+    const lineWidthExpr = kmWidth;
+    if (!map || !classes) return;
 
-    if (!map) return;
-
-    untrack(() => {
-      // Initialize Source
+    const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
-        map.addSource(sid, {
-          type: 'geojson',
-          data: data || { type: 'FeatureCollection', features: [] }
-        });
+        map.addSource(sid, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
       }
 
-      // Initialize Outline Layer (placed slightly below main stroke)
-      if (map.getSource(sid) && !map.getLayer(olid)) {
-        addLayerWithZIndex(
-          map,
-          {
-            id: olid,
-            type: 'line',
-            source: sid,
-            layout: {
-              'line-cap': 'round',
-              'line-join': 'round'
+      return classes.flatMap((perPanelStates, classIndex) => {
+        const outlineLayerId = `${sid}-line-outline-c${classIndex}`;
+        const lineLayerId = `${sid}-line-c${classIndex}`;
+        const filter = classFilterExpression(classIndex);
+
+        if (!map.getLayer(outlineLayerId)) {
+          addLayerWithZIndex(
+            map,
+            {
+              id: outlineLayerId,
+              type: 'line',
+              source: sid,
+              filter,
+              layout: LINE_LAYOUT,
+              paint: {
+                'line-color': classPaintExpression(perPanelStates, 'outlineColor'),
+                'line-width': classPaintExpression(perPanelStates, 'outlineWidth'),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+              }
             },
-            paint: {
-              'line-color': ['coalesce', ['feature-state', 'outlineColor'], '#ffffff'],
-              'line-width': ['coalesce', ['feature-state', 'outlineWidth'], 4],
-              'line-opacity': ['coalesce', ['feature-state', 'strokeOpacity'], 1],
-              'line-width-transition': { duration: 300 },
-              'line-opacity-transition': { duration: 300 },
-              'line-color-transition': { duration: 300 }
-            }
-          },
-          targetZ - SUB_LAYER_OUTLINE_OFFSET
-        );
-      }
+            outlineZ
+          );
+        }
 
-      // Initialize Main Line Layer
-      if (map.getSource(sid) && !map.getLayer(lid)) {
-        addLayerWithZIndex(
-          map,
-          {
-            id: lid,
-            type: 'line',
-            source: sid,
-            layout: {
-              'line-cap': 'round',
-              'line-join': 'round'
+        if (!map.getLayer(lineLayerId)) {
+          addLayerWithZIndex(
+            map,
+            {
+              id: lineLayerId,
+              type: 'line',
+              source: sid,
+              filter,
+              layout: LINE_LAYOUT,
+              paint: {
+                'line-color': classPaintExpression(perPanelStates, 'strokeColor'),
+                'line-width': lineWidthExpr ?? classPaintExpression(perPanelStates, 'strokeWidth'),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+              }
             },
-            paint: {
-              'line-color': ['coalesce', ['feature-state', 'strokeColor'], '#00267e'],
-              'line-width':
-                config.lineWidth?.unit === 'k'
-                  ? getKilometreZoomScaleExpression(config.lineWidth.value)
-                  : ['coalesce', ['feature-state', 'strokeWidth'], 2],
-              'line-opacity': ['coalesce', ['feature-state', 'strokeOpacity'], 1],
-              'line-color-transition': { duration: 300 },
-              'line-opacity-transition': { duration: 300 },
-              'line-width-transition': { duration: 300 }
-            }
-          },
-          targetZ
-        );
-      }
+            zIndex
+          );
+        }
 
-      applyFeatureStates(map, sid, data, config);
+        return [outlineLayerId, lineLayerId];
+      });
     });
 
     return () => {
-      removeLayerWithZIndex(map, lid);
-      removeLayerWithZIndex(map, olid);
+      addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };
-  });
-
-  // Update Data
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    if (map && map.getSource(sid) && data) {
-      (map.getSource(sid) as GeoJSONSource).setData(data);
-      applyFeatureStates(map, sid, data, config);
-    }
-  });
-
-  // Update Styles on config change
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    config;
-    if (map && map.getSource(sid) && data) {
-      applyFeatureStates(map, sid, data, config);
-    }
   });
 </script>

@@ -1,4 +1,4 @@
-import type { Map } from 'maplibre-gl';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import { feature } from 'topojson-client';
 import {
   getDivergentContinuousPaletteInterpolator,
@@ -107,6 +107,28 @@ export interface GeoJsonFeatureState {
 }
 
 /**
+ * Levels the colour-scale `factor` is snapped to when building class layers
+ * ([buildFeatureClasses]). Visually lossless on a ramp; bounds the class count so
+ * a continuous choropleth over hundreds of thousands of features still resolves
+ * to a small, fixed set of layers.
+ */
+export const COLOUR_SCALE_STEPS = 24;
+
+/** State applied to a feature that matches no style rule — fully transparent. */
+export const HIDDEN_FEATURE_STATE: GeoJsonFeatureState = Object.freeze({
+  color: '#00267E',
+  fillColor: '#00267E',
+  strokeColor: '#00267E',
+  outlineColor: '#ffffff',
+  radius: 0,
+  strokeWidth: 0,
+  outlineWidth: 0,
+  opacity: 0,
+  fillOpacity: 0,
+  strokeOpacity: 0
+});
+
+/**
  * Creates a colour interpolation function based on the builder's configuration.
  * This serves as the single source of truth for colour scaling across 2D layers
  * and 3D spikes.
@@ -139,7 +161,8 @@ export function getPaletteInterpolator(style: GeoJsonStyleConfig): ((t: number) 
  */
 function getSingleStyleEvaluator(
   config: GeoJsonConfig,
-  style: GeoJsonStyleConfig
+  style: GeoJsonStyleConfig,
+  quantiseSteps = 0
 ): (feature: any, index: number) => GeoJsonFeatureState {
   const baseOpacity = style.opacity ?? 1;
   const isOpaque = style.isOpaque ?? false;
@@ -176,7 +199,9 @@ function getSingleStyleEvaluator(
     } else if (colourMode === 'scale') {
       let val = Number(props[colourProp || ''] ?? feature?.cVal ?? 0);
       if (isNaN(val)) val = 0;
-      const factor = Math.max(0, Math.min(1, (val - min) / range));
+      let factor = Math.max(0, Math.min(1, (val - min) / range));
+      // Snap to a fixed number of levels so class-layer building stays bounded.
+      if (quantiseSteps > 0) factor = Math.round(factor * quantiseSteps) / quantiseSteps;
       let evaluatedColour = '#888888';
       if (interpolator) {
         evaluatedColour = interpolator(factor);
@@ -251,10 +276,15 @@ function getSingleStyleEvaluator(
  * @param config The GeoJSON layer configuration containing the style rules
  * @returns A function that takes a GeoJSON feature and returns its GeoJsonFeatureState
  */
-export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, index: number) => GeoJsonFeatureState {
+export function getFeatureStateEvaluator(
+  config: GeoJsonConfig,
+  opts: { quantiseSteps?: number } = {}
+): (feature: any, index: number) => GeoJsonFeatureState {
+  const quantiseSteps = opts.quantiseSteps ?? 0;
+
   // Pre-build rule matching predicates to avoid re-parsing filter arrays on every feature
   const styleRules = (config.styles || []).map(style => {
-    const evaluate = getSingleStyleEvaluator(config, style);
+    const evaluate = getSingleStyleEvaluator(config, style, quantiseSteps);
     const filter = style.filter;
 
     const matches = (props: Record<string, any>) => {
@@ -269,25 +299,16 @@ export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, 
     return { matches, evaluate };
   });
 
-  const defaultEvaluator = getSingleStyleEvaluator(config, {
-    colourMode: 'basic',
-    colourConfig: { basicType: 'normal' },
-    opacity: 1,
-    isOpaque: false
-  });
-
-  const hiddenState: GeoJsonFeatureState = {
-    color: '#00267E',
-    fillColor: '#00267E',
-    strokeColor: '#00267E',
-    outlineColor: '#ffffff',
-    radius: 0,
-    strokeWidth: 0,
-    outlineWidth: 0,
-    opacity: 0,
-    fillOpacity: 0,
-    strokeOpacity: 0
-  };
+  const defaultEvaluator = getSingleStyleEvaluator(
+    config,
+    {
+      colourMode: 'basic',
+      colourConfig: { basicType: 'normal' },
+      opacity: 1,
+      isOpaque: false
+    },
+    quantiseSteps
+  );
 
   return (feature: any, index: number) => {
     const props = feature?.properties || {};
@@ -300,7 +321,7 @@ export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, 
 
     // When style rules are defined but none matched, the feature is filtered out (hidden)
     if (config.styles && config.styles.length > 0) {
-      return hiddenState;
+      return HIDDEN_FEATURE_STATE;
     }
 
     // Default fallback when no custom styles are specified
@@ -312,7 +333,7 @@ export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, 
  * Updates MapLibre feature states on a source for all features in the GeoJSON dataset.
  */
 export function applyFeatureStates(
-  map: Map,
+  map: MapLibreMap,
   sourceId: string,
   data: any,
   config: GeoJsonConfig
@@ -326,6 +347,90 @@ export function applyFeatureStates(
     const state = evaluator(feat, index);
     map.setFeatureState({ source: sourceId, id }, state);
   });
+}
+
+/** Property written onto every feature by [buildFeatureClasses]. */
+export const FEATURE_CLASS_PROP = '__gjClass';
+
+/** Global-state key the class-layer paint expressions read (see [classPaintExpression]). */
+export const GEOJSON_POSITION_STATE = 'gjPos';
+
+export interface FeatureClasses {
+  /** Number of distinct classes; one layer (set) is added per class. */
+  classCount: number;
+  /** `classStates[classIndex][panelIndex]` — the class's resolved state in each panel. */
+  classStates: GeoJsonFeatureState[][];
+}
+
+/**
+ * Buckets every feature by the *trajectory* of its resolved style across all
+ * panels, writing an integer `__gjClass` onto each feature's properties.
+ *
+ * Two features that render identically in every panel share a class, so a large
+ * dataset collapses to a handful of classes — one static, filter-selected layer
+ * each, whose paint interpolates purely over the `gjPos` global-state (no
+ * per-feature work at animation time). `colourMode: 'scale'` is quantised so
+ * continuous data stays bounded.
+ *
+ * Mutates `data.features[i].properties.__gjClass`. Pure otherwise.
+ *
+ * @param perPanelConfigs This item's `GeoJsonConfig` in each panel; `undefined`
+ *   for a panel where the item is absent (→ hidden there).
+ */
+export function buildFeatureClasses(
+  data: any,
+  perPanelConfigs: (GeoJsonConfig | undefined)[],
+  quantiseSteps: number = COLOUR_SCALE_STEPS
+): FeatureClasses {
+  const features: any[] = data?.type === 'Feature' ? [data] : (data?.features ?? []);
+
+  const evaluators = perPanelConfigs.map(cfg =>
+    cfg ? getFeatureStateEvaluator(cfg, { quantiseSteps }) : null
+  );
+
+  const keyToIndex = new Map<string, number>();
+  const classStates: GeoJsonFeatureState[][] = [];
+
+  features.forEach((feat, i) => {
+    const states = evaluators.map(evaluate => (evaluate ? evaluate(feat, i) : HIDDEN_FEATURE_STATE));
+    const key = JSON.stringify(states);
+
+    let index = keyToIndex.get(key);
+    if (index === undefined) {
+      index = classStates.length;
+      keyToIndex.set(key, index);
+      classStates.push(states);
+    }
+
+    if (!feat.properties) feat.properties = {};
+    feat.properties[FEATURE_CLASS_PROP] = index;
+  });
+
+  return { classCount: classStates.length, classStates };
+}
+
+/** Filter that selects only the features assigned to `classIndex`. */
+export function classFilterExpression(classIndex: number): any {
+  return ['==', ['get', FEATURE_CLASS_PROP], classIndex];
+}
+
+/**
+ * Builds the paint value for one field of one class layer: a pure
+ * `interpolate` over the `gjPos` global-state with one stop per panel, so
+ * `map.setGlobalStateProperty('gjPos', fromPanel + easedT)` drives the whole
+ * layer with a single per-frame call. A single-panel (builder) class collapses
+ * to the constant value.
+ */
+export function classPaintExpression(
+  perPanelStates: GeoJsonFeatureState[],
+  field: keyof GeoJsonFeatureState,
+  posKey: string = GEOJSON_POSITION_STATE
+): any {
+  if (perPanelStates.length === 1) return perPanelStates[0][field];
+
+  const stops: any[] = [];
+  perPanelStates.forEach((state, panel) => stops.push(panel, state[field]));
+  return ['interpolate', ['linear'], ['number', ['global-state', posKey], 0], ...stops];
 }
 
 /**

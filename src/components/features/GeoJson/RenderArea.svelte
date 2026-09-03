@@ -1,8 +1,8 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type { Map, GeoJSONSource } from 'maplibre-gl';
+  import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import { applyFeatureStates } from './utils.ts';
+  import { classPaintExpression, classFilterExpression, type GeoJsonFeatureState } from './utils.ts';
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,
@@ -14,106 +14,82 @@
 
   let {
     data,
+    classStates,
     config,
     sourceId,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
+    /** `classStates[classIndex][panelIndex]` — one class's resolved state per panel. */
+    classStates: GeoJsonFeatureState[][];
     config: GeoJsonConfig;
     sourceId: string;
     zIndex?: number;
   } = $props();
 
-  const layerId = $derived(`${sourceId}-fill`);
-  const outlineLayerId = $derived(`${sourceId}-outline`);
-
-  // Layer lifecycle: add/remove layer only on mount, unmount, and when map, sourceId, or zIndex changes
+  // Add the source and a fill + outline layer per class, once. Every per-panel
+  // change is the `gjPos` global-state uniform set by GeoJsonHandler, so nothing
+  // here reacts to scroll — the layers are never rebuilt and there is no flash.
+  // Cleanup runs only on unmount / when the class set itself changes (builder).
   $effect(() => {
     const map = mapRoot.map;
     const sid = sourceId;
-    const lid = layerId;
-    const olid = outlineLayerId;
-    const targetZ = zIndex;
+    const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
+    const classes = classStates;
+    if (!map || !classes) return;
 
-    if (!map) return;
-
-    untrack(() => {
-      // Initialize Source
+    const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
-        map.addSource(sid, {
-          type: 'geojson',
-          data: data || { type: 'FeatureCollection', features: [] }
-        });
+        map.addSource(sid, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
       }
 
-      // Initialize Layers
-      if (map.getSource(sid)) {
-        if (!map.getLayer(lid)) {
+      return classes.flatMap((perPanelStates, classIndex) => {
+        const fillLayerId = `${sid}-fill-c${classIndex}`;
+        const outlineLayerId = `${sid}-outline-c${classIndex}`;
+        const filter = classFilterExpression(classIndex);
+
+        if (!map.getLayer(fillLayerId)) {
           addLayerWithZIndex(
             map,
             {
-              id: lid,
+              id: fillLayerId,
               type: 'fill',
               source: sid,
+              filter,
               paint: {
-                'fill-color': ['coalesce', ['feature-state', 'fillColor'], '#00267e'],
-                'fill-opacity': ['coalesce', ['feature-state', 'fillOpacity'], 1],
-                'fill-color-transition': { duration: 300 },
-                'fill-opacity-transition': { duration: 300 }
+                'fill-color': classPaintExpression(perPanelStates, 'fillColor'),
+                'fill-opacity': classPaintExpression(perPanelStates, 'fillOpacity')
               }
             },
-            targetZ - SUB_LAYER_OUTLINE_OFFSET
+            outlineZ
           );
         }
 
-        if (!map.getLayer(olid)) {
+        if (!map.getLayer(outlineLayerId)) {
           addLayerWithZIndex(
             map,
             {
-              id: olid,
+              id: outlineLayerId,
               type: 'line',
               source: sid,
+              filter,
               paint: {
-                'line-color': ['coalesce', ['feature-state', 'strokeColor'], '#00267e'],
-                'line-width': ['coalesce', ['feature-state', 'strokeWidth'], 1],
-                'line-opacity': ['coalesce', ['feature-state', 'strokeOpacity'], 1],
-                'line-width-transition': { duration: 300 },
-                'line-color-transition': { duration: 300 },
-                'line-opacity-transition': { duration: 300 }
+                'line-color': classPaintExpression(perPanelStates, 'strokeColor'),
+                'line-width': classPaintExpression(perPanelStates, 'strokeWidth'),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
               }
             },
-            targetZ
+            zIndex
           );
         }
 
-        applyFeatureStates(map, sid, data, config);
-      }
+        return [fillLayerId, outlineLayerId];
+      });
     });
 
     return () => {
-      removeLayerWithZIndex(map, lid);
-      removeLayerWithZIndex(map, olid);
+      addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };
-  });
-
-  // Update Data
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    if (map && map.getSource(sid) && data) {
-      (map.getSource(sid) as GeoJSONSource).setData(data);
-      applyFeatureStates(map, sid, data, config);
-    }
-  });
-
-  // Update Styles / Feature states when config changes
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    config;
-    if (map && map.getSource(sid) && data) {
-      applyFeatureStates(map, sid, data, config);
-    }
   });
 </script>

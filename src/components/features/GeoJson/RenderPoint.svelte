@@ -1,101 +1,84 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
-  import type { Map, GeoJSONSource } from 'maplibre-gl';
+  import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import { applyFeatureStates, getKilometreZoomScaleExpression } from './utils.ts';
+  import {
+    classPaintExpression,
+    classFilterExpression,
+    getKilometreZoomScaleExpression,
+    type GeoJsonFeatureState
+  } from './utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
   let {
     data,
+    classStates,
     config,
     sourceId,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
+    /** `classStates[classIndex][panelIndex]` — one class's resolved state per panel. */
+    classStates: GeoJsonFeatureState[][];
     config: GeoJsonConfig;
     sourceId: string;
     zIndex?: number;
   } = $props();
 
-  const layerId = $derived(`${sourceId}-circle`);
+  // Fixed real-world radius keeps its zoom expression; the fade is opacity-only.
+  const kmRadius = $derived(
+    config.pointSize?.unit === 'k' ? getKilometreZoomScaleExpression(config.pointSize.value) : null
+  );
 
-  // Layer lifecycle: add/remove layer only on mount, unmount, and when map, sourceId, or zIndex changes
+  // One circle layer per class, added once. See RenderArea for why nothing here
+  // reacts to scroll.
   $effect(() => {
     const map = mapRoot.map;
     const sid = sourceId;
-    const lid = layerId;
     const targetZ = zIndex;
+    const classes = classStates;
+    const radiusExpr = kmRadius;
+    if (!map || !classes) return;
 
-    if (!map) return;
-
-    untrack(() => {
-      // Add source if it doesn't exist
+    const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
-        map.addSource(sid, {
-          type: 'geojson',
-          data: data || { type: 'FeatureCollection', features: [] }
-        });
+        map.addSource(sid, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
       }
 
-      // Add layer if source exists and layer doesn't
-      if (map.getSource(sid) && !map.getLayer(lid)) {
-        addLayerWithZIndex(
-          map,
-          {
-            id: lid,
-            type: 'circle',
-            source: sid,
-            paint: {
-              'circle-pitch-scale': 'map',
-              'circle-color': ['coalesce', ['feature-state', 'color'], '#00267e'],
-              'circle-radius':
-                config.pointSize?.unit === 'k'
-                  ? getKilometreZoomScaleExpression(config.pointSize.value)
-                  : ['coalesce', ['feature-state', 'radius'], 6],
-              'circle-opacity': ['coalesce', ['feature-state', 'opacity'], 1],
-              'circle-stroke-color': ['coalesce', ['feature-state', 'strokeColor'], '#ffffff'],
-              'circle-stroke-width': ['coalesce', ['feature-state', 'strokeWidth'], 0],
-              'circle-stroke-opacity': ['coalesce', ['feature-state', 'strokeOpacity'], 1],
-              'circle-color-transition': { duration: 300 },
-              'circle-radius-transition': { duration: 300 },
-              'circle-opacity-transition': { duration: 300 },
-              'circle-stroke-color-transition': { duration: 300 },
-              'circle-stroke-width-transition': { duration: 300 },
-              'circle-stroke-opacity-transition': { duration: 300 }
-            }
-          },
-          targetZ
-        );
+      return classes.flatMap((perPanelStates, classIndex) => {
+        const circleLayerId = `${sid}-circle-c${classIndex}`;
 
-        applyFeatureStates(map, sid, data, config);
-      }
+        if (!map.getLayer(circleLayerId)) {
+          addLayerWithZIndex(
+            map,
+            {
+              id: circleLayerId,
+              type: 'circle',
+              source: sid,
+              filter: classFilterExpression(classIndex),
+              paint: {
+                'circle-pitch-scale': 'map',
+                'circle-color': classPaintExpression(perPanelStates, 'color'),
+                'circle-radius': radiusExpr ?? classPaintExpression(perPanelStates, 'radius'),
+                'circle-opacity': classPaintExpression(perPanelStates, 'opacity'),
+                'circle-stroke-color': classPaintExpression(perPanelStates, 'strokeColor'),
+                'circle-stroke-width': classPaintExpression(perPanelStates, 'strokeWidth'),
+                'circle-stroke-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+              }
+            },
+            targetZ
+          );
+        }
+
+        return [circleLayerId];
+      });
     });
 
     return () => {
-      removeLayerWithZIndex(map, lid);
+      addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };
-  });
-
-  // Update Data
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    if (map && map.getSource(sid) && data) {
-      (map.getSource(sid) as GeoJSONSource).setData(data);
-      applyFeatureStates(map, sid, data, config);
-    }
-  });
-
-  // Update Styles on config changes
-  $effect(() => {
-    const map = mapRoot.map;
-    const sid = sourceId;
-    config;
-    if (map && map.getSource(sid) && data) {
-      applyFeatureStates(map, sid, data, config);
-    }
   });
 </script>
