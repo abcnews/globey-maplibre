@@ -18,6 +18,14 @@ describe('customLabelStyle', () => {
     });
   });
 
+  it('drives text-opacity from a per-feature opacity property (default opaque)', () => {
+    const layers = getCustomLabelLayers(false, 'test-source');
+
+    layers.forEach(layer => {
+      expect(layer.paint?.['text-opacity']).toEqual(['number', ['get', 'opacity'], 1]);
+    });
+  });
+
   it('should apply dark/satellite colours when isDark is true', () => {
     const darkLayers = getCustomLabelLayers(true);
 

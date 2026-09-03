@@ -1,7 +1,9 @@
 import { Tween } from 'svelte/motion';
 import { cubicOut, cubicInOut } from 'svelte/easing';
+import { get } from 'svelte/store';
 import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
 import type { DecodedObject } from '../../../lib/marker';
+import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
 import type { AnimationMode } from './types.ts';
 import { computeDesiredPosition, easeInOutCubic, lerp, lerpColour, lerpCoords } from './utils.ts';
 
@@ -22,11 +24,12 @@ export interface TweenSyncInput {
   virtualPanel: number;
   /** Scroll progress from currentPanel to currentPanel+1 (0..1). */
   panelPct: number;
-  /** Reduced-motion preference or the builder's animation-disable toggle. */
-  reducedMotion: boolean;
   /** Coarse-pointer touch device (no hover) — skips scroll smoothing. */
   isTouch: boolean;
 }
+
+/** Reduced-motion preference / the builder's animation-disable toggle — read from global state. */
+const prefersReducedMotionNow = (): boolean => get(prefersReducedMotion) || get(disableMapAnimation);
 
 /**
  * The single tween clock shared by every scrollyteller feature.
@@ -67,7 +70,7 @@ export class TweenController {
       mode
     });
 
-    if (input.reducedMotion) {
+    if (prefersReducedMotionNow()) {
       this.#position.set(desired, { duration: 0 });
     } else if (mode === 'scroll') {
       this.#position.set(desired, {

@@ -21,7 +21,6 @@
   import type { DecodedObject } from '../../lib/marker';
   import { TweenController } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
-  import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
 
   setWorkerUrl(workerUrl);
 
@@ -75,7 +74,6 @@
       currentPanel: currentPanel ?? 0,
       virtualPanel: virtualPanel ?? -1,
       panelPct,
-      reducedMotion: $prefersReducedMotion || $disableMapAnimation,
       isTouch: isTouchDevice
     });
   });

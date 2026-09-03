@@ -9,11 +9,14 @@
     Z_INDEX_CUSTOM_LABELS
   } from '../layers/layerUtils.ts';
   import { getCustomLabelLayers } from '../../CustomGlobe/mapStyle/customLabelStyle';
+  import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
+  import { getTween } from '../Tween/context.ts';
+  import { resolveLabelTransition } from './utils.ts';
 
   const SOURCE_ID = 'custom-labels';
 
   interface Props {
-    /** Array of custom user labels to render */
+    /** Array of custom user labels to render (builder / static fallback) */
     labels?: Label[];
     /** Virtual Z-Index layer order for stacking */
     zIndex?: number;
@@ -24,8 +27,21 @@
   let { labels = [], zIndex, isDark = false }: Props = $props();
 
   const mapRoot = getContext<{ map: MapLibreMap | null }>('mapInstance');
+  const tween = getTween();
 
-  const labelsJson = $derived(JSON.stringify(labels));
+  // On the scrollyteller path, cross-fade between the two panels the tween is
+  // blending. With no panels loaded (builder / static), fall back to the `labels`
+  // prop with no transition.
+  const active = $derived(tween.panelCount > 0);
+  const fromLabels = $derived(active ? (tween.fromConfig.labels ?? []) : labels);
+  const toLabels = $derived(active ? (tween.toConfig.labels ?? []) : labels);
+  // Reduced motion + scroll mode still tracks scroll 1:1, so snap to a single
+  // hard swap at the segment midpoint rather than fading.
+  const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
+  const easedT = $derived(!active ? 0 : reducedMotion ? (tween.t < 0.5 ? 0 : 1) : tween.easedT);
+
+  const features = $derived(resolveLabelTransition(fromLabels, toLabels, easedT));
+  const featuresJson = $derived(JSON.stringify(features));
   const activeZIndex = $derived(zIndex ?? Z_INDEX_CUSTOM_LABELS);
 
   // 1. Initialise Layer & Source once, and clean up only on component unmount
@@ -59,9 +75,10 @@
     };
   });
 
-  // 2. Purely update GeoJSON data when labels change
+  // 2. Push the resolved (cross-faded) label set into the source. Re-runs on
+  //    every tween tick while a transition plays, and once at rest per panel.
   $effect(() => {
-    labelsJson;
+    featuresJson;
 
     if (!mapRoot?.map || typeof window === 'undefined') return;
     const map = mapRoot.map;
@@ -71,20 +88,19 @@
 
     const geoJsonData: GeoJSON.FeatureCollection<GeoJSON.Point> = {
       type: 'FeatureCollection',
-      features: (labels || [])
-        .filter(label => Boolean(label?.coords))
-        .map((label, index) => ({
-          type: 'Feature',
-          id: index,
-          properties: {
-            name: label.name || '',
-            style: label.style
-          },
-          geometry: {
-            type: 'Point',
-            coordinates: label.coords
-          }
-        }))
+      features: features.map((feature, index) => ({
+        type: 'Feature',
+        id: index,
+        properties: {
+          name: feature.name,
+          style: feature.style,
+          opacity: feature.opacity
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: feature.coords
+        }
+      }))
     };
 
     source.setData(geoJsonData);

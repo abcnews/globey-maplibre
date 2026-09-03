@@ -64,6 +64,13 @@ export function getCustomLabelLayers(
       visibility: 'visible'
     };
 
+    // Per-feature opacity so the tween can cross-fade labels between panels.
+    // Missing `opacity` (builder / static path) resolves to fully opaque.
+    layer.paint = {
+      ...(layer.paint ?? {}),
+      'text-opacity': ['number', ['get', 'opacity'], 1]
+    };
+
     if (isDark && layer.paint) {
       layer.paint['text-color'] = SATELLITE_TEXT_COLOUR;
       layer.paint['text-halo-color'] = SATELLITE_HALO_COLOUR;
