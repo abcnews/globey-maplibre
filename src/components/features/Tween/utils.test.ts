@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeDesiredPosition, lerp, lerpColour, lerpCoords } from './utils.ts';
+import { computeDesiredPosition, lerp, lerpColour, lerpCoords, tweenStopsExpression } from './utils.ts';
 
 describe('computeDesiredPosition', () => {
   it('holds on the first panel during the prelude', () => {
@@ -82,5 +82,25 @@ describe('lerpCoords', () => {
     const [lng] = lerpCoords([178.065, -17.7134], [-172.1046, -13.759], 0.5);
     // Short path travels east across ±180, not west through longitude 0.
     expect(Math.abs(lng)).toBeGreaterThan(170);
+  });
+});
+
+describe('tweenStopsExpression', () => {
+  it('returns a single value unchanged', () => {
+    expect(tweenStopsExpression([0.5])).toBe(0.5);
+    expect(tweenStopsExpression(['#abcdef'])).toBe('#abcdef');
+  });
+
+  it('builds an interpolate over the tween position with one stop per panel', () => {
+    const expr = tweenStopsExpression([0, 1, 0]);
+    expect(expr[0]).toBe('interpolate');
+    expect(expr[1]).toEqual(['linear']);
+    expect(expr[2]).toEqual(['number', ['global-state', 'tweenPos'], 0]);
+    expect(expr.slice(3)).toEqual([0, 0, 1, 1, 2, 0]);
+  });
+
+  it('uses a custom global-state key when given one', () => {
+    const expr = tweenStopsExpression([0, 1], 'foo');
+    expect(expr[2]).toEqual(['number', ['global-state', 'foo'], 0]);
   });
 });

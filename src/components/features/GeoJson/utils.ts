@@ -11,6 +11,7 @@ import { fetchDownloadObject } from '../../../lib/fetchDownloadObject.ts';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import type { GeoJsonConfig, GeoJsonStyleConfig } from '../../../lib/marker';
 import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
+import { MAPLIBRE_TWEEN_STATE_KEY, tweenStopsExpression } from '../Tween/utils.ts';
 import { THEMES } from './themes.ts';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
@@ -352,8 +353,8 @@ export function applyFeatureStates(
 /** Property written onto every feature by [buildFeatureClasses]. */
 export const FEATURE_CLASS_PROP = '__gjClass';
 
-/** Global-state key the class-layer paint expressions read (see [classPaintExpression]). */
-export const GEOJSON_POSITION_STATE = 'gjPos';
+/** Global-state key the class-layer paint expressions read. Shared with every other feature. */
+export const GEOJSON_POSITION_STATE = MAPLIBRE_TWEEN_STATE_KEY;
 
 export interface FeatureClasses {
   /** Number of distinct classes; one layer (set) is added per class. */
@@ -424,13 +425,12 @@ export function classFilterExpression(classIndex: number): any {
 export function classPaintExpression(
   perPanelStates: GeoJsonFeatureState[],
   field: keyof GeoJsonFeatureState,
-  posKey: string = GEOJSON_POSITION_STATE
+  posKey: string = MAPLIBRE_TWEEN_STATE_KEY
 ): any {
-  if (perPanelStates.length === 1) return perPanelStates[0][field];
-
-  const stops: any[] = [];
-  perPanelStates.forEach((state, panel) => stops.push(panel, state[field]));
-  return ['interpolate', ['linear'], ['number', ['global-state', posKey], 0], ...stops];
+  return tweenStopsExpression(
+    perPanelStates.map(state => state[field]),
+    posKey
+  );
 }
 
 /**

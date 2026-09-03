@@ -319,7 +319,7 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
 
       expect(expr[0]).toBe('interpolate');
       expect(expr[1]).toEqual(['linear']);
-      expect(expr[2]).toEqual(['number', ['global-state', 'gjPos'], 0]);
+      expect(expr[2]).toEqual(['number', ['global-state', 'tweenPos'], 0]);
       expect(expr.slice(3)).toEqual([0, '#000000', 1, '#ffffff', 2, '#ff0000']);
     });
   });

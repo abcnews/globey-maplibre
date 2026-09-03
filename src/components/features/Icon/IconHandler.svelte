@@ -4,28 +4,38 @@
   import { getContext, untrack } from 'svelte';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
   import {
-    addLayerWithZIndex,
     removeLayerWithZIndex,
     setLayerZIndex,
     getIconSourceId,
     getIconLayerId,
     Z_INDEX_CUSTOM_LABELS
   } from '../layers/layerUtils.ts';
+  import { addFadingLayer, pickStop } from '../layers/tweenedLayers.ts';
+  import { getTween } from '../Tween/context.ts';
 
   // In-flight map image load promises across icon handlers to avoid redundant downloads/decoding
   const inFlightMapImages = new Map<string, Promise<any>>();
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
+  const tween = getTween();
 
   let {
     config,
     id = config.id,
-    zIndex = config.zIndex ?? Z_INDEX_CUSTOM_LABELS
+    zIndex = config.zIndex ?? Z_INDEX_CUSTOM_LABELS,
+    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
+    opacityStops = [1],
+    /** One `[lng, lat]` per panel; null where the icon is absent. */
+    coordStops = [config.coords ?? null]
   }: {
     config: IconConfig;
     id?: string;
     zIndex?: number;
+    opacityStops?: number[];
+    coordStops?: ([number, number] | null)[];
   } = $props();
+
+  const iconCoords = (): [number, number] => pickStop(coordStops, tween.fromPanel, config.coords ?? [0, 0]);
 
   const currentCmid = $derived(config.cmid);
   const currentSid = $derived(getIconSourceId(id || config.cmid));
@@ -92,7 +102,7 @@
 
         // Add GeoJSON point source if not already present
         if (!map.getSource(sid)) {
-          const currentCoords = untrack(() => config.coords) || [0, 0];
+          const currentCoords = untrack(() => iconCoords());
           map.addSource(sid, {
             type: 'geojson',
             data: {
@@ -113,21 +123,22 @@
 
         // Add Symbol layer if not already present
         if (!map.getLayer(lid)) {
-          const currentZIndex = untrack(() => zIndex);
-          addLayerWithZIndex(
+          addFadingLayer(
             map,
             {
               id: lid,
-              type: 'symbol',
               source: sid,
+              type: 'symbol',
               layout: {
                 'icon-image': imgId,
                 'icon-size': 0.5,
                 'icon-allow-overlap': true,
                 'icon-ignore-placement': true
-              }
+              },
+              opacityKey: 'icon-opacity',
+              opacityStops: untrack(() => opacityStops)
             },
-            currentZIndex
+            untrack(() => zIndex)
           );
         }
       } catch (err) {
@@ -151,10 +162,11 @@
     };
   });
 
-  // COORDINATES EFFECT: Updates coordinates in-place without rebuilding layer
+  // COORDINATES EFFECT: snap to the panel currently being entered (no per-frame
+  // work — `fromPanel` only changes at a panel boundary).
   $effect(() => {
     const map = mapRoot.map;
-    const currentCoords = config.coords;
+    const currentCoords = iconCoords();
     const sid = currentSid;
     if (!map || !map.getSource(sid) || !currentCoords) return;
 

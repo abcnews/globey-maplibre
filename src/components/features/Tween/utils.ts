@@ -55,6 +55,31 @@ export function lerp(from: number, to: number, t: number): number {
 }
 
 /**
+ * MapLibre global-state key holding the current tween position
+ * (`fromPanel + easedT`). `CustomGlobe` writes it once per frame; feature layers
+ * read it from `tweenStopsExpression`.
+ */
+export const MAPLIBRE_TWEEN_STATE_KEY = 'tweenPos';
+
+/**
+ * Builds a paint value that steps through one value per panel as the tween
+ * position moves. The expression is pure (only the global-state and literals),
+ * so MapLibre compiles it to a shader uniform and one `setGlobalStateProperty`
+ * per frame updates every layer that uses it.
+ *
+ * A single value (builder / static, one "panel") is returned as-is.
+ */
+export function tweenStopsExpression(
+  perPanelValues: (number | string)[],
+  posKey: string = MAPLIBRE_TWEEN_STATE_KEY
+): any {
+  if (perPanelValues.length === 1) return perPanelValues[0];
+
+  const stops = perPanelValues.flatMap((value, panel) => [panel, value]);
+  return ['interpolate', ['linear'], ['number', ['global-state', posKey], 0], ...stops];
+}
+
+/**
  * Interpolates between two CSS colours. Falls back to whichever colour is
  * defined when one side is missing (a feature entering or leaving).
  */

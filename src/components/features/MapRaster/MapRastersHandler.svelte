@@ -1,25 +1,25 @@
 <script lang="ts">
   import type { RasterLayerConfig } from '../../../lib/marker/types.ts';
   import { Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
+  import { buildTweenedLayerEntries } from '../layers/tweenedLayers.ts';
   import MapRasterHandler from './MapRasterHandler.svelte';
 
-  interface Props {
-    /** List of raster layer configurations to mount on the map */
-    config?: RasterLayerConfig[];
-  }
+  // One raster-layer array per panel (built by CustomGlobe, satellite base folded in).
+  let { perPanel = [] }: { perPanel?: RasterLayerConfig[][] } = $props();
 
-  let { config = [] }: Props = $props();
+  const entries = $derived(buildTweenedLayerEntries(perPanel, { keyOf: raster => raster.url }));
+
+  const layerId = (url: string): string => `raster-${btoa(url).replace(/=/g, '').slice(-8)}`;
 </script>
 
-{#each config || [] as item, index ((item as any).id || item.url || index)}
-  {#if item.url}
-    <MapRasterHandler
-      id={`raster-${(item as any).id || (item.url ? btoa(item.url).replace(/=/g, '').slice(-8) : index)}`}
-      url={item.url}
-      maxZoom={item.maxZoom ?? 7}
-      tileSize={item.tileSize ?? 256}
-      attribution={item.attribution}
-      zIndex={item.zIndex ?? Z_INDEX_BASE_RASTER + index * 0.1}
-    />
-  {/if}
+{#each entries as entry (entry.sig)}
+  <MapRasterHandler
+    id={layerId(entry.representative.url)}
+    url={entry.representative.url}
+    maxZoom={entry.representative.maxZoom ?? 7}
+    tileSize={entry.representative.tileSize ?? 256}
+    attribution={entry.representative.attribution}
+    opacityStops={entry.opacityStops}
+    zIndex={entry.representative.zIndex ?? Z_INDEX_BASE_RASTER + entry.index * 0.1}
+  />
 {/each}

@@ -35,10 +35,10 @@
   const active = $derived(tween.panelCount > 0);
   const fromLabels = $derived(active ? (tween.fromConfig.labels ?? []) : labels);
   const toLabels = $derived(active ? (tween.toConfig.labels ?? []) : labels);
-  // Reduced motion + scroll mode still tracks scroll 1:1, so snap to a single
-  // hard swap at the segment midpoint rather than fading.
+  // Reduced motion: show the current panel's labels with no fade. The set
+  // switches when the next panel triggers (`fromPanel` changes).
   const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
-  const easedT = $derived(!active ? 0 : reducedMotion ? (tween.t < 0.5 ? 0 : 1) : tween.easedT);
+  const easedT = $derived(!active ? 0 : reducedMotion ? 0 : tween.easedT);
 
   const features = $derived(resolveLabelTransition(fromLabels, toLabels, easedT));
   const featuresJson = $derived(JSON.stringify(features));

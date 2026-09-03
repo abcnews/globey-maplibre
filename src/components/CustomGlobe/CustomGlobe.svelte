@@ -6,7 +6,6 @@
   import GeoJsonHandler from '../features/GeoJson/GeoJsonHandler.svelte';
   import ImageSourcesHandler from '../features/ImageSource/ImageSourcesHandler.svelte';
   import IconsHandler from '../features/Icon/IconsHandler.svelte';
-  import MapRasterHandler from '../features/MapRaster/MapRasterHandler.svelte';
   import MapRastersHandler from '../features/MapRaster/MapRastersHandler.svelte';
   import ProjectionHandler from '../features/Projection/ProjectionHandler.svelte';
   import AttributionHandler from '../features/Attribution/AttributionHandler.svelte';
@@ -18,9 +17,11 @@
   import { isDarkBase } from './mapStyle/utils';
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-  import type { DecodedObject } from '../../lib/marker';
+  import type { DecodedObject, RasterLayerConfig } from '../../lib/marker';
   import { TweenController } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
+  import { MAPLIBRE_TWEEN_STATE_KEY } from '../features/Tween/utils.ts';
+  import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
 
   setWorkerUrl(workerUrl);
 
@@ -78,6 +79,25 @@
     });
   });
 
+  // Write the shared tween position once per frame. Every feature's layers read
+  // it through a pure `['interpolate', … ['global-state', 'tweenPos'] …]` paint
+  // expression, so this one call drives all of their fades. At rest it lands on a
+  // whole panel index. Reduced motion shows the current panel with no fade; it
+  // switches when the next panel triggers. The builder / static path (no panels)
+  // pins it to 0.
+  const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
+  $effect(() => {
+    const map = mapInstance.map;
+    if (!map) return;
+
+    const position =
+      tweenController.panelCount === 0
+        ? 0
+        : tweenController.fromPanel + (reducedMotion ? 0 : tweenController.easedT);
+
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_STATE_KEY, position);
+  });
+
   const hasRasterSatellite = $derived(
     (options.rasterLayers || []).some(
       r => r.url?.includes('marble') || r.url?.includes('satellite') || r.attribution?.toLowerCase().includes('nasa')
@@ -86,6 +106,30 @@
   const isSatellite = $derived(options.base === 'satellite' || hasRasterSatellite);
   const isDark = $derived(isSatellite || isDarkBase(options.base || 'street'));
   const isVectorLight = $derived(options.base === 'street' && !hasRasterSatellite);
+
+  // A feature's config in each panel — one array per panel on the scrollyteller
+  // path, the current panel's array on the builder / static path.
+  const perPanel = <T,>(pick: (d: DecodedObject) => T[]): T[][] =>
+    tweenController.panelCount > 0
+      ? tweenController.panels.map(p => pick(p.data))
+      : [pick(options)];
+
+  // Raster layers, with the satellite base map folded in: it's a raster layer
+  // derived from `base` + `satelliteVariant`, so we build it here rather than in
+  // MapRastersHandler.
+  const panelRasters = (d: DecodedObject): RasterLayerConfig[] => {
+    const explicit = d.rasterLayers ?? [];
+    if (explicit.length || d.base !== 'satellite') return explicit;
+    const black = d.satelliteVariant === 'black';
+    return [
+      {
+        url: `https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${black ? 'black' : 'blue'}-marble/{z}/{x}/{y}.webp`,
+        maxZoom: 7,
+        tileSize: 256,
+        attribution: black ? 'NASA Black Marble' : 'NASA Blue Marble'
+      } as RasterLayerConfig
+    ];
+  };
 
   onMount(() => {
     if (!mapContainer) return;
@@ -165,19 +209,11 @@
 
       <MapCustomLabelHandler labels={options.labels} zIndex={options.labelsZIndex} {isDark} />
 
-      {#if options.rasterLayers && options.rasterLayers.length > 0}
-        <MapRastersHandler config={options.rasterLayers} />
-      {:else if options.base === 'satellite'}
-        <MapRasterHandler
-          url={`https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${options.satelliteVariant || 'blue'}-marble/{z}/{x}/{y}.webp`}
-          maxZoom={7}
-          attribution={options.satelliteVariant === 'black' ? 'NASA Black Marble' : 'NASA Blue Marble'}
-        />
-      {/if}
+      <MapRastersHandler perPanel={perPanel(panelRasters)} />
 
       <GeoJsonHandler config={options.geoJson} />
-      <ImageSourcesHandler config={options.imageSources} geoJsonConfig={options.geoJson} />
-      <IconsHandler config={options.icons} />
+      <ImageSourcesHandler perPanel={perPanel(d => d.imageSources ?? [])} />
+      <IconsHandler perPanel={perPanel(d => d.icons ?? [])} />
       {#if options.minimap && options.minimap.enabled !== false}
         <MinimapHandler bind:config={options.minimap} {interactive} />
       {/if}

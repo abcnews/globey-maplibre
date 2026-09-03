@@ -66,5 +66,5 @@ For continuous 3D geometry or WebGL instancing that cannot be represented by Map
 
 - **At Rest**: When scrolling stops at a panel, `gjPos` resolves to the panel index, displaying exact panel values.
 - **Static Display**: In single-panel or non-scrollyteller views, `classPaintExpression` evaluates to static constants with no active animation.
-- **Reduced Motion**: Snaps `gjPos` directly to the target panel stop without intermediate interpolation.
+- **Reduced Motion**: `gjPos` holds on the current panel's stop with no fade; it switches when the next panel triggers.
 - **Inactive Panels**: Datasets absent from a panel are assigned zero opacity for that panel stop

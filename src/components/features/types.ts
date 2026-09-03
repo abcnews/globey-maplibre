@@ -140,13 +140,11 @@ export interface LayerFeatureDefinition<T = any> {
   }>;
 
   /**
-   * Svelte component rendered inside CustomGlobe to display the layer on MapLibre.
-   * Gracefully bails out if the item data is incomplete (e.g. missing CMID or URL).
+   * The layer's map-rendering component. Metadata only — CustomGlobe imports each
+   * handler directly and passes whatever props it needs, so the prop shape varies
+   * per feature.
    */
-  MapRenderer?: Component<{
-    config?: any;
-    options?: DecodedObject;
-  }>;
+  MapRenderer?: Component<any>;
 }
 
 /**

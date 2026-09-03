@@ -1,12 +1,8 @@
 <script lang="ts">
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import {
-    addLayerWithZIndex,
-    removeLayerWithZIndex,
-    setLayerZIndex,
-    Z_INDEX_BASE_RASTER
-  } from '../layers/layerUtils.ts';
+  import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
+  import { addFadingLayer } from '../layers/tweenedLayers.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -16,7 +12,9 @@
     id = 'raster-base',
     maxZoom = 7,
     tileSize = 256,
-    zIndex = Z_INDEX_BASE_RASTER
+    zIndex = Z_INDEX_BASE_RASTER,
+    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
+    opacityStops = [1]
   }: {
     url: string;
     attribution?: string;
@@ -24,6 +22,7 @@
     maxZoom?: number;
     tileSize?: number;
     zIndex?: number;
+    opacityStops?: number[];
   } = $props();
 
   // Effect for source and layer lifecycle
@@ -38,6 +37,7 @@
     const s_attribution = attribution;
     const s_maxZoom = maxZoom;
     const s_tileSize = tileSize;
+    const s_opacityStops = opacityStops;
 
     const setup = () => {
       if (!map.getStyle() || map.getSource(sourceId)) return;
@@ -51,18 +51,17 @@
           maxzoom: s_maxZoom
         });
 
-        const initialZ = untrack(() => zIndex ?? Z_INDEX_BASE_RASTER);
-        addLayerWithZIndex(
+        addFadingLayer(
           map,
           {
             id,
-            type: 'raster',
             source: sourceId,
-            paint: {
-              'raster-fade-duration': 0
-            }
+            type: 'raster',
+            paint: { 'raster-fade-duration': 0 },
+            opacityKey: 'raster-opacity',
+            opacityStops: s_opacityStops
           },
-          initialZ
+          untrack(() => zIndex ?? Z_INDEX_BASE_RASTER)
         );
       } catch (e) {
         // Handled during style loads

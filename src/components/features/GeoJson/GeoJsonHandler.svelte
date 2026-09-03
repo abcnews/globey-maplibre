@@ -1,16 +1,12 @@
 <script lang="ts">
-  import { getContext } from 'svelte';
-  import type { Map as MapLibreMap } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
-  import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
-  import { fetchGeoJsonData, buildFeatureClasses, GEOJSON_POSITION_STATE, type FeatureClasses } from './utils.ts';
+  import { fetchGeoJsonData, buildFeatureClasses, type FeatureClasses } from './utils.ts';
   import { generateGeoJsonSourceId, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
   import { getTween } from '../Tween/context.ts';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
 
   let { config = [] } = $props<{ config?: GeoJsonConfig[] }>();
 
-  const mapRoot = getContext<{ map: MapLibreMap | null }>('mapInstance');
   const tween = getTween();
 
   /** Stable identity for a config item across panels (id, else URL, else CMID). */
@@ -73,22 +69,8 @@
         .catch(e => console.error(`[GeoJsonHandler] Error loading GeoJSON ${item.key}:`, e));
     }
   });
-
-  // One global-state write per frame drives every class layer's paint uniform —
-  // O(1), independent of feature count. At rest it sits on an integer panel
-  // index; reduced motion snaps to the nearest one.
-  const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
-  $effect(() => {
-    const map = mapRoot?.map;
-    if (!map) return;
-
-    const position =
-      tween.panelCount === 0
-        ? 0
-        : tween.fromPanel + (reducedMotion ? (tween.t < 0.5 ? 0 : 1) : tween.easedT);
-
-    map.setGlobalStateProperty(GEOJSON_POSITION_STATE, position);
-  });
+  // The per-frame `tweenPos` write that drives every class layer's paint lives in
+  // CustomGlobe now — it is shared by every feature.
 </script>
 
 {#each items as item (item.sig)}

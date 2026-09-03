@@ -37,8 +37,9 @@ marker key (`am` in the URL hash, default `'scroll'`), read from
   paused part-way. Scrolling back to the previous panel plays it in reverse.
 
 Under reduced motion (`prefersReducedMotion` or `disableMapAnimation` in
-[`../../../lib/stores.ts`](../../../lib/stores.ts)) both modes snap — the position
-jumps with `duration: 0`.
+[`../../../lib/stores.ts`](../../../lib/stores.ts)) there is no fade. Features show
+the current panel and switch to the next one when it triggers. (The position tween
+runs with `duration: 0`, and consumers use `0` for the blend instead of `easedT`.)
 
 ---
 
@@ -131,13 +132,14 @@ at `t >= 0.5`. Match whatever the camera / rest of the app does for that field.
 
 ### Reduced motion
 
-Read the global stores directly and snap — do not route this through the
-controller:
+Read the global stores directly. Use `0` for the blend so the feature shows the
+current panel and switches when the next one triggers (`tween.fromPanel` already
+tracks that):
 
 ```svelte
 import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
 const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
-const easedT = $derived(reducedMotion ? (tween.t < 0.5 ? 0 : 1) : tween.easedT);
+const easedT = $derived(reducedMotion ? 0 : tween.easedT);
 ```
 
 ### Builder / static path
@@ -201,7 +203,7 @@ Typed context pair from [`./context.ts`](./context.ts) (Svelte `createContext`).
 | Prelude                           | `position` pinned to `0`                                         |
 | Outro / last panel / single panel | `fromPanel === toPanel`, `easedT` still `0`, values equal        |
 | Builder / static (no panels)      | `panelCount === 0` → consumers use their static prop             |
-| Reduced motion                    | `duration: 0` → `position` and `easedT` snap                     |
+| Reduced motion                    | consumers blend with `0` → show the current panel, switch when the next triggers |
 | `immediate` mode                  | `easedT` ramps over `animationDuration`, reverses on scroll-back |
 
 ---
