@@ -2,7 +2,7 @@
   import { Modal, Typeahead, Loader } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
   import type { DecodedObject, GeoJsonConfig } from '../../../lib/marker';
-  import { Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR } from '../layers/layerUtils.ts';
   import { DEFAULT_FEATURE_SETS, fetchFeatureSetIndex, getFeatureFileUrl, type FeatureSetItem } from './featureSets.ts';
 
   interface Props {
@@ -109,7 +109,6 @@
 
     onclose?.();
   }
-
 </script>
 
 {#snippet footerChildren()}
