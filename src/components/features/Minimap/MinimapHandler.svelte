@@ -4,6 +4,7 @@
   import 'maplibre-gl/dist/maplibre-gl.css';
   import type { MinimapConfig } from '../../../lib/marker';
   import mapStyle from '../../CustomGlobe/mapStyle/streetMap.ts';
+  import { getMainMapBoundsFeature, unwrapLongitude } from './utils.ts';
 
   interface Props {
     config: MinimapConfig;
@@ -21,87 +22,6 @@
   const BOUNDS_SOURCE_ID = 'main-map-bounds-source';
   const BOUNDS_LINE_LAYER_ID = 'main-map-bounds-line';
   const BOUNDS_DOT_LAYER_ID = 'main-map-bounds-dot';
-
-  function getMainMapBoundsFeature(map: Map, mini?: Map) {
-    const center = map.getCenter();
-    const bounds = map.getBounds();
-    const sw = bounds.getSouthWest();
-    const ne = bounds.getNorthEast();
-
-    // Check if the projected rectangle on the minimap canvas is smaller than 5px
-    if (mini) {
-      const pSW = mini.project([sw.lng, sw.lat]);
-      const pNE = mini.project([ne.lng, ne.lat]);
-      const pixelWidth = Math.abs(pNE.x - pSW.x);
-      const pixelHeight = Math.abs(pNE.y - pSW.y);
-
-      if (Math.max(pixelWidth, pixelHeight) < 5) {
-        return {
-          type: 'Feature' as const,
-          geometry: {
-            type: 'Point' as const,
-            coordinates: [center.lng, center.lat]
-          },
-          properties: {}
-        };
-      }
-    }
-
-    const containerEl = map.getContainer();
-    const w = containerEl.clientWidth || 800;
-    const h = containerEl.clientHeight || 600;
-
-    const tl = map.unproject([0, 0]);
-    const tr = map.unproject([w, 0]);
-    const br = map.unproject([w, h]);
-    const bl = map.unproject([0, h]);
-
-    let coordinates: [number, number][][];
-
-    if (
-      tl &&
-      tr &&
-      br &&
-      bl &&
-      !isNaN(tl.lng) &&
-      !isNaN(tl.lat) &&
-      !isNaN(tr.lng) &&
-      !isNaN(tr.lat) &&
-      !isNaN(br.lng) &&
-      !isNaN(br.lat) &&
-      !isNaN(bl.lng) &&
-      !isNaN(bl.lat)
-    ) {
-      coordinates = [
-        [
-          [tl.lng, tl.lat],
-          [tr.lng, tr.lat],
-          [br.lng, br.lat],
-          [bl.lng, bl.lat],
-          [tl.lng, tl.lat]
-        ]
-      ];
-    } else {
-      coordinates = [
-        [
-          [sw.lng, ne.lat],
-          [ne.lng, ne.lat],
-          [ne.lng, sw.lat],
-          [sw.lng, sw.lat],
-          [sw.lng, ne.lat]
-        ]
-      ];
-    }
-
-    return {
-      type: 'Feature' as const,
-      geometry: {
-        type: 'Polygon' as const,
-        coordinates
-      },
-      properties: {}
-    };
-  }
 
   onMount(() => {
     if (!container || config.enabled === false) return;
@@ -127,9 +47,12 @@
         const bounds = map.getBounds();
         const sw = bounds.getSouthWest();
         const ne = bounds.getNorthEast();
+        // Keep east ahead of west even when the view straddles the antimeridian, so the
+        // stored pair round-trips through fitBounds instead of spanning most of the globe.
+        const eastLng = unwrapLongitude(ne.lng, sw.lng);
         config.bounds = [
           [Number(sw.lng.toFixed(5)), Number(sw.lat.toFixed(5))],
-          [Number(ne.lng.toFixed(5)), Number(ne.lat.toFixed(5))]
+          [Number(eastLng.toFixed(5)), Number(ne.lat.toFixed(5))]
         ];
       }
     });
