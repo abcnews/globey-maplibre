@@ -18,9 +18,13 @@
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { DecodedObject, RasterLayerConfig } from '../../lib/marker';
-  import { TweenController } from '../features/Tween/TweenController.svelte.ts';
+  import { TweenController, type TweenClock } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
-  import { MAPLIBRE_TWEEN_STATE_KEY } from '../features/Tween/utils.ts';
+  import {
+    MAPLIBRE_TWEEN_STATE_KEY,
+    MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
+    MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
+  } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
 
   setWorkerUrl(workerUrl);
@@ -79,23 +83,36 @@
     });
   });
 
-  // Write the shared tween position once per frame. Every feature's layers read
-  // it through a pure `['interpolate', … ['global-state', 'tweenPos'] …]` paint
-  // expression, so this one call drives all of their fades. At rest it lands on a
+  // Write the tween positions once per frame. Every feature's layers read one of
+  // these through a pure `['interpolate', … ['global-state', <key>] …]` paint
+  // expression, so these calls drive all of their fades. At rest each lands on a
   // whole panel index. Reduced motion shows the current panel with no fade; it
   // switches when the next panel triggers. The builder / static path (no panels)
-  // pins it to 0.
+  // pins them to 0.
+  //
+  // Two clocks run in parallel: `tweenPosScroll` scrubs with scroll position,
+  // `tweenPosImmediate` plays on arrival. `tweenPos` is transitional — it follows
+  // whichever clock `animationMode` selects, so layers that don't name a clock
+  // are unchanged.
   const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
+  const clockPosition = (clock: TweenClock): number =>
+    tweenController.panelCount === 0
+      ? 0
+      : clock.fromPanel + (reducedMotion ? 0 : clock.easedT);
+
   $effect(() => {
     const map = mapInstance.map;
     if (!map) return;
 
-    const position =
-      tweenController.panelCount === 0
-        ? 0
-        : tweenController.fromPanel + (reducedMotion ? 0 : tweenController.easedT);
-
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_STATE_KEY, position);
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, clockPosition(tweenController.scroll));
+    map.setGlobalStateProperty(
+      MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY,
+      clockPosition(tweenController.immediate)
+    );
+    map.setGlobalStateProperty(
+      MAPLIBRE_TWEEN_STATE_KEY,
+      clockPosition(tweenController.clock(tweenController.mode))
+    );
   });
 
   const hasRasterSatellite = $derived(

@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { computeDesiredPosition, lerp, lerpColour, lerpCoords, tweenStopsExpression } from './utils.ts';
+import {
+  clockStateKey,
+  computeDesiredPosition,
+  lerp,
+  lerpColour,
+  lerpCoords,
+  tweenStopsExpression
+} from './utils.ts';
 
 describe('computeDesiredPosition', () => {
   it('holds on the first panel during the prelude', () => {
@@ -102,5 +109,29 @@ describe('tweenStopsExpression', () => {
   it('uses a custom global-state key when given one', () => {
     const expr = tweenStopsExpression([0, 1], 'foo');
     expect(expr[2]).toEqual(['number', ['global-state', 'foo'], 0]);
+  });
+});
+
+describe('clockStateKey', () => {
+  it('maps immediate mode to the play-on-arrival key', () => {
+    expect(clockStateKey('immediate')).toBe('tweenPosImmediate');
+  });
+
+  it('maps scroll mode to the scroll-tied key', () => {
+    expect(clockStateKey('scroll')).toBe('tweenPosScroll');
+  });
+
+  it('builds a stops expression bound to a clock key', () => {
+    const expr = tweenStopsExpression([0, 1, 0], clockStateKey('immediate'));
+    expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosImmediate'], 0]);
+  });
+});
+
+describe('computeDesiredPosition — one input, two clock targets', () => {
+  const input = { currentPanel: 2, virtualPanel: 2, panelPct: 0.4, panelCount: 5 };
+
+  it('gives the scroll clock a fractional target and the immediate clock a whole one', () => {
+    expect(computeDesiredPosition({ ...input, mode: 'scroll' })).toBe(2.4);
+    expect(computeDesiredPosition({ ...input, mode: 'immediate' })).toBe(2);
   });
 });

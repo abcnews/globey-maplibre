@@ -32,63 +32,24 @@ export interface TweenSyncInput {
 const prefersReducedMotionNow = (): boolean => get(prefersReducedMotion) || get(disableMapAnimation);
 
 /**
- * The single tween clock shared by every scrollyteller feature.
- *
- * `CustomGlobe` owns one instance, publishes it on context, and calls `sync()`
- * once per scroll tick. Features read the getters — all computed from `$state`
- * plus the internal `Tween`, so nothing writes state inside an effect — and use
- * the `lerp*` helpers to blend their own `fromConfig`/`toConfig` values.
+ * One continuous, monotonic panel position and the reads derived from it.
  *
  * `position` is continuous: whole numbers sit on a panel, fractions blend to the
- * next one, so values interpolate smoothly across a panel boundary instead of
- * jumping when the active index changes.
+ * next one. `TweenController` runs two of these side by side — a scroll-tied one
+ * and a play-on-arrival one — and retargets both from `sync()` each tick.
  */
-export class TweenController {
+export class TweenClock {
   #position: Tween<number>;
-  #panels = $state<PanelDefinition<DecodedObject>[]>([]);
+  #panelCount: () => number;
 
-  constructor(initialPanel = 0) {
+  constructor(initialPanel: number, panelCount: () => number) {
     this.#position = new Tween(initialPanel);
+    this.#panelCount = panelCount;
   }
 
-  /**
-   * Push the latest scroll state into the tween. This is the only place the
-   * controller mutates anything, driven by a single `$effect` in `CustomGlobe`.
-   */
-  sync(input: TweenSyncInput): void {
-    this.#panels = input.panels;
-
-    const segTo = Math.min(input.currentPanel + 1, input.panels.length - 1);
-    const mode: AnimationMode = input.panels[segTo]?.data.animationMode ?? 'scroll';
-    const duration = input.panels[segTo]?.data.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
-
-    const desired = computeDesiredPosition({
-      currentPanel: input.currentPanel,
-      virtualPanel: input.virtualPanel,
-      panelPct: input.panelPct,
-      panelCount: input.panels.length,
-      mode
-    });
-
-    if (prefersReducedMotionNow()) {
-      this.#position.set(desired, { duration: 0 });
-    } else if (mode === 'scroll') {
-      this.#position.set(desired, {
-        duration: input.isTouch ? 0 : SCROLL_SMOOTHING_MS,
-        easing: cubicOut
-      });
-    } else {
-      this.#position.set(desired, { duration, easing: cubicInOut });
-    }
-  }
-
-  /** Panels currently loaded. */
-  get panels(): PanelDefinition<DecodedObject>[] {
-    return this.#panels;
-  }
-
-  get panelCount(): number {
-    return this.#panels.length;
+  /** Retarget the clock. Called by `TweenController.sync()` once per tick. */
+  set(target: number, opts: { duration: number; easing?: (t: number) => number }): void {
+    this.#position.set(target, opts);
   }
 
   /** Continuous tween position, e.g. `2.37`. */
@@ -98,14 +59,16 @@ export class TweenController {
 
   /** Lower index of the panel pair currently being blended. */
   get fromPanel(): number {
-    if (this.panelCount === 0) return 0;
-    return Math.min(Math.max(Math.floor(this.position), 0), this.panelCount - 1);
+    const count = this.#panelCount();
+    if (count === 0) return 0;
+    return Math.min(Math.max(Math.floor(this.position), 0), count - 1);
   }
 
   /** Upper index of the panel pair currently being blended. */
   get toPanel(): number {
-    if (this.panelCount === 0) return 0;
-    return Math.min(this.fromPanel + 1, this.panelCount - 1);
+    const count = this.#panelCount();
+    if (count === 0) return 0;
+    return Math.min(this.fromPanel + 1, count - 1);
   }
 
   /** Linear blend factor between `fromPanel` and `toPanel` (0..1). */
@@ -117,6 +80,115 @@ export class TweenController {
   get easedT(): number {
     return easeInOutCubic(this.t);
   }
+}
+
+/**
+ * The tween clock shared by every scrollyteller feature.
+ *
+ * `CustomGlobe` owns one instance, publishes it on context, and calls `sync()`
+ * once per scroll tick. Features read the getters — all computed from `$state`
+ * plus the internal `Tween`s, so nothing writes state inside an effect — and use
+ * the `lerp*` helpers to blend their own `fromConfig`/`toConfig` values.
+ *
+ * Two clocks run in parallel, both retargeted every tick:
+ *
+ * - `scroll` — target `currentPanel + panelPct`, scrubs with scroll position.
+ * - `immediate` — target `currentPanel`, plays 0→1 over `animationDuration` on
+ *   arrival and reverses on scroll-back.
+ *
+ * `animationMode` (`am`) selects which one the shared getters and the `tweenPos`
+ * global-state key follow, so the single-clock API is unchanged. Per-layer clock
+ * selection is a later phase.
+ */
+export class TweenController {
+  #panels = $state<PanelDefinition<DecodedObject>[]>([]);
+  #mode = $state<AnimationMode>('scroll');
+
+  /** Always-scroll-tied clock. */
+  readonly scroll: TweenClock;
+  /** Always-play-on-arrival clock. */
+  readonly immediate: TweenClock;
+
+  constructor(initialPanel = 0) {
+    const panelCount = () => this.#panels.length;
+    this.scroll = new TweenClock(initialPanel, panelCount);
+    this.immediate = new TweenClock(initialPanel, panelCount);
+  }
+
+  /**
+   * Push the latest scroll state into both clocks. This is the only place the
+   * controller mutates anything, driven by a single `$effect` in `CustomGlobe`.
+   */
+  sync(input: TweenSyncInput): void {
+    this.#panels = input.panels;
+
+    const segTo = Math.min(input.currentPanel + 1, input.panels.length - 1);
+    this.#mode = input.panels[segTo]?.data.animationMode ?? 'scroll';
+    const duration = input.panels[segTo]?.data.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
+
+    const base = {
+      currentPanel: input.currentPanel,
+      virtualPanel: input.virtualPanel,
+      panelPct: input.panelPct,
+      panelCount: input.panels.length
+    };
+    const reduced = prefersReducedMotionNow();
+
+    this.scroll.set(computeDesiredPosition({ ...base, mode: 'scroll' }), {
+      duration: reduced || input.isTouch ? 0 : SCROLL_SMOOTHING_MS,
+      easing: cubicOut
+    });
+    this.immediate.set(computeDesiredPosition({ ...base, mode: 'immediate' }), {
+      duration: reduced ? 0 : duration,
+      easing: cubicInOut
+    });
+  }
+
+  /** The clock for a given mode (`immediate`, else `scroll`). */
+  clock(mode: AnimationMode): TweenClock {
+    return mode === 'immediate' ? this.immediate : this.scroll;
+  }
+
+  /** Panels currently loaded. */
+  get panels(): PanelDefinition<DecodedObject>[] {
+    return this.#panels;
+  }
+
+  get panelCount(): number {
+    return this.#panels.length;
+  }
+
+  /** Mode of the segment currently being entered. */
+  get mode(): AnimationMode {
+    return this.#mode;
+  }
+
+  // ---- single-clock API: delegates to the clock `animationMode` selects ----
+
+  /** Continuous tween position, e.g. `2.37`. */
+  get position(): number {
+    return this.clock(this.#mode).position;
+  }
+
+  /** Lower index of the panel pair currently being blended. */
+  get fromPanel(): number {
+    return this.clock(this.#mode).fromPanel;
+  }
+
+  /** Upper index of the panel pair currently being blended. */
+  get toPanel(): number {
+    return this.clock(this.#mode).toPanel;
+  }
+
+  /** Linear blend factor between `fromPanel` and `toPanel` (0..1). */
+  get t(): number {
+    return this.clock(this.#mode).t;
+  }
+
+  /** `t` shaped by a cubic ease-in-out, for features that want an eased curve. */
+  get easedT(): number {
+    return this.clock(this.#mode).easedT;
+  }
 
   get fromConfig(): DecodedObject {
     return this.#panels[this.fromPanel]?.data ?? EMPTY_CONFIG;
@@ -124,11 +196,6 @@ export class TweenController {
 
   get toConfig(): DecodedObject {
     return this.#panels[this.toPanel]?.data ?? EMPTY_CONFIG;
-  }
-
-  /** Mode of the segment currently being entered. */
-  get mode(): AnimationMode {
-    return this.#panels[this.toPanel]?.data.animationMode ?? 'scroll';
   }
 
   // Interpolation helpers, also importable from ./utils.ts for tests and non-context callers.

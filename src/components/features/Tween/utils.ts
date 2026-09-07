@@ -58,8 +58,25 @@ export function lerp(from: number, to: number, t: number): number {
  * MapLibre global-state key holding the current tween position
  * (`fromPanel + easedT`). `CustomGlobe` writes it once per frame; feature layers
  * read it from `tweenStopsExpression`.
+ *
+ * Transitional: this key follows whichever clock the panel's `animationMode`
+ * selects. Layers that don't name a clock (the default) read it. It retires once
+ * per-layer clock selection lands and every layer passes an explicit key.
  */
 export const MAPLIBRE_TWEEN_STATE_KEY = 'tweenPos';
+
+/** Global-state key for the always-scroll-tied clock. */
+export const MAPLIBRE_TWEEN_SCROLL_STATE_KEY = 'tweenPosScroll';
+
+/** Global-state key for the always-play-on-arrival clock. */
+export const MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY = 'tweenPosImmediate';
+
+/** The global-state key a layer should read for a given clock. */
+export function clockStateKey(mode: AnimationMode): string {
+  return mode === 'immediate'
+    ? MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
+    : MAPLIBRE_TWEEN_SCROLL_STATE_KEY;
+}
 
 /**
  * Builds a paint value that steps through one value per panel as the tween
