@@ -26,7 +26,7 @@
     MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
   } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
-  import { tdbg, refId } from '../../lib/tweenDebug.ts';
+  import { tdbg, refId, glog } from '../../lib/tweenDebug.ts';
 
   setWorkerUrl(workerUrl);
 
@@ -156,7 +156,16 @@
     ];
   };
 
+  glog('CustomGlobe', 'instance created', {
+    hasPanels: !!panels,
+    panelCount: panels?.length ?? 0,
+    base: options?.base,
+    projection: options?.projection,
+    coords: options?.coords
+  });
+
   onMount(() => {
+    glog('CustomGlobe', 'onMount', { mapContainer: !!mapContainer });
     if (!mapContainer) return;
 
     mapContainer.style.opacity = '0';
@@ -181,16 +190,23 @@
       preserveDrawingBuffer
     } as any);
 
+    glog('CustomGlobe', 'new Map() constructed');
+
     map.on('error', e => {
       console.error('[MapLibre error]', e.error?.message || e);
+      glog('CustomGlobe', 'map error event', e.error?.message || e);
     });
+    map.on('style.load', () => glog('CustomGlobe', 'map style.load fired'));
+    map.once('idle', () => glog('CustomGlobe', 'map idle (first)', { isStyleLoaded: map.isStyleLoaded() }));
 
     map.on('load', () => {
+      glog('CustomGlobe', 'map load fired', { isStyleLoaded: map.isStyleLoaded() });
       onLoad?.(map);
       if (mapContainer) {
         mapContainer.style.opacity = '1';
       }
       mapInstance.map = map;
+      glog('CustomGlobe', 'mapInstance.map set — feature handlers will now mount');
 
       // DEBUG: raw map events. Repeated `sourcedata` (isSourceLoaded flipping) or
       // `styledata` while scrolling means something is reloading sources — the flash.

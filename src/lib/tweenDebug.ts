@@ -26,6 +26,17 @@ export function tweenDebugLevel(): number {
   }
 }
 
+/**
+ * Always-on load-path log. Prefixed `[globey]` so it is easy to filter and to
+ * find-and-remove later. Use this while chasing "nothing renders in production"
+ * where the gated `tdbg` above would hide the one line you need.
+ */
+export function glog(scope: string, msg: string, data?: unknown): void {
+  const head = `[globey] ${scope}: ${msg}`;
+  if (data === undefined) console.info(head);
+  else console.info(head, data);
+}
+
 const counts: Record<string, number> = {};
 
 /** Log an event with a running per-label count and an optional payload. */

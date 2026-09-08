@@ -7,15 +7,19 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 import acto from '@abcnews/alternating-case-to-object';
 
 import { markerSchema } from './lib/marker';
+import { glog } from './lib/tweenDebug.ts';
 
 const MARKER_NAME = 'globey';
 
+glog('index', 'module evaluated, waiting for Odyssey');
 await whenOdysseyLoaded;
+glog('index', 'Odyssey loaded');
 
 // Multiple scrollytellers are allowed in a page, providing they have a unique id.
 const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, {
   markAsUsed: false
 });
+glog('index', `found ${mounts.length} scrollyteller mount(s)`, mounts.map(m => m.id));
 
 await Promise.all(
   mounts.map(async mountEl => {
@@ -27,6 +31,10 @@ await Promise.all(
 
     try {
       const scrollyConfig = loadScrollyteller(scrollyName, 'u-full', 'mark');
+      glog('index', `loadScrollyteller("${scrollyName}") -> ${scrollyConfig.panels.length} raw panel(s)`, {
+        mountNode: scrollyConfig.mountNode,
+        firstPanelNodes: scrollyConfig.panels[0]?.nodes?.length ?? 0
+      });
 
       const panels = await Promise.all(
         scrollyConfig.panels.map(async panel => ({
@@ -37,6 +45,13 @@ await Promise.all(
           }
         }))
       );
+      glog('index', `decoded ${panels.length} panel(s)`, {
+        names: panels.map(p => p.data._name),
+        bases: panels.map(p => p.data.base)
+      });
+      if (panels.length === 0) {
+        glog('index', 'NO PANELS — ScrollytellerGlobe will render nothing (options undefined)');
+      }
       console.log('mounting', scrollyConfig.mountNode);
 
       mount(ScrollytellerGlobe, {
@@ -45,9 +60,11 @@ await Promise.all(
           panels
         }
       });
+      glog('index', 'ScrollytellerGlobe mounted');
     } catch (e) {
       const errorMessage = 'Unable to load interactive.';
       console.error(errorMessage, e);
+      glog('index', 'loadScrollyteller / mount threw', e);
       mountEl.innerHTML = `<p style="border:1px solid red;padding:1rem;">${errorMessage}</p>`;
     }
   })

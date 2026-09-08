@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { DecodedObject } from '../../lib/marker';
+  import { glog } from '../../lib/tweenDebug.ts';
 
   interface Props {
     /** Scrollyteller panels with pre-decoded marker options in panel.data */
@@ -20,6 +21,16 @@
   let scrollDelta = $state(-6);
   let options = $derived(panels[currentPanel]?.data || panels[0]?.data);
 
+  glog('ScrollytellerGlobe', `instance created with ${panels?.length ?? 0} panel(s)`);
+  $effect(() => {
+    glog('ScrollytellerGlobe', 'render state', {
+      panels: panels?.length ?? 0,
+      currentPanel,
+      optionsDefined: options != null,
+      willRenderCustomGlobe: options != null
+    });
+  });
+
   $effect(() => {
     if (options && onMarker) {
       onMarker(options);
@@ -34,7 +45,6 @@
     }, 1200);
     return () => clearTimeout(timer);
   });
-  console.log('component mountising');
 </script>
 
 {#if options}
