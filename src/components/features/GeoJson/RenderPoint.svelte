@@ -9,6 +9,7 @@
     type GeoJsonFeatureState
   } from './utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { tdbg, refId } from '../../../lib/tweenDebug.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
@@ -41,6 +42,15 @@
     const classes = classStates;
     const radiusExpr = kmRadius;
     if (!map || !classes) return;
+
+    // DEBUG: re-running tears down + rebuilds every circle layer + the source.
+    // Tracked deps: map, sourceId, zIndex, classStates, kmRadius.
+    tdbg(`RenderPoint lifecycle RUN ${sid}`, {
+      classStates: refId(classes),
+      zIndex: targetZ,
+      kmRadius: refId(radiusExpr),
+      map: refId(map)
+    });
 
     const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
@@ -77,6 +87,7 @@
     });
 
     return () => {
+      tdbg(`RenderPoint lifecycle CLEANUP ${sid}`);
       addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };

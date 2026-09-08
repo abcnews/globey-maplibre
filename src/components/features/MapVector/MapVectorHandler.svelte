@@ -23,6 +23,7 @@
     Z_INDEX_BASE_VECTOR,
     Z_INDEX_BASE_LABELS
   } from '../layers/layerUtils.ts';
+  import { tdbg } from '../../../lib/tweenDebug.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -65,6 +66,17 @@
     const s_isSatellite = isSatellite;
     const s_showBase = showBase;
     const s_hasLabels = hasLabels;
+
+    // DEBUG: re-running here removes + re-adds the whole vector base + labels.
+    // Tracked deps: mapRoot.map, needsSource, showBase, hasLabels, isSatellite.
+    tdbg('MapVector lifecycle RUN', {
+      base,
+      hideOsm,
+      showBase: s_showBase,
+      hasLabels: s_hasLabels,
+      isSatellite: s_isSatellite,
+      needsSource
+    });
 
     const baseLayers = s_showBase ? getStreetBaseLayers() : [];
     const labelLayers = s_hasLabels ? getLabelLayers(s_isSatellite) : [];
@@ -113,6 +125,7 @@
     }
 
     return () => {
+      tdbg('MapVector lifecycle CLEANUP', { base, layerCount: allLayers.length });
       map.off('styledata', addLayers);
       allLayers.forEach(layer => {
         removeLayerWithZIndex(map, layer.id);
@@ -126,6 +139,7 @@
     const map = mapRoot.map;
     const effectiveZ = streetMapZIndex ?? Z_INDEX_BASE_VECTOR;
     const baseLayers = getStreetBaseLayers();
+    tdbg('MapVector base restack RUN', { effectiveZ });
 
     setLayersZIndex(
       map,
@@ -140,6 +154,7 @@
     const map = mapRoot.map;
     const effectiveZ = zIndex ?? Z_INDEX_BASE_LABELS;
     const labelLayers = getLabelLayers(isSatellite);
+    tdbg('MapVector label restack RUN', { effectiveZ, isSatellite });
 
     setLayersZIndex(
       map,
@@ -152,6 +167,7 @@
   $effect(() => {
     if (!mapRoot.map) return;
     const map = mapRoot.map;
+    tdbg('MapVector visibility RUN');
 
     const countriesMajor = labels?.countriesMajor ?? true;
     const countriesMedium = labels?.countriesMedium ?? true;
