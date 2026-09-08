@@ -82,9 +82,18 @@
     const labelLayers = s_hasLabels ? getLabelLayers(s_isSatellite) : [];
     const allLayers = [...baseLayers, ...labelLayers];
 
+    // Idempotent: guarded so it is safe to call now and again on every later
+    // `styledata` / `load`. `map.addSource` throws while the style is still
+    // settling; the listeners below retry until it takes.
     const addLayers = () => {
-      if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
-        map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
+      if (!map.getStyle()) return;
+
+      try {
+        if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
+          map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
+        }
+      } catch {
+        return;
       }
 
       if (s_showBase && map.getLayer('background')) {
@@ -118,15 +127,19 @@
       }
     };
 
-    if (map.isStyleLoaded()) {
-      addLayers();
-    } else {
-      map.once('styledata', addLayers);
-    }
+    // Match every other layer handler (raster / image / icon): add now, then
+    // keep re-adding on style churn and on `load`. A single `once('styledata')`
+    // is lost if it fires before the style can take the layers, or if this
+    // effect's cleanup removes it first — which is why the vector base could go
+    // missing in production while the other layers came up fine.
+    addLayers();
+    map.on('styledata', addLayers);
+    map.on('load', addLayers);
 
     return () => {
       tdbg('MapVector lifecycle CLEANUP', { base, layerCount: allLayers.length });
       map.off('styledata', addLayers);
+      map.off('load', addLayers);
       allLayers.forEach(layer => {
         removeLayerWithZIndex(map, layer.id);
       });
@@ -283,11 +296,15 @@
       }
     };
 
-    if (map.isStyleLoaded()) {
-      syncVisibility();
-    } else {
-      map.once('styledata', syncVisibility);
-      return () => map.off('styledata', syncVisibility);
-    }
+    // Idempotent (every branch is `if (map.getLayer(id))`), so run it now and on
+    // every later style change rather than waiting on one `styledata`.
+    syncVisibility();
+    map.on('styledata', syncVisibility);
+    map.on('load', syncVisibility);
+
+    return () => {
+      map.off('styledata', syncVisibility);
+      map.off('load', syncVisibility);
+    };
   });
 </script>
