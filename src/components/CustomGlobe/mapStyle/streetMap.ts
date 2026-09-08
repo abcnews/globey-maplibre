@@ -5,12 +5,34 @@ import { getStyleColor } from './utils';
 export const styleSource = _styleSource as maplibregl.StyleSpecification;
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
-export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
+
+/**
+ * Vector source for the street base map.
+ *
+ * The style JSON ships this as `{ type: 'vector', url: '…/world.json' }`, but that
+ * makes MapLibre fetch and resolve a TileJSON before it can request a single
+ * tile — a step that intermittently stalls (endless `sourcedataloading`, blank
+ * map, no `.pbf` requests). We inline the resolved values from `world.json` so
+ * tile loading starts immediately with no `url` round-trip.
+ */
+export const OPENMAPTILES_SOURCE_DEF: maplibregl.VectorSourceSpecification = {
+  type: 'vector',
+  tiles: ['https://abcnewsmaps.sgp1.cdn.digitaloceanspaces.com/{z}/{x}/{y}.pbf'],
+  minzoom: 0,
+  maxzoom: 12,
+  bounds: [-180, -85.0511, 180, 85.0511],
+  attribution:
+    '<a href="https://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a> <a href="https://www.openstreetmap.org/copyright" target="_blank">&copy; OpenStreetMap contributors</a>'
+};
 
 // We clone the style source to avoid mutating the original import
 export const getBaseStyleSource = () => {
-  const style = JSON.parse(JSON.stringify(styleSource));
-  return style as maplibregl.StyleSpecification;
+  const style = JSON.parse(JSON.stringify(styleSource)) as maplibregl.StyleSpecification;
+  // Use the inlined tile template rather than the JSON's TileJSON `url` (see
+  // OPENMAPTILES_SOURCE_DEF) so anything built from this style — e.g. the minimap
+  // via mapStyle() — also skips the stall-prone TileJSON resolution.
+  style.sources.openmaptiles = { ...OPENMAPTILES_SOURCE_DEF };
+  return style;
 };
 
 export function getProcessedLayers(): maplibregl.LayerSpecification[] {
