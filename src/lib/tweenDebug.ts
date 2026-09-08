@@ -26,15 +26,37 @@ export function tweenDebugLevel(): number {
   }
 }
 
+/** JSON.stringify that survives Errors, circular refs and functions. */
+function safeStringify(value: unknown): string {
+  const seen = new WeakSet<object>();
+  try {
+    return JSON.stringify(
+      value,
+      (_key, val) => {
+        if (val instanceof Error) return { name: val.name, message: val.message, stack: val.stack };
+        if (typeof val === 'function') return `[function ${val.name || 'anonymous'}]`;
+        if (typeof val === 'object' && val !== null) {
+          if (seen.has(val)) return '[circular]';
+          seen.add(val);
+        }
+        return val;
+      },
+      2
+    );
+  } catch (e) {
+    return `[unstringifiable: ${String(e)}]`;
+  }
+}
+
 /**
  * Always-on load-path log. Prefixed `[globey]` so it is easy to filter and to
- * find-and-remove later. Use this while chasing "nothing renders in production"
- * where the gated `tdbg` above would hide the one line you need.
+ * find-and-remove later. The payload is stringified inline so it copies cleanly
+ * out of the console instead of showing `{…}`.
  */
 export function glog(scope: string, msg: string, data?: unknown): void {
   const head = `[globey] ${scope}: ${msg}`;
   if (data === undefined) console.info(head);
-  else console.info(head, data);
+  else console.info(`${head} ${safeStringify(data)}`);
 }
 
 const counts: Record<string, number> = {};
