@@ -86,6 +86,10 @@ export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
     options.labels = item;
   },
 
+  isValid(data: Label[]) {
+    return Boolean(data && data.length > 0);
+  },
+
   update(options: DecodedObject, _descriptor: LayerItemDescriptor<Label[]>, data: Label[]) {
     options.labels = data;
   },

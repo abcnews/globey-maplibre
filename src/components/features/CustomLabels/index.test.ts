@@ -134,5 +134,14 @@ describe('CustomLabels Feature Definition', () => {
     customLabelsFeature.update?.(options, descriptor, updated);
     assert.deepStrictEqual(options.labels, updated);
   });
+
+  it('isValid should return true only when label array has at least one item', () => {
+    assert.strictEqual(customLabelsFeature.isValid?.([]), false);
+    assert.strictEqual(customLabelsFeature.isValid?.(undefined as any), false);
+    assert.strictEqual(
+      customLabelsFeature.isValid?.([{ name: 'Test', coords: [0, 0], style: 'country-large', number: 0 }]),
+      true
+    );
+  });
 });
 

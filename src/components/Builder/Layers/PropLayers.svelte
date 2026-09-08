@@ -299,11 +299,7 @@
   {/if}
 
   {#if editingItem?.feature.ConfigModal}
-    {#if editingItem.feature.kind === 'customLabels'}
-      <editingItem.feature.ConfigModal bind:config={$options.labels} {map} onclose={handleClose} />
-    {:else}
-      <editingItem.feature.ConfigModal bind:config={editingItem.data} {map} onclose={handleClose} />
-    {/if}
+    <editingItem.feature.ConfigModal bind:config={editingItem.data} {map} onclose={handleClose} />
   {/if}
 
   {#if activeCustomModal}
