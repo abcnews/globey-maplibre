@@ -33,6 +33,7 @@ Features that appear or disappear across panels fade in or out using zero-opacit
 - **Expressions Must Not Access Dynamic Properties**: Paint expressions on class layers must rely only on the global position uniform (`gjPos`). Do not introduce runtime `['get', ...]` or `['feature-state', ...]` calls into animatable paint properties.
 - **No Layer Reconstruction During Transitions**: Avoid calling `source.setData()` or adding/removing layers while scrolling or animating. All transitions must be driven via `gjPos`.
 - **Static Filters**: Class filters must remain static. Dynamic expressions inside filters trigger full source reloads.
+- **Config Identity Must Be Stable**: A renderer's layer `$effect` rebuilds whenever the `config` it derives from changes identity, and a rebuild removes the source and re-adds every layer — a visible flash. Identity is not naturally stable: the builder deep-clones `options` on every map move. `GeoJsonHandler` therefore passes `panelConfigs` through `memoiseByContent()` so renderers only ever see a new config for a real edit. Anything new that feeds a renderer must preserve that.
 - **Quantise Continuous Inputs**: All continuous colour and numerical values used in classification must be quantised so total class counts remain bounded.
 
 ---

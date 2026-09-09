@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { GeoJsonConfig } from '../../../lib/marker';
+  import { memoiseByContent } from '../../../lib/memoiseByContent.ts';
   import { fetchGeoJsonData, buildFeatureClasses, type FeatureClasses } from './utils.ts';
   import { generateGeoJsonSourceId, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
   import { getTween } from '../Tween/context.ts';
@@ -16,10 +17,19 @@
 
   // One config array per panel on the scrollyteller path; the single `config`
   // prop on the builder / static path.
+  //
+  // Memoised because everything below inherits its identity: `items`, and through
+  // it the `config` prop each renderer derives its MapLibre layers from. The
+  // builder deep-clones `options` on every map move, so without this a pan hands
+  // the renderers an equal-but-new config and they rebuild their layers, which
+  // flashes.
+  const stablePanelConfigs = memoiseByContent<GeoJsonConfig[][]>();
   const panelConfigs = $derived<GeoJsonConfig[][]>(
-    tween.panelCount > 0
-      ? tween.panels.map(panel => (panel.data.geoJson ?? []) as GeoJsonConfig[])
-      : [config]
+    stablePanelConfigs(
+      tween.panelCount > 0
+        ? tween.panels.map(panel => (panel.data.geoJson ?? []) as GeoJsonConfig[])
+        : [config]
+    )
   );
 
   // Every distinct item that appears in any panel, first-seen order, with its

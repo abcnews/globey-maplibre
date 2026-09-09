@@ -101,7 +101,8 @@ export class TweenClock {
  * selection is a later phase.
  */
 export class TweenController {
-  #panels = $state<PanelDefinition<DecodedObject>[]>([]);
+  // Use $state.raw to avoid re-proxying on every scroll frame, which triggers unnecessary map layer reloads.
+  #panels = $state.raw<PanelDefinition<DecodedObject>[]>([]);
   #mode = $state<AnimationMode>('scroll');
 
   /** Always-scroll-tied clock. */

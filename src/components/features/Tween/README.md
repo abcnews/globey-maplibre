@@ -50,6 +50,17 @@ tweens run with `duration: 0`, and consumers use `0` for the blend instead of
 
 ---
 
+## Panels are raw state
+
+`#panels` is `$state.raw`, not `$state`. `sync()` reassigns it on every scroll
+tick with the same raw `panels` array; a deep `$state` re-proxies that array on
+each assignment, and a fresh proxy is never `===` the old one, so every
+`tween.panels` reader re-derives 60x/sec with new object identities. That is what
+made GeoJSON layers rebuild and flash on scroll. Panels are immutable decoded
+data, so raw is both correct and cheaper.
+
+---
+
 ## Mental model
 
 The controller exposes one continuous number, **`position`**:
