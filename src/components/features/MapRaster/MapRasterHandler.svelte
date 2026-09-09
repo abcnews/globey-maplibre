@@ -3,6 +3,8 @@
   import { getContext, untrack } from 'svelte';
   import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
   import { addFadingLayer } from '../layers/tweenedLayers.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
+  import type { AnimationMode } from '../Tween/types.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -14,7 +16,8 @@
     tileSize = 256,
     zIndex = Z_INDEX_BASE_RASTER,
     /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
-    opacityStops = [1]
+    opacityStops = [1],
+    animationClock
   }: {
     url: string;
     attribution?: string;
@@ -23,7 +26,11 @@
     tileSize?: number;
     zIndex?: number;
     opacityStops?: number[];
+    /** Clock this layer's fade follows; unset means the scroll-tied clock. */
+    animationClock?: AnimationMode;
   } = $props();
+
+  const posKey = $derived(layerClockKey(animationClock));
 
   // Effect for source and layer lifecycle
   $effect(() => {
@@ -59,7 +66,8 @@
             type: 'raster',
             paint: { 'raster-fade-duration': 0 },
             opacityKey: 'raster-opacity',
-            opacityStops: s_opacityStops
+            opacityStops: s_opacityStops,
+            posKey: untrack(() => posKey)
           },
           untrack(() => zIndex ?? Z_INDEX_BASE_RASTER)
         );

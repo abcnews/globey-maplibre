@@ -20,11 +20,7 @@
   import type { DecodedObject, RasterLayerConfig } from '../../lib/marker';
   import { TweenController, type TweenClock } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
-  import {
-    MAPLIBRE_TWEEN_STATE_KEY,
-    MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
-    MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
-  } from '../features/Tween/utils.ts';
+  import { MAPLIBRE_TWEEN_SCROLL_STATE_KEY, MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
 
   setWorkerUrl(workerUrl);
@@ -91,28 +87,41 @@
   // pins them to 0.
   //
   // Two clocks run in parallel: `tweenPosScroll` scrubs with scroll position,
-  // `tweenPosImmediate` plays on arrival. `tweenPos` is transitional — it follows
-  // whichever clock `animationMode` selects, so layers that don't name a clock
-  // are unchanged.
+  // `tweenPosImmediate` plays on arrival. Each layer picks one through its
+  // `animationClock`; the panel's `animationMode` governs the camera only.
+  //
+  // The two clocks are shaped differently because their tweens mean different
+  // things. `scroll`'s tween is only a 150ms catch-up filter, so its position is
+  // essentially linear in scroll position and `easedT` supplies the per-panel
+  // curve. `immediate`'s tween *is* the animation — cubicInOut over the panel's
+  // `animationDuration` — so easing it again composes two cubic ease-in-outs,
+  // which pins the first ~40% of the play below 7% and then rushes the rest. It
+  // is written raw.
   const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
-  const clockPosition = (clock: TweenClock): number =>
-    tweenController.panelCount === 0
-      ? 0
-      : clock.fromPanel + (reducedMotion ? 0 : clock.easedT);
+
+  const clampToPanels = (position: number): number =>
+    Math.min(Math.max(position, 0), Math.max(tweenController.panelCount - 1, 0));
+
+  /**
+   * `shapedPosition` is read by the caller before this runs, so the effect tracks
+   * both clocks even when the value written ignores them (reduced motion, or no
+   * panels yet).
+   */
+  const clockPosition = (clock: TweenClock, shapedPosition: number): number => {
+    if (tweenController.panelCount === 0) return 0;
+    return reducedMotion ? clock.fromPanel : clampToPanels(shapedPosition);
+  };
 
   $effect(() => {
     const map = mapInstance.map;
     if (!map) return;
 
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, clockPosition(tweenController.scroll));
-    map.setGlobalStateProperty(
-      MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY,
-      clockPosition(tweenController.immediate)
-    );
-    map.setGlobalStateProperty(
-      MAPLIBRE_TWEEN_STATE_KEY,
-      clockPosition(tweenController.clock(tweenController.mode))
-    );
+    const { scroll, immediate } = tweenController;
+    const scrollPos = clockPosition(scroll, scroll.fromPanel + scroll.easedT);
+    const immediatePos = clockPosition(immediate, immediate.position);
+
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, scrollPos);
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY, immediatePos);
   });
 
   const hasRasterSatellite = $derived(
@@ -127,9 +136,7 @@
   // A feature's config in each panel — one array per panel on the scrollyteller
   // path, the current panel's array on the builder / static path.
   const perPanel = <T,>(pick: (d: DecodedObject) => T[]): T[][] =>
-    tweenController.panelCount > 0
-      ? tweenController.panels.map(p => pick(p.data))
-      : [pick(options)];
+    tweenController.panelCount > 0 ? tweenController.panels.map(p => pick(p.data)) : [pick(options)];
 
   // Raster layers, with the satellite base map folded in: it's a raster layer
   // derived from `base` + `satelliteVariant`, so we build it here rather than in

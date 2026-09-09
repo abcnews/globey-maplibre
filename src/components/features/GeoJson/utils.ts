@@ -11,7 +11,7 @@ import { fetchDownloadObject } from '../../../lib/fetchDownloadObject.ts';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import type { GeoJsonConfig, GeoJsonStyleConfig } from '../../../lib/marker';
 import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
-import { MAPLIBRE_TWEEN_STATE_KEY, tweenStopsExpression } from '../Tween/utils.ts';
+import { tweenStopsExpression } from '../Tween/utils.ts';
 import { THEMES } from './themes.ts';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
@@ -353,9 +353,6 @@ export function applyFeatureStates(
 /** Property written onto every feature by [buildFeatureClasses]. */
 export const FEATURE_CLASS_PROP = '__gjClass';
 
-/** Global-state key the class-layer paint expressions read. Shared with every other feature. */
-export const GEOJSON_POSITION_STATE = MAPLIBRE_TWEEN_STATE_KEY;
-
 export interface FeatureClasses {
   /** Number of distinct classes; one layer (set) is added per class. */
   classCount: number;
@@ -416,16 +413,16 @@ export function classFilterExpression(classIndex: number): any {
 }
 
 /**
- * Builds the paint value for one field of one class layer: a pure
- * `interpolate` over the `gjPos` global-state with one stop per panel, so
- * `map.setGlobalStateProperty('gjPos', fromPanel + easedT)` drives the whole
- * layer with a single per-frame call. A single-panel (builder) class collapses
- * to the constant value.
+ * Builds the paint value for one field of one class layer: a pure `interpolate`
+ * over `posKey`'s global-state with one stop per panel, so one
+ * `setGlobalStateProperty` per frame drives the whole layer. `posKey` is the
+ * clock the item's `animationClock` selects. A single-panel (builder) class
+ * collapses to the constant value.
  */
 export function classPaintExpression(
   perPanelStates: GeoJsonFeatureState[],
   field: keyof GeoJsonFeatureState,
-  posKey: string = MAPLIBRE_TWEEN_STATE_KEY
+  posKey: string
 ): any {
   return tweenStopsExpression(
     perPanelStates.map(state => state[field]),

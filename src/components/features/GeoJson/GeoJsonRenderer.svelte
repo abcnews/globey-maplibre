@@ -29,10 +29,12 @@
   const tween = getTween();
 
   // Spikes keep their own per-panel animation, so hand them the current panel's
-  // config (2D layers are class-based and take the representative config).
-  const spikeConfig = $derived(
-    perPanelConfigs[Math.min(tween.fromPanel, perPanelConfigs.length - 1)] ?? config
-  );
+  // config (2D layers are class-based and take the representative config). The
+  // panel index comes from the layer's own clock, matching its 2D siblings.
+  const spikeConfig = $derived.by(() => {
+    const { fromPanel } = tween.clock(config.animationClock ?? 'scroll');
+    return perPanelConfigs[Math.min(fromPanel, perPanelConfigs.length - 1)] ?? config;
+  });
 </script>
 
 {#if config.type === 'areas'}

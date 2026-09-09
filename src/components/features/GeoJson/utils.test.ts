@@ -310,16 +310,20 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
     const state = (fillColor: string, fillOpacity: number): any => ({ ...HIDDEN_FEATURE_STATE, fillColor, fillOpacity });
 
     it('returns a bare constant for a single-panel (builder) class', () => {
-      expect(classPaintExpression([state('#123456', 0.5)], 'fillColor')).toBe('#123456');
-      expect(classPaintExpression([state('#123456', 0.5)], 'fillOpacity')).toBe(0.5);
+      expect(classPaintExpression([state('#123456', 0.5)], 'fillColor', 'tweenPosScroll')).toBe('#123456');
+      expect(classPaintExpression([state('#123456', 0.5)], 'fillOpacity', 'tweenPosScroll')).toBe(0.5);
     });
 
     it('builds a pure global-state interpolate with one stop per panel', () => {
-      const expr = classPaintExpression([state('#000000', 0), state('#ffffff', 1), state('#ff0000', 0.5)], 'fillColor');
+      const expr = classPaintExpression(
+        [state('#000000', 0), state('#ffffff', 1), state('#ff0000', 0.5)],
+        'fillColor',
+        'tweenPosScroll'
+      );
 
       expect(expr[0]).toBe('interpolate');
       expect(expr[1]).toEqual(['linear']);
-      expect(expr[2]).toEqual(['number', ['global-state', 'tweenPos'], 0]);
+      expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosScroll'], 0]);
       expect(expr.slice(3)).toEqual([0, '#000000', 1, '#ffffff', 2, '#ff0000']);
     });
   });

@@ -151,6 +151,13 @@ export const geoJsonSpikeSchema = object({
 }).asArray();
 
 /**
+ * Animation clock schema for individual map layers.
+ */
+export const animationClockSchema = oneOf(['scroll', 'immediate'] as const)
+  .key('ac')
+  .optional();
+
+/**
  * Item schema for a single GeoJSON source dataset.
  */
 export const geoJsonItemSchema = object({
@@ -164,7 +171,8 @@ export const geoJsonItemSchema = object({
   pointSize: sizeSchema.key('ps').optional(),
   lineWidth: sizeSchema.key('lw').optional(),
   spike: geoJsonSpikeSchema.key('sp').optional(),
-  zIndex: decimal(2).key('z').optional()
+  zIndex: decimal(2).key('z').optional(),
+  animationClock: animationClockSchema
 }).asArray();
 
 /**
@@ -186,7 +194,8 @@ export const iconItemSchema = object({
   id: string().key('id').optional(),
   cmid: decimal().key('c'),
   coords: coordsCodec.key('coords'),
-  zIndex: decimal(2).key('z').optional()
+  zIndex: decimal(2).key('z').optional(),
+  animationClock: animationClockSchema
 }).asArray();
 
 /**
@@ -197,7 +206,8 @@ export const imageSourceItemSchema = object({
   url: urlCodec.key('u'),
   opacity: decimal(2).key('o').default(1),
   coordinates: boundsCodec.key('c'),
-  zIndex: decimal(2).key('z').optional()
+  zIndex: decimal(2).key('z').optional(),
+  animationClock: animationClockSchema
 }).asArray();
 
 /**
@@ -223,7 +233,8 @@ export const rasterItemSchema = object({
   maxZoom: decimal().key('mz').default(7),
   tileSize: decimal().key('ts').default(256),
   attribution: base36String().key('a').default(''),
-  zIndex: decimal(2).key('z').optional()
+  zIndex: decimal(2).key('z').optional(),
+  animationClock: animationClockSchema
 }).asArray();
 
 /**
@@ -265,7 +276,9 @@ export const markerSchema = object({
   geoJson: array(geoJsonItemSchema)
     .transform(
       (items: any[]) =>
-        items?.filter(([_, cmid, url]) => (typeof cmid === 'number' ? cmid > 0 : Boolean(cmid)) || Boolean(url && isValidUrl(url))) ?? [],
+        items?.filter(
+          ([_, cmid, url]) => (typeof cmid === 'number' ? cmid > 0 : Boolean(cmid)) || Boolean(url && isValidUrl(url))
+        ) ?? [],
       (items: any) => items
     )
     .asBase36()
@@ -274,8 +287,7 @@ export const markerSchema = object({
 
   icons: array(iconItemSchema)
     .transform(
-      (items: any[]) =>
-        items?.filter(([_, cmid]) => (typeof cmid === 'number' ? cmid > 0 : Boolean(cmid))) ?? [],
+      (items: any[]) => items?.filter(([_, cmid]) => (typeof cmid === 'number' ? cmid > 0 : Boolean(cmid))) ?? [],
       (items: any) => items
     )
     .asBase36()
@@ -284,8 +296,7 @@ export const markerSchema = object({
 
   imageSources: array(imageSourceItemSchema)
     .transform(
-      (items: any[]) =>
-        items?.filter(([_, url]) => Boolean(url && isValidUrl(url))) ?? [],
+      (items: any[]) => items?.filter(([_, url]) => Boolean(url && isValidUrl(url))) ?? [],
       (items: any) => items
     )
     .asBase36()
@@ -294,8 +305,7 @@ export const markerSchema = object({
 
   rasterLayers: array(rasterItemSchema)
     .transform(
-      (items: any[]) =>
-        items?.filter(([url]) => Boolean(url && isValidUrl(url))) ?? [],
+      (items: any[]) => items?.filter(([url]) => Boolean(url && isValidUrl(url))) ?? [],
       (items: any) => items
     )
     .asBase36()
@@ -311,7 +321,7 @@ export const markerSchema = object({
   constrainView: boolean().key('cv').default(false),
   attribution: base36String().key('attr').default(''),
   hideOsm: boolean().key('ho').default(false),
-  animationDuration: decimal().key('ad').default(2000),
+  animationDuration: decimal().key('ad').default(500),
   /** How the transition *into* this panel plays: scroll-scrubbed or a fixed-duration play. */
   animationMode: oneOf(['scroll', 'immediate'] as const)
     .key('am')
@@ -325,6 +335,3 @@ export const markerSchema = object({
     return input || {};
   }
 );
-
-
-

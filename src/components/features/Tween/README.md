@@ -208,14 +208,44 @@ Typed context pair from [`./context.ts`](./context.ts) (Svelte `createContext`).
 | `lerpColour(from, to, t)`                                                            | Interpolates hex / CSS colours; falls back to whichever side is defined.                                                                                         |
 | `lerpCoords(from, to, t)`                                                            | Interpolates `[lng, lat]`, shortest path across ±180°.                                                                                                           |
 | `easeInOutCubic`                                                                     | Re-exported from `../PanZoom/utils.ts`.                                                                                                                          |
-| `tweenStopsExpression(perPanelValues, posKey?)`                                      | Paint value stepping one value per panel over `posKey` (default `MAPLIBRE_TWEEN_STATE_KEY`). Single value returned as-is.                                          |
-| `MAPLIBRE_TWEEN_STATE_KEY` (`'tweenPos'`)                                            | Transitional default key — follows the clock `animationMode` selects.                                                                                            |
-| `MAPLIBRE_TWEEN_SCROLL_STATE_KEY` (`'tweenPosScroll'`) / `MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY` (`'tweenPosImmediate'`) | Dedicated per-clock keys. `CustomGlobe` writes all three every frame.                                    |
-| `clockStateKey(mode)`                                                               | The global-state key a layer should read for a given clock.                                                                                                     |
+| `tweenStopsExpression(perPanelValues, posKey)`                                      | Paint value stepping one value per panel over `posKey`. Single value returned as-is.                                                                             |
+| `MAPLIBRE_TWEEN_SCROLL_STATE_KEY` (`'tweenPosScroll'`) / `MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY` (`'tweenPosImmediate'`) | The two clock keys. `CustomGlobe` writes both every frame.                                               |
+| `clockStateKey(mode)`                                                               | The global-state key for a given clock.                                                                                                                         |
+| `layerClockKey(clock?)`                                                             | The key a layer config should read. `undefined` → the scroll-tied key, so an author opts in to `'immediate'` per layer.                                          |
 
 ### `./types.ts`
 
 `AnimationMode = 'scroll' | 'immediate'`.
+
+### How each clock is shaped
+
+The two clocks are written to global state differently, because their `Tween`s
+mean different things:
+
+| Clock | Its tween | Value written |
+| --- | --- | --- |
+| `scroll` | A 150ms `cubicOut` catch-up filter — position is essentially linear in scroll | `fromPanel + easedT`, so `easedT` gives the per-panel curve |
+| `immediate` | The animation itself: `cubicInOut` over the panel's `animationDuration` | `position`, raw |
+
+Do not apply `easedT` to the immediate clock. Composing its `cubicInOut` with
+`easeInOutCubic` gives a sextic: over a 2000ms play the value is still under 7%
+at 800ms, hits 50% at 1000ms and is done by 1200ms, so the fade looks like it
+starts late and then snaps.
+
+### Who picks which clock
+
+Two separate choices, both using `AnimationMode`:
+
+- **Panel `animationMode`** (hash key `am`) sets the camera's clock — it is what
+  `TweenController.mode` and the single-clock getters (`position`, `fromPanel`,
+  `easedT`, …) delegate to, which `PanZoomScrollHandler` reads.
+- **Layer `animationClock`** (hash key `ac`, on each GeoJSON / icon / image /
+  raster item) sets that layer's fade clock. Absent means scroll-tied, so
+  `'immediate'` is always an explicit opt-in. Toggled from the layer row in the
+  builder.
+
+Both clocks run every tick regardless, so layers on different clocks cost
+nothing extra — both uniforms are already written.
 
 ---
 

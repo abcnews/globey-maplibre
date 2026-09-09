@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   clockStateKey,
+  layerClockKey,
   computeDesiredPosition,
   lerp,
   lerpColour,
@@ -94,19 +95,19 @@ describe('lerpCoords', () => {
 
 describe('tweenStopsExpression', () => {
   it('returns a single value unchanged', () => {
-    expect(tweenStopsExpression([0.5])).toBe(0.5);
-    expect(tweenStopsExpression(['#abcdef'])).toBe('#abcdef');
+    expect(tweenStopsExpression([0.5], 'tweenPosScroll')).toBe(0.5);
+    expect(tweenStopsExpression(['#abcdef'], 'tweenPosScroll')).toBe('#abcdef');
   });
 
   it('builds an interpolate over the tween position with one stop per panel', () => {
-    const expr = tweenStopsExpression([0, 1, 0]);
+    const expr = tweenStopsExpression([0, 1, 0], 'tweenPosScroll');
     expect(expr[0]).toBe('interpolate');
     expect(expr[1]).toEqual(['linear']);
-    expect(expr[2]).toEqual(['number', ['global-state', 'tweenPos'], 0]);
+    expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosScroll'], 0]);
     expect(expr.slice(3)).toEqual([0, 0, 1, 1, 2, 0]);
   });
 
-  it('uses a custom global-state key when given one', () => {
+  it('uses whichever global-state key it is given', () => {
     const expr = tweenStopsExpression([0, 1], 'foo');
     expect(expr[2]).toEqual(['number', ['global-state', 'foo'], 0]);
   });
@@ -124,6 +125,17 @@ describe('clockStateKey', () => {
   it('builds a stops expression bound to a clock key', () => {
     const expr = tweenStopsExpression([0, 1, 0], clockStateKey('immediate'));
     expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosImmediate'], 0]);
+  });
+});
+
+describe('layerClockKey', () => {
+  it('falls back to the scroll clock when a layer names none', () => {
+    expect(layerClockKey(undefined)).toBe('tweenPosScroll');
+  });
+
+  it('honours an explicit clock', () => {
+    expect(layerClockKey('scroll')).toBe('tweenPosScroll');
+    expect(layerClockKey('immediate')).toBe('tweenPosImmediate');
   });
 });
 

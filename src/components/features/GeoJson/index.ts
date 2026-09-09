@@ -3,7 +3,7 @@ import type { GeoJsonConfig, DecodedObject } from '../../../lib/marker';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
-import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
+import { createClockButton, createEditButton, createDeleteButton } from '../buttonHelpers.ts';
 import BuilderGeoJsonConfigModal from './BuilderGeoJsonConfigModal.svelte';
 import GeoJsonHandler from './GeoJsonHandler.svelte';
 
@@ -14,7 +14,9 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   defaultZIndex: Z_INDEX_GEOJSON,
   isMultiItem: true,
 
-  buttons: [
+  // A factory, not an array: the clock toggle's icon reflects the item's
+  // current `animationClock`, so it has to be resolved per item.
+  buttons: item => [createClockButton<GeoJsonConfig>(item),
     createEditButton<GeoJsonConfig>({ title: 'Edit GeoJSON layer' }),
     createDeleteButton<GeoJsonConfig>({ title: 'Delete GeoJSON layer' })
   ],

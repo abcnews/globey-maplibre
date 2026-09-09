@@ -41,15 +41,36 @@ const prefersReducedMotionNow = (): boolean => get(prefersReducedMotion) || get(
 export class TweenClock {
   #position: Tween<number>;
   #panelCount: () => number;
+  #target: number;
+  #duration: number;
 
   constructor(initialPanel: number, panelCount: () => number) {
     this.#position = new Tween(initialPanel);
     this.#panelCount = panelCount;
+    this.#target = initialPanel;
+    this.#duration = 0;
   }
 
   /** Retarget the clock. Called by `TweenController.sync()` once per tick. */
   set(target: number, opts: { duration: number; easing?: (t: number) => number }): void {
+    // Avoid restarting Svelte's Tween if target and duration haven't changed,
+    // which resets elapsed time to 0 and freezes animations on scroll frames.
+    if (
+      this.#target === target &&
+      this.#duration === opts.duration &&
+      (opts.duration > 0 || this.#position.current === target)
+    ) {
+      return;
+    }
+
+    this.#target = target;
+    this.#duration = opts.duration;
     this.#position.set(target, opts);
+  }
+
+  /** Target index the clock is currently animating towards. */
+  get target(): number {
+    return this.#target;
   }
 
   /** Continuous tween position, e.g. `2.37`. */
@@ -96,9 +117,9 @@ export class TweenClock {
  * - `immediate` — target `currentPanel`, plays 0→1 over `animationDuration` on
  *   arrival and reverses on scroll-back.
  *
- * `animationMode` (`am`) selects which one the shared getters and the `tweenPos`
- * global-state key follow, so the single-clock API is unchanged. Per-layer clock
- * selection is a later phase.
+ * The panel's `animationMode` (`am`) selects which one the single-clock getters
+ * below follow — that is the camera's clock. Individual layers pick their own
+ * via `animationClock` (`ac`) and read the matching global-state key directly.
  */
 export class TweenController {
   // Use $state.raw to avoid re-proxying on every scroll frame, which triggers unnecessary map layer reloads.
@@ -124,8 +145,8 @@ export class TweenController {
     this.#panels = input.panels;
 
     const segTo = Math.min(input.currentPanel + 1, input.panels.length - 1);
-    this.#mode = input.panels[segTo]?.data.animationMode ?? 'scroll';
-    const duration = input.panels[segTo]?.data.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
+    const activePanelMode = input.panels[input.currentPanel]?.data.animationMode;
+    this.#mode = activePanelMode === 'immediate' ? 'immediate' : (input.panels[segTo]?.data.animationMode ?? 'scroll');
 
     const base = {
       currentPanel: input.currentPanel,
@@ -135,12 +156,17 @@ export class TweenController {
     };
     const reduced = prefersReducedMotionNow();
 
-    this.scroll.set(computeDesiredPosition({ ...base, mode: 'scroll' }), {
+    const scrollTarget = computeDesiredPosition({ ...base, mode: 'scroll' });
+    const immediateTarget = computeDesiredPosition({ ...base, mode: 'immediate' });
+    const immediateFrom = this.immediate.position;
+    const immediateDuration = input.panels[immediateTarget]?.data.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
+
+    this.scroll.set(scrollTarget, {
       duration: reduced || input.isTouch ? 0 : SCROLL_SMOOTHING_MS,
       easing: cubicOut
     });
-    this.immediate.set(computeDesiredPosition({ ...base, mode: 'immediate' }), {
-      duration: reduced ? 0 : duration,
+    this.immediate.set(immediateTarget, {
+      duration: reduced ? 0 : immediateDuration,
       easing: cubicInOut
     });
   }

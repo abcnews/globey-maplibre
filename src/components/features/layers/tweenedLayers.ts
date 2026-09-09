@@ -52,8 +52,10 @@ export function buildTweenedLayerEntries<Config, Coord = never>(
 }
 
 /**
- * Adds a layer whose opacity fades with the shared `tweenPos` global-state:
- * `opacityKey` is set to `tweenStopsExpression(opacityStops)` in the paint.
+ * Adds a layer whose opacity fades with a clock's global-state: `opacityKey` is
+ * set to `tweenStopsExpression(opacityStops, posKey)` in the paint. `posKey`
+ * comes from the item's `animationClock` via `layerClockKey`, so layers on
+ * different clocks can coexist — both uniforms are written every frame.
  */
 export function addFadingLayer(
   map: MapLibreMap,
@@ -65,15 +67,19 @@ export function addFadingLayer(
     paint?: Record<string, unknown>;
     opacityKey: string;
     opacityStops: number[];
+    /** Global-state key of the clock this layer's fade follows. */
+    posKey: string;
   },
   zIndex: number
 ): void {
-  const { opacityKey, opacityStops, ...spec } = layer;
+  const { opacityKey, opacityStops, posKey, ...spec } = layer;
+  const opacityExpression = tweenStopsExpression(opacityStops, posKey);
+
   addLayerWithZIndex(
     map,
     {
       ...spec,
-      paint: { ...(spec.paint ?? {}), [opacityKey]: tweenStopsExpression(opacityStops) }
+      paint: { ...(spec.paint ?? {}), [opacityKey]: opacityExpression }
     } as any,
     zIndex
   );

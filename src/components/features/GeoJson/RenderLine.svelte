@@ -8,6 +8,7 @@
     getKilometreZoomScaleExpression,
     type GeoJsonFeatureState
   } from './utils.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,
@@ -39,6 +40,10 @@
     config.lineWidth?.unit === 'k' ? getKilometreZoomScaleExpression(config.lineWidth.value) : null
   );
 
+  // Which clock this layer's fades follow. Baked into the paint at add time, so
+  // changing it rebuilds the layers — only ever a builder action.
+  const posKey = $derived(layerClockKey(config.animationClock));
+
   // One main + outline line layer per class, added once. See RenderArea for why
   // nothing here reacts to scroll.
   $effect(() => {
@@ -46,6 +51,7 @@
     const sid = sourceId;
     const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
     const classes = classStates;
+    const clockKey = posKey;
     const lineWidthExpr = kmWidth;
     if (!map || !classes) return;
 
@@ -69,9 +75,9 @@
               filter,
               layout: LINE_LAYOUT,
               paint: {
-                'line-color': classPaintExpression(perPanelStates, 'outlineColor'),
-                'line-width': classPaintExpression(perPanelStates, 'outlineWidth'),
-                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+                'line-color': classPaintExpression(perPanelStates, 'outlineColor', clockKey),
+                'line-width': classPaintExpression(perPanelStates, 'outlineWidth', clockKey),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
               }
             },
             outlineZ
@@ -88,9 +94,9 @@
               filter,
               layout: LINE_LAYOUT,
               paint: {
-                'line-color': classPaintExpression(perPanelStates, 'strokeColor'),
-                'line-width': lineWidthExpr ?? classPaintExpression(perPanelStates, 'strokeWidth'),
-                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+                'line-color': classPaintExpression(perPanelStates, 'strokeColor', clockKey),
+                'line-width': lineWidthExpr ?? classPaintExpression(perPanelStates, 'strokeWidth', clockKey),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
               }
             },
             zIndex

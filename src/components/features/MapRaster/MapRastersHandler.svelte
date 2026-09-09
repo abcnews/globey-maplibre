@@ -20,6 +20,7 @@
     tileSize={entry.representative.tileSize ?? 256}
     attribution={entry.representative.attribution}
     opacityStops={entry.opacityStops}
+    animationClock={entry.representative.animationClock}
     zIndex={entry.representative.zIndex ?? Z_INDEX_BASE_RASTER + entry.index * 0.1}
   />
 {/each}

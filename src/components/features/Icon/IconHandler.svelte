@@ -12,6 +12,7 @@
   } from '../layers/layerUtils.ts';
   import { addFadingLayer, pickStop } from '../layers/tweenedLayers.ts';
   import { getTween } from '../Tween/context.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
 
   // In-flight map image load promises across icon handlers to avoid redundant downloads/decoding
   const inFlightMapImages = new Map<string, Promise<any>>();
@@ -35,7 +36,13 @@
     coordStops?: ([number, number] | null)[];
   } = $props();
 
-  const iconCoords = (): [number, number] => pickStop(coordStops, tween.fromPanel, config.coords ?? [0, 0]);
+  // The fade reads this clock's uniform; the coordinate snap reads the same
+  // clock's panel index, so position and opacity stay in step.
+  const clock = $derived(config.animationClock ?? 'scroll');
+  const posKey = $derived(layerClockKey(config.animationClock));
+
+  const iconCoords = (): [number, number] =>
+    pickStop(coordStops, tween.clock(clock).fromPanel, config.coords ?? [0, 0]);
 
   const currentCmid = $derived(config.cmid);
   const currentSid = $derived(getIconSourceId(id || config.cmid));
@@ -136,7 +143,8 @@
                 'icon-ignore-placement': true
               },
               opacityKey: 'icon-opacity',
-              opacityStops: untrack(() => opacityStops)
+              opacityStops: untrack(() => opacityStops),
+              posKey: untrack(() => posKey)
             },
             untrack(() => zIndex)
           );

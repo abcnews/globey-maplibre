@@ -5,6 +5,7 @@
   import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_IMAGE_LAYERS } from '../layers/layerUtils.ts';
   import { addFadingLayer, pickStop } from '../layers/tweenedLayers.ts';
   import { getTween } from '../Tween/context.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const tween = getTween();
@@ -35,11 +36,17 @@
   const currentLid = $derived(`image-layer-${config.id || config.url}`);
   const currentUrl = $derived(config.url);
 
+  // The fade reads this clock's uniform; the coordinate snap below reads the same
+  // clock's panel index, so position and opacity stay in step.
+  const clock = $derived(config.animationClock ?? 'scroll');
+  const posKey = $derived(layerClockKey(config.animationClock));
+
   const currentCoords = (): number[][] =>
-    pickStop(coordStops, tween.fromPanel, config.coordinates ?? DEFAULT_COORDS);
+    pickStop(coordStops, tween.clock(clock).fromPanel, config.coordinates ?? DEFAULT_COORDS);
 
   // LIFECYCLE EFFECT: adds / removes the source and layer once. Opacity is baked
-  // into the paint as a `tweenPos` interpolation, so nothing re-applies it.
+  // into the paint as an interpolation over the layer's clock, so nothing
+  // re-applies it.
   $effect(() => {
     const map = mapRoot.map;
 
@@ -62,7 +69,8 @@
             source: currentSid,
             type: 'raster',
             opacityKey: 'raster-opacity',
-            opacityStops: untrack(() => opacityStops)
+            opacityStops: untrack(() => opacityStops),
+            posKey: untrack(() => posKey)
           },
           untrack(() => zIndex)
         );

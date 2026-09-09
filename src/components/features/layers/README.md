@@ -15,19 +15,21 @@ per icon). To fade it we:
 
 1. Look at every panel in the story and decide the layer's opacity in each one:
    its normal opacity where the item is present, `0` where it is absent.
-2. Add the layer **once**, at load, with an opacity that reads the shared
-   `tweenPos` value: `['interpolate', ['linear'], ['number', ['global-state',
-   'tweenPos'], 0], 0, op0, 1, op1, …]` — one stop per panel.
-3. `CustomGlobe` writes `tweenPos` once per animation frame
-   (`fromPanel + easedT`). Every layer's opacity follows it.
+2. Add the layer **once**, at load, with an opacity that reads the item's clock:
+   `['interpolate', ['linear'], ['number', ['global-state', 'tweenPosScroll'],
+   0], 0, op0, 1, op1, …]` — one stop per panel. The key comes from the item's
+   `animationClock` via `layerClockKey`, so a layer can fade on arrival at the
+   marker (`tweenPosImmediate`) while the rest scrub with scroll.
+3. `CustomGlobe` writes both clock values once per animation frame
+   (`fromPanel + easedT`). Every layer's opacity follows the one it named.
 
 The layer is never removed or re-added while you scroll. An item that is missing
 from a panel just has `opacity: 0` at that stop, so it fades instead of popping.
 Per-frame cost is one `setGlobalStateProperty` call, no matter how many layers.
 
-`tweenPos` and the expression builder live in
-[`../Tween/utils.ts`](../Tween/utils.ts):
-`MAPLIBRE_TWEEN_STATE_KEY` and `tweenStopsExpression(perPanelValues, posKey?)`.
+The clock keys and the expression builder live in
+[`../Tween/utils.ts`](../Tween/utils.ts): `layerClockKey(clock?)` and
+`tweenStopsExpression(perPanelValues, posKey)`.
 
 ---
 
@@ -86,13 +88,17 @@ different. Only the shared tween wiring is factored out.
 
 ## Rules
 
-- **The opacity expression must stay pure.** Only `['global-state', 'tweenPos']`
+- **The opacity expression must stay pure.** Only `['global-state', <clock key>]`
   and literal numbers. No `['get', …]` or `['feature-state', …]` — those turn the
   shader uniform into per-feature work.
 - **Do not add, remove, or `setData` a layer in response to scroll.** That
-  re-tessellates and flashes. Fades are the `tweenPos` uniform only.
+  re-tessellates and flashes. Fades are the clock uniform only. (Changing a
+  layer's `animationClock` *does* rebuild it — the key is baked into the paint at
+  add time — but that only ever happens as a builder action, never on scroll.)
 - **Position snaps, it does not tween.** Read it from `coordStops[fromPanel]` in
-  an effect that depends on `fromPanel`, never on `easedT`.
+  an effect that depends on `fromPanel`, never on `easedT`. Take that
+  `fromPanel` from `tween.clock(item.animationClock ?? 'scroll')` so the snap
+  lands on the same clock as the fade.
 - **Reduced motion, immediate mode, builder** — all handled by the single
   `tweenPos` write in `CustomGlobe`. Leaf handlers carry no mode logic. Under
   reduced motion `tweenPos` holds on the current panel and switches when the next

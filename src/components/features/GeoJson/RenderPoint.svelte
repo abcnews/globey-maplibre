@@ -8,6 +8,7 @@
     getKilometreZoomScaleExpression,
     type GeoJsonFeatureState
   } from './utils.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
@@ -32,6 +33,10 @@
     config.pointSize?.unit === 'k' ? getKilometreZoomScaleExpression(config.pointSize.value) : null
   );
 
+  // Which clock this layer's fades follow. Baked into the paint at add time, so
+  // changing it rebuilds the layers — only ever a builder action.
+  const posKey = $derived(layerClockKey(config.animationClock));
+
   // One circle layer per class, added once. See RenderArea for why nothing here
   // reacts to scroll.
   $effect(() => {
@@ -39,6 +44,7 @@
     const sid = sourceId;
     const targetZ = zIndex;
     const classes = classStates;
+    const clockKey = posKey;
     const radiusExpr = kmRadius;
     if (!map || !classes) return;
 
@@ -60,12 +66,12 @@
               filter: classFilterExpression(classIndex),
               paint: {
                 'circle-pitch-scale': 'map',
-                'circle-color': classPaintExpression(perPanelStates, 'color'),
-                'circle-radius': radiusExpr ?? classPaintExpression(perPanelStates, 'radius'),
-                'circle-opacity': classPaintExpression(perPanelStates, 'opacity'),
-                'circle-stroke-color': classPaintExpression(perPanelStates, 'strokeColor'),
-                'circle-stroke-width': classPaintExpression(perPanelStates, 'strokeWidth'),
-                'circle-stroke-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+                'circle-color': classPaintExpression(perPanelStates, 'color', clockKey),
+                'circle-radius': radiusExpr ?? classPaintExpression(perPanelStates, 'radius', clockKey),
+                'circle-opacity': classPaintExpression(perPanelStates, 'opacity', clockKey),
+                'circle-stroke-color': classPaintExpression(perPanelStates, 'strokeColor', clockKey),
+                'circle-stroke-width': classPaintExpression(perPanelStates, 'strokeWidth', clockKey),
+                'circle-stroke-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
               }
             },
             targetZ

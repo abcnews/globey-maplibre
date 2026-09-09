@@ -3,6 +3,7 @@
   import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
   import { classPaintExpression, classFilterExpression, type GeoJsonFeatureState } from './utils.ts';
+  import { layerClockKey } from '../Tween/utils.ts';
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,
@@ -27,6 +28,10 @@
     zIndex?: number;
   } = $props();
 
+  // Which clock this layer's fades follow. Baked into the paint at add time, so
+  // changing it rebuilds the layers — only ever a builder action.
+  const posKey = $derived(layerClockKey(config.animationClock));
+
   // Add the source and a fill + outline layer per class, once. Every per-panel
   // change is the `gjPos` global-state uniform set by GeoJsonHandler, so nothing
   // here reacts to scroll — the layers are never rebuilt and there is no flash.
@@ -36,6 +41,7 @@
     const sid = sourceId;
     const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
     const classes = classStates;
+    const clockKey = posKey;
     if (!map || !classes) return;
 
     const addedLayerIds = untrack(() => {
@@ -57,8 +63,8 @@
               source: sid,
               filter,
               paint: {
-                'fill-color': classPaintExpression(perPanelStates, 'fillColor'),
-                'fill-opacity': classPaintExpression(perPanelStates, 'fillOpacity')
+                'fill-color': classPaintExpression(perPanelStates, 'fillColor', clockKey),
+                'fill-opacity': classPaintExpression(perPanelStates, 'fillOpacity', clockKey)
               }
             },
             outlineZ
@@ -74,9 +80,9 @@
               source: sid,
               filter,
               paint: {
-                'line-color': classPaintExpression(perPanelStates, 'strokeColor'),
-                'line-width': classPaintExpression(perPanelStates, 'strokeWidth'),
-                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity')
+                'line-color': classPaintExpression(perPanelStates, 'strokeColor', clockKey),
+                'line-width': classPaintExpression(perPanelStates, 'strokeWidth', clockKey),
+                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
               }
             },
             zIndex

@@ -55,15 +55,10 @@ export function lerp(from: number, to: number, t: number): number {
 }
 
 /**
- * MapLibre global-state key holding the current tween position
- * (`fromPanel + easedT`). `CustomGlobe` writes it once per frame; feature layers
- * read it from `tweenStopsExpression`.
- *
- * Transitional: this key follows whichever clock the panel's `animationMode`
- * selects. Layers that don't name a clock (the default) read it. It retires once
- * per-layer clock selection lands and every layer passes an explicit key.
+ * MapLibre global-state keys holding each clock's current tween position
+ * (`fromPanel + easedT`). `CustomGlobe` writes both once per frame; feature
+ * layers read the one their `animationClock` selects, via `tweenStopsExpression`.
  */
-export const MAPLIBRE_TWEEN_STATE_KEY = 'tweenPos';
 
 /** Global-state key for the always-scroll-tied clock. */
 export const MAPLIBRE_TWEEN_SCROLL_STATE_KEY = 'tweenPosScroll';
@@ -79,6 +74,13 @@ export function clockStateKey(mode: AnimationMode): string {
 }
 
 /**
+ * The global-state key a layer config should read. A layer that names no clock
+ * follows the scroll-tied one — the panel's `animationMode` governs the camera,
+ * not individual layer fades.
+ */
+export const layerClockKey = (clock?: AnimationMode): string => clockStateKey(clock ?? 'scroll');
+
+/**
  * Builds a paint value that steps through one value per panel as the tween
  * position moves. The expression is pure (only the global-state and literals),
  * so MapLibre compiles it to a shader uniform and one `setGlobalStateProperty`
@@ -86,10 +88,7 @@ export function clockStateKey(mode: AnimationMode): string {
  *
  * A single value (builder / static, one "panel") is returned as-is.
  */
-export function tweenStopsExpression(
-  perPanelValues: (number | string)[],
-  posKey: string = MAPLIBRE_TWEEN_STATE_KEY
-): any {
+export function tweenStopsExpression(perPanelValues: (number | string)[], posKey: string): any {
   if (perPanelValues.length === 1) return perPanelValues[0];
 
   const stops = perPanelValues.flatMap((value, panel) => [panel, value]);
