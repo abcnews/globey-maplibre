@@ -11,7 +11,7 @@
   import AttributionHandler from '../features/Attribution/AttributionHandler.svelte';
   import MinimapHandler from '../features/Minimap/MinimapHandler.svelte';
   import { MAX_ZOOM } from '../../lib/constants';
-  import { Map, setWorkerUrl, getWorkerUrl } from 'maplibre-gl';
+  import { Map, setWorkerUrl } from 'maplibre-gl';
   import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import { isDarkBase } from './mapStyle/utils';
@@ -29,49 +29,6 @@
   import { tdbg, refId, glog } from '../../lib/tweenDebug.ts';
 
   setWorkerUrl(workerUrl);
-
-  // DEBUG: the MapLibre worker parses vector tiles (raster tiles decode on the
-  // main thread — which is why satellite still works when this is broken). If the
-  // worker URL is wrong / 404 / cross-origin-blocked, vector tiles never load and
-  // never even fire `.pbf` requests.
-  glog('CustomGlobe', 'worker setup', {
-    importedWorkerUrl: workerUrl,
-    getWorkerUrl: getWorkerUrl(),
-    resolvedAgainstBase: (() => {
-      try {
-        return new URL(workerUrl, document.baseURI).href;
-      } catch (e) {
-        return `[bad url: ${String(e)}]`;
-      }
-    })(),
-    pageOrigin: location.origin
-  });
-  fetch(workerUrl)
-    .then(r =>
-      glog('CustomGlobe', 'worker fetch result', {
-        ok: r.ok,
-        status: r.status,
-        finalUrl: r.url,
-        contentType: r.headers.get('content-type')
-      })
-    )
-    .catch(e => glog('CustomGlobe', 'worker fetch threw', e));
-  try {
-    const probe = new Worker(workerUrl, { type: 'module' });
-    probe.addEventListener('error', e =>
-      glog('CustomGlobe', 'worker probe error event', {
-        message: e.message,
-        filename: e.filename,
-        lineno: e.lineno
-      })
-    );
-    setTimeout(() => {
-      glog('CustomGlobe', 'worker probe survived 3s (likely constructed OK)');
-      probe.terminate();
-    }, 3000);
-  } catch (e) {
-    glog('CustomGlobe', 'new Worker() threw synchronously', e);
-  }
 
   type Props = {
     rootElStyle?: string;
