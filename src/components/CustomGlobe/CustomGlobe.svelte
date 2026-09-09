@@ -194,45 +194,10 @@
 
     map.on('error', e => {
       console.error('[MapLibre error]', e.error?.message || e);
-      glog('CustomGlobe', 'map error event', {
-        sourceId: (e as any).sourceId,
-        message: e.error?.message,
-        error: e.error
-      });
+      glog('CustomGlobe', 'map error event', e.error?.message || e);
     });
     map.on('style.load', () => glog('CustomGlobe', 'map style.load fired'));
-
-    // Always-on: the openmaptiles vector source is the one that renders the
-    // street base. Track its tile lifecycle so a grey globe (layers present, no
-    // geometry) can be traced to the TileJSON / tile requests.
-    map.on('sourcedataloading', e => {
-      if (e.sourceId === 'openmaptiles') glog('CustomGlobe', 'openmaptiles sourcedataloading', { type: e.dataType });
-    });
-    map.on('sourcedata', e => {
-      if (e.sourceId !== 'openmaptiles') return;
-      glog('CustomGlobe', 'openmaptiles sourcedata', {
-        type: e.sourceDataType,
-        isSourceLoaded: e.isSourceLoaded,
-        tilesLoaded: (map as any).style?.sourceCaches?.['openmaptiles']?.loaded?.()
-      });
-    });
-
-    map.once('idle', () => {
-      let water = -1;
-      try {
-        water = map.querySourceFeatures('openmaptiles', { sourceLayer: 'water' }).length;
-      } catch (e) {
-        glog('CustomGlobe', 'querySourceFeatures threw', e);
-      }
-      glog('CustomGlobe', 'map idle (first) — openmaptiles diagnostic', {
-        isStyleLoaded: map.isStyleLoaded(),
-        sourceExists: !!map.getSource('openmaptiles'),
-        isSourceLoaded: map.isSourceLoaded('openmaptiles'),
-        areTilesLoaded: map.areTilesLoaded(),
-        resolvedSource: map.getStyle()?.sources?.openmaptiles,
-        waterFeaturesInView: water
-      });
-    });
+    map.once('idle', () => glog('CustomGlobe', 'map idle (first)', { isStyleLoaded: map.isStyleLoaded() }));
 
     map.on('load', () => {
       glog('CustomGlobe', 'map load fired', { isStyleLoaded: map.isStyleLoaded() });
