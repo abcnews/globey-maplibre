@@ -1,98 +1,60 @@
 # TweenController
 
-A single tween clock shared by every scrollyteller feature, so map features
-animate between panels on the same timeline as the camera.
+A shared tween clock that synchronises map camera movements and layer transitions across scrollyteller panels.
 
 ---
 
-## Why this exists
+## Overview
 
-A scrollyteller is a list of `panels`. Each panel carries a decoded marker config
-(`panel.data: DecodedObject`) describing the whole map state at that point —
-camera, base map, GeoJSON layers, custom labels, icons, rasters, projection.
+A scrollyteller consists of sequential `panels`, each defining map configuration (camera position, GeoJSON layers, custom labels, icons, rasters, and projection).
 
-Historically only the **camera** animated between panels
-([`PanZoom/PanZoomScrollHandler.svelte`](../PanZoom/PanZoomScrollHandler.svelte)).
-Every other handler read `options = panels[currentPanel].data` and applied it
-instantly, so labels, layers and icons **popped** on each panel change.
-
-`TweenController` replaces the camera's bespoke tween with one clock that any
-feature can read. A feature interpolates its values between the two panels using
-the same clock as the camera so everything stays in sync.
+`TweenController` provides a unified clock for all map features. Individual handlers read this clock to interpolate properties smoothly between panels alongside camera movements.
 
 ---
 
 ## The two clocks
 
-`TweenController` runs **two** clocks side by side. Both are retargeted every
-tick; they only differ in timing.
+`TweenController` manages two parallel clocks updated on every tick:
 
-- **`scroll`** — target `currentPanel + panelPct`. Progress is tied to scroll
-  position; stop half-way between panels and it holds there. A short catch-up
-  smoothing (`SCROLL_SMOOTHING_MS`, 150 ms) is applied on non-touch devices like
-  scrollwheels; touch devices track scroll 1:1 so it feels snappier.
-- **`immediate`** — target `currentPanel`. On reaching a panel it plays `0 → 1`
-  over a fixed duration (`animationDuration`, default 2000 ms) and cannot be
-  paused part-way. Scrolling back to the previous panel plays it in reverse.
+- **`scroll`**: Target is `currentPanel + panelPct`. Progress tracks scroll position directly. Smooths mousewheel input with a 150ms catch-up transition while updating 1:1 on touch devices.
+- **`immediate`**: Target is `currentPanel`. Plays from start to finish over a fixed duration (`animationDuration`, default 2000ms) upon reaching a panel, and plays in reverse when scrolling back.
 
-`animationMode` (`am` in the URL hash, default `'scroll'`), read from
-`panels[toPanel].data`, selects which clock the shared getters (`position`, `t`,
-`easedT`, `fromPanel`, `toPanel`) and the `tweenPos` global-state key follow. The
-other clock still runs; nothing reads it yet. Per-layer clock selection — camera
-on one clock, GeoJSON on the other — is a later phase; it will read
-`tween.clock(mode)` and pass `clockStateKey(mode)` as the paint expression's key.
+Camera playback mode is governed by the panel's `animationMode` (`'scroll'` or `'immediate'`), while individual layers choose their timing via `animationClock`.
 
-Under reduced motion (`prefersReducedMotion` or `disableMapAnimation` in
-[`../../../lib/stores.ts`](../../../lib/stores.ts)) there is no fade. Features show
-the current panel and switch to the next one when it triggers. (Both position
-tweens run with `duration: 0`, and consumers use `0` for the blend instead of
-`easedT`.)
+Under reduced motion (`prefersReducedMotion` or `disableMapAnimation`), transitions snap directly to the active panel without easing.
 
 ---
 
-## Panels are raw state
+## State management
 
-`#panels` is `$state.raw`, not `$state`. `sync()` reassigns it on every scroll
-tick with the same raw `panels` array; a deep `$state` re-proxies that array on
-each assignment, and a fresh proxy is never `===` the old one, so every
-`tween.panels` reader re-derives 60x/sec with new object identities. That is what
-made GeoJSON layers rebuild and flash on scroll. Panels are immutable decoded
-data, so raw is both correct and cheaper.
+Panels are held in raw state (`$state.raw`) rather than deep reactive state. This ensures array references remain stable across 60fps scroll frames, avoiding unnecessary layer teardowns and re-renders.
 
 ---
 
 ## Mental model
 
-The controller exposes one continuous number, **`position`**:
+The controller tracks progression as a continuous number, `position` (for example, `0` is panel 0, `1.5` is halfway between panels 1 and 2, and `3` is panel 3).
 
-```
-position = 0        panel 0
-position = 1.5      half-way from panel 1 to panel 2
-position = 3        panel 3
-```
+From `position`, derived properties are calculated:
 
-From `position` the controller derives the properties being blended and the
-blend factor:
-
-| Getter       | Meaning                                                        |
-| ------------ | -------------------------------------------------------------- |
-| `fromPanel`  | `clamp(floor(position), 0, N-1)` — lower panel of the pair     |
-| `toPanel`    | `clamp(fromPanel + 1, 0, N-1)` — upper panel of the pair       |
-| `t`          | `clamp(position - fromPanel, 0, 1)` — linear blend factor      |
-| `easedT`     | `easeInOutCubic(t)` — shaped blend factor, matches the camera  |
-| `fromConfig` | `panels[fromPanel].data` (a `DecodedObject`)                   |
-| `toConfig`   | `panels[toPanel].data`                                         |
-| `mode`       | `'scroll'` or `'immediate'` for the current segment            |
-| `panelCount` | number of panels; `0` on the builder / static path (see below) |
+- **`fromPanel`**: Lower index of the active panel pair (`Math.floor(position)` clamped between 0 and `panelCount - 1`).
+- **`toPanel`**: Upper index of the active panel pair (`fromPanel + 1`).
+- **`t`**: Linear progress between `fromPanel` and `toPanel` (clamped `0..1`).
+- **`easedT`**: Progress shaped by cubic in-out easing for natural transitions.
+- **`fromConfig`**: Decoded configuration for `fromPanel`.
+- **`toConfig`**: Decoded configuration for `toPanel`.
+- **`mode`**: Active animation mode (`'scroll'` or `'immediate'`).
+- **`panelCount`**: Total panels loaded (returns `0` in static or builder mode).
 
 ---
 
 ## Consuming the clock in a feature
 
-[`CustomGlobe.svelte`](../../CustomGlobe/CustomGlobe.svelte) creates the
-instance and provides it on context.
+[`CustomGlobe.svelte`](../../CustomGlobe/CustomGlobe.svelte) provides the `TweenController` instance via Svelte context. Features access it using `getTween()`.
 
-### A single numeric or colour value
+### Numeric and colour values
+
+Interpolate between `fromConfig` and `toConfig` using `lerp`, `lerpColour`, or `lerpCoords`:
 
 ```svelte
 <script lang="ts">
@@ -104,15 +66,12 @@ instance and provides it on context.
   const mapRoot = getContext<{ map: Map }>('mapInstance');
   const tween = getTween();
 
-  // Blend between the two panels; fall back to the static prop in the builder.
   const opacity = $derived(
     tween.panelCount > 0
       ? tween.lerp(tween.fromConfig.myOpacity ?? 1, tween.toConfig.myOpacity ?? 1, tween.easedT)
       : (config.myOpacity ?? 1)
   );
 
-  // Push the current value at each tick. `easedT` only changes while a transition
-  // is playing, so this is idle at rest.
   $effect(() => {
     const map = mapRoot.map;
     if (!map || !map.getLayer('my-layer')) return;
@@ -121,161 +80,74 @@ instance and provides it on context.
 </script>
 ```
 
-Use `tween.lerpColour(from, to, t)` for hex / CSS colours and
-`tween.lerpCoords(from, to, t)` for `[lng, lat]` pairs (shortest path across the
-antimeridian). All three are also importable from
-[`./utils.ts`](./utils.ts) for tests.
+### Feature collections
 
-### A collection (many features in one source)
+For datasets containing multiple features (such as labels or markers):
 
-Build the **keyed union** of `fromConfig`'s items and `toConfig`'s items. For each
-key:
+- Compute the union of items between `fromConfig` and `toConfig`.
+- Persistent items stay at opacity `1`.
+- Exiting items fade out with `1 - easedT`.
+- Entering items fade in with `easedT`.
+- Update the MapLibre GeoJSON source using `setData`.
 
-- in both panels → render it, opacity `1` (persistent);
-- outgoing only → render it, opacity `1 - easedT` (leaving);
-- incoming only → render it, opacity `easedT` (entering).
+Reference: [`../CustomLabels/MapCustomLabelHandler.svelte`](../CustomLabels/MapCustomLabelHandler.svelte).
 
-Then `source.setData` the resolved set each tick and drive `*-opacity` from a
-per-feature `opacity` property (e.g. `['number', ['get', 'opacity'], 1]`).
+### Discrete properties
 
-Reference: [`../CustomLabels/utils.ts`](../CustomLabels/utils.ts)
-(`resolveLabelTransition`) and its use in
-[`../CustomLabels/MapCustomLabelHandler.svelte`](../CustomLabels/MapCustomLabelHandler.svelte).
-
-### Discrete values
-
-Values that cannot be interpolated (`projection`, `base`, a layer id, an enum)
-should not be blended. Either keep `fromConfig`'s value until `t >= 1`, or switch
-at `t >= 0.5`. Match whatever the camera / rest of the app does for that field.
-
-### Reduced motion
-
-Read the global stores directly. Use `0` for the blend so the feature shows the
-current panel and switches when the next one triggers (`tween.fromPanel` already
-tracks that):
-
-```svelte
-import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
-const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
-const easedT = $derived(reducedMotion ? 0 : tween.easedT);
-```
-
-### Builder / static path
-
-There are no panels, so `tween.panelCount === 0`. Fall back to the component's own
-config prop (`config`, `options`, `labels`, …) with no transition. Everything
-still renders; nothing animates.
+Properties that cannot be smoothly interpolated (such as projections or layer IDs) should snap at panel boundaries (`t >= 1` or `t >= 0.5`).
 
 ---
 
-## API
+## Clock outputs and shader uniforms
 
-### `class TweenController`
+Both clocks are written to MapLibre `global-state` uniforms each frame by `CustomGlobe`:
 
-`new TweenController(initialPanel = 0)`
+- **`scroll` (`tweenPosScroll`)**: Written as `fromPanel + easedT`.
+- **`immediate` (`tweenPosImmediate`)**: Written directly as `position` (cubic in-out easing is already applied by the tween itself).
 
-| Member                               | Type                               | Notes                                                                                        |
-| ------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------------------- |
-| `sync(input)`                        | `(TweenSyncInput) => void`         | Called once per scroll tick by `CustomGlobe`. Reads reduced motion from `lib/stores` itself. |
-| `scroll` / `immediate`               | `TweenClock`                       | The two parallel clocks. Each exposes `position` / `fromPanel` / `toPanel` / `t` / `easedT`. |
-| `clock(mode)`                        | `(AnimationMode) => TweenClock`    | `immediate` → the immediate clock, else the scroll clock.                                    |
-| `position`                           | `number`                           | Continuous panel position — of the clock `mode` selects.                                     |
-| `panels`                             | `PanelDefinition<DecodedObject>[]` | Current panels.                                                                              |
-| `panelCount`                         | `number`                           | `0` when idle (builder / static).                                                            |
-| `fromPanel` / `toPanel`              | `number`                           | Clamped indices of the blended pair (of the clock `mode` selects).                          |
-| `t` / `easedT`                       | `number`                           | Linear / cubic-eased blend factor, `0..1` (of the clock `mode` selects).                     |
-| `fromConfig` / `toConfig`            | `DecodedObject`                    | The two panels' configs. Frozen `{}` when idle.                                              |
-| `mode`                               | `AnimationMode`                    | Segment's playback mode.                                                                     |
-| `lerp` / `lerpColour` / `lerpCoords` | functions                          | Interpolation helpers, also in `./utils.ts`.                                                 |
-
-### `TweenSyncInput`
-
-`{ panels, currentPanel, virtualPanel, panelPct, isTouch }` — the raw scrollyteller
-progress. `virtualPanel` is `-1` in the prelude, `0..N-1` on panels, `N` in the
-outro.
-
-### `getTween()` / `setTween(controller)`
-
-Typed context pair from [`./context.ts`](./context.ts) (Svelte `createContext`).
-`getTween()` throws if no `setTween()` ran in an ancestor.
-
-### `./utils.ts`
-
-| Export                                                                               | Notes                                                                                                                                                            |
-| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `computeDesiredPosition({ currentPanel, virtualPanel, panelPct, panelCount, mode })` | Pure. Called once per clock per tick. Prelude → `0`; outro → `panelCount - 1`; `scroll` → `currentPanel + panelPct`; `immediate` → `currentPanel`. |
-| `lerp(from, to, t)`                                                                  | Linear interpolation.                                                                                                                                            |
-| `lerpColour(from, to, t)`                                                            | Interpolates hex / CSS colours; falls back to whichever side is defined.                                                                                         |
-| `lerpCoords(from, to, t)`                                                            | Interpolates `[lng, lat]`, shortest path across ±180°.                                                                                                           |
-| `easeInOutCubic`                                                                     | Re-exported from `../PanZoom/utils.ts`.                                                                                                                          |
-| `tweenStopsExpression(perPanelValues, posKey)`                                      | Paint value stepping one value per panel over `posKey`. Single value returned as-is.                                                                             |
-| `MAPLIBRE_TWEEN_SCROLL_STATE_KEY` (`'tweenPosScroll'`) / `MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY` (`'tweenPosImmediate'`) | The two clock keys. `CustomGlobe` writes both every frame.                                               |
-| `clockStateKey(mode)`                                                               | The global-state key for a given clock.                                                                                                                         |
-| `layerClockKey(clock?)`                                                             | The key a layer config should read. `undefined` → the scroll-tied key, so an author opts in to `'immediate'` per layer.                                          |
-
-### `./types.ts`
-
-`AnimationMode = 'scroll' | 'immediate'`.
-
-### How each clock is shaped
-
-The two clocks are written to global state differently, because their `Tween`s
-mean different things:
-
-| Clock | Its tween | Value written |
-| --- | --- | --- |
-| `scroll` | A 150ms `cubicOut` catch-up filter — position is essentially linear in scroll | `fromPanel + easedT`, so `easedT` gives the per-panel curve |
-| `immediate` | The animation itself: `cubicInOut` over the panel's `animationDuration` | `position`, raw |
-
-Do not apply `easedT` to the immediate clock. Composing its `cubicInOut` with
-`easeInOutCubic` gives a sextic: over a 2000ms play the value is still under 7%
-at 800ms, hits 50% at 1000ms and is done by 1200ms, so the fade looks like it
-starts late and then snaps.
-
-### Who picks which clock
-
-Two separate choices, both using `AnimationMode`:
-
-- **Panel `animationMode`** (hash key `am`) sets the camera's clock — it is what
-  `TweenController.mode` and the single-clock getters (`position`, `fromPanel`,
-  `easedT`, …) delegate to, which `PanZoomScrollHandler` reads.
-- **Layer `animationClock`** (hash key `ac`, on each GeoJSON / icon / image /
-  raster item) sets that layer's fade clock. Absent means scroll-tied, so
-  `'immediate'` is always an explicit opt-in. Toggled from the layer row in the
-  builder.
-
-Both clocks run every tick regardless, so layers on different clocks cost
-nothing extra — both uniforms are already written.
+Layers bind their opacity directly to either uniform using `tweenStopsExpression`.
 
 ---
 
-## Edge cases (all handled by the model, no extra code)
+## API reference
 
-| Situation                         | Result                                                           |
-| --------------------------------- | ---------------------------------------------------------------- |
-| At rest on a panel                | `t = 0` → `fromConfig` is that panel, `easedT = 0`               |
-| Prelude                           | `position` pinned to `0`                                         |
-| Outro / last panel / single panel | `fromPanel === toPanel`, `easedT` still `0`, values equal        |
-| Builder / static (no panels)      | `panelCount === 0` → consumers use their static prop             |
-| Reduced motion                    | consumers blend with `0` → show the current panel, switch when the next triggers |
-| `immediate` mode                  | `easedT` ramps over `animationDuration`, reverses on scroll-back |
+### `TweenController`
+
+- `sync(input: TweenSyncInput)`: Synchronises scroll state from scrollyteller.
+- `scroll`: The continuous scroll-tied `TweenClock`.
+- `immediate`: The fixed-duration arrival `TweenClock`.
+- `clock(mode: AnimationMode)`: Returns either `immediate` or `scroll` clock.
+- `position`: Current position value for the active mode.
+- `fromPanel` / `toPanel`: Panel indices currently being blended.
+- `t` / `easedT`: Linear and cubic-eased blend factors (`0..1`).
+- `fromConfig` / `toConfig`: Decoded marker configurations for the active blend pair.
+- `mode`: Current segment animation mode (`'scroll'` or `'immediate'`).
+- `panels` / `panelCount`: Loaded panels and panel count.
+- `lerp(from, to, t)`: Linear numeric interpolation.
+- `lerpColour(from, to, t)`: Hex and CSS colour blending.
+- `lerpCoords(from, to, t)`: Longitude and latitude interpolation over the antimeridian.
+
+### `TweenClock`
+
+- `set(target, { duration, easing })`: Retargets the clock, skipping redundant calls if target and duration are unchanged.
+- `position`: Current continuous position.
+- `target`: Target position being animated towards.
+- `fromPanel` / `toPanel`: Blended panel index pair.
+- `t` / `easedT`: Linear and eased progress between panels.
+
+### Utilities (`utils.ts`)
+
+- `computeDesiredPosition(input)`: Calculates target position for scroll or immediate modes.
+- `clockStateKey(mode)`: Returns `'tweenPosImmediate'` or `'tweenPosScroll'`.
+- `layerClockKey(clock?)`: Resolves layer animation clock key (defaults to scroll).
+- `tweenStopsExpression(stops, key)`: Generates a MapLibre interpolation expression driven by global state.
 
 ---
 
-## Files
+## File structure
 
-| File                                                       | Purpose                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------- |
-| [`TweenController.svelte.ts`](./TweenController.svelte.ts) | `TweenController` + the `TweenClock` class it runs two of.    |
-| [`context.ts`](./context.ts)                               | `getTween` / `setTween`.                                      |
-| [`utils.ts`](./utils.ts)                                   | `computeDesiredPosition`, `lerp*`, `tweenStopsExpression`, the global-state keys, `clockStateKey`. |
-| [`utils.test.ts`](./utils.test.ts)                         | Pure-helper tests.                                            |
-| [`types.ts`](./types.ts)                                   | `AnimationMode`.                                              |
-| [`index.ts`](./index.ts)                                   | Barrel.                                                       |
-
-## Current consumers
-
-- [`../PanZoom/PanZoomScrollHandler.svelte`](../PanZoom/PanZoomScrollHandler.svelte)
-  — camera (`resolveAllPanelViews` + `createZoomInterpolator(startView, targetView)(t)`).
-- [`../CustomLabels/MapCustomLabelHandler.svelte`](../CustomLabels/MapCustomLabelHandler.svelte)
-  — custom-label cross-fade.
+- [`TweenController.svelte.ts`](./TweenController.svelte.ts): Implements `TweenController` and `TweenClock`.
+- [`context.ts`](./context.ts): Context helpers (`getTween` / `setTween`).
+- [`utils.ts`](./utils.ts): Pure interpolation and MapLibre expression helpers.
+- [`types.ts`](./types.ts): Type definitions (`AnimationMode`).
+- [`index.ts`](./index.ts): Barrel exports.
