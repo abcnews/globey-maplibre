@@ -23,8 +23,7 @@
     Z_INDEX_BASE_VECTOR,
     Z_INDEX_BASE_LABELS
   } from '../layers/layerUtils.ts';
-  import { tdbg, glog } from '../../../lib/tweenDebug.ts';
-  import { tryUntil } from '../../../lib/tryUntil.ts';
+  import { tdbg } from '../../../lib/tweenDebug.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -68,39 +67,32 @@
     const s_showBase = showBase;
     const s_hasLabels = hasLabels;
 
-    glog('MapVector', 'lifecycle RUN', {
+    // DEBUG: re-running here removes + re-adds the whole vector base + labels.
+    // Tracked deps: mapRoot.map, needsSource, showBase, hasLabels, isSatellite.
+    tdbg('MapVector lifecycle RUN', {
       base,
       hideOsm,
       showBase: s_showBase,
       hasLabels: s_hasLabels,
       isSatellite: s_isSatellite,
-      needsSource,
-      isStyleLoaded: map.isStyleLoaded()
+      needsSource
     });
 
     const baseLayers = s_showBase ? getStreetBaseLayers() : [];
     const labelLayers = s_hasLabels ? getLabelLayers(s_isSatellite) : [];
     const allLayers = [...baseLayers, ...labelLayers];
-    const firstLayerId = allLayers[0]?.id;
 
     // Idempotent: guarded so it is safe to call now and again on every later
     // `styledata` / `load`. `map.addSource` throws while the style is still
     // settling; the listeners below retry until it takes.
-    let addCalls = 0;
     const addLayers = () => {
-      addCalls += 1;
-      if (!map.getStyle()) {
-        glog('MapVector', `addLayers #${addCalls} skipped — no style yet`);
-        return;
-      }
+      if (!map.getStyle()) return;
 
       try {
         if (!map.getSource(OPENMAPTILES_SOURCE_ID)) {
           map.addSource(OPENMAPTILES_SOURCE_ID, OPENMAPTILES_SOURCE_DEF as any);
-          glog('MapVector', `addLayers #${addCalls} — added source "${OPENMAPTILES_SOURCE_ID}"`);
         }
-      } catch (e) {
-        glog('MapVector', `addLayers #${addCalls} — addSource threw`, e);
+      } catch {
         return;
       }
 
@@ -112,14 +104,11 @@
         map.setPaintProperty('background', 'background-color', defaultBackground);
       }
 
-      let added = 0;
-
       if (s_showBase) {
         baseLayers.forEach((layer, idx) => {
           const layerZ = untrack(() => (streetMapZIndex ?? Z_INDEX_BASE_VECTOR) + idx * 0.0001);
           if (!map.getLayer(layer.id)) {
             addLayerWithZIndex(map, layer as any, layerZ);
-            added += 1;
           }
         });
       }
@@ -129,18 +118,12 @@
           const layerZ = untrack(() => (zIndex ?? Z_INDEX_BASE_LABELS) + idx * 0.0001);
           if (!map.getLayer(layer.id)) {
             addLayerWithZIndex(map, layer as any, layerZ);
-            added += 1;
           } else if (layer.paint) {
             Object.keys(layer.paint).forEach(prop => {
               map.setPaintProperty(layer.id, prop as any, (layer.paint as any)[prop]);
             });
           }
         });
-      }
-
-      if (added > 0 || addCalls <= 2) {
-        const present = allLayers.filter(l => map.getLayer(l.id)).length;
-        glog('MapVector', `addLayers #${addCalls} — +${added}, now ${present}/${allLayers.length} layers on map`);
       }
     };
 
@@ -153,19 +136,8 @@
     map.on('styledata', addLayers);
     map.on('load', addLayers);
 
-    // Belt and braces: poll until the layers actually land, in case neither
-    // `styledata` nor `load` fires in a state that can accept them.
-    const cancelRetry = tryUntil(
-      () => {
-        addLayers();
-        return firstLayerId ? map.getLayer(firstLayerId) != null : true;
-      },
-      { label: 'MapVector addLayers', intervalMs: 200, timeoutMs: 15000 }
-    );
-
     return () => {
-      glog('MapVector', 'lifecycle CLEANUP', { base, layerCount: allLayers.length });
-      cancelRetry();
+      tdbg('MapVector lifecycle CLEANUP', { base, layerCount: allLayers.length });
       map.off('styledata', addLayers);
       map.off('load', addLayers);
       allLayers.forEach(layer => {
