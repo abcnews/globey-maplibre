@@ -161,26 +161,9 @@
       { label: 'MapVector addLayers', intervalMs: 200, timeoutMs: 15000 }
     );
 
-    // Watchdog for the MapLibre source-resolution race we have hit before: if
-    // the vector source still has not loaded a few seconds in, re-set its tile
-    // template to force the source cache to (re)start requesting tiles, and
-    // force a repaint. Re-setting the same tiles when it is already fine is a
-    // cheap single reload.
-    const watchdog = setTimeout(() => {
-      const src = map.getSource(OPENMAPTILES_SOURCE_ID) as maplibregl.VectorTileSource | undefined;
-      if (!src) return;
-      const loaded = map.isSourceLoaded(OPENMAPTILES_SOURCE_ID);
-      glog('MapVector', 'watchdog 4s', { isSourceLoaded: loaded, isStyleLoaded: map.isStyleLoaded() });
-      if (!loaded) {
-        src.setTiles?.(OPENMAPTILES_SOURCE_DEF.tiles ?? []);
-        map.triggerRepaint();
-      }
-    }, 4000);
-
     return () => {
       glog('MapVector', 'lifecycle CLEANUP', { base, layerCount: allLayers.length });
       cancelRetry();
-      clearTimeout(watchdog);
       allLayers.forEach(layer => {
         removeLayerWithZIndex(map, layer.id);
       });
@@ -318,10 +301,9 @@
     const cancelVis = tryUntil(
       () => {
         syncVisibility();
-        // A real label layer id from the style (see getLabelLayers()).
-        return map.getLayer('place-country-rank1-symbol') != null;
+        return map.getLayer('place-country-1') != null;
       },
-      { label: 'MapVector visibility', intervalMs: 250, timeoutMs: 6000 }
+      { label: 'MapVector visibility', intervalMs: 200, timeoutMs: 15000 }
     );
 
     return () => cancelVis();

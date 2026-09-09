@@ -50,7 +50,7 @@ export function tryUntil(
     }
 
     if (Date.now() - startedAt >= timeoutMs) {
-      if (log) console.info(`[globey] ${label}: gave up after ${tries} tries / ${Date.now() - startedAt}ms`);
+      if (log) console.warn(`[globey] ${label}: gave up after ${tries} tries / ${Date.now() - startedAt}ms`);
       stop();
       return;
     }
