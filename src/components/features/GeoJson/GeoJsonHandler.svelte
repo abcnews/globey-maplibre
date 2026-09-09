@@ -3,7 +3,6 @@
   import { fetchGeoJsonData, buildFeatureClasses, type FeatureClasses } from './utils.ts';
   import { generateGeoJsonSourceId, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
   import { getTween } from '../Tween/context.ts';
-  import { tdbg, refId } from '../../../lib/tweenDebug.ts';
   import GeoJsonRenderer from './GeoJsonRenderer.svelte';
 
   let { config = [] } = $props<{ config?: GeoJsonConfig[] }>();
@@ -46,17 +45,6 @@
     });
   });
 
-  // DEBUG: watch the derived chain that keys the {#each}. A changing `panelConfigs`
-  // ref or a changing `sig` remounts GeoJsonRenderer and tears the source down.
-  $effect(() => {
-    tdbg('GeoJsonHandler items', {
-      panelConfigs: refId(panelConfigs),
-      panelCount: tween.panelCount,
-      panels: refId(tween.panels),
-      sigs: items.map(i => i.sig)
-    });
-  });
-
   // Fetched GeoJSON, keyed by item key (URL / CMID never change → fetch once).
   let dataByKey = $state<Record<string, any>>({});
   // Class breakdown, keyed by signature (rebuilt only when a builder edit changes
@@ -70,8 +58,6 @@
       const loadData = dataByKey[item.key]
         ? Promise.resolve(dataByKey[item.key])
         : fetchGeoJsonData({ cmid: item.representative.cmid, url: item.representative.url });
-
-      tdbg('GeoJsonHandler (re)build classes', { key: item.key, sig: item.sig });
 
       loadData
         .then(data => {

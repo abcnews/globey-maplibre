@@ -9,7 +9,6 @@
     Z_INDEX_GEOJSON,
     SUB_LAYER_OUTLINE_OFFSET
   } from '../layers/layerUtils.ts';
-  import { tdbg, refId } from '../../../lib/tweenDebug.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
@@ -38,14 +37,6 @@
     const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
     const classes = classStates;
     if (!map || !classes) return;
-
-    // DEBUG: this effect re-running means every area layer + the source is torn
-    // down and rebuilt. Tracked deps: map, sourceId, zIndex, classStates.
-    tdbg(`RenderArea lifecycle RUN ${sid}`, {
-      classStates: refId(classes),
-      zIndex,
-      map: refId(map)
-    });
 
     const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
@@ -97,7 +88,6 @@
     });
 
     return () => {
-      tdbg(`RenderArea lifecycle CLEANUP ${sid}`);
       addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };

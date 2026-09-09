@@ -14,7 +14,6 @@
     Z_INDEX_GEOJSON,
     SUB_LAYER_OUTLINE_OFFSET
   } from '../layers/layerUtils.ts';
-  import { tdbg, refId } from '../../../lib/tweenDebug.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
@@ -49,15 +48,6 @@
     const classes = classStates;
     const lineWidthExpr = kmWidth;
     if (!map || !classes) return;
-
-    // DEBUG: re-running tears down + rebuilds every line layer + the source.
-    // Tracked deps: map, sourceId, zIndex, classStates, kmWidth.
-    tdbg(`RenderLine lifecycle RUN ${sid}`, {
-      classStates: refId(classes),
-      zIndex,
-      kmWidth: refId(lineWidthExpr),
-      map: refId(map)
-    });
 
     const addedLayerIds = untrack(() => {
       if (!map.getSource(sid)) {
@@ -112,7 +102,6 @@
     });
 
     return () => {
-      tdbg(`RenderLine lifecycle CLEANUP ${sid}`);
       addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
       if (map.getSource(sid)) map.removeSource(sid);
     };

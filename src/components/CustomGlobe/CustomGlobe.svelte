@@ -26,7 +26,6 @@
     MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
   } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
-  import { tdbg, refId } from '../../lib/tweenDebug.ts';
 
   setWorkerUrl(workerUrl);
 
@@ -105,22 +104,15 @@
     const map = mapInstance.map;
     if (!map) return;
 
-    const scrollPos = clockPosition(tweenController.scroll);
-    const immediatePos = clockPosition(tweenController.immediate);
-    const selectedPos = clockPosition(tweenController.clock(tweenController.mode));
-
-    tdbg('CustomGlobe global-state write', {
-      mode: tweenController.mode,
-      scroll: Number(scrollPos.toFixed(4)),
-      immediate: Number(immediatePos.toFixed(4)),
-      selected: Number(selectedPos.toFixed(4)),
-      panels: refId(tweenController.panels),
-      panelCount: tweenController.panelCount
-    });
-
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, scrollPos);
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY, immediatePos);
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_STATE_KEY, selectedPos);
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, clockPosition(tweenController.scroll));
+    map.setGlobalStateProperty(
+      MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY,
+      clockPosition(tweenController.immediate)
+    );
+    map.setGlobalStateProperty(
+      MAPLIBRE_TWEEN_STATE_KEY,
+      clockPosition(tweenController.clock(tweenController.mode))
+    );
   });
 
   const hasRasterSatellite = $derived(
@@ -191,17 +183,6 @@
         mapContainer.style.opacity = '1';
       }
       mapInstance.map = map;
-
-      // DEBUG: raw map events. Repeated `sourcedata` (isSourceLoaded flipping) or
-      // `styledata` while scrolling means something is reloading sources — the flash.
-      map.on('styledata', () => tdbg('map event: styledata'));
-      map.on('sourcedata', e => {
-        if (e.sourceDataType === 'metadata' || e.sourceDataType === 'visibility') return;
-        tdbg(`map event: sourcedata ${e.sourceId}`, {
-          type: e.sourceDataType,
-          loaded: e.isSourceLoaded
-        });
-      });
     });
 
     return () => {

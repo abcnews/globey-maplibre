@@ -2,7 +2,6 @@
   import type { GeoJsonConfig } from '../../../lib/marker';
   import type { GeoJsonFeatureState } from './utils.ts';
   import { getTween } from '../Tween/context.ts';
-  import { tdbg, refId } from '../../../lib/tweenDebug.ts';
   import RenderArea from './RenderArea.svelte';
   import RenderLine from './RenderLine.svelte';
   import RenderPoint from './RenderPoint.svelte';
@@ -34,18 +33,6 @@
   const spikeConfig = $derived(
     perPanelConfigs[Math.min(tween.fromPanel, perPanelConfigs.length - 1)] ?? config
   );
-
-  // DEBUG: this component owns the source. Every mount/unmount is a full source
-  // teardown + re-tessellation — the flash.
-  $effect(() => {
-    tdbg(`GeoJsonRenderer MOUNT ${sourceId}`, {
-      type: config.type,
-      classStates: refId(classStates),
-      data: refId(data),
-      zIndex
-    });
-    return () => tdbg(`GeoJsonRenderer UNMOUNT ${sourceId}`);
-  });
 </script>
 
 {#if config.type === 'areas'}

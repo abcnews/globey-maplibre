@@ -1,5 +1,4 @@
 import type { Map as MapLibreMap, AddLayerObject, CustomLayerInterface } from 'maplibre-gl';
-import { tdbgTrace } from '../../../lib/tweenDebug.ts';
 
 /**
  * Standard default Z-Index constants for MapLibre visual layers.
@@ -134,8 +133,6 @@ export function addLayerWithZIndex(
   // If the layer is already added, avoid adding it again
   if (map.getLayer(layer.id)) return;
 
-  tdbgTrace(`addLayer ${layer.id}`, { zIndex });
-
   const registry = getMapRegistry(map);
 
   let beforeId: string | undefined = fallbackBeforeId;
@@ -187,8 +184,6 @@ export function setLayersZIndex(
 ): void {
   if (!map || !layerIds?.length) return;
 
-  tdbgTrace(`setLayersZIndex ${layerIds.length} layers`, { baseZIndex, first: layerIds[0] });
-
   const registry = getMapRegistry(map);
 
   // 1. Update all registry entries first
@@ -221,7 +216,6 @@ export function removeLayerWithZIndex(map: MapLibreMap, layerId: string): void {
   registry.delete(layerId);
 
   if (map.getLayer(layerId)) {
-    tdbgTrace(`removeLayer ${layerId}`);
     map.removeLayer(layerId);
   }
 }
