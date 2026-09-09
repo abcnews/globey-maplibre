@@ -104,12 +104,14 @@
         return;
       }
 
-      // Add only what is missing. On a repeat call where everything is present
-      // this loop does nothing — no `setLayoutProperty` / `setPaintProperty`,
-      // so it does not dirty the style. That matters: those setters on a vector
-      // layer mark the source for reload, and a handler that re-applies them on
-      // every `styledata` starves the source of the quiet moment it needs to
-      // fetch its first tiles (grey map, endless `sourcedataloading`).
+      if (s_showBase && map.getLayer('background')) {
+        const defaultBackground = (
+          getBaseStyleSource().layers.find(layer => layer.id === 'background') as
+            maplibregl.BackgroundLayerSpecification | undefined
+        )?.paint?.['background-color'];
+        map.setPaintProperty('background', 'background-color', defaultBackground);
+      }
+
       let added = 0;
 
       if (s_showBase) {
@@ -128,18 +130,12 @@
           if (!map.getLayer(layer.id)) {
             addLayerWithZIndex(map, layer as any, layerZ);
             added += 1;
+          } else if (layer.paint) {
+            Object.keys(layer.paint).forEach(prop => {
+              map.setPaintProperty(layer.id, prop as any, (layer.paint as any)[prop]);
+            });
           }
         });
-      }
-
-      // Reset the background to the street style's colour — once, on the build
-      // that actually adds the base.
-      if (added > 0 && s_showBase && map.getLayer('background')) {
-        const defaultBackground = (
-          getBaseStyleSource().layers.find(layer => layer.id === 'background') as
-            maplibregl.BackgroundLayerSpecification | undefined
-        )?.paint?.['background-color'];
-        map.setPaintProperty('background', 'background-color', defaultBackground);
       }
 
       if (added > 0 || addCalls <= 2) {
@@ -148,11 +144,17 @@
       }
     };
 
-    // Add now; if the style cannot take the layers yet, poll until it can. We
-    // deliberately do NOT listen on `styledata` here — `addLayers` is a no-op
-    // once the layers exist, and re-running it on every style change was
-    // creating a feedback loop that blocked tile loading.
+    // Match every other layer handler (raster / image / icon): add now, then
+    // keep re-adding on style churn and on `load`. A single `once('styledata')`
+    // is lost if it fires before the style can take the layers, or if this
+    // effect's cleanup removes it first — which is why the vector base could go
+    // missing in production while the other layers came up fine.
     addLayers();
+    map.on('styledata', addLayers);
+    map.on('load', addLayers);
+
+    // Belt and braces: poll until the layers actually land, in case neither
+    // `styledata` nor `load` fires in a state that can accept them.
     const cancelRetry = tryUntil(
       () => {
         addLayers();
@@ -164,6 +166,8 @@
     return () => {
       glog('MapVector', 'lifecycle CLEANUP', { base, layerCount: allLayers.length });
       cancelRetry();
+      map.off('styledata', addLayers);
+      map.off('load', addLayers);
       allLayers.forEach(layer => {
         removeLayerWithZIndex(map, layer.id);
       });
@@ -215,33 +219,37 @@
     const towns = labels?.towns ?? false;
     const oceans = labels?.oceans ?? false;
 
-    // Only write `visibility` when it actually differs from what the layer
-    // already has. `setLayoutProperty` on a vector layer marks the source for
-    // reload every time, so a blind re-apply on each `styledata` starves the
-    // source of the gap it needs to fetch tiles. With this guard `syncVisibility`
-    // is a true no-op once applied and is safe to call on every style change.
-    const setVis = (id: string, visible: boolean) => {
-      if (!map.getLayer(id)) return;
-      const want = visible ? 'visible' : 'none';
-      const current = (map.getLayoutProperty(id, 'visibility') as string | undefined) ?? 'visible';
-      if (current !== want) map.setLayoutProperty(id, 'visibility', want);
-    };
-
     const syncVisibility = () => {
       // COUNTRIES
-      setVis('place-country-1', countriesMajor);
-      setVis('place-country-rank1-symbol', countriesMajor);
-      setVis('place-country-2', countriesMedium);
-      setVis('place-country-rank2-symbol', countriesMedium);
-      setVis('place-country-3', countriesMinor);
-      setVis('place-country-rank>=3-symbol', countriesMinor);
-      setVis('place-country-other', countriesMinor);
+      const countryLayers: Record<string, boolean> = {
+        'place-country-1': countriesMajor,
+        'place-country-rank1-symbol': countriesMajor,
+        'place-country-2': countriesMedium,
+        'place-country-rank2-symbol': countriesMedium,
+        'place-country-3': countriesMinor,
+        'place-country-rank>=3-symbol': countriesMinor,
+        'place-country-other': countriesMinor
+      };
+
+      Object.entries(countryLayers).forEach(([id, isVisible]) => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', isVisible ? 'visible' : 'none');
+        }
+      });
 
       // CONTINENTS
-      ['place-continent', 'place-continent-symbol'].forEach(id => setVis(id, continents));
+      ['place-continent', 'place-continent-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', continents ? 'visible' : 'none');
+        }
+      });
 
       // STATES
-      ['place-state', 'place-state-symbol', 'place-state-AU-symbol'].forEach(id => setVis(id, states));
+      ['place-state', 'place-state-symbol', 'place-state-AU-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', states ? 'visible' : 'none');
+        }
+      });
 
       // CITIES
       [
@@ -253,7 +261,11 @@
         'place-city-capital-symbol',
         'place-city-capital-state',
         'place-city-capital_state-symbol'
-      ].forEach(id => setVis(id, cities));
+      ].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', cities ? 'visible' : 'none');
+        }
+      });
 
       // TOWNS
       [
@@ -265,7 +277,11 @@
         'place-island-major-symbol',
         'place-island-minor-symbol',
         'place-other'
-      ].forEach(id => setVis(id, towns));
+      ].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', towns ? 'visible' : 'none');
+        }
+      });
 
       // OCEANS
       [
@@ -280,32 +296,43 @@
         'water-name-bay-straight',
         'water_name-bay_strait-symbol',
         'waterway-name-symbol'
-      ].forEach(id => setVis(id, oceans));
+      ].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', oceans ? 'visible' : 'none');
+        }
+      });
 
       // OTHER UNMANAGED SYMBOLS
-      ['mountain_peak-symbol', 'aerodrome_label-major-symbol', 'transportation_name-road-symbol'].forEach(id =>
-        setVis(id, false)
-      );
+      ['mountain_peak-symbol', 'aerodrome_label-major-symbol', 'transportation_name-road-symbol'].forEach(id => {
+        if (map.getLayer(id)) {
+          map.setLayoutProperty(id, 'visibility', 'none');
+        }
+      });
 
       // BOUNDARIES
-      setVis('boundary-land-level-2', true);
-      setVis('boundary-land-disputed', true);
-      setVis('boundary-land-level-4', false);
-      setVis('boundary-land-level-6', false);
+      if (map.getLayer('boundary-land-level-2')) {
+        map.setLayoutProperty('boundary-land-level-2', 'visibility', 'visible');
+      }
+      if (map.getLayer('boundary-land-disputed')) {
+        map.setLayoutProperty('boundary-land-disputed', 'visibility', 'visible');
+      }
+      if (map.getLayer('boundary-land-level-4')) {
+        map.setLayoutProperty('boundary-land-level-4', 'visibility', 'none');
+      }
+      if (map.getLayer('boundary-land-level-6')) {
+        map.setLayoutProperty('boundary-land-level-6', 'visibility', 'none');
+      }
     };
 
-    // Apply now, then poll until the label layers exist (they are added by the
-    // other effect). No `styledata` listener — `setLayoutProperty` churn on
-    // every style change was blocking tile loading.
+    // Idempotent (every branch is `if (map.getLayer(id))`), so run it now and on
+    // every later style change rather than waiting on one `styledata`.
     syncVisibility();
-    const cancelVis = tryUntil(
-      () => {
-        syncVisibility();
-        return map.getLayer('place-country-1') != null;
-      },
-      { label: 'MapVector visibility', intervalMs: 200, timeoutMs: 15000 }
-    );
+    map.on('styledata', syncVisibility);
+    map.on('load', syncVisibility);
 
-    return () => cancelVis();
+    return () => {
+      map.off('styledata', syncVisibility);
+      map.off('load', syncVisibility);
+    };
   });
 </script>

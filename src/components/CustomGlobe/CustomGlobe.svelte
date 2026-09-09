@@ -217,28 +217,22 @@
       });
     });
 
-    // Reach the map from the console: `window.__globeyMap`
-    (window as any).__globeyMap = map;
-
-    const openmaptilesDiagnostic = (when: string) => {
-      const sourceExists = !!map.getSource('openmaptiles');
+    map.once('idle', () => {
       let water = -1;
       try {
-        if (sourceExists) water = map.querySourceFeatures('openmaptiles', { sourceLayer: 'water' }).length;
-      } catch {
-        /* querySourceFeatures throws before the source cache exists */
+        water = map.querySourceFeatures('openmaptiles', { sourceLayer: 'water' }).length;
+      } catch (e) {
+        glog('CustomGlobe', 'querySourceFeatures threw', e);
       }
-      glog('CustomGlobe', `openmaptiles diagnostic (${when})`, {
+      glog('CustomGlobe', 'map idle (first) — openmaptiles diagnostic', {
         isStyleLoaded: map.isStyleLoaded(),
-        sourceExists,
-        isSourceLoaded: sourceExists ? map.isSourceLoaded('openmaptiles') : false,
+        sourceExists: !!map.getSource('openmaptiles'),
+        isSourceLoaded: map.isSourceLoaded('openmaptiles'),
         areTilesLoaded: map.areTilesLoaded(),
         resolvedSource: map.getStyle()?.sources?.openmaptiles,
         waterFeaturesInView: water
       });
-    };
-    map.once('idle', () => openmaptilesDiagnostic('idle'));
-    setTimeout(() => openmaptilesDiagnostic('+5s'), 5000);
+    });
 
     map.on('load', () => {
       glog('CustomGlobe', 'map load fired', { isStyleLoaded: map.isStyleLoaded() });
