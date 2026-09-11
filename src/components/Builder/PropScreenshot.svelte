@@ -1,0 +1,78 @@
+<script lang="ts">
+  import type * as maplibregl from 'maplibre-gl';
+  import { jsonBlob } from '../../lib/data/blobStore.ts';
+
+  interface Props {
+    map?: maplibregl.Map;
+  }
+
+  let { map }: Props = $props();
+
+  async function takeScreenshot() {
+    if (!map) {
+      console.error('Map not initialized');
+      return;
+    }
+
+    alert(
+      'This feature does not screenshot all the map features, such as custom labels, attribution etc. It is not suitable as a fallback image.'
+    );
+
+    const projection = map.getProjection();
+    if (projection && projection.type === 'globe') {
+      const shouldSwitch = confirm(
+        'Switch to 2D map?\n\nThis is highly recommended if you intend to use this as georectified imagery. 2D mode ensures the linear geographic bounds match the image corners exactly.'
+      );
+      if (shouldSwitch) {
+        jsonBlob.update(b => {
+          if (!b) return b;
+          return {
+            ...b,
+            map: {
+              ...b.map,
+              projection: 'mercator'
+            }
+          };
+        });
+        // Wait for the next idle event after the projection change
+        await new Promise(resolve => map?.once('idle', resolve));
+      }
+    }
+
+    capture();
+  }
+
+  function capture() {
+    if (!map) return;
+    // Trigger a repaint and wait for idle to ensure the buffer is populated
+    map.triggerRepaint();
+    map.once('idle', () => {
+      if (!map) return;
+      const canvas = map.getCanvas();
+      const bounds = map.getBounds();
+
+      // Bound order: top, left, bottom, right (N, W, S, E)
+      const top = bounds.getNorth().toFixed(6);
+      const left = bounds.getWest().toFixed(6);
+      const bottom = bounds.getSouth().toFixed(6);
+      const right = bounds.getEast().toFixed(6);
+
+      const filename = `builder.${top},${left},${bottom},${right}.png`;
+
+      canvas.toBlob((blob: Blob | null) => {
+        if (!blob) {
+          console.error('Failed to create blob from canvas');
+          return;
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+    });
+  }
+</script>
+
+<button type="button" onclick={takeScreenshot}>Take Screenshot...</button>

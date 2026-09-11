@@ -60,7 +60,7 @@
     map.on('load', () => {
       minimap = map;
       if (initialBounds) {
-        map.fitBounds(initialBounds as [number, number][], { duration: 0 });
+        map.fitBounds(initialBounds as [[number, number], [number, number]], { duration: 0 });
       }
       map.once('render', () => {
         isReady = true;

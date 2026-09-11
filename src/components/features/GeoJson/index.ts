@@ -26,6 +26,8 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
       id: Date.now().toString(),
       type: 'areas',
       colourMode: 'simple',
+      opacity: 1,
+      isOpaque: false,
       zIndex: maxZIndex
     };
   },

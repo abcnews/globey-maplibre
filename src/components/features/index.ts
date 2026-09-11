@@ -3,6 +3,8 @@ export * from './buttonHelpers.ts';
 export * from './layers/layerManager.ts';
 export * from './layers/layerUtils.ts';
 
+import type { LayerFeatureDefinition } from './types.ts';
+
 import { geoJsonFeature } from './GeoJson/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
 import { iconFeature } from './Icon/index.ts';
@@ -12,7 +14,7 @@ import { customLabelsFeature } from './CustomLabels/index.ts';
 import { streetMapFeature } from './MapVector/index.ts';
 import { rasterFeature } from './MapRaster/index.ts';
 
-export const layerFeatureRegistry = [
+export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
   geoJsonFeature,
   iconFeature,
   imageSourceFeature,

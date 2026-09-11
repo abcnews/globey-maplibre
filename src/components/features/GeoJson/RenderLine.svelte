@@ -28,8 +28,8 @@
 
   const LINE_LAYOUT = { 'line-cap': 'round', 'line-join': 'round' } as const;
 
-  const lineLayerId = `${sourceId}-line`;
-  const outlineLayerId = `${sourceId}-line-outline`;
+  const lineLayerId = $derived(`${sourceId}-line`);
+  const outlineLayerId = $derived(`${sourceId}-line-outline`);
 
   // Fixed real-world width keeps its zoom expression; otherwise driven by config.
   const lineWidthExpr = $derived(

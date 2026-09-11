@@ -1,5 +1,6 @@
 import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
 import type { DecodedObject, MapLabelsConfig } from '../../../lib/marker';
+import { DEFAULT_MAP_LABELS, DISABLED_MAP_LABELS } from '../../../lib/marker/utils.ts';
 import { Z_INDEX_BASE_LABELS } from '../layers/layerUtils.ts';
 import { Tag as LabelIcon } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
@@ -22,11 +23,9 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
     return (options.mapLabels as any)._disabled === true;
   },
 
-  createDefault() {
+  createDefault(): MapLabelsConfig {
     return {
-      countriesMajor: true,
-      countriesMedium: true,
-      countriesMinor: true,
+      ...DEFAULT_MAP_LABELS,
       continents: true,
       states: true,
       cities: true,
@@ -63,7 +62,9 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
       states: item?.states ?? true,
       cities: item?.cities ?? true,
       towns: item?.towns ?? true,
-      oceans: item?.oceans ?? true
+      oceans: item?.oceans ?? true,
+      nationalBoundaries: item?.nationalBoundaries ?? true,
+      stateBoundaries: item?.stateBoundaries ?? false
     };
     delete (options.mapLabels as any)._disabled;
   },
@@ -73,11 +74,10 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
   },
 
   delete(options: DecodedObject) {
-
     if (options.mapLabels) {
       options.mapLabels = {
+        ...DISABLED_MAP_LABELS,
         ...options.mapLabels,
-        _disabled: true,
         countriesMajor: false,
         countriesMedium: false,
         countriesMinor: false,
@@ -85,7 +85,10 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
         states: false,
         cities: false,
         towns: false,
-        oceans: false
+        oceans: false,
+        nationalBoundaries: false,
+        stateBoundaries: false,
+        ...({ _disabled: true } as any)
       };
     }
   },

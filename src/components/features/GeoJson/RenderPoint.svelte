@@ -26,7 +26,7 @@
     zIndex?: number;
   } = $props();
 
-  const circleLayerId = `${sourceId}-circle`;
+  const circleLayerId = $derived(`${sourceId}-circle`);
 
   // Fixed real-world radius keeps its zoom expression; otherwise driven by config.
   const radiusExpr = $derived(

@@ -24,8 +24,8 @@
     zIndex?: number;
   } = $props();
 
-  const fillLayerId = `${sourceId}-fill`;
-  const outlineLayerId = `${sourceId}-outline`;
+  const fillLayerId = $derived(`${sourceId}-fill`);
+  const outlineLayerId = $derived(`${sourceId}-outline`);
 
   // Add the source and the fill + outline layer once, on mount. Paint/filter are
   // then kept in sync with `config` by the effect below, in place, so builder

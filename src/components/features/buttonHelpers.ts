@@ -88,8 +88,6 @@ export function getDefaultLayerButtons<T = any>(
   if (feature.ConfigModal) {
     buttons.push(createEditButton<T>());
   }
-  if (feature.delete) {
-    buttons.push(createDeleteButton<T>());
-  }
+  buttons.push(createDeleteButton<T>());
   return buttons;
 }

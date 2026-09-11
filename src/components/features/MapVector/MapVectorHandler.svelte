@@ -7,7 +7,7 @@
    */
   import type * as maplibregl from 'maplibre-gl';
   import type { MapLabelsConfig } from '../../../lib/marker/types';
-  import { hasMapLabels } from '../../../lib/marker/utils';
+  import { hasMapLabels, DEFAULT_MAP_LABELS } from '../../../lib/marker/utils';
   import { getContext, untrack } from 'svelte';
   import {
     OPENMAPTILES_SOURCE_ID,
@@ -30,16 +30,7 @@
     base,
     hideOsm = false,
     streetMapZIndex = Z_INDEX_BASE_VECTOR,
-    labels = {
-      countriesMajor: true,
-      countriesMedium: true,
-      countriesMinor: true,
-      continents: false,
-      states: false,
-      cities: false,
-      towns: false,
-      oceans: false
-    },
+    labels = DEFAULT_MAP_LABELS,
     zIndex = Z_INDEX_BASE_LABELS,
     isSatellite = false
   }: {

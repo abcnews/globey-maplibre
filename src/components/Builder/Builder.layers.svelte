@@ -22,9 +22,9 @@
     type LayerAddMenuItem
   } from '../features';
   import { safeFitBounds } from './utils.ts';
-  import PropList from '../Builder.legacy/PropList.svelte';
-  import PropScreenshot from '../Builder.legacy/PropScreenshotTool/PropScreenshot.svelte';
-  import IframeUrl from '../Builder.legacy/IframeUrl.svelte';
+  import PropList from './PropList.svelte';
+  import PropScreenshot from './PropScreenshot.svelte';
+  import IframeUrl from './IframeUrl.svelte';
   import { Plus, X } from 'svelte-bootstrap-icons';
 
   let map = $state<MapLibreMap>();
@@ -94,7 +94,7 @@
 
     layerFeatureRegistry.forEach(feature => {
       const items = feature.getItems(currentOptions);
-      items.forEach(item => {
+      items.forEach((item: LayerItemDescriptor<any>) => {
         const itemDescriptorWithFeature = { ...item, feature };
         const rawButtons =
           item.buttons ||
@@ -239,18 +239,19 @@
 
   $effect(() => {
     if (!map) return;
+    const mapInstance = map;
 
     if (activePlacement) {
-      map.getCanvas().style.cursor = 'crosshair';
-      map.on('click', handleMapClick);
+      mapInstance.getCanvas().style.cursor = 'crosshair';
+      mapInstance.on('click', handleMapClick);
     } else {
-      map.getCanvas().style.cursor = '';
-      map.off('click', handleMapClick);
+      mapInstance.getCanvas().style.cursor = '';
+      mapInstance.off('click', handleMapClick);
     }
 
     return () => {
-      map.off('click', handleMapClick);
-      if (map?.getCanvas()) map.getCanvas().style.cursor = '';
+      mapInstance.off('click', handleMapClick);
+      if (mapInstance.getCanvas()) mapInstance.getCanvas().style.cursor = '';
     };
   });
 

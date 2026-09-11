@@ -59,7 +59,7 @@ if (staticMountEl) {
   const staticMountProps = await markerSchema.decode(acto(window.location.hash.slice(1)));
   mount(CustomGlobe, {
     target: staticMountEl,
-    props: { options: staticMountProps, rootElStyle: 'height: 100dvh; width: 100%;' }
+    props: { options: staticMountProps, interactive: false, rootElStyle: 'height: 100dvh; width: 100%;' }
   });
 }
 

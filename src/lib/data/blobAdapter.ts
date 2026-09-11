@@ -129,7 +129,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
     coords: map.coords ?? [0, 0],
     z: map.z ?? 2,
     bounds: map.bounds ?? [],
-    base: map.base ?? 'satellite',
+    base: map.base === 'street' ? 'street' : 'satellite',
     projection: map.projection ?? 'globe',
     satelliteVariant: map.satelliteVariant ?? 'blue',
     attribution: map.attribution ?? '',
