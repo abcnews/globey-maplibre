@@ -5,7 +5,7 @@ import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR, Z_INDEX_GEOJSON } from '../la
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
 import { createClockButton, createEditButton, createDeleteButton } from '../buttonHelpers.ts';
 import BuilderGeoJsonConfigModal from './BuilderGeoJsonConfigModal.svelte';
-import GeoJsonHandler from './GeoJsonHandler.svelte';
+import GeoJsonsHandler from './GeoJsonsHandler.svelte';
 
 export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   kind: 'geojson',
@@ -27,7 +27,7 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
       type: 'areas',
       colourMode: 'simple',
       zIndex: maxZIndex
-    } as any;
+    };
   },
 
   getItems(options: DecodedObject): LayerItemDescriptor<GeoJsonConfig>[] {
@@ -76,10 +76,11 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   },
 
   ConfigModal: BuilderGeoJsonConfigModal,
-  MapRenderer: GeoJsonHandler
+  MapRenderer: GeoJsonsHandler
 };
 
 export * from './utils.ts';
 export * from './themes.ts';
 export { default as GeoJsonHandler } from './GeoJsonHandler.svelte';
+export { default as GeoJsonsHandler } from './GeoJsonsHandler.svelte';
 export { default as BuilderGeoJsonConfigModal } from './BuilderGeoJsonConfigModal.svelte';

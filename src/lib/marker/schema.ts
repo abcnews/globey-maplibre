@@ -125,20 +125,6 @@ export const geoJsonColourConfigSchema = object({
 }).asArray();
 
 /**
- * Style configuration schema for a GeoJSON layer.
- */
-export const geoJsonStyleSchema = object({
-  colourMode: oneOf(['scale', 'simple', 'basic'] as const)
-    .key('cm')
-    .default('scale'),
-  colourProp: string().key('cp').optional(),
-  colourConfig: geoJsonColourConfigSchema.key('cc').optional(),
-  opacity: decimal(2).key('o').default(1),
-  isOpaque: boolean().key('io').default(false),
-  filter: geoJsonFilterSchema.key('f').optional()
-}).asArray();
-
-/**
  * 3D spike configuration schema.
  */
 export const geoJsonSpikeSchema = object({
@@ -167,7 +153,14 @@ export const geoJsonItemSchema = object({
   type: oneOf(['areas', 'lines', 'points', 'spikes'] as const)
     .key('t')
     .default('areas'),
-  styles: array(geoJsonStyleSchema).key('s').default([]),
+  colourMode: oneOf(['scale', 'simple', 'basic'] as const)
+    .key('cm')
+    .default('scale'),
+  colourProp: string().key('cp').optional(),
+  colourConfig: geoJsonColourConfigSchema.key('cc').optional(),
+  opacity: decimal(2).key('o').default(1),
+  isOpaque: boolean().key('io').default(false),
+  filter: geoJsonFilterSchema.key('f').optional(),
   pointSize: sizeSchema.key('ps').optional(),
   lineWidth: sizeSchema.key('lw').optional(),
   spike: geoJsonSpikeSchema.key('sp').optional(),

@@ -8,8 +8,6 @@
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
   import BuilderPropGeoJsonHeight from './BuilderPropGeoJsonHeight.svelte';
   import VerticalTabs from '../../Builder/shared/VerticalTabs.svelte';
-  import Collapsible from '../../Builder/shared/Collapsible.svelte';
-  import { ArrowUp, ArrowDown, Trash } from 'svelte-bootstrap-icons';
   import { untrack } from 'svelte';
 
   interface Props {
@@ -162,28 +160,18 @@
     }
   });
 
-  $effect(() => {
-    // Ensure styles array exists to be manipulated by the UI
-    if (!draftConfig.styles) {
-      if ((draftConfig as any).colourMode) {
-        draftConfig.styles = [
-          {
-            colourMode: (draftConfig as any).colourMode,
-            colourProp: (draftConfig as any).colourProp,
-            colourConfig: (draftConfig as any).colourConfig,
-            filter: (draftConfig as any).filter
-          } as any
-        ];
-        delete (draftConfig as any).colourMode;
-        delete (draftConfig as any).colourProp;
-        delete (draftConfig as any).colourConfig;
-        delete (draftConfig as any).filter;
-        delete (draftConfig as any).opacity;
-      } else {
-        draftConfig.styles = [{ colourMode: 'basic' }];
-      }
-    }
-  });
+  function commitDraft() {
+    config.type = draftConfig.type;
+    config.colourMode = draftConfig.colourMode;
+    config.colourProp = draftConfig.colourProp;
+    config.colourConfig = $state.snapshot(draftConfig.colourConfig);
+    config.opacity = draftConfig.opacity;
+    config.isOpaque = draftConfig.isOpaque;
+    config.filter = $state.snapshot(draftConfig.filter);
+    config.pointSize = $state.snapshot(draftConfig.pointSize);
+    config.lineWidth = $state.snapshot(draftConfig.lineWidth);
+    config.spike = $state.snapshot(draftConfig.spike);
+  }
 
   function handleSave(goto = false) {
     const trimmed = rawSourceInput.trim();
@@ -201,11 +189,7 @@
       }
       config.url = trimmed;
       delete (config as any).cmid;
-      config.type = draftConfig.type;
-      config.styles = $state.snapshot(draftConfig.styles);
-      config.pointSize = $state.snapshot(draftConfig.pointSize);
-      config.lineWidth = $state.snapshot(draftConfig.lineWidth);
-      config.spike = $state.snapshot(draftConfig.spike);
+      commitDraft();
     } else {
       const numericCmid = Number(trimmed);
       if (!numericCmid || isNaN(numericCmid) || numericCmid <= 0) {
@@ -215,11 +199,7 @@
       }
       config.cmid = numericCmid;
       delete (config as any).url;
-      config.type = draftConfig.type;
-      config.styles = $state.snapshot(draftConfig.styles);
-      config.pointSize = $state.snapshot(draftConfig.pointSize);
-      config.lineWidth = $state.snapshot(draftConfig.lineWidth);
-      config.spike = $state.snapshot(draftConfig.spike);
+      commitDraft();
     }
 
     let bounds: [number, number][] | undefined = undefined;
@@ -280,25 +260,6 @@
     }
 
     onclose?.(bounds);
-  }
-
-  function addStyle() {
-    draftConfig.styles = [...(draftConfig.styles ?? []), { colourMode: 'basic' }];
-  }
-
-
-  function removeStyle(index: number) {
-    if (draftConfig.styles) {
-      draftConfig.styles = draftConfig.styles.filter((_, i) => i !== index);
-    }
-  }
-
-  function moveStyle(from: number, to: number) {
-    if (!draftConfig.styles || to < 0 || to >= draftConfig.styles.length) return;
-    const newStyles = [...draftConfig.styles];
-    const [style] = newStyles.splice(from, 1);
-    newStyles.splice(to, 0, style);
-    draftConfig.styles = newStyles;
   }
 </script>
 
@@ -383,70 +344,11 @@
       {/if}
     {:else if activeTab === 'style'}
       {#if status === 'loaded'}
-        {#if draftConfig.styles}
-          <p class="gj-note">Adjust how your GeoJSON displays. Styles are matched in order, from top to bottom.</p>
+        <p class="gj-note">Adjust how your GeoJSON layer displays.</p>
 
-          {#each draftConfig.styles as style, i}
-            <Collapsible open={i === 0}>
-              {#snippet header()}
-                <h4 style:margin="0" style:display="inline-block; font-size: 0.9em;">
-                  Style {i + 1}
-                  {#if style.filter?.prop}
-                    : <span style:font-family="monospace">{style.filter.prop}</span>
-                    {#if style.filter.values?.length > 0}
-                      <small class="stat"
-                        >: {style.filter.values.join(', ').slice(0, 30)}{style.filter.values.join(', ').length > 30
-                          ? '...'
-                          : ''}</small
-                      >
-                    {/if}
-                  {/if}
-                </h4>
-              {/snippet}
-              {#snippet actions()}
-                <div class="gj-actions">
-                  <button
-                    type="button"
-                    class="gj-btn-icon"
-                    disabled={i === 0}
-                    onclick={() => moveStyle(i, i - 1)}
-                    title="Move Up"
-                  >
-                    <ArrowUp width="12" height="12" />
-                  </button>
-                  <button
-                    type="button"
-                    class="gj-btn-icon"
-                    disabled={i === (draftConfig.styles?.length ?? 0) - 1}
-                    onclick={() => moveStyle(i, i + 1)}
-                    title="Move Down"
-                  >
-                    <ArrowDown width="12" height="12" />
-                  </button>
-                  {#if draftConfig.styles && draftConfig.styles.length > 1}
-                    <button
-                      type="button"
-                      class="gj-btn-icon gj-btn-danger"
-                      onclick={() => removeStyle(i)}
-                      title="Remove Style"
-                    >
-                      <Trash width="12" height="12" />
-                    </button>
-                  {/if}
-                </div>
-              {/snippet}
+        <BuilderPropGeoJsonFilter bind:style={draftConfig} {properties} {getUniqueValues} />
 
-              <BuilderPropGeoJsonFilter bind:style={draftConfig.styles[i]} {properties} {getUniqueValues} />
-
-              <BuilderPropGeoJsonColour bind:style={draftConfig.styles[i]} {properties} features={rawFeatures} />
-            </Collapsible>
-          {/each}
-
-          <div style:margin-bottom="1rem">
-            <button type="button" onclick={addStyle}>+ Add Another Style</button>
-          </div>
-
-        {/if}
+        <BuilderPropGeoJsonColour bind:style={draftConfig} {properties} features={rawFeatures} />
       {:else}
         <div style:padding="1rem" style:text-align="center" style:color="var(--text-light, #888)">
           Loading data to configure styles...
@@ -463,42 +365,6 @@
     opacity: 0.8;
     margin-bottom: 0.75rem;
     padding: 0 0.25rem;
-  }
-
-  .gj-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .gj-btn-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.25rem;
-    background: none;
-    border: 1px solid transparent;
-    cursor: pointer;
-    color: var(--text-light, #888);
-    border-radius: 4px;
-    transition: all 0.2s;
-  }
-
-  .gj-btn-icon:hover:not(:disabled) {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text, #ccc);
-    border-color: var(--border, rgba(122, 123, 135, 0.5));
-  }
-
-  .gj-btn-icon.gj-btn-danger:hover:not(:disabled) {
-    color: var(--builder-color-danger, #ff4444);
-    background-color: rgba(255, 68, 68, 0.1);
-    border-color: var(--builder-color-danger, #ff4444);
-  }
-
-  .gj-btn-icon:disabled {
-    opacity: 0.2;
-    cursor: not-allowed;
   }
 
   .source-input-row {

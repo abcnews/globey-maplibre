@@ -3,7 +3,7 @@
   import PanZoomScrollHandler from '../features/PanZoom/PanZoomScrollHandler.svelte';
   import MapVectorHandler from '../features/MapVector/MapVectorHandler.svelte';
   import MapCustomLabelHandler from '../features/CustomLabels/MapCustomLabelHandler.svelte';
-  import GeoJsonHandler from '../features/GeoJson/GeoJsonHandler.svelte';
+  import GeoJsonsHandler from '../features/GeoJson/GeoJsonsHandler.svelte';
   import ImageSourcesHandler from '../features/ImageSource/ImageSourcesHandler.svelte';
   import IconsHandler from '../features/Icon/IconsHandler.svelte';
   import MapRastersHandler from '../features/MapRaster/MapRastersHandler.svelte';
@@ -235,7 +235,7 @@
 
       <MapRastersHandler perPanel={perPanel(panelRasters)} />
 
-      <GeoJsonHandler config={options.geoJson} />
+      <GeoJsonsHandler config={options.geoJson} />
       <ImageSourcesHandler perPanel={perPanel(d => d.imageSources ?? [])} />
       <IconsHandler perPanel={perPanel(d => d.icons ?? [])} />
       {#if options.minimap && options.minimap.enabled !== false}

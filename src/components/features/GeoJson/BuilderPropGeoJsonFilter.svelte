@@ -1,14 +1,14 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { Typeahead } from '@abcnews/components-builder';
-  import type { GeoJsonStyleConfig } from '../../../lib/marker';
+  import type { GeoJsonConfig } from '../../../lib/marker';
 
   let {
     style = $bindable(),
     properties,
     getUniqueValues
   } = $props<{
-    style: GeoJsonStyleConfig;
+    style: GeoJsonConfig;
     properties: string[];
     getUniqueValues: (prop: string) => string[];
   }>();

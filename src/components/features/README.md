@@ -42,7 +42,7 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 ### Example Reference
 
 - Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte) and [Icon/IconsHandler.svelte](./Icon/IconsHandler.svelte)
-- Complex geojson renderer: [GeoJson/GeoJsonRenderer.svelte](./GeoJson/GeoJsonRenderer.svelte) and [GeoJson/GeoJsonHandler.svelte](./GeoJson/GeoJsonHandler.svelte)
+- Single/Collection map renderer: [GeoJson/GeoJsonHandler.svelte](./GeoJson/GeoJsonHandler.svelte) and [GeoJson/GeoJsonsHandler.svelte](./GeoJson/GeoJsonsHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
 - Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte) and [MapRaster/MapRastersHandler.svelte](./MapRaster/MapRastersHandler.svelte)
 

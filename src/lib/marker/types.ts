@@ -3,7 +3,6 @@ import type {
   sizeSchema,
   geoJsonFilterSchema,
   geoJsonColourConfigSchema,
-  geoJsonStyleSchema,
   geoJsonSpikeSchema,
   geoJsonItemSchema,
   labelSchema,
@@ -22,7 +21,6 @@ export type GeoJsonSize = Infer<typeof sizeSchema>;
 export type GeoJsonColourConfig = Infer<typeof geoJsonColourConfigSchema>;
 export type GeoJsonFilter = Infer<typeof geoJsonFilterSchema>;
 export type GeoJsonSpike = Infer<typeof geoJsonSpikeSchema>;
-export type GeoJsonStyleConfig = Infer<typeof geoJsonStyleSchema>;
 export type GeoJsonConfig = Infer<typeof geoJsonItemSchema>;
 export type IconConfig = Infer<typeof iconItemSchema>;
 export type ImageSourceConfig = Infer<typeof imageSourceItemSchema>;

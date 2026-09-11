@@ -1,71 +1,44 @@
 # GeoJSON Feature
 
-Renders GeoJSON and TopoJSON datasets (`options.geoJson`) as areas, lines, points, or 3D spikes, with smooth colour, size, and opacity transitions between scrollyteller panels on the shared tween clock.
+Renders a GeoJSON or TopoJSON dataset (one entry of `options.geoJson`) as an area, line, point, or 3D spike layer.
 
----
-
-## How It Works
-
-Transitions are handled without re-uploading geometries or modifying sources per frame:
-
-- **Feature Classification**: Visual styles (colours, opacities, line widths, radii) are evaluated across all panels at load time. Features that share the same visual profile across all panels are grouped into a shared class (`__gjClass`). Continuous numerical or colour scales are quantised to keep class counts small.
-- **Static Class Layers**: Each class is represented by static MapLibre layers filtered by `__gjClass`. Layer paint properties use interpolation expressions mapped to a global state variable (`gjPos`).
-- **Global Position Updates**: During panel transitions, `GeoJsonHandler` updates `gjPos` once per animation frame with the current continuous position (`panelIndex + easedProgress`). All class layers update their appearance automatically.
-
-Features that appear or disappear across panels fade in or out using zero-opacity stops.
+Each `GeoJsonConfig` item is one dataset, one fixed filter, one fixed colour mode/opacity, and exactly one MapLibre layer (plus an outline layer for areas/lines). To show multiple colours or filtered subsets of the same or different data, add multiple `GeoJsonConfig` items — `options.geoJson` is a plain array of independent layer instances, each addable/editable/deletable in the Builder.
 
 ---
 
 ## Component Architecture
 
-- **`GeoJsonHandler.svelte`**: Collects distinct GeoJSON configurations across panels, fetches data, builds feature classes, and updates the `gjPos` global state on each frame.
-- **`GeoJsonRenderer.svelte`**: Dispatches datasets to geometry-specific renderers based on configuration `type`.
-- **`RenderArea.svelte`**: Renders polygon fills and casing outlines per class.
-- **`RenderLine.svelte`**: Renders line strokes and casing outlines per class.
-- **`RenderPoint.svelte`**: Renders circle markers per class with screen or kilometre-based sizing.
-- **`RenderSpike.svelte` / `SpikeLayer.ts`**: Renders 3D extruded spikes via a Three.js custom layer interface.
-- **`utils.ts`**: Utilities for data normalisation, style evaluation, classification, and paint expressions.
+- **`GeoJsonsHandler.svelte`**: Plural wrapper — iterates `options.geoJson` and renders one `GeoJsonHandler` per item.
+- **`GeoJsonHandler.svelte`**: Fetches one dataset (by CMID or URL) and dispatches it to the geometry-specific renderer for `config.type`.
+- **`RenderArea.svelte`**: Renders a single polygon fill + outline layer.
+- **`RenderLine.svelte`**: Renders a single line + casing outline layer.
+- **`RenderPoint.svelte`**: Renders a single circle layer, with screen- or kilometre-based sizing.
+- **`RenderSpike.svelte` / `RenderSpikeInner.svelte` / `SpikeLayer.ts`**: Renders 3D extruded spikes via a Three.js custom layer interface, animating height/colour transitions on data change.
+- **`utils.ts`**: Data fetching/normalisation, the per-feature style evaluator (used by spikes), and the native MapLibre expression builders (`buildFilterExpression`, `buildColourExpression`, `buildOpacityExpression`, `buildRadiusExpression`, `buildStrokeWidthExpression`) used by the 2D renderers.
 - **`themes.ts`**: Palette presets and theme defaults.
-- **`BuilderGeoJsonConfigModal.svelte`**: Builder interface for configuring layer properties, styles, and filters.
+- **`BuilderGeoJsonConfigModal.svelte`**: Builder interface for configuring a layer's source, geometry type, filter, and colour.
 
-## Technical Constraints
+## How Styling Works
 
-- **Expressions Must Not Access Dynamic Properties**: Paint expressions on class layers must rely only on the global position uniform (`gjPos`). Do not introduce runtime `['get', ...]` or `['feature-state', ...]` calls into animatable paint properties.
-- **No Layer Reconstruction During Transitions**: Avoid calling `source.setData()` or adding/removing layers while scrolling or animating. All transitions must be driven via `gjPos`.
-- **Static Filters**: Class filters must remain static. Dynamic expressions inside filters trigger full source reloads.
-- **Config Identity Must Be Stable**: A renderer's layer `$effect` rebuilds whenever the `config` it derives from changes identity, and a rebuild removes the source and re-adds every layer — a visible flash. Identity is not naturally stable: the builder deep-clones `options` on every map move. `GeoJsonHandler` therefore passes `panelConfigs` through `memoiseByContent()` so renderers only ever see a new config for a real edit. Anything new that feeds a renderer must preserve that.
-- **Quantise Continuous Inputs**: All continuous colour and numerical values used in classification must be quantised so total class counts remain bounded.
+- **Filtering**: `config.filter` (`{ prop, values }`) becomes a native MapLibre `filter` expression (`['in', ['get', prop], ['literal', values]]`) on the layer — non-matching features simply aren't drawn. No filter means every feature is shown.
+- **Colour modes** (`config.colourMode`):
+  - `basic` — a single fixed theme or custom colour.
+  - `simple` — reads GeoJSON simplestyle-spec properties (`marker-color`, `fill`, `stroke`, etc.) per feature via native `get`/`coalesce` expressions.
+  - `scale` — a numeric feature property (`colourProp`) interpolated through a palette or min/max colour ramp via a native `interpolate`/`get` expression (palette interpolators are sampled into a fixed set of stops).
+- **Opacity/size**: `config.opacity`, `config.isOpaque`, `config.pointSize`, `config.lineWidth` feed directly into the paint expressions for the single layer.
+- Colour/opacity can still be animated externally (e.g. via `map.setPaintProperty`) — this feature no longer bakes in any per-panel or scrollyteller-driven animation itself.
 
----
+## Live Builder Edits
 
-## Creating a New Visualisation
+Each renderer adds its source/layer(s) once on mount, then keeps paint properties and the filter in sync with `config` reactively via `map.setPaintProperty`/`map.setFilter` — so builder edits update in place without removing and re-adding layers (no flash).
 
-### 1. 2D Layer Types (Areas, Lines, Points, Heatmaps)
+## Spikes
 
-1. **Schema**: Add the new identifier to the `type` enum in `src/lib/marker/schema.ts`.
-2. **Renderer Component**: Create a component (e.g. `RenderHeatmap.svelte`) following `RenderArea.svelte`.
-   - In an untracked effect, add the MapLibre source once.
-   - Use `classStates.flatMap()` to generate class layers.
-   - Set filters with `classFilterExpression(classIndex)`.
-   - Bind animated paint properties with `classPaintExpression(perPanelStates, field)`.
-   - Clean up layers and sources in the effect teardown.
-3. **Dispatch**: Add the type case in `GeoJsonRenderer.svelte`.
-4. **State Fields**: If the new layer requires new visual attributes, add them to `GeoJsonFeatureState` and calculate them in `utils.ts`.
-5. **Builder UI**: Add any necessary property controls to `BuilderGeoJsonConfigModal.svelte`.
+Spikes use a separate rendering path (`RenderSpike.svelte` → Three.js `CustomLayerInterface` in `SpikeLayer.ts`) since they're 3D instanced geometry, not a 2D MapLibre layer type. They reuse `getColourEvaluator`/`getHeightEvaluator` from `utils.ts` to compute a colour and height per feature in JS, and animate transitions between data updates with a short eased tween.
 
-### 2. 3D or Custom Shader Layers (CustomLayerInterface)
+## Adding a New 2D Geometry Type
 
-For continuous 3D geometry or WebGL instancing that cannot be represented by MapLibre layers (such as spikes):
-
-- Implement a custom layer class implementing MapLibre's `CustomLayerInterface`.
-- Read transition progress directly from `getTween()` or subscribe to animation frames.
-- Receive the current panel configuration directly from `GeoJsonRenderer`.
-
----
-
-## Edge Case Handling
-
-- **At Rest**: When scrolling stops at a panel, `gjPos` resolves to the panel index, displaying exact panel values.
-- **Static Display**: In single-panel or non-scrollyteller views, `classPaintExpression` evaluates to static constants with no active animation.
-- **Reduced Motion**: `gjPos` holds on the current panel's stop with no fade; it switches when the next panel triggers.
-- **Inactive Panels**: Datasets absent from a panel are assigned zero opacity for that panel stop
+1. Add the identifier to the `type` enum in `src/lib/marker/schema.ts`.
+2. Create a renderer component (e.g. `RenderHeatmap.svelte`) following `RenderArea.svelte`: add the source/layer once on mount, then reactively set paint/filter from `config` using the `build*Expression` helpers in `utils.ts`.
+3. Add the type case in `GeoJsonHandler.svelte`.
+4. Add any necessary property controls to `BuilderGeoJsonConfigModal.svelte`.

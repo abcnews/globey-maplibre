@@ -4,14 +4,11 @@ import {
   getFeatureStateEvaluator,
   getColourEvaluator,
   getHeightEvaluator,
-  getPaletteInterpolator,
   getKilometreZoomScaleExpression,
   fetchGeoJsonData,
-  buildFeatureClasses,
-  classPaintExpression,
-  FEATURE_CLASS_PROP,
+  buildFilterExpression,
+  buildColourExpression,
   HIDDEN_FEATURE_STATE,
-  COLOUR_SCALE_STEPS,
   EARTH_CIRCUMFERENCE_KM,
   TILE_SIZE_PX
 } from './utils.ts';
@@ -51,7 +48,8 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'normal' } }]
+        colourMode: 'basic',
+        colourConfig: { basicType: 'normal' }
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state = evaluate({ properties: {} }, 0);
@@ -67,7 +65,8 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [{ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }]
+        colourMode: 'basic',
+        colourConfig: { basicType: 'highlighted' }
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state = evaluate({ properties: {} }, 0);
@@ -83,7 +82,8 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'areas',
-        styles: [{ colourMode: 'basic', colourConfig: { basic: '#00ff00' } }]
+        colourMode: 'basic',
+        colourConfig: { basic: '#00ff00' }
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state = evaluate({ properties: {} }, 0);
@@ -95,7 +95,9 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'areas',
-        styles: [{ colourMode: 'basic', isOpaque: true, opacity: 0.8 }]
+        colourMode: 'basic',
+        isOpaque: true,
+        opacity: 0.8
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state = evaluate({ properties: {} }, 0);
@@ -109,7 +111,7 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [{ colourMode: 'simple' }]
+        colourMode: 'simple'
       };
       const evaluate = getFeatureStateEvaluator(config);
       const feature = {
@@ -136,18 +138,14 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [
-          {
-            colourMode: 'scale',
-            colourProp: 'val',
-            colourConfig: {
-              min: 0,
-              max: 100,
-              paletteType: 'sequential',
-              paletteVariant: 'blue'
-            }
-          }
-        ]
+        colourMode: 'scale',
+        colourProp: 'val',
+        colourConfig: {
+          min: 0,
+          max: 100,
+          paletteType: 'sequential',
+          paletteVariant: 'blue'
+        }
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state0 = evaluate({ properties: { val: 0 } }, 0);
@@ -162,18 +160,14 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [
-          {
-            colourMode: 'scale',
-            colourProp: 'val',
-            colourConfig: {
-              min: 0,
-              max: 100,
-              minColour: '#000000',
-              maxColour: '#ffffff'
-            }
-          }
-        ]
+        colourMode: 'scale',
+        colourProp: 'val',
+        colourConfig: {
+          min: 0,
+          max: 100,
+          minColour: '#000000',
+          maxColour: '#ffffff'
+        }
       };
       const evaluate = getFeatureStateEvaluator(config);
       const state0 = evaluate({ properties: { val: 0 } }, 0);
@@ -184,22 +178,14 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
     });
   });
 
-  describe('Feature State Evaluator (Filtered Multi-Style Rules)', () => {
-    it('should match filter rules and fallback correctly', () => {
+  describe('Feature State Evaluator (Filter)', () => {
+    it('should style matching features and hide non-matching ones', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [
-          {
-            colourMode: 'basic',
-            colourConfig: { basic: '#004cff' },
-            filter: { prop: 'status', values: ['hit'] }
-          },
-          {
-            colourMode: 'basic',
-            colourConfig: { basic: '#ff0000' }
-          }
-        ]
+        colourMode: 'basic',
+        colourConfig: { basic: '#004cff' },
+        filter: { prop: 'status', values: ['hit'] }
       };
 
       const evaluate = getFeatureStateEvaluator(config);
@@ -208,123 +194,63 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       assert.strictEqual(hitState.color, '#004cff');
 
       const missState = evaluate({ properties: { status: 'miss' } }, 1);
-      assert.strictEqual(missState.color, '#ff0000');
-
-      const noPropState = evaluate({ properties: {} }, 2);
-      assert.strictEqual(noPropState.color, '#ff0000');
+      assert.deepStrictEqual(missState, HIDDEN_FEATURE_STATE);
     });
 
-    it('should hide features that do not match any filter rule when all rules have filters', () => {
+    it('should style every feature when no filter is configured', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'points',
-        styles: [
-          {
-            colourMode: 'basic',
-            colourConfig: { basic: '#004cff' },
-            filter: { prop: 'category', values: ['active'] }
-          }
-        ]
+        colourMode: 'basic',
+        colourConfig: { basic: '#ff0000' }
       };
 
       const evaluate = getFeatureStateEvaluator(config);
-
-      const activeState = evaluate({ properties: { category: 'active' } }, 0);
-      assert.strictEqual(activeState.color, '#004cff');
-      assert.strictEqual(activeState.opacity, 0.6);
-
-      const inactiveState = evaluate({ properties: { category: 'inactive' } }, 1);
-      assert.strictEqual(inactiveState.opacity, 0);
-      assert.strictEqual(inactiveState.fillOpacity, 0);
-      assert.strictEqual(inactiveState.strokeOpacity, 0);
+      const state = evaluate({ properties: {} }, 0);
+      assert.strictEqual(state.color, '#ff0000');
     });
   });
 
-  describe('buildFeatureClasses', () => {
-    const fc = (values: number[]) => ({
-      type: 'FeatureCollection',
-      features: values.map((v, i) => ({ type: 'Feature', id: i, properties: { val: v }, geometry: null }))
+  describe('buildFilterExpression', () => {
+    it('builds a native "in" filter from a GeoJsonFilter', () => {
+      const expr = buildFilterExpression({ prop: 'status', values: ['hit', 'maybe'] });
+      expect(expr).toEqual(['in', ['get', 'status'], ['literal', ['hit', 'maybe']]]);
     });
 
-    it('collapses a constant-colour layer that never changes to a single class', () => {
-      const cfg: GeoJsonConfig = { cmid: 1, type: 'areas', styles: [{ colourMode: 'basic', colourConfig: { basic: '#00ff00' } }] };
-      const data = fc([1, 2, 3]);
-
-      const { classCount, classStates } = buildFeatureClasses(data, [cfg, cfg, cfg]);
-
-      expect(classCount).toBe(1);
-      expect(classStates[0]).toHaveLength(3); // one state per panel
-      expect(data.features.every((f: any) => f.properties[FEATURE_CLASS_PROP] === 0)).toBe(true);
-      expect(classStates[0][0].fillColor).toBe('#00ff00');
-    });
-
-    it('bounds a continuous choropleth to at most COLOUR_SCALE_STEPS + 1 classes', () => {
-      const cfg: GeoJsonConfig = {
-        cmid: 1,
-        type: 'areas',
-        styles: [
-          {
-            colourMode: 'scale',
-            colourProp: 'val',
-            colourConfig: { min: 0, max: 100, paletteType: 'sequential', paletteVariant: 'blue' }
-          }
-        ]
-      };
-      // 500 distinct values → without quantisation this would be ~500 classes.
-      const data = fc(Array.from({ length: 500 }, (_, i) => (i / 499) * 100));
-
-      const { classCount } = buildFeatureClasses(data, [cfg, cfg]);
-
-      expect(classCount).toBeLessThanOrEqual(COLOUR_SCALE_STEPS + 1);
-      expect(classCount).toBeGreaterThan(1);
-    });
-
-    it('gives features hidden in one panel a distinct trajectory ending in HIDDEN_FEATURE_STATE', () => {
-      const cfg: GeoJsonConfig = { cmid: 1, type: 'areas', styles: [{ colourMode: 'basic', colourConfig: { basic: '#00ff00' } }] };
-      const data = fc([1, 2]);
-
-      const { classCount, classStates } = buildFeatureClasses(data, [cfg, undefined]);
-
-      expect(classCount).toBe(1);
-      expect(classStates[0][0].fillOpacity).toBeGreaterThan(0);
-      expect(classStates[0][1]).toEqual(HIDDEN_FEATURE_STATE);
-    });
-
-    it('splits into separate classes when a filter matches only some features', () => {
-      const cfg: GeoJsonConfig = {
-        cmid: 1,
-        type: 'areas',
-        styles: [{ colourMode: 'basic', colourConfig: { basic: '#004cff' }, filter: { prop: 'val', values: [1] } }]
-      };
-      const data = fc([1, 2, 1]);
-
-      const { classCount } = buildFeatureClasses(data, [cfg, cfg]);
-
-      expect(classCount).toBe(2); // matched vs hidden
-      expect(data.features[0].properties[FEATURE_CLASS_PROP]).toBe(data.features[2].properties[FEATURE_CLASS_PROP]);
-      expect(data.features[1].properties[FEATURE_CLASS_PROP]).not.toBe(data.features[0].properties[FEATURE_CLASS_PROP]);
+    it('returns undefined when there is no filter or no values', () => {
+      expect(buildFilterExpression(undefined)).toBeUndefined();
+      expect(buildFilterExpression({ prop: 'status', values: [] })).toBeUndefined();
     });
   });
 
-  describe('classPaintExpression', () => {
-    const state = (fillColor: string, fillOpacity: number): any => ({ ...HIDDEN_FEATURE_STATE, fillColor, fillOpacity });
-
-    it('returns a bare constant for a single-panel (builder) class', () => {
-      expect(classPaintExpression([state('#123456', 0.5)], 'fillColor', 'tweenPosScroll')).toBe('#123456');
-      expect(classPaintExpression([state('#123456', 0.5)], 'fillOpacity', 'tweenPosScroll')).toBe(0.5);
+  describe('buildColourExpression', () => {
+    it('returns a constant colour for basic mode', () => {
+      const config: GeoJsonConfig = { type: 'areas', colourMode: 'basic', colourConfig: { basic: '#00ff00' } };
+      expect(buildColourExpression(config, 'fill')).toBe('#00ff00');
     });
 
-    it('builds a pure global-state interpolate with one stop per panel', () => {
-      const expr = classPaintExpression(
-        [state('#000000', 0), state('#ffffff', 1), state('#ff0000', 0.5)],
-        'fillColor',
-        'tweenPosScroll'
-      );
-
+    it('builds a data-driven interpolate expression for scale mode', () => {
+      const config: GeoJsonConfig = {
+        type: 'areas',
+        colourMode: 'scale',
+        colourProp: 'val',
+        colourConfig: { min: 0, max: 100, minColour: '#000000', maxColour: '#ffffff' }
+      };
+      const expr = buildColourExpression(config, 'fill');
       expect(expr[0]).toBe('interpolate');
       expect(expr[1]).toEqual(['linear']);
-      expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosScroll'], 0]);
-      expect(expr.slice(3)).toEqual([0, '#000000', 1, '#ffffff', 2, '#ff0000']);
+      expect(expr[2]).toEqual(['to-number', ['get', 'val'], 0]);
+      expect(expr.slice(3)).toEqual([0, '#000000', 100, '#ffffff']);
+    });
+
+    it('reads simplestyle-spec properties per-feature for simple mode', () => {
+      const config: GeoJsonConfig = { type: 'areas', colourMode: 'simple' };
+      expect(buildColourExpression(config, 'fill')).toEqual([
+        'coalesce',
+        ['get', 'fill'],
+        ['get', 'fill-color'],
+        '#00267E'
+      ]);
     });
   });
 
@@ -333,7 +259,8 @@ describe('GeoJson Utils & Feature State Evaluators', () => {
       const config: GeoJsonConfig = {
         cmid: 12345,
         type: 'spikes',
-        styles: [{ colourMode: 'basic', colourConfig: { basic: '#123456' } }]
+        colourMode: 'basic',
+        colourConfig: { basic: '#123456' }
       };
       const evaluator = getColourEvaluator(config);
       assert.strictEqual(evaluator({ properties: {} }), '#123456');

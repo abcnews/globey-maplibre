@@ -1,4 +1,3 @@
-import type { Map as MapLibreMap } from 'maplibre-gl';
 import { feature } from 'topojson-client';
 import {
   getDivergentContinuousPaletteInterpolator,
@@ -9,9 +8,8 @@ import {
 import { interpolateColour, getCustomPaletteInterpolator } from '../../../lib/colours.ts';
 import { fetchDownloadObject } from '../../../lib/fetchDownloadObject.ts';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
-import type { GeoJsonConfig, GeoJsonStyleConfig } from '../../../lib/marker';
+import type { GeoJsonConfig, GeoJsonFilter } from '../../../lib/marker';
 import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
-import { tweenStopsExpression } from '../Tween/utils.ts';
 import { THEMES } from './themes.ts';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
@@ -108,37 +106,15 @@ export interface GeoJsonFeatureState {
 }
 
 /**
- * Levels the colour-scale `factor` is snapped to when building class layers
- * ([buildFeatureClasses]). Visually lossless on a ramp; bounds the class count so
- * a continuous choropleth over hundreds of thousands of features still resolves
- * to a small, fixed set of layers.
- */
-export const COLOUR_SCALE_STEPS = 24;
-
-/** State applied to a feature that matches no style rule — fully transparent. */
-export const HIDDEN_FEATURE_STATE: GeoJsonFeatureState = Object.freeze({
-  color: '#00267E',
-  fillColor: '#00267E',
-  strokeColor: '#00267E',
-  outlineColor: '#ffffff',
-  radius: 0,
-  strokeWidth: 0,
-  outlineWidth: 0,
-  opacity: 0,
-  fillOpacity: 0,
-  strokeOpacity: 0
-});
-
-/**
  * Creates a colour interpolation function based on the builder's configuration.
  * This serves as the single source of truth for colour scaling across 2D layers
  * and 3D spikes.
  *
- * @param style The GeoJSON style configuration
+ * @param config The GeoJSON layer configuration
  * @returns An interpolator function for mapping 0-1 values to CSS colours
  */
-export function getPaletteInterpolator(style: GeoJsonStyleConfig): ((t: number) => string) | null {
-  const { paletteType, paletteVariant, customPalette } = style.colourConfig || {};
+export function getPaletteInterpolator(config: GeoJsonConfig): ((t: number) => string) | null {
+  const { paletteType, paletteVariant, customPalette } = config.colourConfig || {};
   if (!paletteType) return null;
 
   if (paletteType === 'sequential' && paletteVariant) {
@@ -158,20 +134,22 @@ export function getPaletteInterpolator(style: GeoJsonStyleConfig): ((t: number) 
 }
 
 /**
- * Creates a single style evaluator for computing per-feature style state.
+ * Returns a function that calculates the styling (colours, opacities, sizes) for a single GeoJSON
+ * feature, using this layer's single colour mode/filter. Features that don't match the configured
+ * filter are hidden (fully transparent) — a layer only ever shows one filtered subset at a time.
+ *
+ * @param config The GeoJSON layer configuration
+ * @returns A function that takes a GeoJSON feature and returns its GeoJsonFeatureState
  */
-function getSingleStyleEvaluator(
-  config: GeoJsonConfig,
-  style: GeoJsonStyleConfig,
-  quantiseSteps = 0
-): (feature: any, index: number) => GeoJsonFeatureState {
-  const baseOpacity = style.opacity ?? 1;
-  const isOpaque = style.isOpaque ?? false;
-  const colourMode = style.colourMode || 'basic';
-  const colourConfig = style.colourConfig;
-  const colourProp = style.colourProp;
+export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, index: number) => GeoJsonFeatureState {
+  const baseOpacity = config.opacity ?? 1;
+  const isOpaque = config.isOpaque ?? false;
+  const colourMode = config.colourMode || 'basic';
+  const colourConfig = config.colourConfig;
+  const colourProp = config.colourProp;
+  const filter = config.filter;
 
-  const interpolator = colourMode === 'scale' ? getPaletteInterpolator(style) : null;
+  const interpolator = colourMode === 'scale' ? getPaletteInterpolator(config) : null;
   const min = colourConfig?.min ?? 0;
   const max = colourConfig?.max ?? 100;
   const range = max - min || 1;
@@ -181,8 +159,16 @@ function getSingleStyleEvaluator(
   const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
   const basicColor = colourConfig?.basicType ? basicPreset.color : colourConfig?.basic || basicPreset.color;
 
-  return (feature: any) => {
-    const props = feature?.properties || {};
+  const matchesFilter = (props: Record<string, any>) => {
+    if (!filter?.prop || !filter.values?.length) return true;
+    const propValue = String(props[filter.prop] ?? '');
+    return filter.values.some(expectedValue => String(expectedValue) === propValue);
+  };
+
+  return (feat: any) => {
+    const props = feat?.properties || {};
+
+    if (!matchesFilter(props)) return HIDDEN_FEATURE_STATE;
 
     // 1. Calculate color / fillColor / strokeColor
     let markerColor = basicColor;
@@ -198,11 +184,9 @@ function getSingleStyleEvaluator(
       strokeColor = props['stroke'] || '#00267E';
       fillColor = props['fill'] || props['fill-color'] || '#00267E';
     } else if (colourMode === 'scale') {
-      let val = Number(props[colourProp || ''] ?? feature?.cVal ?? 0);
+      let val = Number(props[colourProp || ''] ?? feat?.cVal ?? 0);
       if (isNaN(val)) val = 0;
-      let factor = Math.max(0, Math.min(1, (val - min) / range));
-      // Snap to a fixed number of levels so class-layer building stays bounded.
-      if (quantiseSteps > 0) factor = Math.round(factor * quantiseSteps) / quantiseSteps;
+      const factor = Math.max(0, Math.min(1, (val - min) / range));
       let evaluatedColour = '#888888';
       if (interpolator) {
         evaluatedColour = interpolator(factor);
@@ -269,165 +253,116 @@ function getSingleStyleEvaluator(
   };
 }
 
-/**
- * Returns a function that calculates the styling (colours, opacities, sizes) for a single GeoJSON feature.
- * It checks the feature's properties against each style rule in config.styles in order, using the first rule that matches.
- * If no rules match, the feature is hidden. If no custom styles are configured, it uses the default theme.
- *
- * @param config The GeoJSON layer configuration containing the style rules
- * @returns A function that takes a GeoJSON feature and returns its GeoJsonFeatureState
- */
-export function getFeatureStateEvaluator(
-  config: GeoJsonConfig,
-  opts: { quantiseSteps?: number } = {}
-): (feature: any, index: number) => GeoJsonFeatureState {
-  const quantiseSteps = opts.quantiseSteps ?? 0;
+/** State applied to a feature that doesn't match the layer's filter — fully transparent. */
+export const HIDDEN_FEATURE_STATE: GeoJsonFeatureState = Object.freeze({
+  color: '#00267E',
+  fillColor: '#00267E',
+  strokeColor: '#00267E',
+  outlineColor: '#ffffff',
+  radius: 0,
+  strokeWidth: 0,
+  outlineWidth: 0,
+  opacity: 0,
+  fillOpacity: 0,
+  strokeOpacity: 0
+});
 
-  // Pre-build rule matching predicates to avoid re-parsing filter arrays on every feature
-  const styleRules = (config.styles || []).map(style => {
-    const evaluate = getSingleStyleEvaluator(config, style, quantiseSteps);
-    const filter = style.filter;
+/** Builds a native MapLibre `filter` expression from a `GeoJsonFilter`, or `undefined` for no filter. */
+export function buildFilterExpression(filter?: GeoJsonFilter): any {
+  if (!filter?.prop || !filter.values?.length) return undefined;
+  return ['in', ['get', filter.prop], ['literal', filter.values]];
+}
 
-    const matches = (props: Record<string, any>) => {
-      // If no filter property is configured, treat this as an unconditional catch-all rule
-      if (!filter?.prop || !filter.values?.length) {
-        return true;
-      }
-      const propValue = String(props[filter.prop] ?? '');
-      return filter.values.some(expectedValue => String(expectedValue) === propValue);
-    };
+/** Number of stops sampled from a palette interpolator when building a scale-mode paint expression. */
+const SCALE_EXPRESSION_STOPS = 16;
 
-    return { matches, evaluate };
+function buildScaleColourExpression(config: GeoJsonConfig): any {
+  const { colourProp, colourConfig } = config;
+  const min = colourConfig?.min ?? 0;
+  const max = colourConfig?.max ?? 100;
+  const minColour = colourConfig?.minColour || '#ffffff';
+  const maxColour = colourConfig?.maxColour || '#ff0000';
+  const propExpr = ['to-number', ['get', colourProp || ''], min];
+
+  const interpolator = getPaletteInterpolator(config);
+  if (!interpolator) {
+    return ['interpolate', ['linear'], propExpr, min, minColour, max, maxColour];
+  }
+
+  const stops = Array.from({ length: SCALE_EXPRESSION_STOPS + 1 }, (_, i) => {
+    const t = i / SCALE_EXPRESSION_STOPS;
+    return [min + t * (max - min), interpolator(t)];
   });
-
-  const defaultEvaluator = getSingleStyleEvaluator(
-    config,
-    {
-      colourMode: 'basic',
-      colourConfig: { basicType: 'normal' },
-      opacity: 1,
-      isOpaque: false
-    },
-    quantiseSteps
-  );
-
-  return (feature: any, index: number) => {
-    const props = feature?.properties || {};
-
-    // Find the first rule whose filter matches the feature properties
-    const matchedRule = styleRules.find(rule => rule.matches(props));
-    if (matchedRule) {
-      return matchedRule.evaluate(feature, index);
-    }
-
-    // When style rules are defined but none matched, the feature is filtered out (hidden)
-    if (config.styles && config.styles.length > 0) {
-      return HIDDEN_FEATURE_STATE;
-    }
-
-    // Default fallback when no custom styles are specified
-    return defaultEvaluator(feature, index);
-  };
+  return ['interpolate', ['linear'], propExpr, ...stops.flat()];
 }
 
 /**
- * Updates MapLibre feature states on a source for all features in the GeoJSON dataset.
+ * Builds the native MapLibre paint expression (or constant) for a layer's colour, for the given
+ * channel. `fill`/`stroke` differ under `simple` mode (reading distinct GeoJSON simplestyle-spec
+ * properties); `marker` is used for point/spike colour.
  */
-export function applyFeatureStates(
-  map: MapLibreMap,
-  sourceId: string,
-  data: any,
-  config: GeoJsonConfig
-) {
-  if (!map || !map.getSource(sourceId) || !data?.features?.length) return;
+export function buildColourExpression(config: GeoJsonConfig, channel: 'fill' | 'stroke' | 'marker' = 'marker'): any {
+  const { colourMode = 'basic', colourConfig } = config;
 
-  const evaluator = getFeatureStateEvaluator(config);
+  if (colourMode === 'simple') {
+    if (channel === 'fill') return ['coalesce', ['get', 'fill'], ['get', 'fill-color'], '#00267E'];
+    if (channel === 'stroke') return ['coalesce', ['get', 'stroke'], '#00267E'];
+    return ['coalesce', ['get', 'marker-color'], ['get', 'stroke'], ['get', 'fill'], ['get', 'fill-color'], '#00267E'];
+  }
 
-  data.features.forEach((feat: any, index: number) => {
-    const id = feat.id ?? index;
-    const state = evaluator(feat, index);
-    map.setFeatureState({ source: sourceId, id }, state);
-  });
+  if (colourMode === 'scale') return buildScaleColourExpression(config);
+
+  const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
+  return colourConfig?.basicType ? basicPreset.color : colourConfig?.basic || basicPreset.color;
 }
 
-/** Property written onto every feature by [buildFeatureClasses]. */
-export const FEATURE_CLASS_PROP = '__gjClass';
+/** Builds the native MapLibre paint expression (or constant) for a layer's opacity on the given channel. */
+export function buildOpacityExpression(config: GeoJsonConfig, channel: 'fill' | 'stroke' | 'circle' = 'fill'): any {
+  const { colourMode = 'basic', opacity = 1, isOpaque = false, colourConfig } = config;
+  const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
 
-export interface FeatureClasses {
-  /** Number of distinct classes; one layer (set) is added per class. */
-  classCount: number;
-  /** `classStates[classIndex][panelIndex]` — the class's resolved state in each panel. */
-  classStates: GeoJsonFeatureState[][];
+  if (colourMode === 'simple') {
+    const prop = channel === 'stroke' ? 'stroke-opacity' : channel === 'circle' ? 'opacity' : 'fill-opacity';
+    const fallback = channel === 'stroke' ? 1 : isOpaque ? 1 : 0.5;
+    return ['*', opacity, ['coalesce', ['to-number', ['get', prop], fallback], fallback]];
+  }
+
+  const factor = channel === 'stroke' ? basicPreset.strokeOpacity : isOpaque ? 1 : basicPreset.fillOpacity;
+  return opacity * factor;
 }
 
-/**
- * Buckets every feature by the *trajectory* of its resolved style across all
- * panels, writing an integer `__gjClass` onto each feature's properties.
- *
- * Two features that render identically in every panel share a class, so a large
- * dataset collapses to a handful of classes — one static, filter-selected layer
- * each, whose paint interpolates purely over the `gjPos` global-state (no
- * per-feature work at animation time). `colourMode: 'scale'` is quantised so
- * continuous data stays bounded.
- *
- * Mutates `data.features[i].properties.__gjClass`. Pure otherwise.
- *
- * @param perPanelConfigs This item's `GeoJsonConfig` in each panel; `undefined`
- *   for a panel where the item is absent (→ hidden there).
- */
-export function buildFeatureClasses(
-  data: any,
-  perPanelConfigs: (GeoJsonConfig | undefined)[],
-  quantiseSteps: number = COLOUR_SCALE_STEPS
-): FeatureClasses {
-  const features: any[] = data?.type === 'Feature' ? [data] : (data?.features ?? []);
+/** Builds the native MapLibre paint expression (or constant) for a point/circle radius. */
+export function buildRadiusExpression(config: GeoJsonConfig): any {
+  if (config.pointSize?.unit === 'p') return config.pointSize.value;
 
-  const evaluators = perPanelConfigs.map(cfg =>
-    cfg ? getFeatureStateEvaluator(cfg, { quantiseSteps }) : null
-  );
-
-  const keyToIndex = new Map<string, number>();
-  const classStates: GeoJsonFeatureState[][] = [];
-
-  features.forEach((feat, i) => {
-    const states = evaluators.map(evaluate => (evaluate ? evaluate(feat, i) : HIDDEN_FEATURE_STATE));
-    const key = JSON.stringify(states);
-
-    let index = keyToIndex.get(key);
-    if (index === undefined) {
-      index = classStates.length;
-      keyToIndex.set(key, index);
-      classStates.push(states);
-    }
-
-    if (!feat.properties) feat.properties = {};
-    feat.properties[FEATURE_CLASS_PROP] = index;
-  });
-
-  return { classCount: classStates.length, classStates };
+  const basicPreset = THEMES[config.colourConfig?.basicType || 'normal'] || THEMES.normal;
+  if (config.colourMode === 'simple') {
+    return [
+      'case',
+      ['==', ['get', 'marker-size'], 'small'],
+      4,
+      ['==', ['get', 'marker-size'], 'large'],
+      9,
+      ['to-number', ['get', 'marker-size'], basicPreset.radius]
+    ];
+  }
+  return basicPreset.radius;
 }
 
-/** Filter that selects only the features assigned to `classIndex`. */
-export function classFilterExpression(classIndex: number): any {
-  return ['==', ['get', FEATURE_CLASS_PROP], classIndex];
+/** Builds the native MapLibre paint expression (or constant) for a stroke/line width. */
+export function buildStrokeWidthExpression(config: GeoJsonConfig): any {
+  if (config.lineWidth?.unit === 'p') return config.lineWidth.value;
+
+  const basicPreset = THEMES[config.colourConfig?.basicType || 'normal'] || THEMES.normal;
+  if (config.colourMode === 'simple') {
+    return ['to-number', ['get', 'stroke-width'], basicPreset.strokeWidth];
+  }
+  return basicPreset.strokeWidth;
 }
 
-/**
- * Builds the paint value for one field of one class layer: a pure `interpolate`
- * over `posKey`'s global-state with one stop per panel, so one
- * `setGlobalStateProperty` per frame drives the whole layer. `posKey` is the
- * clock the item's `animationClock` selects. A single-panel (builder) class
- * collapses to the constant value.
- */
-export function classPaintExpression(
-  perPanelStates: GeoJsonFeatureState[],
-  field: keyof GeoJsonFeatureState,
-  posKey: string
-): any {
-  return tweenStopsExpression(
-    perPanelStates.map(state => state[field]),
-    posKey
-  );
+/** Adds a fixed amount to a width value that may be a constant or a MapLibre expression. */
+export function widthPlus(widthExpr: any, addition: number): any {
+  return typeof widthExpr === 'number' ? widthExpr + addition : ['+', widthExpr, addition];
 }
 
 /**

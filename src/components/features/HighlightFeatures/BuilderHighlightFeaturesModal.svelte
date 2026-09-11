@@ -81,20 +81,16 @@
         id: `${slug}-${Date.now()}-${idx}`,
         type: 'areas',
         url: getFeatureFileUrl(activeSet, item),
-        styles: [
-          {
-            colourMode: 'basic',
-            colourConfig: {
-              basicType: 'normal',
-              minColour: '#ffffff',
-              maxColour: '#ff0000',
-              paletteType: 'sequential',
-              paletteVariant: 'Blue'
-            },
-            opacity: 1,
-            isOpaque: false
-          }
-        ],
+        colourMode: 'basic',
+        colourConfig: {
+          basicType: 'normal',
+          minColour: '#ffffff',
+          maxColour: '#ff0000',
+          paletteType: 'sequential',
+          paletteVariant: 'Blue'
+        },
+        opacity: 1,
+        isOpaque: false,
         zIndex: Number((baseZ + 1 + idx * 0.1).toFixed(2))
       };
     });

@@ -3,31 +3,24 @@
   import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
   import {
-    classPaintExpression,
-    classFilterExpression,
+    buildColourExpression,
+    buildOpacityExpression,
+    buildStrokeWidthExpression,
+    buildFilterExpression,
     getKilometreZoomScaleExpression,
-    type GeoJsonFeatureState
+    widthPlus
   } from './utils.ts';
-  import { layerClockKey } from '../Tween/utils.ts';
-  import {
-    addLayerWithZIndex,
-    removeLayerWithZIndex,
-    Z_INDEX_GEOJSON,
-    SUB_LAYER_OUTLINE_OFFSET
-  } from '../layers/layerUtils.ts';
+  import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON, SUB_LAYER_OUTLINE_OFFSET } from '../layers/layerUtils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
   let {
     data,
-    classStates,
     config,
     sourceId,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
-    /** `classStates[classIndex][panelIndex]` — one class's resolved state per panel. */
-    classStates: GeoJsonFeatureState[][];
     config: GeoJsonConfig;
     sourceId: string;
     zIndex?: number;
@@ -35,81 +28,54 @@
 
   const LINE_LAYOUT = { 'line-cap': 'round', 'line-join': 'round' } as const;
 
-  // Fixed real-world width keeps its zoom expression; the fade is opacity-only.
-  const kmWidth = $derived(
-    config.lineWidth?.unit === 'k' ? getKilometreZoomScaleExpression(config.lineWidth.value) : null
+  const lineLayerId = `${sourceId}-line`;
+  const outlineLayerId = `${sourceId}-line-outline`;
+
+  // Fixed real-world width keeps its zoom expression; otherwise driven by config.
+  const lineWidthExpr = $derived(
+    config.lineWidth?.unit === 'k' ? getKilometreZoomScaleExpression(config.lineWidth.value) : buildStrokeWidthExpression(config)
   );
 
-  // Which clock this layer's fades follow. Baked into the paint at add time, so
-  // changing it rebuilds the layers — only ever a builder action.
-  const posKey = $derived(layerClockKey(config.animationClock));
-
-  // One main + outline line layer per class, added once. See RenderArea for why
-  // nothing here reacts to scroll.
+  // Add the source and the line + outline layer once, on mount. Paint/filter are
+  // then kept in sync with `config` by the effect below, in place.
   $effect(() => {
     const map = mapRoot.map;
-    const sid = sourceId;
     const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
-    const classes = classStates;
-    const clockKey = posKey;
-    const lineWidthExpr = kmWidth;
-    if (!map || !classes) return;
+    if (!map) return;
 
-    const addedLayerIds = untrack(() => {
-      if (!map.getSource(sid)) {
-        map.addSource(sid, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
+    untrack(() => {
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
       }
-
-      return classes.flatMap((perPanelStates, classIndex) => {
-        const outlineLayerId = `${sid}-line-outline-c${classIndex}`;
-        const lineLayerId = `${sid}-line-c${classIndex}`;
-        const filter = classFilterExpression(classIndex);
-
-        if (!map.getLayer(outlineLayerId)) {
-          addLayerWithZIndex(
-            map,
-            {
-              id: outlineLayerId,
-              type: 'line',
-              source: sid,
-              filter,
-              layout: LINE_LAYOUT,
-              paint: {
-                'line-color': classPaintExpression(perPanelStates, 'outlineColor', clockKey),
-                'line-width': classPaintExpression(perPanelStates, 'outlineWidth', clockKey),
-                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
-              }
-            },
-            outlineZ
-          );
-        }
-
-        if (!map.getLayer(lineLayerId)) {
-          addLayerWithZIndex(
-            map,
-            {
-              id: lineLayerId,
-              type: 'line',
-              source: sid,
-              filter,
-              layout: LINE_LAYOUT,
-              paint: {
-                'line-color': classPaintExpression(perPanelStates, 'strokeColor', clockKey),
-                'line-width': lineWidthExpr ?? classPaintExpression(perPanelStates, 'strokeWidth', clockKey),
-                'line-opacity': classPaintExpression(perPanelStates, 'strokeOpacity', clockKey)
-              }
-            },
-            zIndex
-          );
-        }
-
-        return [outlineLayerId, lineLayerId];
-      });
+      if (!map.getLayer(outlineLayerId)) {
+        addLayerWithZIndex(map, { id: outlineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} }, outlineZ);
+      }
+      if (!map.getLayer(lineLayerId)) {
+        addLayerWithZIndex(map, { id: lineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} }, zIndex);
+      }
     });
 
     return () => {
-      addedLayerIds.forEach(id => removeLayerWithZIndex(map, id));
-      if (map.getSource(sid)) map.removeSource(sid);
+      removeLayerWithZIndex(map, outlineLayerId);
+      removeLayerWithZIndex(map, lineLayerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
     };
+  });
+
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map || !map.getLayer(lineLayerId)) return;
+
+    const filter = buildFilterExpression(config.filter) ?? null;
+    map.setFilter(lineLayerId, filter);
+    map.setFilter(outlineLayerId, filter);
+
+    map.setPaintProperty(outlineLayerId, 'line-color', '#ffffff');
+    map.setPaintProperty(outlineLayerId, 'line-width', widthPlus(lineWidthExpr, 2));
+    map.setPaintProperty(outlineLayerId, 'line-opacity', buildOpacityExpression(config, 'stroke'));
+
+    map.setPaintProperty(lineLayerId, 'line-color', buildColourExpression(config, 'stroke'));
+    map.setPaintProperty(lineLayerId, 'line-width', lineWidthExpr);
+    map.setPaintProperty(lineLayerId, 'line-opacity', buildOpacityExpression(config, 'stroke'));
   });
 </script>

@@ -180,7 +180,8 @@ describe('marker codecs', () => {
           {
             cmid: 12345678,
             type: 'areas',
-            styles: [{ colourMode: 'simple', opacity: 0.8 }]
+            colourMode: 'simple',
+            opacity: 0.8
           }
         ]
       };
@@ -214,33 +215,25 @@ describe('marker codecs', () => {
             cmid: 12345678,
             type: 'areas',
             zIndex: 400,
-            styles: [
-              {
-                colourMode: 'scale',
-                opacity: 1,
-                isOpaque: false,
-                colourConfig: {
-                  paletteType: 'custom',
-                  customPalette: ['#ff0000', '#00ff00']
-                }
-              }
-            ]
+            colourMode: 'scale',
+            opacity: 1,
+            isOpaque: false,
+            colourConfig: {
+              paletteType: 'custom',
+              customPalette: ['#ff0000', '#00ff00']
+            }
           },
           {
             id: 'gj-2',
             cmid: 12345678,
             type: 'lines',
             zIndex: 410,
-            styles: [
-              {
-                colourMode: 'basic',
-                opacity: 0.8,
-                isOpaque: true,
-                colourConfig: {
-                  basicType: 'highlighted'
-                }
-              }
-            ]
+            colourMode: 'basic',
+            opacity: 0.8,
+            isOpaque: true,
+            colourConfig: {
+              basicType: 'highlighted'
+            }
           }
         ],
         imageSources: [
@@ -276,13 +269,10 @@ describe('marker codecs', () => {
       assert.strictEqual(decoded.geoJson![1].type, 'lines');
       assert.strictEqual(decoded.geoJson![1].zIndex, 410);
       assert.deepStrictEqual(
-        decoded.geoJson![0].styles?.[0].colourConfig?.customPalette,
-        input.geoJson![0].styles[0].colourConfig?.customPalette
+        decoded.geoJson![0].colourConfig?.customPalette,
+        input.geoJson![0].colourConfig?.customPalette
       );
-      assert.strictEqual(
-        decoded.geoJson![1].styles?.[0].colourConfig?.basicType,
-        'highlighted'
-      );
+      assert.strictEqual(decoded.geoJson![1].colourConfig?.basicType, 'highlighted');
       assert.strictEqual(decoded.imageSources?.length, 1);
       assert.strictEqual(decoded.imageSources![0].url, input.imageSources![0].url);
       assert.strictEqual(decoded.imageSources![0].zIndex, 300);
@@ -317,14 +307,15 @@ describe('marker codecs', () => {
             url: 'https://live-production.wcms.abc-cdn.net.au/data/places.geojson',
             type: 'points',
             zIndex: 420,
-            styles: [{ colourMode: 'basic', opacity: 0.9 }]
+            colourMode: 'basic',
+            opacity: 0.9
           },
           {
             id: 'fra-1',
             url: 'https://www.abc.net.au/res/sites/news-projects/geojson-naturalearth-countries/10m-defacto/FRA.geojson',
             type: 'areas',
             zIndex: 400,
-            styles: [{ colourMode: 'basic' }]
+            colourMode: 'basic'
           }
         ]
       };
@@ -350,22 +341,30 @@ describe('marker codecs', () => {
           {
             cmid: 12345678,
             type: 'areas',
-            styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
+            colourMode: 'simple',
+            opacity: 1,
+            isOpaque: false
           },
           {
             cmid: 0,
             type: 'areas',
-            styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
+            colourMode: 'simple',
+            opacity: 1,
+            isOpaque: false
           },
           {
             url: 'https://preview-production.wcms.abc-cdn.net.au/invalid.geojson',
             type: 'lines',
-            styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
+            colourMode: 'simple',
+            opacity: 1,
+            isOpaque: false
           },
           {
             url: 'https://live-production.wcms.abc-cdn.net.au/valid.geojson',
             type: 'lines',
-            styles: [{ colourMode: 'simple', opacity: 1, isOpaque: false }]
+            colourMode: 'simple',
+            opacity: 1,
+            isOpaque: false
           }
         ],
         imageSources: [
