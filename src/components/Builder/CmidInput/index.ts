@@ -1,2 +1,2 @@
-export { default as CmidInput } from './CmidInput.svelte';
-export * from './utils.ts';
+export { default as CmidInput } from '../../Builder.legacy/CmidInput/CmidInput.svelte';
+export * from '../../Builder.legacy/CmidInput/utils.ts';

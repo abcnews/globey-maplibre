@@ -1,4 +1,4 @@
-Currently Globyteller stores data in markers. These markers are self-contained units of config that have no relation to previous markers. But this causes problems, so we need to unify our config into a global JSON which has all the layers and all the data up front. Then in the Scrollyteller we can toggle these layers while keeping the Z index and data consistently in one place in the json blob.
+Currently Globeyteller stores data in markers. These markers are self-contained units of config that have no relation to previous markers. But this causes problems, so we need to unify our config into a global JSON which has all the layers and all the data up front. Then in the Scrollyteller we can toggle these layers while keeping the Z index and data consistently in one place in the json blob.
 
 We must use as much of the current builder code to create a new builder that lets the user:
 
