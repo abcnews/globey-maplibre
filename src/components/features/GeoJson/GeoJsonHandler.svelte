@@ -15,8 +15,12 @@
   let data = $state<any>();
 
   $effect(() => {
+    console.log(`[GeoJsonHandler] Initializing layer ${sourceId}:`, { cmid: config.cmid, url: config.url, type: config.type, zIndex: config.zIndex });
     fetchGeoJsonData({ cmid: config.cmid, url: config.url })
-      .then(result => (data = result))
+      .then(result => {
+        console.log(`[GeoJsonHandler] Successfully loaded data for ${sourceId}`);
+        data = result;
+      })
       .catch(e => console.error(`[GeoJsonHandler] Error loading GeoJSON ${sourceId}:`, e));
   });
 </script>

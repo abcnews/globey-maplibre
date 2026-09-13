@@ -161,6 +161,7 @@
   });
 
   function commitDraft() {
+    config.id = draftConfig.id || config.id;
     config.type = draftConfig.type;
     config.colourMode = draftConfig.colourMode;
     config.colourProp = draftConfig.colourProp;
@@ -171,6 +172,9 @@
     config.pointSize = $state.snapshot(draftConfig.pointSize);
     config.lineWidth = $state.snapshot(draftConfig.lineWidth);
     config.spike = $state.snapshot(draftConfig.spike);
+    if (draftConfig.zIndex !== undefined) {
+      config.zIndex = draftConfig.zIndex;
+    }
   }
 
   function handleSave(goto = false) {
@@ -201,6 +205,7 @@
       delete (config as any).url;
       commitDraft();
     }
+    console.log('[BuilderGeoJsonConfigModal handleSave] Saved config:', $state.snapshot(config));
 
     let bounds: [number, number][] | undefined = undefined;
     if (goto && rawFeatures.length > 0) {

@@ -58,23 +58,41 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   },
 
   add(options: DecodedObject, item: GeoJsonConfig) {
+    console.log('[geoJsonFeature] Adding GeoJSON layer:', item);
     options.geoJson = [...(options.geoJson || []), item];
   },
 
   isValid(data: GeoJsonConfig) {
-    return Boolean((data?.cmid && Number(data.cmid) > 0) || (data?.url && isValidUrl(data.url)));
+    const valid = Boolean((data?.cmid && Number(data.cmid) > 0) || (data?.url && isValidUrl(data.url)));
+    if (!valid) {
+      console.warn('[geoJsonFeature] isValid returned false for:', data);
+    }
+    return valid;
   },
 
   update(options: DecodedObject, descriptor: LayerItemDescriptor<GeoJsonConfig>, data: GeoJsonConfig) {
+    console.log('[geoJsonFeature] Updating GeoJSON layer:', { descriptor, data });
     if (options.geoJson) {
-      options.geoJson = options.geoJson.map(item =>
-        item === descriptor.data || (item.id && item.id === data.id) ? data : item
-      );
+      const targetId = descriptor.id?.replace(/^geojson-/, '') || descriptor.data?.id;
+      options.geoJson = options.geoJson.map(item => {
+        const matches =
+          (targetId && item.id === targetId) ||
+          (data.id && item.id === data.id) ||
+          item === descriptor.data;
+        return matches ? data : item;
+      });
     }
   },
 
   delete(options: DecodedObject, item: LayerItemDescriptor<GeoJsonConfig>) {
-    options.geoJson = (options.geoJson || []).filter(entry => entry !== item.data);
+    console.log('[geoJsonFeature] Deleting GeoJSON layer:', item);
+    const targetId = item.id?.replace(/^geojson-/, '') || item.data?.id;
+    options.geoJson = (options.geoJson || []).filter(entry => {
+      if (targetId && entry.id) {
+        return entry.id !== targetId;
+      }
+      return entry !== item.data;
+    });
   },
 
   ConfigModal: BuilderGeoJsonConfigModal,

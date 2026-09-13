@@ -262,11 +262,16 @@
 
     if (editingItem) {
       const { feature, descriptor, data } = editingItem;
+      const currentData = editingItem.data ?? data;
+      console.log('[Builder.layers] Closing layer modal for:', descriptor.name, { descriptor, currentData });
+
       mutateDecoded(draft => {
-        if (feature.isValid && !feature.isValid(data, draft)) {
+        if (feature.isValid && !feature.isValid(currentData, draft)) {
+          console.warn('[Builder.layers] Layer invalid on close, deleting:', descriptor.name);
           feature.delete(draft, descriptor);
         } else if (feature.update) {
-          feature.update(draft, descriptor, data);
+          console.log('[Builder.layers] Updating layer on close:', descriptor.name, currentData);
+          feature.update(draft, descriptor, currentData);
         }
       });
     }
