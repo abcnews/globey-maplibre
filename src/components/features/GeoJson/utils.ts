@@ -297,6 +297,17 @@ function buildScaleColourExpression(config: GeoJsonConfig): any {
 }
 
 /**
+ * Reads a numeric feature property, falling back when it's missing or not a number.
+ *
+ * `['to-number', ['get', prop], fallback]` is not enough on its own: MapLibre converts a missing
+ * property (`null`) to `0` and treats that as a successful conversion, so the fallback is never
+ * used and features without the property render with zero opacity/width/radius.
+ */
+function numericPropExpression(prop: string, fallback: number): any {
+  return ['to-number', ['coalesce', ['get', prop], fallback], fallback];
+}
+
+/**
  * Builds the native MapLibre paint expression (or constant) for a layer's colour, for the given
  * channel. `fill`/`stroke` differ under `simple` mode (reading distinct GeoJSON simplestyle-spec
  * properties); `marker` is used for point/spike colour.
@@ -324,7 +335,7 @@ export function buildOpacityExpression(config: GeoJsonConfig, channel: 'fill' | 
   if (colourMode === 'simple') {
     const prop = channel === 'stroke' ? 'stroke-opacity' : channel === 'circle' ? 'opacity' : 'fill-opacity';
     const fallback = channel === 'stroke' ? 1 : isOpaque ? 1 : 0.5;
-    return ['*', opacity, ['coalesce', ['to-number', ['get', prop], fallback], fallback]];
+    return ['*', opacity, numericPropExpression(prop, fallback)];
   }
 
   const factor = channel === 'stroke' ? basicPreset.strokeOpacity : isOpaque ? 1 : basicPreset.fillOpacity;
@@ -343,7 +354,7 @@ export function buildRadiusExpression(config: GeoJsonConfig): any {
       4,
       ['==', ['get', 'marker-size'], 'large'],
       9,
-      ['to-number', ['get', 'marker-size'], basicPreset.radius]
+      numericPropExpression('marker-size', basicPreset.radius)
     ];
   }
   return basicPreset.radius;
@@ -355,7 +366,7 @@ export function buildStrokeWidthExpression(config: GeoJsonConfig): any {
 
   const basicPreset = THEMES[config.colourConfig?.basicType || 'normal'] || THEMES.normal;
   if (config.colourMode === 'simple') {
-    return ['to-number', ['get', 'stroke-width'], basicPreset.strokeWidth];
+    return numericPropExpression('stroke-width', basicPreset.strokeWidth);
   }
   return basicPreset.strokeWidth;
 }

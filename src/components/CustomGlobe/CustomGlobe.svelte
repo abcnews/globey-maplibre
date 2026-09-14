@@ -161,6 +161,11 @@
     if (!mapContainer) return;
 
     mapContainer.style.opacity = '0';
+    // Globe projection's raycast reads transform matrices that aren't populated
+    // until after 'load'; a real mouseover on the canvas before then crashes
+    // MapLibre (unproject on an undefined pixelMatrixInverse). Block pointer
+    // events until load so the browser never dispatches one to the canvas.
+    mapContainer.style.pointerEvents = 'none';
     const map = new Map({
       zoom: options.z || 3,
       minZoom: -1,
@@ -190,6 +195,7 @@
       onLoad?.(map);
       if (mapContainer) {
         mapContainer.style.opacity = '1';
+        mapContainer.style.pointerEvents = '';
       }
       mapInstance.map = map;
     });
