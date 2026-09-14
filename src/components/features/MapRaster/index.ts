@@ -34,13 +34,10 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayerConfig> = {
 
   getItems(options: DecodedObject): LayerItemDescriptor<RasterLayerConfig>[] {
     return (options.rasterLayers || []).map((item, idx) => {
-      const name = item.attribution || 'Raster Layer';
-
       return {
         id: (item as any).id || (item.url ? `raster-${btoa(item.url).replace(/=/g, '').slice(-8)}` : `raster-${idx}`),
         kind: 'raster',
-        name,
-        description: item.url || '',
+        name: item.name || rasterFeature.label,
         zIndex: item.zIndex ?? Z_INDEX_BASE_RASTER + idx * 0.1,
         data: item
       };

@@ -42,8 +42,7 @@ export const iconFeature: LayerFeatureDefinition<IconConfig> = {
       return {
         id: `icon-${item.id || item.cmid || idx}`,
         kind: 'icon',
-        name: 'Icon Marker',
-        description: item.cmid ? `CMID: ${item.cmid}` : 'No CMID',
+        name: item.name || iconFeature.label,
         zIndex: item.zIndex ?? Z_INDEX_CUSTOM_LABELS + idx * 0.1,
         data: item
       };

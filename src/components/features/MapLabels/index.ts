@@ -42,7 +42,6 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
         id: 'map-labels',
         kind: 'mapLabels',
         name: 'Map Labels',
-        description: 'Built-in Country and City Names',
         zIndex: options.mapLabelsZIndex ?? Z_INDEX_BASE_LABELS,
         data: options.mapLabels ?? DEFAULT_MAP_LABELS
       }

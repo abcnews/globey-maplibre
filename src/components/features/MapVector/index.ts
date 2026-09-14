@@ -34,7 +34,6 @@ export const streetMapFeature: LayerFeatureDefinition<void> = {
         id: 'street-map',
         kind: 'streetMap',
         name: 'Street Map',
-        description: 'OpenStreetMap Vector Base (land, water, roads)',
         zIndex: options.streetMapZIndex ?? Z_INDEX_BASE_VECTOR
       }
     ];

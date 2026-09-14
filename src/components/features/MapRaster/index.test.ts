@@ -22,7 +22,7 @@ describe('Raster Feature Definition', () => {
     assert.strictEqual(item.zIndex, 150);
   });
 
-  it('getItems should format items correctly, preferring attribution over the URL', () => {
+  it('getItems should fall back to the feature label when no friendly name is set', () => {
     const options: DecodedObject = {
       rasterLayers: [
         {
@@ -48,9 +48,26 @@ describe('Raster Feature Definition', () => {
 
     const items = rasterFeature.getItems(options);
     assert.strictEqual(items.length, 3);
-    assert.strictEqual(items[0].name, 'NASA Blue Marble');
-    assert.strictEqual(items[1].name, 'NASA Black Marble');
-    assert.strictEqual(items[2].name, 'Example Provider');
+    assert.strictEqual(items[0].name, rasterFeature.label);
+    assert.strictEqual(items[1].name, rasterFeature.label);
+    assert.strictEqual(items[2].name, rasterFeature.label);
+  });
+
+  it('getItems should surface the friendly name unchanged when set', () => {
+    const options: DecodedObject = {
+      rasterLayers: [
+        {
+          url: 'https://tile.example.com/{z}/{x}/{y}.png',
+          maxZoom: 18,
+          attribution: 'Example Provider',
+          zIndex: 120,
+          name: 'basemap'
+        }
+      ]
+    };
+
+    const [item] = rasterFeature.getItems(options);
+    assert.strictEqual(item.name, 'basemap');
   });
 
   it('add should append new raster config to options.rasterLayers', () => {

@@ -57,7 +57,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           lineWidth: layer.lineWidth as any,
           spike: layer.spike as any,
           zIndex: index,
-          animationClock: layer.animationClock
+          animationClock: layer.animationClock,
+          name: layer.name
         });
         break;
 
@@ -67,7 +68,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           cmid: layer.cmid,
           coords: layer.coords,
           zIndex: index,
-          animationClock: layer.animationClock
+          animationClock: layer.animationClock,
+          name: layer.name
         });
         break;
 
@@ -77,7 +79,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           url: layer.url,
           coordinates: layer.coordinates as any,
           zIndex: index,
-          animationClock: layer.animationClock
+          animationClock: layer.animationClock,
+          name: layer.name
         });
         break;
 
@@ -89,7 +92,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           attribution: layer.attribution,
           darkTheme: layer.darkTheme,
           zIndex: index,
-          animationClock: layer.animationClock
+          animationClock: layer.animationClock,
+          name: layer.name
         });
         break;
 
@@ -185,7 +189,8 @@ export function decodedObjectToBlob(
         pointSize: gj.pointSize as any,
         lineWidth: gj.lineWidth as any,
         spike: gj.spike as any,
-        animationClock: gj.animationClock
+        animationClock: gj.animationClock,
+        name: gj.name
       }
     });
   });
@@ -198,7 +203,8 @@ export function decodedObjectToBlob(
         type: 'icon',
         cmid: ic.cmid,
         coords: ic.coords,
-        animationClock: ic.animationClock
+        animationClock: ic.animationClock,
+        name: ic.name
       }
     });
   });
@@ -211,7 +217,8 @@ export function decodedObjectToBlob(
         type: 'image',
         url: img.url,
         coordinates: (img.coordinates as any) || [],
-        animationClock: img.animationClock
+        animationClock: img.animationClock,
+        name: img.name
       }
     });
   });
@@ -227,7 +234,8 @@ export function decodedObjectToBlob(
         tileSize: r.tileSize ?? 256,
         attribution: r.attribution ?? '',
         darkTheme: r.darkTheme ?? false,
-        animationClock: r.animationClock
+        animationClock: r.animationClock,
+        name: r.name
       }
     });
   });

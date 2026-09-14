@@ -4,20 +4,18 @@
 
   /**
    * PropList
-   * A reusable list component for builder properties with truncated labels,
-   * descriptions, and action buttons. Supports reordering via D&D and keyboard.
+   * A reusable list component for builder properties with truncated labels
+   * and action buttons. Supports reordering via D&D and keyboard.
    */
 
   let {
     items,
     name,
-    description,
     actions,
     onchange
   }: {
     items: T[];
     name: Snippet<[T, number]>;
-    description?: Snippet<[T, number]>;
     actions: Snippet<[T, number]>;
     onchange?: (items: T[]) => void;
   } = $props();
@@ -74,11 +72,6 @@
         <div class="name">
           {@render name(item, i)}
         </div>
-        {#if description}
-          <div class="description">
-            {@render description(item, i)}
-          </div>
-        {/if}
       </div>
       <div class="actions-wrapper">
         <div class="actions">
@@ -135,14 +128,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  .description {
-    font-size: 0.8em;
-    opacity: 0.7;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
   .actions-wrapper {
     cursor: initial;
     display: flex;

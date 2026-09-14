@@ -72,8 +72,8 @@ export type AnimationClock = z.infer<typeof animationClockSchema>;
 const baseLayerObject = {
   /** Unique identifier / UUID for the layer */
   id: z.string(),
-  /** Human readable name / slug for layer references */
-  name: z.string().optional(),
+  /** Friendly, lowercase-alphanumeric name for identifying the layer in the Builder */
+  name: z.string().regex(/^[a-z0-9]*$/, 'Lowercase letters and numbers only').optional(),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };

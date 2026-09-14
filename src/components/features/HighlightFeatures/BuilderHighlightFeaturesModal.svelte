@@ -91,7 +91,8 @@
         },
         opacity: 1,
         isOpaque: false,
-        zIndex: Number((baseZ + 1 + idx * 0.1).toFixed(2))
+        zIndex: Number((baseZ + 1 + idx * 0.1).toFixed(2)),
+        name: item.name.toLowerCase().replace(/[^a-z0-9]/g, '')
       };
     });
 

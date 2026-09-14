@@ -38,12 +38,10 @@ export const imageSourceFeature: LayerFeatureDefinition<ImageSourceConfig> = {
 
   getItems(options: DecodedObject): LayerItemDescriptor<ImageSourceConfig>[] {
     return (options.imageSources || []).map((item, idx) => {
-      const filename = item.url ? item.url.split('/').pop() || item.url : 'Untitled Image';
       return {
         id: `image-${item.id || item.url || idx}`,
         kind: 'image',
-        name: filename,
-        description: item.url ? `${item.url.slice(0, 40)}...` : 'No URL',
+        name: item.name || imageSourceFeature.label,
         zIndex: item.zIndex ?? Z_INDEX_IMAGE_LAYERS + idx * 0.1,
         data: item
       };

@@ -144,6 +144,12 @@ export const animationClockSchema = oneOf(['scroll', 'immediate'] as const)
   .optional();
 
 /**
+ * Friendly, lowercase-alphanumeric name for a layer. Purely for identifying
+ * layers in the Builder UI — not used for rendering.
+ */
+export const layerNameSchema = string().key('nm').optional();
+
+/**
  * Item schema for a single GeoJSON source dataset.
  */
 export const geoJsonItemSchema = object({
@@ -165,7 +171,8 @@ export const geoJsonItemSchema = object({
   lineWidth: sizeSchema.key('lw').optional(),
   spike: geoJsonSpikeSchema.key('sp').optional(),
   zIndex: decimal(2).key('z').optional(),
-  animationClock: animationClockSchema
+  animationClock: animationClockSchema,
+  name: layerNameSchema
 }).asArray();
 
 /**
@@ -188,7 +195,8 @@ export const iconItemSchema = object({
   cmid: decimal().key('c'),
   coords: coordsCodec.key('coords'),
   zIndex: decimal(2).key('z').optional(),
-  animationClock: animationClockSchema
+  animationClock: animationClockSchema,
+  name: layerNameSchema
 }).asArray();
 
 /**
@@ -200,7 +208,8 @@ export const imageSourceItemSchema = object({
   opacity: decimal(2).key('o').default(1),
   coordinates: boundsCodec.key('c'),
   zIndex: decimal(2).key('z').optional(),
-  animationClock: animationClockSchema
+  animationClock: animationClockSchema,
+  name: layerNameSchema
 }).asArray();
 
 /**
@@ -229,7 +238,8 @@ export const rasterItemSchema = object({
   /** Whether this raster layer's imagery is visually dark, so label/UI styling should switch to a dark theme. */
   darkTheme: boolean().key('dt').default(false),
   zIndex: decimal(2).key('z').optional(),
-  animationClock: animationClockSchema
+  animationClock: animationClockSchema,
+  name: layerNameSchema
 }).asArray();
 
 /**

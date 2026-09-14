@@ -55,7 +55,6 @@ describe('CustomLabels Feature Definition', () => {
     assert.strictEqual(items.length, 1);
     assert.strictEqual(items[0].id, 'custom-labels');
     assert.strictEqual(items[0].name, 'Custom Labels');
-    assert.strictEqual(items[0].description, '2 placed labels');
     assert.strictEqual(items[0].zIndex, 620);
 
     const itemsEmpty = customLabelsFeature.getItems({});
@@ -100,9 +99,10 @@ describe('CustomLabels Feature Definition', () => {
     const options: DecodedObject = { labels: [] };
     addBtn.onclick({
       options,
-      item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', description: '', zIndex: 600, data: options.labels },
+      item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', zIndex: 600, data: options.labels },
       startInteractivePlacement: mockStartPlacement,
-      openModal: mockAddOpenModal
+      openModal: mockAddOpenModal,
+      openClockModal: vi.fn()
     });
 
     assert.strictEqual(mockStartPlacement.mock.calls.length, 1);
@@ -119,9 +119,10 @@ describe('CustomLabels Feature Definition', () => {
     const mockOpenModal = vi.fn();
     editBtn.onclick({
       options,
-      item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', description: '', zIndex: 600, data: options.labels },
+      item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', zIndex: 600, data: options.labels },
       startInteractivePlacement: vi.fn(),
-      openModal: mockOpenModal
+      openModal: mockOpenModal,
+      openClockModal: vi.fn()
     });
     assert.strictEqual(mockOpenModal.mock.calls.length, 1);
   });

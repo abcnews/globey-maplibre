@@ -109,7 +109,6 @@ export const myFeature: LayerFeatureDefinition<MyFeatureConfig> = {
       id: `myfeature-${item.id || idx}`,
       kind: 'myFeature',
       name: item.name || 'My Feature',
-      description: item.description || '',
       zIndex: item.zIndex ?? Z_INDEX_GEOJSON + idx * 0.1,
       data: item
     }));

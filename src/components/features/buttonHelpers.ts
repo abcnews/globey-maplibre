@@ -1,4 +1,4 @@
-import { Bezier2, Pencil, Trash, Vr } from 'svelte-bootstrap-icons';
+import { ClockHistory, Pencil, Trash } from 'svelte-bootstrap-icons';
 import type { LayerButton, LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
 import type { DecodedObject } from '../../lib/marker';
 
@@ -42,31 +42,20 @@ export function createDeleteButton<T = any>({
 }
 
 /**
- * Creates a toggle between the two animation clocks for a layer. Scroll-tied
- * (the default) scrubs the layer's fade with scroll position; play-on-arrival
- * holds until the reader reaches the marker, then plays the fade over the
- * panel's `animationDuration`. Absent means scroll-tied, so the toggle only ever
- * writes `'immediate'` or clears the property.
+ * Opens the shared clock/name modal for a layer item, where the reader picks
+ * between the two animation clocks — scroll-tied (the default) scrubs the
+ * layer's fade with scroll position, play-on-arrival holds until the reader
+ * reaches the marker then plays the fade over the panel's `animationDuration`
+ * — and sets an optional friendly name for the layer.
  */
 export function createClockButton<T = any>(item: LayerItemDescriptor<T>): LayerButton<T> {
-  const isImmediate = (item.data as any)?.animationClock === 'immediate';
-
   return {
     id: 'clock',
-    title: isImmediate
-      ? 'Animates on arrival — click to tie to scroll'
-      : 'Tied to scroll — click to animate on arrival',
-    ariaLabel: 'Toggle animation clock',
-    icon: isImmediate ? Vr : Bezier2,
-    onclick: ({ item: clicked }) => {
-      const data = clicked.data as any;
-      if (!data) return;
-
-      if (isImmediate) {
-        delete data.animationClock;
-        return;
-      }
-      data.animationClock = 'immediate';
+    title: 'Layer settings (animation clock, name)',
+    ariaLabel: 'Layer settings',
+    icon: ClockHistory,
+    onclick: ({ openClockModal }) => {
+      openClockModal();
     }
   };
 }

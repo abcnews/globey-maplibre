@@ -71,7 +71,6 @@ export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
         id: 'custom-labels',
         kind: 'customLabels',
         name: 'Custom Labels',
-        description: `${options.labels.length} placed label${options.labels.length === 1 ? '' : 's'}`,
         zIndex: options.labelsZIndex ?? Z_INDEX_CUSTOM_LABELS,
         data: options.labels
       }

@@ -19,6 +19,8 @@ export interface LayerButtonContext<T = any> {
   }) => void;
   /** Opens the layer's configuration modal */
   openModal: () => void;
+  /** Opens the shared animation clock / friendly name modal for this item */
+  openClockModal: () => void;
 }
 
 /**
@@ -47,8 +49,6 @@ export interface LayerItemDescriptor<T = any> {
   kind: string;
   /** Primary label displayed in the layer list item */
   name: string;
-  /** Secondary description/metadata displayed in the layer list item */
-  description: string;
   /** Current stacking z-index */
   zIndex: number;
   /** Reference to the underlying data object (for array items) */

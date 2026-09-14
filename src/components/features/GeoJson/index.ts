@@ -38,13 +38,10 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
     const baseZ = Math.max(streetMapZ, ...rasterZs);
 
     return (options.geoJson || []).map((item, idx) => {
-      const typeStr = item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'GeoJSON';
-      const description = item.cmid ? `CMID: ${item.cmid}` : item.url ? item.url : 'No source';
       return {
         id: `geojson-${item.id || item.cmid || item.url || idx}`,
         kind: 'geojson',
-        name: typeStr,
-        description,
+        name: item.name || geoJsonFeature.label,
         zIndex: item.zIndex ?? baseZ + 1 + idx * 0.1,
         data: item
       };
