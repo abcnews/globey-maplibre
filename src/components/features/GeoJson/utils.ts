@@ -375,32 +375,3 @@ export function buildStrokeWidthExpression(config: GeoJsonConfig): any {
 export function widthPlus(widthExpr: any, addition: number): any {
   return typeof widthExpr === 'number' ? widthExpr + addition : ['+', widthExpr, addition];
 }
-
-/**
- * Creates a colour evaluator function for spikes and custom layers.
- */
-export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => string {
-  const evaluator = getFeatureStateEvaluator(config);
-  return feature => evaluator(feature, 0).color;
-}
-
-const MIN_HEIGHT_JANK_FACTOR = 3000;
-
-/**
- * Creates a high-performance height evaluator function for spikes.
- */
-export function getHeightEvaluator(config: GeoJsonConfig): (feature: { hVal: number }) => number {
-  const spikeConfig = config.spike;
-  if (!spikeConfig?.heightProp) return () => 0;
-
-  const min = spikeConfig.min ?? 0;
-  const max = spikeConfig.max ?? 100;
-  const scalar = spikeConfig.scalar ?? 2000000;
-  const range = max - min || 1;
-
-  return feature => {
-    const val = feature.hVal;
-    const factor = Math.max(0, Math.min(1, (val - min) / range));
-    return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);
-  };
-}

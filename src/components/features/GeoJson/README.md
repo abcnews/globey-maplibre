@@ -13,7 +13,6 @@ Each `GeoJsonConfig` item is one dataset, one fixed filter, one fixed colour mod
 - **`RenderArea.svelte`**: Renders a single polygon fill + outline layer.
 - **`RenderLine.svelte`**: Renders a single line + casing outline layer.
 - **`RenderPoint.svelte`**: Renders a single circle layer, with screen- or kilometre-based sizing.
-- **`RenderSpike.svelte` / `RenderSpikeInner.svelte` / `SpikeLayer.ts`**: Renders 3D extruded spikes via a Three.js custom layer interface, animating height/colour transitions on data change.
 - **`utils.ts`**: Data fetching/normalisation, the per-feature style evaluator (used by spikes), and the native MapLibre expression builders (`buildFilterExpression`, `buildColourExpression`, `buildOpacityExpression`, `buildRadiusExpression`, `buildStrokeWidthExpression`) used by the 2D renderers.
 - **`themes.ts`**: Palette presets and theme defaults.
 - **`BuilderGeoJsonConfigModal.svelte`**: Builder interface for configuring a layer's source, geometry type, filter, and colour.
@@ -34,7 +33,7 @@ Each renderer adds its source/layer(s) once on mount, then keeps paint propertie
 
 ## Spikes
 
-Spikes use a separate rendering path (`RenderSpike.svelte` → Three.js `CustomLayerInterface` in `SpikeLayer.ts`) since they're 3D instanced geometry, not a 2D MapLibre layer type. They reuse `getColourEvaluator`/`getHeightEvaluator` from `utils.ts` to compute a colour and height per feature in JS, and animate transitions between data updates with a short eased tween.
+3D extruded spikes are no longer a Builder-editable GeoJSON type — they've been extracted into a standalone, opt-in example plugin. See [`src/plugins/GeoJsonSpikes/README.md`](../../../plugins/GeoJsonSpikes/README.md), which also doubles as the worked example for building your own [custom layer plugin](../../../lib/plugins/types.ts).
 
 ## Adding a New 2D Geometry Type
 

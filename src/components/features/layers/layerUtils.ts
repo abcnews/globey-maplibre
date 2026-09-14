@@ -23,8 +23,6 @@ export function getGeoJsonLayerIds(config: GeoJsonConfig): string[] {
       return [`${sourceId}-line`, `${sourceId}-line-outline`];
     case 'points':
       return [`${sourceId}-circle`];
-    case 'spikes':
-      return [`${sourceId}-spike`];
     default:
       return [];
   }

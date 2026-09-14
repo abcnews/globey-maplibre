@@ -6,7 +6,6 @@
   import BuilderPropGeoJsonFilter from './BuilderPropGeoJsonFilter.svelte';
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
-  import BuilderPropGeoJsonHeight from './BuilderPropGeoJsonHeight.svelte';
   import VerticalTabs from '../../Builder/shared/VerticalTabs.svelte';
   import { untrack } from 'svelte';
 
@@ -153,13 +152,6 @@
     return Array.from(set).sort();
   }
 
-  $effect(() => {
-    // Ensure nested objects exist based on type
-    if (draftConfig.type === 'spikes') {
-      if (!draftConfig.spike) draftConfig.spike = { scalar: 2000000, heightProp: '' };
-    }
-  });
-
   function commitDraft() {
     config.id = draftConfig.id || config.id;
     config.type = draftConfig.type;
@@ -171,7 +163,6 @@
     config.filter = $state.snapshot(draftConfig.filter);
     config.pointSize = $state.snapshot(draftConfig.pointSize);
     config.lineWidth = $state.snapshot(draftConfig.lineWidth);
-    config.spike = $state.snapshot(draftConfig.spike);
     if (draftConfig.zIndex !== undefined) {
       config.zIndex = draftConfig.zIndex;
     }
@@ -320,7 +311,7 @@
         <fieldset>
           <legend>Geometry Type</legend>
           <div style:display="flex" style:gap="1rem">
-            {#each ['areas', 'lines', 'points', 'spikes'] as type}
+            {#each ['areas', 'lines', 'points'] as type}
               <label
                 style:display="flex"
                 style:align-items="center"
@@ -335,16 +326,12 @@
           </div>
         </fieldset>
 
-        {#if draftConfig.type === 'points' || draftConfig.type === 'spikes'}
+        {#if draftConfig.type === 'points'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="pointSize" legend="Point Size" />
         {/if}
 
         {#if draftConfig.type === 'lines'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="lineWidth" legend="Line Width" />
-        {/if}
-
-        {#if draftConfig.type === 'spikes'}
-          <BuilderPropGeoJsonHeight bind:config={draftConfig} {properties} features={rawFeatures} />
         {/if}
       {/if}
     {:else if activeTab === 'style'}

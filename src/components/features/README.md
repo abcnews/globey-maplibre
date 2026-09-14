@@ -2,6 +2,8 @@
 
 Features are self-contained modules located in subdirectories of `src/components/features/`. Each feature encapsulates its map rendering logic, builder UI components, state codecs, and registration hooks.
 
+> This guide covers `LayerFeatureDefinition` — layers editable in the Builder and encoded in the URL-hash marker schema. If you're consuming `CustomGlobe`/`ScrollytellerGlobe` from outside this repo and want to add a layer in code, use the `CustomLayerPlugin` contract in [`src/lib/plugins/types.ts`](../../lib/plugins/types.ts) instead — see [`src/plugins/GeoJsonSpikes/`](../../plugins/GeoJsonSpikes/README.md) for a worked example.
+
 ---
 
 ## Table of Contents

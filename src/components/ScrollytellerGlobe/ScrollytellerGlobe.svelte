@@ -4,15 +4,21 @@
   import { onMount } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { DecodedObject } from '../../lib/marker';
+  import type { Map } from 'maplibre-gl';
+  import type { CustomLayerRegistration } from '../../lib/plugins/types.ts';
 
   interface Props {
     /** Scrollyteller panels with pre-decoded marker options in panel.data */
     panels: PanelDefinition<DecodedObject>[];
     /** Optional callback invoked when active marker changes */
     onMarker?: (marker: DecodedObject) => void;
+    /** Called with the MapLibre map instance as soon as it's constructed, before its style has loaded. */
+    onmap?: (map: Map) => void;
+    /** Consumer-defined custom layers, mounted once the map is ready. */
+    plugins?: CustomLayerRegistration[];
   }
 
-  let { panels, onMarker }: Props = $props();
+  let { panels, onMarker, onmap, plugins }: Props = $props();
   let currentPanel = $state(0);
   let virtualPanel = $state(-1);
   let panelPct = $state(0);
@@ -59,6 +65,8 @@
         {panelPct}
         {scrollPct}
         {scrollDelta}
+        {onmap}
+        {plugins}
         rootElStyle="width:100%;height:100%"
         interactive={false}
       />

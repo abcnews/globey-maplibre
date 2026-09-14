@@ -4,8 +4,8 @@
  */
 
 import type { CustomLayerInterface, CustomRenderMethodInput, Map } from 'maplibre-gl';
-import type { THREE } from '../../threeJS';
-import { loadThreeJS } from '../../threeJS/utils';
+import type { THREE } from '../../components/threeJS';
+import { loadThreeJS } from '../../components/threeJS/utils';
 
 interface SpikeLayerOptions {
   id: string;

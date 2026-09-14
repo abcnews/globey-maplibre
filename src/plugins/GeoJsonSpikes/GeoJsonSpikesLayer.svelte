@@ -1,27 +1,22 @@
 <script lang="ts">
-  import { getContext } from 'svelte';
-  import type * as maplibregl from 'maplibre-gl';
-  import type { GeoJsonConfig } from '../../../lib/marker';
-  import { parseColor } from '../../../lib/colours.ts';
+  import { getSpikeLayer } from './SpikeLayer.ts';
   import { getColourEvaluator, getHeightEvaluator } from './utils.ts';
-  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { parseColor } from '../../lib/colours.ts';
+  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../../components/features/layers/layerUtils.ts';
+  import type { CustomLayerProps } from '../../lib/plugins/types.ts';
+  import type { GeoJsonSpikesConfig } from './types.ts';
 
-  let {
-    data,
-    config,
-    sourceId,
-    SpikeLayerClass,
-    zIndex = config.zIndex ?? Z_INDEX_GEOJSON
-  }: {
-    data: any;
-    config: GeoJsonConfig;
-    sourceId: string;
-    SpikeLayerClass: any;
-    zIndex?: number;
-  } = $props();
+  let { map, config, zIndex = Z_INDEX_GEOJSON }: CustomLayerProps<GeoJsonSpikesConfig> = $props();
 
-  const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
-  const layerId = $derived(`${sourceId}-spike`);
+  const layerId = `spikes-${crypto.randomUUID()}`;
+
+  let SpikeLayerClass = $state<any>();
+
+  $effect(() => {
+    getSpikeLayer().then(cls => {
+      SpikeLayerClass = cls;
+    });
+  });
 
   let layer: any;
   let animationFrame: number;
@@ -29,7 +24,7 @@
   const DURATION = 500;
 
   // Map state for pixel-based sizing
-  let currentZoom = $state(mapRoot.map?.getZoom() || 0);
+  let currentZoom = $state(map.getZoom());
 
   // Animation state buffers
   let currentHeights: Float32Array;
@@ -39,22 +34,21 @@
 
   // Lifecycle: Manage the Three.js Layer
   $effect(() => {
-    const map = mapRoot.map;
-    if (!map || !SpikeLayerClass) return;
+    if (!SpikeLayerClass) return;
 
     layer = new SpikeLayerClass({
-      id: layerId,
+      id: `${layerId}-spike`,
       baseDiameter: 15000
     });
 
-    addLayerWithZIndex(map, layer, zIndex ?? Z_INDEX_GEOJSON);
+    addLayerWithZIndex(map, layer, zIndex);
 
     // Zoom listener for pixel-based sizing
     const onZoom = () => (currentZoom = map.getZoom());
     map.on('zoom', onZoom);
     currentZoom = map.getZoom();
 
-    const lid = layerId;
+    const lid = `${layerId}-spike`;
     return () => {
       map.off('zoom', onZoom);
       cancelAnimationFrame(animationFrame);
@@ -64,9 +58,8 @@
 
   // Derived diameter based on pointSize (supporting k=km and p=px)
   const diameter = $derived.by(() => {
-    const map = mapRoot.map;
     const ps = config.pointSize;
-    if (!map || !ps) return 15000;
+    if (!ps) return 15000;
 
     const { value, unit } = ps;
 
@@ -86,34 +79,25 @@
 
   // Pre-calculate all values in a $derived for clarity and debuggability
   const processedValues = $derived.by(() => {
-    if (!data?.features?.length) return null;
+    const features = config.data?.features;
+    if (!features?.length) return null;
 
     const colourEvaluator = getColourEvaluator(config);
     const heightEvaluator = getHeightEvaluator(config);
-    const count = data.features.length;
+    const count = features.length;
 
     const locations: [number, number][] = [];
     const targetHeights = new Float32Array(count);
     const targetColours = new Float32Array(count * 3);
 
-    data.features.forEach((f: any, i: number) => {
-      const props = f.properties || {};
+    features.forEach((f, i) => {
+      const hVal = config.heightProp ? Number((f.properties as any)?.[config.heightProp]) || 0 : 0;
 
-      // Map GeoJSON properties to hVal/cVal for shared evaluators in utils.ts
-      const hVal = config.spike?.heightProp ? Number(props[config.spike.heightProp]) || 0 : 0;
-      let cVal: any;
-
-      if (config.colourMode === 'simple') {
-        cVal = props['fill'] || '#888888';
-      } else if (config.colourMode === 'scale' && config.colourProp) {
-        cVal = Number(props[config.colourProp] || '0');
-      }
-
-      const height = heightEvaluator({ hVal });
-      const colour = colourEvaluator({ cVal });
+      const height = heightEvaluator(hVal);
+      const colour = colourEvaluator(f);
       const [r, g, b] = parseColor(colour).map(c => c / 255);
 
-      locations.push(f.geometry.coordinates as [number, number]);
+      locations.push((f.geometry as any).coordinates as [number, number]);
       targetHeights[i] = height;
       targetColours[i * 3] = r;
       targetColours[i * 3 + 1] = g;
@@ -146,12 +130,10 @@
 
   // Update Z-Index when changed
   $effect(() => {
-    const map = mapRoot.map;
-    const targetZ = zIndex ?? config.zIndex;
-    const lid = layerId;
-    if (!map || targetZ === undefined || !map.getLayer(lid)) return;
+    const lid = `${layerId}-spike`;
+    if (!map.getLayer(lid)) return;
 
-    setLayerZIndex(map, lid, targetZ);
+    setLayerZIndex(map, lid, zIndex);
   });
 
   function animate() {

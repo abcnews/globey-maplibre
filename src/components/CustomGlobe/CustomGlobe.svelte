@@ -22,6 +22,7 @@
   import { setTween } from '../features/Tween/context.ts';
   import { MAPLIBRE_TWEEN_SCROLL_STATE_KEY, MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
+  import type { CustomLayerRegistration } from '../../lib/plugins/types.ts';
 
   setWorkerUrl(workerUrl);
 
@@ -29,6 +30,8 @@
     rootElStyle?: string;
     interactive: boolean;
     onLoad?: (map: Map) => void;
+    /** Called with the MapLibre map instance as soon as it's constructed, before its style has loaded. */
+    onmap?: (map: Map) => void;
     options: DecodedObject;
     preserveDrawingBuffer?: boolean;
     panels?: PanelDefinition<DecodedObject>[];
@@ -38,11 +41,14 @@
     scrollPct?: number;
     scrollDelta?: number;
     children?: import('svelte').Snippet;
+    /** Consumer-defined custom layers, mounted once the map is ready. */
+    plugins?: CustomLayerRegistration[];
   };
   let {
     rootElStyle,
     interactive,
     onLoad,
+    onmap,
     options,
     preserveDrawingBuffer = false,
     panels,
@@ -51,7 +57,8 @@
     panelPct,
     scrollPct,
     scrollDelta,
-    children
+    children,
+    plugins
   }: Props = $props();
 
   let mapContainer = $state<HTMLDivElement>();
@@ -187,6 +194,8 @@
       preserveDrawingBuffer
     } as any);
 
+    onmap?.(map);
+
     map.on('error', e => {
       console.error('[MapLibre error]', e.error?.message || e);
     });
@@ -249,6 +258,9 @@
       {#if options.minimap && options.minimap.enabled !== false}
         <MinimapHandler bind:config={options.minimap} {interactive} />
       {/if}
+      {#each plugins ?? [] as plugin (plugin.id)}
+        <plugin.component map={mapInstance.map} config={plugin.config} zIndex={plugin.zIndex} />
+      {/each}
       {@render children?.()}
     {/if}
   </div>
