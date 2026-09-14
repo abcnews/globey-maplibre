@@ -116,6 +116,9 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           nationalBoundaries: layer.nationalBoundaries,
           stateBoundaries: layer.stateBoundaries
         };
+        if (!layer.enabled) {
+          (mapLabels as any)._disabled = true;
+        }
         mapLabelsZIndex = index;
         break;
 
@@ -253,6 +256,7 @@ export function decodedObjectToBlob(
         id: 'builtin-map-labels',
         name: 'Map Labels',
         type: 'mapLabels',
+        enabled: !(options.mapLabels as any)?._disabled,
         countriesMajor: options.mapLabels.countriesMajor ?? true,
         countriesMedium: options.mapLabels.countriesMedium ?? true,
         countriesMinor: options.mapLabels.countriesMinor ?? true,

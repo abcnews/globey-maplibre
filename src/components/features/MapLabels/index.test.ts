@@ -13,7 +13,8 @@ describe('MapLabels Feature Definition', () => {
     assert.ok(mapLabelsFeature.ConfigModal);
   });
 
-  it('canAdd should return true when mapLabels is absent or marked disabled', () => {
+  it('canAdd should return false unless mapLabels is explicitly marked disabled', () => {
+    const optionsAbsent: DecodedObject = {};
     const optionsActive: DecodedObject = {
       mapLabels: { ...DEFAULT_MAP_LABELS }
     } as any;
@@ -23,14 +24,19 @@ describe('MapLabels Feature Definition', () => {
     const optionsDeleted: DecodedObject = {
       mapLabels: { ...DISABLED_MAP_LABELS, _disabled: true }
     } as any;
-    const optionsNull: DecodedObject = {
-      mapLabels: null
-    } as any;
 
+    // Absent mapLabels means "use the defaults" (on by default), not "not yet added".
+    assert.strictEqual(mapLabelsFeature.canAdd?.(optionsAbsent), false);
     assert.strictEqual(mapLabelsFeature.canAdd?.(optionsActive), false);
     assert.strictEqual(mapLabelsFeature.canAdd?.(optionsAllDeselectedButActive), false);
     assert.strictEqual(mapLabelsFeature.canAdd?.(optionsDeleted), true);
-    assert.strictEqual(mapLabelsFeature.canAdd?.(optionsNull), true);
+  });
+
+  it('getItems should return the default-config descriptor by default (map labels are a layer out of the box)', () => {
+    const items = mapLabelsFeature.getItems({});
+    assert.strictEqual(items.length, 1);
+    assert.strictEqual(items[0].id, 'map-labels');
+    assert.deepStrictEqual(items[0].data, DEFAULT_MAP_LABELS);
   });
 
   it('getItems should return descriptor when layer is active even with all labels deselected', () => {
@@ -62,6 +68,14 @@ describe('MapLabels Feature Definition', () => {
     const [item] = mapLabelsFeature.getItems(options);
     mapLabelsFeature.setZIndex(options, item, 550);
     assert.strictEqual(options.mapLabelsZIndex, 550);
+  });
+
+  it('setZIndex should materialise default mapLabels when absent, so the z-index survives a save', () => {
+    const options: DecodedObject = {};
+    const [item] = mapLabelsFeature.getItems(options);
+    mapLabelsFeature.setZIndex(options, item, 550);
+    assert.strictEqual(options.mapLabelsZIndex, 550);
+    assert.deepStrictEqual(options.mapLabels, DEFAULT_MAP_LABELS);
   });
 
   it('createDefault should have all text labels checked (true)', () => {
@@ -101,6 +115,17 @@ describe('MapLabels Feature Definition', () => {
     assert.strictEqual(options.mapLabels?.countriesMedium, false);
     assert.strictEqual(options.mapLabels?.countriesMinor, false);
     assert.strictEqual((options.mapLabels as any)?._disabled, true);
+  });
+
+  it('delete should disable map labels even when options.mapLabels was never set (the default-on state)', () => {
+    const options: DecodedObject = {};
+
+    const [item] = mapLabelsFeature.getItems(options);
+    mapLabelsFeature.delete(options, item);
+    assert.strictEqual(options.mapLabels?.countriesMajor, false);
+    assert.strictEqual((options.mapLabels as any)?._disabled, true);
+    assert.strictEqual(mapLabelsFeature.canAdd?.(options), true);
+    assert.strictEqual(mapLabelsFeature.getItems(options).length, 0);
   });
 
   it('update should update options.mapLabels', () => {

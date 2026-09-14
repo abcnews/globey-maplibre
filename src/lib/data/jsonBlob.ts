@@ -160,6 +160,9 @@ export type RasterLayer = z.infer<typeof rasterLayerSchema>;
 export const mapLabelsLayerSchema = z.object({
   ...baseLayerObject,
   type: z.literal('mapLabels'),
+  /** False when the user has deleted this layer from the builder; distinct from
+   *  every sub-field being individually unchecked while the layer stays "added". */
+  enabled: z.boolean().default(true),
   countriesMajor: z.boolean().default(true),
   countriesMedium: z.boolean().default(true),
   countriesMinor: z.boolean().default(true),

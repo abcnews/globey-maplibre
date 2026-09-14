@@ -125,4 +125,47 @@ describe('blobAdapter', () => {
 
     expect(result.layers.map(l => l.type)).toEqual(['raster', 'icon']);
   });
+
+  it('persists a disabled map-labels layer as enabled: false, and restores the _disabled marker on decode', () => {
+    const blob = createDefaultJsonBlob('Map Labels Test');
+    const options = blobToDecodedObject(blob);
+
+    // Simulates mapLabelsFeature.delete(): materialised + marked disabled.
+    options.mapLabels = {
+      countriesMajor: false,
+      countriesMedium: false,
+      countriesMinor: false,
+      continents: false,
+      states: false,
+      cities: false,
+      towns: false,
+      oceans: false,
+      nationalBoundaries: false,
+      stateBoundaries: false,
+      ...({ _disabled: true } as any)
+    };
+
+    const savedBlob = decodedObjectToBlob(blob, options);
+    const mapLabelsLayer = savedBlob.layers.find(l => l.type === 'mapLabels');
+    expect(mapLabelsLayer).toBeDefined();
+    expect(mapLabelsLayer && 'enabled' in mapLabelsLayer && mapLabelsLayer.enabled).toBe(false);
+
+    // Round-tripping through decode must not silently re-enable it.
+    const reDecoded = blobToDecodedObject(savedBlob);
+    expect((reDecoded.mapLabels as any)?._disabled).toBe(true);
+  });
+
+  it('persists an enabled map-labels layer without a disabled marker on decode', () => {
+    const blob = createDefaultJsonBlob('Map Labels Enabled Test');
+    const options = blobToDecodedObject(blob);
+
+    options.mapLabels = { countriesMajor: true, countriesMedium: true, countriesMinor: true } as any;
+
+    const savedBlob = decodedObjectToBlob(blob, options);
+    const mapLabelsLayer = savedBlob.layers.find(l => l.type === 'mapLabels');
+    expect(mapLabelsLayer && 'enabled' in mapLabelsLayer && mapLabelsLayer.enabled).toBe(true);
+
+    const reDecoded = blobToDecodedObject(savedBlob);
+    expect((reDecoded.mapLabels as any)?._disabled).toBeUndefined();
+  });
 });

@@ -18,9 +18,10 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
     createDeleteButton<MapLabelsConfig>({ title: 'Hide map labels' })
   ],
 
+  // Map labels are on by default (absent options.mapLabels means "use the
+  // defaults"), so they're only addable again once explicitly deleted.
   canAdd(options: DecodedObject) {
-    if (!options.mapLabels) return true;
-    return (options.mapLabels as any)._disabled === true;
+    return (options.mapLabels as any)?._disabled === true;
   },
 
   createDefault(): MapLabelsConfig {
@@ -35,8 +36,7 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
   },
 
   getItems(options: DecodedObject): LayerItemDescriptor<MapLabelsConfig>[] {
-    if (!options.mapLabels) return [];
-    if ((options.mapLabels as any)._disabled === true) return [];
+    if ((options.mapLabels as any)?._disabled === true) return [];
     return [
       {
         id: 'map-labels',
@@ -44,12 +44,17 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
         name: 'Map Labels',
         description: 'Built-in Country and City Names',
         zIndex: options.mapLabelsZIndex ?? Z_INDEX_BASE_LABELS,
-        data: options.mapLabels
+        data: options.mapLabels ?? DEFAULT_MAP_LABELS
       }
     ];
   },
 
   setZIndex(options: DecodedObject, _item: LayerItemDescriptor<MapLabelsConfig>, newZIndex: number) {
+    // Materialise the default config so the z-index change has something to
+    // attach to — otherwise decodedObjectToBlob has no mapLabels object to persist.
+    if (!options.mapLabels) {
+      options.mapLabels = { ...DEFAULT_MAP_LABELS };
+    }
     options.mapLabelsZIndex = newZIndex;
   },
 
@@ -74,23 +79,12 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsConfig> = {
   },
 
   delete(options: DecodedObject) {
-    if (options.mapLabels) {
-      options.mapLabels = {
-        ...DISABLED_MAP_LABELS,
-        ...options.mapLabels,
-        countriesMajor: false,
-        countriesMedium: false,
-        countriesMinor: false,
-        continents: false,
-        states: false,
-        cities: false,
-        towns: false,
-        oceans: false,
-        nationalBoundaries: false,
-        stateBoundaries: false,
-        ...({ _disabled: true } as any)
-      };
-    }
+    // Deleting when mapLabels is still absent (the default-on state) must also
+    // work — it can't rely on an existing options.mapLabels object to update.
+    options.mapLabels = {
+      ...DISABLED_MAP_LABELS,
+      ...({ _disabled: true } as any)
+    };
   },
 
   ConfigModal: BuilderMapLabelsConfigModal
