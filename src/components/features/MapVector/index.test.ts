@@ -14,18 +14,18 @@ describe('StreetMap Feature Definition', () => {
   it('isStreetMapActive helper should check base and hideOsm', () => {
     assert.strictEqual(isStreetMapActive({ base: 'street', hideOsm: false }), true);
     assert.strictEqual(isStreetMapActive({ base: 'street', hideOsm: true }), false);
-    assert.strictEqual(isStreetMapActive({ base: 'satellite', hideOsm: false }), false);
+    assert.strictEqual(isStreetMapActive({ base: 'dark', hideOsm: false }), false);
     assert.strictEqual(isStreetMapActive({}), true);
   });
 
   it('canAdd should return true only when street map is inactive', () => {
     const optionsActive: DecodedObject = { base: 'street', hideOsm: false };
     const optionsHidden: DecodedObject = { base: 'street', hideOsm: true };
-    const optionsSatellite: DecodedObject = { base: 'satellite', hideOsm: false };
+    const optionsDarkBase: DecodedObject = { base: 'dark', hideOsm: false };
 
     assert.strictEqual(streetMapFeature.canAdd?.(optionsActive), false);
     assert.strictEqual(streetMapFeature.canAdd?.(optionsHidden), true);
-    assert.strictEqual(streetMapFeature.canAdd?.(optionsSatellite), true);
+    assert.strictEqual(streetMapFeature.canAdd?.(optionsDarkBase), true);
   });
 
   it('getItems should return descriptor when active and empty when hidden', () => {
@@ -49,7 +49,7 @@ describe('StreetMap Feature Definition', () => {
   });
 
   it('add should set base to street and hideOsm to false', () => {
-    const options: DecodedObject = { base: 'satellite', hideOsm: true };
+    const options: DecodedObject = { base: 'dark', hideOsm: true };
     streetMapFeature.add(options);
     assert.strictEqual(options.base, 'street');
     assert.strictEqual(options.hideOsm, false);

@@ -9,7 +9,7 @@ describe('blobAdapter', () => {
     const options = blobToDecodedObject(blob);
 
     expect(options.coords).toBeDefined();
-    expect(options.base).toBe('satellite');
+    expect(options.base).toBe('street');
     expect(options.projection).toBe('globe');
     expect(options.geoJson).toEqual([]);
     expect(options.icons).toEqual([]);
@@ -22,7 +22,6 @@ describe('blobAdapter', () => {
       map: {
         projection: 'mercator',
         base: 'street',
-        satelliteVariant: 'blue',
         attribution: 'Test Attrib',
         animationDuration: 750,
         fitGlobe: false,
@@ -124,6 +123,22 @@ describe('blobAdapter', () => {
     const result = decodedObjectToBlob(blob, options);
 
     expect(result.layers.map(l => l.type)).toEqual(['raster', 'icon']);
+  });
+
+  it('round-trips a raster layer darkTheme flag through blob <-> DecodedObject conversion', () => {
+    const blob = createDefaultJsonBlob('Raster Dark Theme Test');
+    const options = blobToDecodedObject(blob);
+
+    options.rasterLayers = [
+      { url: 'https://example.com/tiles/{z}/{x}/{y}.png', darkTheme: true, zIndex: 0 } as any
+    ];
+
+    const result = decodedObjectToBlob(blob, options);
+    const rasterLayer = result.layers.find(l => l.type === 'raster');
+    expect(rasterLayer && 'darkTheme' in rasterLayer && rasterLayer.darkTheme).toBe(true);
+
+    const roundTripped = blobToDecodedObject(result);
+    expect(roundTripped.rasterLayers?.[0]?.darkTheme).toBe(true);
   });
 
   it('persists a disabled map-labels layer as enabled: false, and restores the _disabled marker on decode', () => {

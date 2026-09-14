@@ -18,9 +18,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
     return {
       coords: [0, 0],
       z: 2,
-      base: 'satellite',
-      projection: 'globe',
-      satelliteVariant: 'blue'
+      base: 'street',
+      projection: 'globe'
     };
   }
 
@@ -88,6 +87,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           maxZoom: layer.maxZoom,
           tileSize: layer.tileSize,
           attribution: layer.attribution,
+          darkTheme: layer.darkTheme,
           zIndex: index,
           animationClock: layer.animationClock
         });
@@ -133,9 +133,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
     coords: map.coords ?? [0, 0],
     z: map.z ?? 2,
     bounds: map.bounds ?? [],
-    base: map.base === 'street' ? 'street' : 'satellite',
+    base: map.base === 'dark' ? 'dark' : 'street',
     projection: map.projection ?? 'globe',
-    satelliteVariant: map.satelliteVariant ?? 'blue',
     attribution: map.attribution ?? '',
     animationDuration: map.animationDuration ?? 500,
     fitGlobe: map.fitGlobe ?? false,
@@ -227,6 +226,7 @@ export function decodedObjectToBlob(
         maxZoom: r.maxZoom ?? 7,
         tileSize: r.tileSize ?? 256,
         attribution: r.attribution ?? '',
+        darkTheme: r.darkTheme ?? false,
         animationClock: r.animationClock
       }
     });
@@ -294,7 +294,6 @@ export function decodedObjectToBlob(
       bounds: options.bounds,
       base: (options.base as any) ?? currentBlob.map.base,
       projection: (options.projection as any) ?? currentBlob.map.projection,
-      satelliteVariant: (options.satelliteVariant as any) ?? currentBlob.map.satelliteVariant,
       attribution: options.attribution ?? currentBlob.map.attribution,
       animationDuration: options.animationDuration ?? currentBlob.map.animationDuration,
       fitGlobe: options.fitGlobe ?? currentBlob.map.fitGlobe,

@@ -17,7 +17,7 @@
   import { isDarkBase } from './mapStyle/utils';
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-  import type { DecodedObject, RasterLayerConfig } from '../../lib/marker';
+  import type { DecodedObject } from '../../lib/marker';
   import { TweenController, type TweenClock } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
   import { MAPLIBRE_TWEEN_SCROLL_STATE_KEY, MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY } from '../features/Tween/utils.ts';
@@ -131,38 +131,15 @@
     map.setGlobalStateProperty(MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY, immediatePos);
   });
 
-  const hasRasterSatellite = $derived(
-    (options.rasterLayers || []).some(
-      r => r.url?.includes('marble') || r.url?.includes('satellite') || r.attribution?.toLowerCase().includes('nasa')
-    )
-  );
-  const isSatellite = $derived(options.base === 'satellite' || hasRasterSatellite);
+  const hasDarkRaster = $derived((options.rasterLayers || []).some(r => r.darkTheme));
+  const isSatellite = $derived(hasDarkRaster);
   const isDark = $derived(isSatellite || isDarkBase(options.base || 'street'));
-  const isVectorLight = $derived(options.base === 'street' && !hasRasterSatellite);
+  const isVectorLight = $derived(options.base === 'street' && !hasDarkRaster);
 
   // A feature's config in each panel — one array per panel on the scrollyteller
   // path, the current panel's array on the builder / static path.
   const perPanel = <T,>(pick: (d: DecodedObject) => T[]): T[][] =>
     tweenController.panelCount > 0 ? tweenController.panels.map(p => pick(p.data)) : [pick(options)];
-
-  // Raster layers, with the satellite base map folded in: it's a raster layer
-  // derived from `base` + `satelliteVariant`, so we build it here rather than in
-  // MapRastersHandler.
-  const panelRasters = (d: DecodedObject): RasterLayerConfig[] => {
-    const explicit = d.rasterLayers ?? [];
-    if (explicit.length || d.base !== 'satellite') return explicit;
-    const black = d.satelliteVariant === 'black';
-    return [
-      {
-        url: `https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${black ? 'black' : 'blue'}-marble/{z}/{x}/{y}.webp`,
-        maxZoom: 7,
-        tileSize: 256,
-        attribution: black ? 'NASA Black Marble' : 'NASA Blue Marble',
-        // Must stay below the smallest real position-derived zIndex (0, from blobAdapter).
-        zIndex: -1
-      } as RasterLayerConfig
-    ];
-  };
 
   onMount(() => {
     if (!mapContainer) return;
@@ -250,7 +227,7 @@
 
       <MapCustomLabelHandler labels={options.labels} zIndex={options.labelsZIndex} {isDark} />
 
-      <MapRastersHandler perPanel={perPanel(panelRasters)} />
+      <MapRastersHandler perPanel={perPanel(d => d.rasterLayers ?? [])} />
 
       <GeoJsonsHandler config={options.geoJson} />
       <ImageSourcesHandler perPanel={perPanel(d => d.imageSources ?? [])} />

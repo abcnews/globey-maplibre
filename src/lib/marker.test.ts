@@ -166,7 +166,7 @@ describe('marker codecs', () => {
       const input: DecodedObject = {
         coords: [151.2093, -33.8688],
         z: 6.14,
-        base: 'satellite',
+        base: 'dark',
         attribution: 'Map data (c) ABC News, 2026!',
         labels: [
           {

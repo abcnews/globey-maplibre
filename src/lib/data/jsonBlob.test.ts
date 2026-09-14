@@ -14,7 +14,7 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.strictEqual(result.version, 1);
     assert.deepStrictEqual(result.layers, []);
     assert.strictEqual(result.map.projection, 'globe');
-    assert.strictEqual(result.map.base, 'satellite');
+    assert.strictEqual(result.map.base, 'street');
   });
 
   it('should validate and parse complete JSON blob with multiple layer types', () => {
@@ -115,7 +115,6 @@ describe('globeJsonBlobSchema (Zod)', () => {
       map: {
         projection: 'globe',
         base: 'dark',
-        satelliteVariant: 'black',
         attribution: 'ABC News',
         animationDuration: 500,
         fitGlobe: false,

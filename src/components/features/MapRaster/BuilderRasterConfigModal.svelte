@@ -11,18 +11,20 @@
 
   let { config = $bindable(), onclose }: Props = $props();
 
-  const PRESETS: Record<string, { label: string; url: string; maxZoom: number; attribution: string }> = {
+  const PRESETS: Record<string, { label: string; url: string; maxZoom: number; attribution: string; darkTheme: boolean }> = {
     blueMarble: {
       label: 'NASA Blue Marble',
       url: 'https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-blue-marble/{z}/{x}/{y}.webp',
       maxZoom: 7,
-      attribution: 'NASA Blue Marble'
+      attribution: 'NASA Blue Marble',
+      darkTheme: true
     },
     blackMarble: {
       label: 'NASA Black Marble',
       url: 'https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-black-marble/{z}/{x}/{y}.webp',
       maxZoom: 7,
-      attribution: 'NASA Black Marble'
+      attribution: 'NASA Black Marble',
+      darkTheme: true
     }
   };
 
@@ -41,6 +43,7 @@
       config.url = preset.url;
       config.maxZoom = preset.maxZoom;
       config.attribution = preset.attribution;
+      config.darkTheme = preset.darkTheme;
     }
   }
 </script>
@@ -100,6 +103,14 @@
           <input id="raster-attribution" type="text" placeholder="e.g. NASA, Mapbox" bind:value={config.attribution} />
         </div>
       </div>
+
+      <div class="field-group">
+        <label class="checkbox-label">
+          <input type="checkbox" bind:checked={config.darkTheme} />
+          Dark imagery
+        </label>
+        <small class="help-text">Enable for imagery with a dark background (e.g. satellite/night imagery) so labels switch to light-on-dark styling.</small>
+      </div>
     </fieldset>
   </div>
 
@@ -158,6 +169,12 @@
   .field-row {
     display: flex;
     gap: 0.75rem;
+  }
+
+  .checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
   }
 
   .flex-1 {

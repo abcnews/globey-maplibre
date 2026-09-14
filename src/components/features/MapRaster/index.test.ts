@@ -18,10 +18,11 @@ describe('Raster Feature Definition', () => {
     assert.include(item.url, 'blue-marble');
     assert.strictEqual(item.maxZoom, 7);
     assert.strictEqual(item.attribution, 'NASA Blue Marble');
+    assert.strictEqual(item.darkTheme, true);
     assert.strictEqual(item.zIndex, 150);
   });
 
-  it('getItems should format items correctly and detect Blue/Black Marble names', () => {
+  it('getItems should format items correctly, preferring attribution over the URL', () => {
     const options: DecodedObject = {
       rasterLayers: [
         {

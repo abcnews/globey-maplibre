@@ -45,7 +45,7 @@
   }}
 />
 
-<!-- Satellite view -->
+<!-- Satellite view: driven entirely by an explicit raster layer, not a base-map special case -->
 <Story
   name="Satellite"
   args={{
@@ -55,8 +55,15 @@
       coords: [120, 40],
       z: 3,
       projection: 'globe',
-      base: 'satellite',
-      satelliteVariant: 'blue'
+      rasterLayers: [
+        {
+          url: 'https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-blue-marble/{z}/{x}/{y}.webp',
+          maxZoom: 7,
+          tileSize: 256,
+          attribution: 'NASA Blue Marble',
+          darkTheme: true
+        }
+      ]
     }
   }}
 />

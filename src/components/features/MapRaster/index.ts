@@ -27,20 +27,14 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayerConfig> = {
       maxZoom: 7,
       tileSize: 256,
       attribution: 'NASA Blue Marble',
+      darkTheme: true,
       zIndex: maxZIndex
     } as any;
   },
 
   getItems(options: DecodedObject): LayerItemDescriptor<RasterLayerConfig>[] {
     return (options.rasterLayers || []).map((item, idx) => {
-      let name = 'Raster Layer';
-      if (item.url?.includes('blue-marble')) {
-        name = 'NASA Blue Marble';
-      } else if (item.url?.includes('black-marble')) {
-        name = 'NASA Black Marble';
-      } else if (item.attribution) {
-        name = item.attribution;
-      }
+      const name = item.attribution || 'Raster Layer';
 
       return {
         id: (item as any).id || (item.url ? `raster-${btoa(item.url).replace(/=/g, '').slice(-8)}` : `raster-${idx}`),

@@ -150,7 +150,9 @@ export const rasterLayerSchema = z.object({
   url: z.string(),
   maxZoom: z.number().default(7),
   tileSize: z.number().default(256),
-  attribution: z.string().default('')
+  attribution: z.string().default(''),
+  /** Whether this raster layer's imagery is visually dark, so label/UI styling should switch to a dark theme. */
+  darkTheme: z.boolean().default(false)
 });
 export type RasterLayer = z.infer<typeof rasterLayerSchema>;
 
@@ -214,8 +216,7 @@ export type MinimapConfig = z.infer<typeof minimapSchema>;
  */
 export const mapDefaultsSchema = z.object({
   projection: z.enum(['globe', 'mercator']).default('globe'),
-  base: z.enum(['satellite', 'street', 'dark']).default('satellite'),
-  satelliteVariant: z.enum(['blue', 'black']).default('blue'),
+  base: z.enum(['street', 'dark']).default('street'),
   attribution: z.string().default(''),
   animationDuration: z.number().default(500),
   fitGlobe: z.boolean().default(false),

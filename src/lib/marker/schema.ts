@@ -226,6 +226,8 @@ export const rasterItemSchema = object({
   maxZoom: decimal().key('mz').default(7),
   tileSize: decimal().key('ts').default(256),
   attribution: base36String().key('a').default(''),
+  /** Whether this raster layer's imagery is visually dark, so label/UI styling should switch to a dark theme. */
+  darkTheme: boolean().key('dt').default(false),
   zIndex: decimal(2).key('z').optional(),
   animationClock: animationClockSchema
 }).asArray();
@@ -245,15 +247,12 @@ export const markerSchema = object({
   coords: coordsCodec.key('geohash').default([0, 0]),
   bounds: boundsCodec.key('b').default([]),
   z: twoDecimalCodec.key('z').default(2),
-  base: oneOf(['street', 'satellite'] as const)
+  base: oneOf(['street', 'dark'] as const)
     .key('base')
     .default('street'),
   projection: oneOf(['globe', 'mercator'] as const)
     .key('p')
     .default('globe'),
-  satelliteVariant: oneOf(['blue', 'black'] as const)
-    .key('sv')
-    .default('blue'),
   mapLabels: mapLabelsSchema.key('ml').default({
     countriesMajor: true,
     countriesMedium: true,
