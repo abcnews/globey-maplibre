@@ -25,7 +25,7 @@ export default defineConfig({
   },
   resolve: {
     alias: process.env.VITEST ? {
-      '@abcnews/env-utils': join(process.cwd(), 'src/lib/mocks/env-utils.ts')
+      '@abcnews/terminus-fetch': join(process.cwd(), 'src/lib/mocks/terminus-fetch.ts')
     } : {}
   },
   build: {
