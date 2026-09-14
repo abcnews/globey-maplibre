@@ -66,15 +66,14 @@ export const animationClockSchema = z.enum(['scroll', 'immediate']);
 export type AnimationClock = z.infer<typeof animationClockSchema>;
 
 /**
- * Base layer definition schema with common properties: UUID, user-facing label/name, and Z-index
+ * Base layer definition schema with common properties: UUID and user-facing label/name.
+ * Rendering stack order comes from each layer's position in `GlobeJsonBlob.layers`, not a stored field.
  */
 const baseLayerObject = {
   /** Unique identifier / UUID for the layer */
   id: z.string(),
   /** Human readable name / slug for layer references */
   name: z.string().optional(),
-  /** Rendering stack order z-index */
-  zIndex: z.number().default(0),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
@@ -91,7 +90,6 @@ export const geoJsonLayerSchema = z.object({
   colourMode: z.enum(['scale', 'simple', 'basic']).default('simple'),
   colourProp: z.string().optional(),
   colourConfig: geoJsonColourConfigSchema.optional(),
-  opacity: z.number().min(0).max(1).default(1),
   isOpaque: z.boolean().default(false),
   filter: geoJsonFilterSchema.optional(),
   pointSize: sizeSchema.optional(),
@@ -139,7 +137,6 @@ export const imageLayerSchema = z.object({
   ...baseLayerObject,
   type: z.literal('image'),
   url: z.string(),
-  opacity: z.number().min(0).max(1).default(1),
   coordinates: boundsSchema
 });
 export type ImageLayer = z.infer<typeof imageLayerSchema>;
@@ -238,7 +235,7 @@ export const globeJsonBlobSchema = z.object({
   title: z.string().optional(),
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
-  /** All layers available in the presentation, with their respective zIndex stacking */
+  /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */
   layers: z.array(globeLayerSchema).default([])
 });
 export type GlobeJsonBlob = z.infer<typeof globeJsonBlobSchema>;

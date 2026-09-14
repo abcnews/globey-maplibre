@@ -150,7 +150,9 @@
         url: `https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-${black ? 'black' : 'blue'}-marble/{z}/{x}/{y}.webp`,
         maxZoom: 7,
         tileSize: 256,
-        attribution: black ? 'NASA Black Marble' : 'NASA Blue Marble'
+        attribution: black ? 'NASA Black Marble' : 'NASA Blue Marble',
+        // Must stay below the smallest real position-derived zIndex (0, from blobAdapter).
+        zIndex: -1
       } as RasterLayerConfig
     ];
   };

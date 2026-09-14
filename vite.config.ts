@@ -23,6 +23,11 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['maplibre-gl']
   },
+  resolve: {
+    alias: process.env.VITEST ? {
+      '@abcnews/env-utils': join(process.cwd(), 'src/lib/mocks/env-utils.ts')
+    } : {}
+  },
   build: {
     rollupOptions: {
       input: {
@@ -38,6 +43,12 @@ export default defineConfig({
         chunkFileNames: 'modules/[name]-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]'
       }
+    }
+  },
+  test: {
+    reporters: ['default', 'json'],
+    outputFile: {
+      json: 'test-results.json'
     }
   }
 });

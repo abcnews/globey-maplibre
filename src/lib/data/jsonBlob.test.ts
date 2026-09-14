@@ -40,24 +40,20 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'layer-raster-1',
           name: 'satellite',
           type: 'raster',
-          zIndex: 100,
           url: 'https://example.com/raster/{z}/{x}/{y}.png'
         },
         {
           id: 'layer-geojson-fires',
           name: 'fires',
           type: 'geojson',
-          zIndex: 200,
           cmid: 123456,
           geometryType: 'points',
-          colourMode: 'simple',
-          opacity: 0.8
+          colourMode: 'simple'
         },
         {
           id: 'layer-custom-labels',
           name: 'labels',
           type: 'customLabels',
-          zIndex: 300,
           labels: [
             {
               name: 'Sydney',
@@ -71,7 +67,6 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'layer-icon-1',
           name: 'evac',
           type: 'icon',
-          zIndex: 400,
           cmid: 998877,
           coords: [150.5, -34.2]
         },
@@ -79,7 +74,6 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'layer-image-1',
           name: 'radar',
           type: 'image',
-          zIndex: 500,
           url: 'https://example.com/radar.png',
           coordinates: [
             [-180, 85],
@@ -92,7 +86,6 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'layer-map-labels',
           name: 'builtInLabels',
           type: 'mapLabels',
-          zIndex: 600,
           countriesMajor: true,
           cities: true
         },
@@ -100,7 +93,6 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'layer-osm',
           name: 'osm',
           type: 'streetMap',
-          zIndex: 50,
           hideOsm: false
         }
       ]
@@ -134,10 +126,8 @@ describe('globeJsonBlobSchema (Zod)', () => {
           id: 'fires-layer',
           name: 'fires',
           type: 'geojson',
-          zIndex: 10,
           geometryType: 'areas',
           colourMode: 'scale',
-          opacity: 1,
           isOpaque: false
         }
       ]

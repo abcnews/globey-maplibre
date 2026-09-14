@@ -38,7 +38,10 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
   let hideOsm: boolean | undefined;
   let streetMapZIndex: number | undefined;
 
-  layers.forEach(layer => {
+  // Array position (flat across every layer kind) becomes each item's zIndex — a
+  // geojson layer at blob index 3 gets zIndex 3 even if other-kind layers sit at
+  // indices 0-2. This preserves true cross-kind ordering, not per-kind-relative.
+  layers.forEach((layer, index) => {
     switch (layer.type) {
       case 'geojson':
         geoJson.push({
@@ -49,13 +52,12 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           colourMode: layer.colourMode,
           colourProp: layer.colourProp,
           colourConfig: layer.colourConfig as any,
-          opacity: layer.opacity,
           isOpaque: layer.isOpaque,
           filter: layer.filter as any,
           pointSize: layer.pointSize as any,
           lineWidth: layer.lineWidth as any,
           spike: layer.spike as any,
-          zIndex: layer.zIndex,
+          zIndex: index,
           animationClock: layer.animationClock
         });
         break;
@@ -65,7 +67,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           id: layer.id,
           cmid: layer.cmid,
           coords: layer.coords,
-          zIndex: layer.zIndex,
+          zIndex: index,
           animationClock: layer.animationClock
         });
         break;
@@ -74,9 +76,8 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
         imageSources.push({
           id: layer.id,
           url: layer.url,
-          opacity: layer.opacity,
           coordinates: layer.coordinates as any,
-          zIndex: layer.zIndex,
+          zIndex: index,
           animationClock: layer.animationClock
         });
         break;
@@ -87,7 +88,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           maxZoom: layer.maxZoom,
           tileSize: layer.tileSize,
           attribution: layer.attribution,
-          zIndex: layer.zIndex,
+          zIndex: index,
           animationClock: layer.animationClock
         });
         break;
@@ -99,7 +100,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           style: l.style,
           number: l.number
         }));
-        labelsZIndex = layer.zIndex;
+        labelsZIndex = index;
         break;
 
       case 'mapLabels':
@@ -115,12 +116,12 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           nationalBoundaries: layer.nationalBoundaries,
           stateBoundaries: layer.stateBoundaries
         };
-        mapLabelsZIndex = layer.zIndex;
+        mapLabelsZIndex = index;
         break;
 
       case 'streetMap':
         hideOsm = layer.hideOsm;
-        streetMapZIndex = layer.zIndex;
+        streetMapZIndex = index;
         break;
     }
   });
@@ -158,115 +159,127 @@ export function decodedObjectToBlob(
   currentBlob: GlobeJsonBlob,
   options: DecodedObject
 ): GlobeJsonBlob {
-  const newLayers: GlobeLayer[] = [];
+  // Collect every layer with the DecodedObject-side zIndex it should sort by, then
+  // sort once and strip that number back out — GlobeLayer has no zIndex field, its
+  // array position *is* the stacking order. Items missing a zIndex (freshly added,
+  // not yet reordered) default to Infinity so they land on top rather than buried
+  // at the bottom; Array.sort is stable, so multiple such items keep insertion order.
+  const entries: { zIndex: number; layer: GlobeLayer }[] = [];
 
-  // 1. GeoJSON layers
   (options.geoJson || []).forEach(gj => {
-    newLayers.push({
-      id: gj.id || `geojson-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: 'geojson',
-      cmid: gj.cmid,
-      url: gj.url,
-      geometryType: (gj.type as any) || 'areas',
-      colourMode: (gj.colourMode as any) || 'simple',
-      colourProp: gj.colourProp,
-      colourConfig: gj.colourConfig as any,
-      opacity: gj.opacity ?? 1,
-      isOpaque: gj.isOpaque ?? false,
-      filter: gj.filter as any,
-      pointSize: gj.pointSize as any,
-      lineWidth: gj.lineWidth as any,
-      spike: gj.spike as any,
-      zIndex: gj.zIndex ?? 0,
-      animationClock: gj.animationClock
+    entries.push({
+      zIndex: gj.zIndex ?? Infinity,
+      layer: {
+        id: gj.id || `geojson-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        type: 'geojson',
+        cmid: gj.cmid,
+        url: gj.url,
+        geometryType: (gj.type as any) || 'areas',
+        colourMode: (gj.colourMode as any) || 'simple',
+        colourProp: gj.colourProp,
+        colourConfig: gj.colourConfig as any,
+        isOpaque: gj.isOpaque ?? false,
+        filter: gj.filter as any,
+        pointSize: gj.pointSize as any,
+        lineWidth: gj.lineWidth as any,
+        spike: gj.spike as any,
+        animationClock: gj.animationClock
+      }
     });
   });
 
-  // 2. Icon layers
   (options.icons || []).forEach(ic => {
-    newLayers.push({
-      id: ic.id || `icon-${ic.cmid}-${Date.now()}`,
-      type: 'icon',
-      cmid: ic.cmid,
-      coords: ic.coords,
-      zIndex: ic.zIndex ?? 0,
-      animationClock: ic.animationClock
+    entries.push({
+      zIndex: ic.zIndex ?? Infinity,
+      layer: {
+        id: ic.id || `icon-${ic.cmid}-${Date.now()}`,
+        type: 'icon',
+        cmid: ic.cmid,
+        coords: ic.coords,
+        animationClock: ic.animationClock
+      }
     });
   });
 
-  // 3. Image sources
   (options.imageSources || []).forEach(img => {
-    newLayers.push({
-      id: img.id || `image-${Date.now()}`,
-      type: 'image',
-      url: img.url,
-      opacity: img.opacity ?? 1,
-      coordinates: (img.coordinates as any) || [],
-      zIndex: img.zIndex ?? 0,
-      animationClock: img.animationClock
+    entries.push({
+      zIndex: img.zIndex ?? Infinity,
+      layer: {
+        id: img.id || `image-${Date.now()}`,
+        type: 'image',
+        url: img.url,
+        coordinates: (img.coordinates as any) || [],
+        animationClock: img.animationClock
+      }
     });
   });
 
-  // 4. Raster layers
   (options.rasterLayers || []).forEach(r => {
-    newLayers.push({
-      id: `raster-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      type: 'raster',
-      url: r.url,
-      maxZoom: r.maxZoom ?? 7,
-      tileSize: r.tileSize ?? 256,
-      attribution: r.attribution ?? '',
-      zIndex: r.zIndex ?? 0,
-      animationClock: r.animationClock
+    entries.push({
+      zIndex: r.zIndex ?? Infinity,
+      layer: {
+        id: `raster-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        type: 'raster',
+        url: r.url,
+        maxZoom: r.maxZoom ?? 7,
+        tileSize: r.tileSize ?? 256,
+        attribution: r.attribution ?? '',
+        animationClock: r.animationClock
+      }
     });
   });
 
-  // 5. Custom labels
   if (options.labels && options.labels.length > 0) {
-    newLayers.push({
-      id: 'custom-labels',
-      name: 'Custom Labels',
-      type: 'customLabels',
-      zIndex: options.labelsZIndex ?? 600,
-      labels: options.labels.map(l => ({
-        name: l.name,
-        coords: l.coords,
-        style: l.style ?? 'country-large',
-        number: l.number ?? 0
-      }))
+    entries.push({
+      zIndex: options.labelsZIndex ?? Infinity,
+      layer: {
+        id: 'custom-labels',
+        name: 'Custom Labels',
+        type: 'customLabels',
+        labels: options.labels.map(l => ({
+          name: l.name,
+          coords: l.coords,
+          style: l.style ?? 'country-large',
+          number: l.number ?? 0
+        }))
+      }
     });
   }
 
-  // 6. Built-in map labels
   if (options.mapLabels) {
-    newLayers.push({
-      id: 'builtin-map-labels',
-      name: 'Map Labels',
-      type: 'mapLabels',
-      zIndex: options.mapLabelsZIndex ?? 500,
-      countriesMajor: options.mapLabels.countriesMajor ?? true,
-      countriesMedium: options.mapLabels.countriesMedium ?? true,
-      countriesMinor: options.mapLabels.countriesMinor ?? true,
-      continents: options.mapLabels.continents ?? false,
-      states: options.mapLabels.states ?? false,
-      cities: options.mapLabels.cities ?? false,
-      towns: options.mapLabels.towns ?? false,
-      oceans: options.mapLabels.oceans ?? false,
-      nationalBoundaries: options.mapLabels.nationalBoundaries ?? false,
-      stateBoundaries: options.mapLabels.stateBoundaries ?? false
+    entries.push({
+      zIndex: options.mapLabelsZIndex ?? Infinity,
+      layer: {
+        id: 'builtin-map-labels',
+        name: 'Map Labels',
+        type: 'mapLabels',
+        countriesMajor: options.mapLabels.countriesMajor ?? true,
+        countriesMedium: options.mapLabels.countriesMedium ?? true,
+        countriesMinor: options.mapLabels.countriesMinor ?? true,
+        continents: options.mapLabels.continents ?? false,
+        states: options.mapLabels.states ?? false,
+        cities: options.mapLabels.cities ?? false,
+        towns: options.mapLabels.towns ?? false,
+        oceans: options.mapLabels.oceans ?? false,
+        nationalBoundaries: options.mapLabels.nationalBoundaries ?? false,
+        stateBoundaries: options.mapLabels.stateBoundaries ?? false
+      }
     });
   }
 
-  // 7. Street map
   if (options.hideOsm !== undefined || options.streetMapZIndex !== undefined) {
-    newLayers.push({
-      id: 'street-map',
-      name: 'Street Map',
-      type: 'streetMap',
-      zIndex: options.streetMapZIndex ?? 200,
-      hideOsm: options.hideOsm ?? false
+    entries.push({
+      zIndex: options.streetMapZIndex ?? Infinity,
+      layer: {
+        id: 'street-map',
+        name: 'Street Map',
+        type: 'streetMap',
+        hideOsm: options.hideOsm ?? false
+      }
     });
   }
+
+  const newLayers = entries.sort((a, b) => a.zIndex - b.zIndex).map(e => e.layer);
 
   return {
     ...currentBlob,
