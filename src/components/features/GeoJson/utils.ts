@@ -11,6 +11,7 @@ import { isValidUrl } from '../../../lib/marker/utils.ts';
 import type { GeoJsonConfig, GeoJsonFilter } from '../../../lib/marker';
 import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
 import { THEMES } from './themes.ts';
+import type { FeatureCollection } from 'geojson';
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
 
@@ -81,15 +82,7 @@ export const TILE_SIZE_PX = 512;
  */
 export function getKilometreZoomScaleExpression(valueInKm: number): any {
   const sizeAtZoom0 = (valueInKm / EARTH_CIRCUMFERENCE_KM) * TILE_SIZE_PX;
-  return [
-    'interpolate',
-    ['exponential', 2],
-    ['zoom'],
-    0,
-    sizeAtZoom0,
-    22,
-    sizeAtZoom0 * Math.pow(2, 22)
-  ];
+  return ['interpolate', ['exponential', 2], ['zoom'], 0, sizeAtZoom0, 22, sizeAtZoom0 * Math.pow(2, 22)];
 }
 
 export interface GeoJsonFeatureState {
@@ -402,5 +395,12 @@ export function getHeightEvaluator(config: GeoJsonConfig): (feature: { hVal: num
     const val = feature.hVal;
     const factor = Math.max(0, Math.min(1, (val - min) / range));
     return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);
+  };
+}
+
+export function filterFeaturesType(data: FeatureCollection, featureTypes = ['']) {
+  return {
+    ...data,
+    features: data.features.filter(feature => featureTypes.includes(feature.geometry?.type))
   };
 }

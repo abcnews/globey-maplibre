@@ -8,7 +8,8 @@
     buildStrokeWidthExpression,
     buildRadiusExpression,
     buildFilterExpression,
-    getKilometreZoomScaleExpression
+    getKilometreZoomScaleExpression,
+    filterFeaturesType
   } from './utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 
@@ -30,7 +31,9 @@
 
   // Fixed real-world radius keeps its zoom expression; otherwise driven by config.
   const radiusExpr = $derived(
-    config.pointSize?.unit === 'k' ? getKilometreZoomScaleExpression(config.pointSize.value) : buildRadiusExpression(config)
+    config.pointSize?.unit === 'k'
+      ? getKilometreZoomScaleExpression(config.pointSize.value)
+      : buildRadiusExpression(config)
   );
 
   // Add the source and the circle layer once, on mount. Paint/filter are then
@@ -41,7 +44,10 @@
 
     untrack(() => {
       if (!map.getSource(sourceId)) {
-        map.addSource(sourceId, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
+        map.addSource(sourceId, {
+          type: 'geojson',
+          data: filterFeaturesType(data, ['Point', 'MultiPoint']) || { type: 'FeatureCollection', features: [] }
+        });
       }
       if (!map.getLayer(circleLayerId)) {
         addLayerWithZIndex(

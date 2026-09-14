@@ -19,7 +19,7 @@
     "test": "vitest run",
     "check": "svelte-check --tsconfig ./tsconfig.app.json && tsc -p tsconfig.node.json",
     "format": "prettier --write .",
-    "storybook": "storybook dev -p 6006 --ci",
+    "storybook": "storybook dev -p 6006 --ci --host `hostname`.aus.aunty.abc.net.au",
     "build-storybook": "storybook build"
   },
   "devDependencies": {
@@ -68,6 +68,7 @@
     "@abcnews/svelte-scrollyteller": "^5.0.0-next.3",
     "@abcnews/terminus-fetch": "^7.1.0",
     "d3-interpolate": "^3.0.1",
+    "geojson": "^0.5.0",
     "zod": "^4.6.2"
   },
   "contributors": [
