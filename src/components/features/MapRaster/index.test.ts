@@ -80,6 +80,19 @@ describe('Raster Feature Definition', () => {
     assert.strictEqual(item.zIndex, 160);
   });
 
+  it('setZIndex should update a cloned draft, not the original descriptor reference (regression: stale item.data)', () => {
+    const item = { url: 'https://example.com/1/{z}/{x}/{y}.png', maxZoom: 10, attribution: 'A', zIndex: 100 };
+    const options: DecodedObject = { rasterLayers: [item] };
+    const [descriptor] = rasterFeature.getItems(options);
+
+    const draft: DecodedObject = JSON.parse(JSON.stringify(options));
+
+    rasterFeature.setZIndex(draft, descriptor, 160);
+
+    assert.strictEqual(draft.rasterLayers?.[0].zIndex, 160);
+    assert.strictEqual(item.zIndex, 100, 'the original (pre-clone) object must be left untouched');
+  });
+
   it('isValid and update should validate and synchronize raster layers', () => {
     assert.strictEqual(rasterFeature.isValid?.({ url: 'https://example.com/tiles/{z}/{x}/{y}.png' } as any, {}), true);
     assert.strictEqual(rasterFeature.isValid?.({ url: '' } as any, {}), false);

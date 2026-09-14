@@ -40,6 +40,7 @@
   } | null>(null);
 
   let activeCustomModal = $state<Component<any> | null>(null);
+  let customModalOptions = $state<typeof currentOptions | null>(null);
   let showAddMenu = $state(false);
 
   let activePlacement = $state<{
@@ -156,6 +157,7 @@
     editingItem = null;
 
     if (menuItem.CustomModal) {
+      customModalOptions = JSON.parse(JSON.stringify(currentOptions));
       activeCustomModal = menuItem.CustomModal;
     } else if (menuItem.onSelect) {
       menuItem.onSelect({
@@ -512,16 +514,24 @@
                 aria-label={btn.ariaLabel || btn.title}
                 title={btn.title}
                 onclick={() => {
-                  btn.onclick({
-                    options: currentOptions,
-                    item,
-                    map,
-                    startInteractivePlacement,
-                    openModal: () => {
-                      const currentItems = item.feature.getItems(currentOptions);
-                      const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
-                      openEditModal(item.feature, matchingItem);
-                    }
+                  mutateDecoded(draft => {
+                    const draftItems = item.feature.getItems(draft);
+                    const draftItem = {
+                      ...(draftItems.find(i => i.id === item.id) || draftItems[0] || item),
+                      feature: item.feature
+                    };
+
+                    btn.onclick({
+                      options: draft,
+                      item: draftItem,
+                      map,
+                      startInteractivePlacement,
+                      openModal: () => {
+                        const currentItems = item.feature.getItems(currentOptions);
+                        const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
+                        openEditModal(item.feature, matchingItem);
+                      }
+                    });
                   });
                 }}
               >
@@ -592,16 +602,20 @@
   <editingItem.feature.ConfigModal bind:config={editingItem.data} {map} onclose={handleCloseLayerModal} />
 {/if}
 
-{#if activeCustomModal}
+{#if activeCustomModal && customModalOptions}
   {@const CustomModalComponent = activeCustomModal}
   <CustomModalComponent
-    options={currentOptions}
+    bind:options={customModalOptions}
     {map}
     onclose={(bounds?: [number, number][]) => {
       if (bounds && map) {
         safeFitBounds(map, bounds, { padding: 50 });
       }
+      mutateDecoded(draft => {
+        Object.assign(draft, customModalOptions);
+      });
       activeCustomModal = null;
+      customModalOptions = null;
     }}
   />
 {/if}

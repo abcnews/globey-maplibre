@@ -52,9 +52,8 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   },
 
   setZIndex(options: DecodedObject, item: LayerItemDescriptor<GeoJsonConfig>, newZIndex: number) {
-    if (item.data) {
-      item.data.zIndex = newZIndex;
-    }
+    const entry = geoJsonFeature.getItems(options).find(i => i.id === item.id)?.data;
+    if (entry) entry.zIndex = newZIndex;
   },
 
   add(options: DecodedObject, item: GeoJsonConfig) {

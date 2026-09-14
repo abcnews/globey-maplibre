@@ -54,10 +54,8 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayerConfig> = {
   },
 
   setZIndex(options: DecodedObject, item: LayerItemDescriptor<RasterLayerConfig>, newZIndex: number) {
-    if (item.data) {
-      item.data.zIndex = newZIndex;
-      options.rasterLayers = options.rasterLayers ? [...options.rasterLayers] : [];
-    }
+    const entry = rasterFeature.getItems(options).find(i => i.id === item.id)?.data;
+    if (entry) entry.zIndex = newZIndex;
   },
 
   add(options: DecodedObject, item: RasterLayerConfig) {
