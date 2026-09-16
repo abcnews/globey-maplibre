@@ -12,5 +12,5 @@
 </script>
 
 {#each entries as entry (entry.sig)}
-  <GeoJsonHandler config={entry.representative} opacityStops={entry.opacityStops} />
+  <GeoJsonHandler config={entry.representative} opacityStops={entry.opacityStops} configStops={entry.configStops} />
 {/each}

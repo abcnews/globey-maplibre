@@ -17,6 +17,9 @@ export interface TweenedLayerEntry<Config, Coord> {
   opacityStops: number[];
   /** Coordinate per panel; `null` where absent. Empty when `coordsOf` is omitted. */
   coordStops: (Coord | null)[];
+  /** This item's own config per panel; `undefined` where absent — lets a handler tween any
+   *  other per-panel property itself (e.g. GeoJson colour) beyond opacity/coords. */
+  configStops: (Config | undefined)[];
   /** `{#each}` key. */
   sig: string;
 }
@@ -46,6 +49,7 @@ export function buildTweenedLayerEntries<Config, Coord = never>(
       representative: perPanelConfig.find(Boolean) as Config,
       opacityStops: perPanelConfig.map(config => (config ? opacityOf(config) : 0)),
       coordStops: opts.coordsOf ? perPanelConfig.map(config => (config ? opts.coordsOf!(config) : null)) : [],
+      configStops: perPanelConfig,
       sig: `${key}|${JSON.stringify(perPanelConfig.map(config => config ?? null))}`
     };
   });

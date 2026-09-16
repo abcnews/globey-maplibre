@@ -3,7 +3,7 @@
   import type { Map } from 'maplibre-gl';
   import type { GeoJsonConfig } from '../../../lib/marker';
   import {
-    buildColourExpression,
+    buildTweenedColourExpression,
     buildOpacityExpression,
     buildStrokeWidthExpression,
     buildFilterExpression,
@@ -21,6 +21,8 @@
     sourceId,
     /** One opacity per panel (1 present / 0 absent), multiplied into every opacity paint property. */
     opacityStops = [1],
+    /** This item's own config per panel — lets colour cross-fade panel to panel. */
+    configStops,
     /** Global-state key this layer's fade follows. */
     posKey = MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
@@ -29,6 +31,7 @@
     config: GeoJsonConfig;
     sourceId: string;
     opacityStops?: number[];
+    configStops?: (GeoJsonConfig | undefined)[];
     posKey?: string;
     zIndex?: number;
   } = $props();
@@ -83,7 +86,7 @@
     map.setPaintProperty(outlineLayerId, 'line-width', widthPlus(lineWidthExpr, 2));
     map.setPaintProperty(outlineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
 
-    map.setPaintProperty(lineLayerId, 'line-color', buildColourExpression(config, 'stroke'));
+    map.setPaintProperty(lineLayerId, 'line-color', buildTweenedColourExpression(configStops, config, 'stroke', posKey));
     map.setPaintProperty(lineLayerId, 'line-width', lineWidthExpr);
     map.setPaintProperty(lineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
   });

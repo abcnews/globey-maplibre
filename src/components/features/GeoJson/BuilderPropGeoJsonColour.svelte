@@ -2,6 +2,7 @@
   import { untrack } from 'svelte';
   import { SequentialPalette, DivergentPalette } from '@abcnews/palette';
   import type { GeoJsonConfig } from '../../../lib/marker';
+  import ColourSchemePicker from '../../shared/ColourSchemePicker.svelte';
   import ColourLegendPreview from './ColourLegendPreview.svelte';
   import DistributionInput from './DistributionInput.svelte';
 
@@ -136,22 +137,15 @@
     >
   {:else if style.colourMode === 'basic'}
     {#if style.colourConfig}
-      <div class="gj-grid">
-        <div>
-          <label for="gj-basic-type">Preset</label>
-          <select id="gj-basic-type" bind:value={style.colourConfig.basicType}>
-            <option value="normal">Normal</option>
-            <option value="highlighted">Highlighted</option>
-            <option value="custom">Custom</option>
-          </select>
-        </div>
-        {#if style.colourConfig.basicType === 'custom'}
-          <div>
-            <label for="gj-colour-basic">Colour</label>
-            <input id="gj-colour-basic" type="color" bind:value={style.colourConfig.basic} />
-          </div>
-        {/if}
-      </div>
+      <ColourSchemePicker
+        idPrefix="gj-basic"
+        scheme={style.colourConfig.basicType ?? 'normal'}
+        customColour={style.colourConfig.basic}
+        onchange={({ scheme, customColour }) => {
+          style.colourConfig!.basicType = scheme;
+          if (customColour) style.colourConfig!.basic = customColour;
+        }}
+      />
     {/if}
   {:else if style.colourMode === 'scale' && style.colourProp}
     {#if !isNumeric}

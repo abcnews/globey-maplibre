@@ -10,8 +10,11 @@
   let {
     config,
     /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
-    opacityStops = [1]
-  }: { config: GeoJsonConfig; opacityStops?: number[] } = $props();
+    opacityStops = [1],
+    /** This item's own config per panel (undefined where absent) — lets colour cross-fade
+     *  between panels, e.g. a marker LAYER override changing colour panel to panel. */
+    configStops
+  }: { config: GeoJsonConfig; opacityStops?: number[]; configStops?: (GeoJsonConfig | undefined)[] } = $props();
 
   const sourceId = $derived(generateGeoJsonSourceId(config.id || config.url || config.cmid));
   const posKey = $derived(layerClockKey(config.animationClock));
@@ -32,10 +35,10 @@
 
 {#if data}
   {#if config.type === 'areas'}
-    <RenderArea {data} {config} {sourceId} {opacityStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
+    <RenderArea {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
   {:else if config.type === 'lines'}
-    <RenderLine {data} {config} {sourceId} {opacityStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
+    <RenderLine {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
   {:else if config.type === 'points'}
-    <RenderPoint {data} {config} {sourceId} {opacityStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
+    <RenderPoint {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
   {/if}
 {/if}

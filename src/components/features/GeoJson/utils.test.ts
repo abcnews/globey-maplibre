@@ -4,7 +4,8 @@ import {
   buildOpacityExpression,
   buildStrokeWidthExpression,
   buildRadiusExpression,
-  buildColourExpression
+  buildColourExpression,
+  buildTweenedColourExpression
 } from './utils.ts';
 
 /**
@@ -127,6 +128,64 @@ describe('GeoJSON paint expressions – numeric fallback bug regression', () => 
       const expr = buildColourExpression({ colourMode: 'simple' }, 'stroke');
       const result = evaluateExpression(expr, colorSpec, { stroke: '#00ff00' });
       expect(String(result).toLowerCase()).toContain('00ff00');
+    });
+
+    it('basic mode with no basicType uses the normal preset', () => {
+      const expr = buildColourExpression({ colourMode: 'basic' }, 'fill');
+      const result = evaluateExpression(expr, colorSpec, {});
+      expect(String(result).toLowerCase()).toContain('267e');
+    });
+
+    it('basic mode with basicType "highlighted" uses the highlighted preset', () => {
+      const expr = buildColourExpression({ colourMode: 'basic', colourConfig: { basicType: 'highlighted' } }, 'fill');
+      const result = evaluateExpression(expr, colorSpec, {});
+      expect(String(result).toLowerCase()).toContain('3c27');
+    });
+
+    it('basic mode with basicType "custom" uses colourConfig.basic, not the normal preset', () => {
+      const expr = buildColourExpression(
+        { colourMode: 'basic', colourConfig: { basicType: 'custom', basic: '#123456' } },
+        'fill'
+      );
+      const result = evaluateExpression(expr, colorSpec, {});
+      expect(String(result).toLowerCase()).toContain('123456');
+    });
+  });
+
+  describe('buildTweenedColourExpression', () => {
+    const normal = { colourMode: 'basic' as const, colourConfig: { basicType: 'normal' as const } };
+    const highlighted = { colourMode: 'basic' as const, colourConfig: { basicType: 'highlighted' as const } };
+
+    it('with 0 or 1 config stops, returns the representative colour unchanged', () => {
+      expect(buildTweenedColourExpression(undefined, normal, 'fill', 'tweenPosScroll')).toBe(
+        buildColourExpression(normal, 'fill')
+      );
+      expect(buildTweenedColourExpression([normal], normal, 'fill', 'tweenPosScroll')).toBe(
+        buildColourExpression(normal, 'fill')
+      );
+    });
+
+    it('interpolates across each panel colour, following the given global-state key', () => {
+      const expr = buildTweenedColourExpression([normal, highlighted], normal, 'fill', 'tweenPosScroll');
+      expect(Array.isArray(expr)).toBe(true);
+      expect(expr[0]).toBe('interpolate');
+      expect(expr[2]).toEqual(['number', ['global-state', 'tweenPosScroll'], 0]);
+      // stops: [panel0, colour0, panel1, colour1]
+      expect(expr[4]).toBe(buildColourExpression(normal, 'fill'));
+      expect(expr[6]).toBe(buildColourExpression(highlighted, 'fill'));
+    });
+
+    it('fills a gap (item absent from a panel) with the representative colour', () => {
+      const expr = buildTweenedColourExpression([normal, undefined, highlighted], normal, 'fill', 'tweenPosScroll');
+      expect(expr[4]).toBe(buildColourExpression(normal, 'fill'));
+      expect(expr[6]).toBe(buildColourExpression(normal, 'fill'));
+      expect(expr[8]).toBe(buildColourExpression(highlighted, 'fill'));
+    });
+
+    it('does not tween scale/simple mode — falls back to the representative expression', () => {
+      const scale = { colourMode: 'scale' as const, colourProp: 'x' };
+      const expr = buildTweenedColourExpression([scale, highlighted], scale, 'fill', 'tweenPosScroll');
+      expect(expr).toBe(buildColourExpression(scale, 'fill'));
     });
   });
 });

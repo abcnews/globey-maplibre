@@ -55,6 +55,16 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 ## GeoJson cross-panel fades
 
 Fading layer kinds (raster/image/icon/geojson) share `buildTweenedLayerEntries()` (`src/components/features/layers/tweenedLayers.ts`): `CustomGlobe` passes `perPanel: Config[][]` (all panels, not just current), entries stay mounted with an `opacityStops` array tweened via MapLibre `global-state`. Passing only the current panel's array (as `GeoJsonsHandler` used to) makes layers snap instead of fade — any new fading layer kind must use this pattern.
+- GeoJson colour also cross-fades this way: `TweenedLayerEntry.configStops` (each panel's own config, threaded through `GeoJsonHandler`/`RenderArea`/`RenderLine`/`RenderPoint`) feeds `buildTweenedColourExpression()` (`GeoJson/utils.ts`), which tweens between panels' literal colours in `basic` mode only — `scale`/`simple` modes are data-driven expressions with no single colour to interpolate, so those fall back to the current panel's own expression (no cross-fade).
+
+## Colour scheme
+
+`src/lib/colourScheme.ts` is the shared normal/highlighted/custom colour concept — currently
+resolves GeoJson's `colourConfig.basicType`/`.basic` (`GeoJson/utils.ts`, `GeoJson/themes.ts`)
+and the Marker Mode colour override (`PropMarkerLayers.svelte`), both via the shared
+`ColourSchemePicker.svelte` (`src/components/shared/`). Intended to be reused for CustomLabels
+colouring later. `schemeForColour()`/`resolveSchemeColour()` round-trip a scheme ⇄ hex; marker
+overrides only store a hex on the wire, so the scheme name is a best-effort guess on reload.
 
 ## Conventions
 

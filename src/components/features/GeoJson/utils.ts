@@ -10,7 +10,16 @@ import { fetchDownloadObject } from '../../../lib/fetchDownloadObject.ts';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import type { GeoJsonConfig, GeoJsonFilter } from '../../../lib/marker';
 import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
-import { THEMES } from './themes.ts';
+import { resolveSchemeColour, type ColourSchemeName } from '../../../lib/colourScheme.ts';
+import { tweenStopsExpression } from '../Tween/utils.ts';
+import { THEMES, type GeoJsonTheme } from './themes.ts';
+
+/** `THEMES` only carries non-colour visuals (stroke width/opacity/radius) for `normal`/
+ *  `highlighted` — `custom` has no preset of its own, so it visually behaves like `normal`
+ *  (its actual colour comes from `resolveSchemeColour`, not this preset). */
+function resolveBasicPreset(basicType: ColourSchemeName | undefined): GeoJsonTheme {
+  return (basicType && basicType !== 'custom' && THEMES[basicType]) || THEMES.normal;
+}
 
 export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
 
@@ -156,8 +165,8 @@ export function getFeatureStateEvaluator(config: GeoJsonConfig): (feature: any, 
   const minColour = colourConfig?.minColour || '#ffffff';
   const maxColour = colourConfig?.maxColour || '#ff0000';
 
-  const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
-  const basicColor = colourConfig?.basicType ? basicPreset.color : colourConfig?.basic || basicPreset.color;
+  const basicPreset = resolveBasicPreset(colourConfig?.basicType);
+  const basicColor = resolveSchemeColour(colourConfig?.basicType, colourConfig?.basic);
 
   const matchesFilter = (props: Record<string, any>) => {
     if (!filter?.prop || !filter.values?.length) return true;
@@ -323,14 +332,50 @@ export function buildColourExpression(config: GeoJsonConfig, channel: 'fill' | '
 
   if (colourMode === 'scale') return buildScaleColourExpression(config);
 
-  const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
-  return colourConfig?.basicType ? basicPreset.color : colourConfig?.basic || basicPreset.color;
+  return resolveSchemeColour(colourConfig?.basicType, colourConfig?.basic);
+}
+
+/**
+ * Like `buildColourExpression`, but also cross-fades between panels' own colours (e.g. a
+ * marker LAYER override changing a layer's colour panel to panel) via the tween clock —
+ * `buildColourExpression` alone is a snapshot of one config and can't see other panels.
+ *
+ * Only "basic" colour mode resolves to a single literal hex per panel, so that's the only
+ * mode this can tween. Deciding whether to tween per-panel (not off `representative` alone)
+ * matters: `representative` is just "first panel with this item on", which may not be the
+ * panel with an active colour override, so gating on its mode alone could skip tweening
+ * even when other panels clearly have one. Any panel resolving to something other than a
+ * literal colour ("simple"/"scale" mode) is filled with the nearest literal stop instead —
+ * it has no single colour of its own to show anyway.
+ */
+export function buildTweenedColourExpression(
+  configStops: (GeoJsonConfig | undefined)[] | undefined,
+  representative: GeoJsonConfig,
+  channel: 'fill' | 'stroke' | 'marker',
+  posKey: string
+): any {
+  const fallbackExpr = buildColourExpression(representative, channel);
+  if (!configStops || configStops.length <= 1) {
+    return fallbackExpr;
+  }
+
+  const resolved = configStops.map(panelConfig => {
+    if (!panelConfig) return null;
+    const expr = buildColourExpression(panelConfig, channel);
+    return typeof expr === 'string' ? expr : null;
+  });
+
+  const firstLiteral = resolved.find((colour): colour is string => colour !== null);
+  if (!firstLiteral) return fallbackExpr;
+
+  const stops = resolved.map(colour => colour ?? firstLiteral);
+  return tweenStopsExpression(stops, posKey);
 }
 
 /** Builds the native MapLibre paint expression (or constant) for a layer's opacity on the given channel. */
 export function buildOpacityExpression(config: GeoJsonConfig, channel: 'fill' | 'stroke' | 'circle' = 'fill'): any {
   const { colourMode = 'basic', opacity = 1, isOpaque = false, colourConfig } = config;
-  const basicPreset = THEMES[colourConfig?.basicType || 'normal'] || THEMES.normal;
+  const basicPreset = resolveBasicPreset(colourConfig?.basicType);
 
   if (colourMode === 'simple') {
     const prop = channel === 'stroke' ? 'stroke-opacity' : channel === 'circle' ? 'opacity' : 'fill-opacity';
@@ -346,7 +391,7 @@ export function buildOpacityExpression(config: GeoJsonConfig, channel: 'fill' | 
 export function buildRadiusExpression(config: GeoJsonConfig): any {
   if (config.pointSize?.unit === 'p') return config.pointSize.value;
 
-  const basicPreset = THEMES[config.colourConfig?.basicType || 'normal'] || THEMES.normal;
+  const basicPreset = resolveBasicPreset(config.colourConfig?.basicType);
   if (config.colourMode === 'simple') {
     return [
       'case',
@@ -364,7 +409,7 @@ export function buildRadiusExpression(config: GeoJsonConfig): any {
 export function buildStrokeWidthExpression(config: GeoJsonConfig): any {
   if (config.lineWidth?.unit === 'p') return config.lineWidth.value;
 
-  const basicPreset = THEMES[config.colourConfig?.basicType || 'normal'] || THEMES.normal;
+  const basicPreset = resolveBasicPreset(config.colourConfig?.basicType);
   if (config.colourMode === 'simple') {
     return numericPropExpression('stroke-width', basicPreset.strokeWidth);
   }

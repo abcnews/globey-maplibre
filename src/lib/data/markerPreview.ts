@@ -54,6 +54,7 @@ export function applyMarkerOverrides(base: DecodedObject, config: MarkerConfig):
     overrides
   );
 
+
   result.icons = withClock(filterLayers<IconConfig>(base.icons ?? [], overrides), overrides);
   result.imageSources = withClock(filterLayers<ImageSourceConfig>(base.imageSources ?? [], overrides), overrides);
   result.rasterLayers = withClock(filterLayers<RasterLayerConfig>(base.rasterLayers ?? [], overrides), overrides);

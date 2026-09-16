@@ -1,3 +1,5 @@
+import { COLOUR_SCHEME_COLOURS } from '../../../lib/colourScheme.ts';
+
 export interface GeoJsonTheme {
   color: string;
   strokeWidth: number;
@@ -6,16 +8,17 @@ export interface GeoJsonTheme {
   radius: number;
 }
 
-export const THEMES: Record<string, GeoJsonTheme> = {
+/** GeoJson-specific visual presets, layered on top of the shared normal/highlighted colours. */
+export const THEMES: Record<'normal' | 'highlighted', GeoJsonTheme> = {
   normal: {
-    color: '#00267E',
+    color: COLOUR_SCHEME_COLOURS.normal,
     strokeWidth: 1,
     fillOpacity: 0.6,
     strokeOpacity: 1.0,
     radius: 6
   },
   highlighted: {
-    color: '#FF3C27',
+    color: COLOUR_SCHEME_COLOURS.highlighted,
     strokeWidth: 2,
     fillOpacity: 0.6,
     strokeOpacity: 1.0,

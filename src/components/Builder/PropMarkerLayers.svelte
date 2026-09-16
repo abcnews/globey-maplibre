@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { GlobeLayer } from '../../lib/data/jsonBlob.ts';
   import type { MarkerLayerOverride } from '../../lib/data/marker.ts';
+  import { schemeForColour, resolveSchemeColour, DEFAULT_COLOUR_SCHEME } from '../../lib/colourScheme.ts';
+  import ColourSchemePicker from '../shared/ColourSchemePicker.svelte';
   import { layerFeatureRegistry } from '../features';
   import { ArrowCounterclockwise } from 'svelte-bootstrap-icons';
 
@@ -88,23 +90,13 @@
 
         {#if layer.type === 'geojson'}
           <div class="row sub-row">
-            <label class="colour-label">
-              Colour
-              <input
-                type="color"
-                value={override.colour ? `#${override.colour}` : '#ffffff'}
-                onchange={e => updateOverride(layer, { colour: e.currentTarget.value.replace('#', '') })}
-              />
-            </label>
-            <input
-              type="text"
-              class="hex-input"
-              placeholder="layer default"
-              value={override.colour ?? ''}
-              oninput={e => {
-                const hex = e.currentTarget.value.trim().replace(/^#/, '');
-                updateOverride(layer, { colour: hex || undefined });
-              }}
+            <span class="colour-label">Colour</span>
+            <ColourSchemePicker
+              idPrefix={`marker-colour-${layer.id}`}
+              scheme={schemeForColour(override.colour) ?? DEFAULT_COLOUR_SCHEME}
+              customColour={override.colour ? `#${override.colour}` : undefined}
+              onchange={({ scheme, customColour }) =>
+                updateOverride(layer, { colour: resolveSchemeColour(scheme, customColour).replace('#', '') })}
             />
             {#if override.colour}
               <button
@@ -178,12 +170,6 @@
   }
 
   .colour-label {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-  }
-
-  .hex-input {
-    width: 6rem;
+    font-size: 0.85em;
   }
 </style>
