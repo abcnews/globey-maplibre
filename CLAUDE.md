@@ -1,5 +1,11 @@
 # Globey architecture notes
 
+## Keeping this file in sync
+
+This is an index, not documentation — one or two lines per entry, pointing at files, not
+explaining them. When a change adds a non-obvious data flow, gotcha, or contract between
+components, add/edit an entry here in the same turn. Skip routine fixes.
+
 ## Layer data flow
 
 Two schemas represent layers, bridged by an adapter — always update both when adding a layer field:
@@ -32,10 +38,23 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 `Builder.svelte` routes between `Builder.layers.svelte` (Layout Mode) and `Builder.markers.svelte` (Marker Mode) purely by reading `window.location.hash`: starts with `mark` → Markers, else Layout. No separate mode flag — the hash is the single source of truth.
 
-- ACTO marker codec lives in `src/lib/data/marker.ts` (`encodeMarker`/`decodeMarker`/`MarkerConfig`) — distinct from `src/lib/marker/` (the whole-page `DecodedObject` hash-codec above). A marker only carries BBOX/CAM/BASE/LABELS/MINIMAP/per-layer on-off-colour overrides, referencing master layers by `name` (falling back to `id`).
-- Markers are never persisted by the app — they live in `window.location.hash` only. `Builder.markers.svelte` seeds `markerConfig` by decoding the hash **synchronously at setup**, not in `onMount`; decoding later would let the hash-sync `$effect` write a blank marker over a real one first.
-- `MarkerAdmin` (`@abcnews/components-builder`) does `prefixes[mode] + window.location.hash.slice(1)` for copy/paste. Since our live hash already starts with the literal text `mark`, its prefix must be `'#'`, not `'#mark'` — using `'#mark'` doubles up to `#markmark...`.
-- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) renders a marker's *final* on/off/colour/camera state on `CustomGlobe` for live preview — it does not simulate scroll-tied vs immediate animation timing.
+- ACTO marker codec: `src/lib/data/marker.ts` (`encodeMarker`/`decodeMarker`/`MarkerConfig`) — distinct from `src/lib/marker/` (whole-page hash-codec above). Token spec (BBOX/CAM/FITGLOBE/CENTER/LAYER/BASE/LABELS/MINIMAP) is in `REFACTOR.md`.
+- `decodeMarker(raw: string)` expects a raw string; `markerConfigFromParsed(parsed)` expects an already `acto()`-parsed object (what `loadScrollyteller`/`parsePastedContent` panel data actually is) — passing a parsed object to `decodeMarker` breaks.
+- Markers live only in `window.location.hash`, never persisted. `Builder.markers.svelte` seeds `markerConfig` synchronously at setup, not `onMount` (avoids the hash-sync `$effect` stomping a real marker).
+- `MarkerAdmin` prefix must be `'#'` not `'#mark'` (our hash already starts with `mark`).
+- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) is the single "blob + marker → panel `DecodedObject`" function, shared by Builder preview and the runtime below — it also sets animation timing (`animationMode`/`animationDuration` from `CAM`, per-layer `animationClock` from a `LAYER` duration's presence/absence only, not its value — see `TweenController`).
+
+## Scrollyteller / static runtime
+
+`src/index.ts` (CM bootstrap) resolves each mount's CMID via `getMountCmid()` (`src/lib/mountCmid.ts`) and loads the blob via `loadGlobeJsonBlobByCmid()` (`src/lib/data/loadBlobByCmid.ts`, shared with `Builder.firstrun.svelte`).
+
+- `ScrollytellerGlobe.svelte` takes `jsonBlob` + `panels: PanelDefinition<Record<string, any>>[]` (parsed marker objects) and derives per-panel `DecodedObject`s itself. `CustomGlobe` is unchanged.
+- `#staticglobey` mount = the real "iframe mode" (`CustomGlobeIframe.svelte` was dead, deleted).
+- `PastedScrollytellerGlobe.svelte` (dev paste tool) still runs the old `markerSchema` codec, bypassing `ScrollytellerGlobe`. `Builder.pastedScrollyteller.svelte` (`#paste` hash, not linked in UI) is the blob-aware equivalent, using the live `jsonBlob` store.
+
+## GeoJson cross-panel fades
+
+Fading layer kinds (raster/image/icon/geojson) share `buildTweenedLayerEntries()` (`src/components/features/layers/tweenedLayers.ts`): `CustomGlobe` passes `perPanel: Config[][]` (all panels, not just current), entries stay mounted with an `opacityStops` array tweened via MapLibre `global-state`. Passing only the current panel's array (as `GeoJsonsHandler` used to) makes layers snap instead of fade — any new fading layer kind must use this pattern.
 
 ## Conventions
 
