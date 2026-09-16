@@ -102,7 +102,9 @@
         <PropMarkerPosition
           {map}
           bbox={markerConfig.bbox}
-          onchange={bbox => (markerConfig = { ...markerConfig, bbox })}
+          fitGlobe={markerConfig.fitGlobe}
+          center={markerConfig.center}
+          onchange={patch => (markerConfig = { ...markerConfig, ...patch })}
         />
       </div>
 

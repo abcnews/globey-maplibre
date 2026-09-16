@@ -6,7 +6,11 @@ import CustomGlobe from './components/CustomGlobe/CustomGlobe.svelte';
 import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 import acto from '@abcnews/alternating-case-to-object';
 
-import { markerSchema } from './lib/marker';
+import { loadGlobeJsonBlobByCmid } from './lib/data/loadBlobByCmid.ts';
+import { blobToDecodedObject } from './lib/data/blobAdapter.ts';
+import { applyMarkerOverrides } from './lib/data/markerPreview.ts';
+import { decodeMarker } from './lib/data/marker.ts';
+import { getMountCmid } from './lib/mountCmid.ts';
 import { MARKER_NAME } from './lib/constants.ts';
 
 await whenOdysseyLoaded;
@@ -19,29 +23,21 @@ const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, {
 await Promise.all(
   mounts.map(async mountEl => {
     const scrollyName = acto(mountEl.id || '').name;
+    const cmid = getMountCmid(mountEl);
 
-    if (typeof scrollyName !== 'string') {
+    if (typeof scrollyName !== 'string' || cmid === undefined) {
       return;
     }
 
     try {
-      const scrollyConfig = loadScrollyteller(scrollyName, 'u-full', 'mark');
-
-      const panels = await Promise.all(
-        scrollyConfig.panels.map(async panel => ({
-          ...panel,
-          data: {
-            ...(await markerSchema.decode(panel.data)),
-            _name: panel.nodes[0]?.textContent || ''
-          }
-        }))
-      );
-      console.log('mounting', scrollyConfig.mountNode);
+      const jsonBlob = await loadGlobeJsonBlobByCmid(cmid);
+      const scrollyConfig = loadScrollyteller<Record<string, any>>(scrollyName, 'u-full', 'mark');
 
       mount(ScrollytellerGlobe, {
         target: scrollyConfig.mountNode,
         props: {
-          panels
+          jsonBlob,
+          panels: scrollyConfig.panels
         }
       });
     } catch (e) {
@@ -55,11 +51,17 @@ await Promise.all(
 const [staticMountEl] = selectMounts('staticglobey');
 
 if (staticMountEl) {
-  const staticMountProps = await markerSchema.decode(acto(window.location.hash.slice(1)));
-  mount(CustomGlobe, {
-    target: staticMountEl,
-    props: { options: staticMountProps, interactive: false, rootElStyle: 'height: 100dvh; width: 100%;' }
-  });
+  const cmid = getMountCmid(staticMountEl);
+
+  if (cmid !== undefined) {
+    const jsonBlob = await loadGlobeJsonBlobByCmid(cmid);
+    const markerConfig = decodeMarker(window.location.hash.slice(1));
+    const staticMountProps = applyMarkerOverrides(blobToDecodedObject(jsonBlob), markerConfig);
+    mount(CustomGlobe, {
+      target: staticMountEl,
+      props: { options: staticMountProps, interactive: false, rootElStyle: 'height: 100dvh; width: 100%;' }
+    });
+  }
 }
 
 const [builderMountEl] = selectMounts('builder');

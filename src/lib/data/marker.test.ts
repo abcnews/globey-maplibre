@@ -2,9 +2,11 @@ import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
 import { GEOHASH_PRECISION } from '../marker/schema.ts';
+import acto from '@abcnews/alternating-case-to-object';
 import {
   decodeMarker,
   encodeMarker,
+  markerConfigFromParsed,
   parseLayerOverride,
   formatLayerOverride,
   decodeGeohashBounds,
@@ -128,6 +130,14 @@ describe('marker ACTO data codec (REFACTOR.md spec)', () => {
       ]);
     });
 
+    it('markerConfigFromParsed matches decodeMarker given the same acto-parsed object', () => {
+      // `loadScrollyteller` (@abcnews/svelte-scrollyteller) already strips the marker
+      // prefix off the mount id and runs `acto()` on the remainder before handing panels
+      // their data — this is exactly that shape, not a raw string.
+      const raw = 'CAM1500msLAYERsatelliteonBASEstreetLABELSonMINIMAPoff';
+      assert.deepStrictEqual(markerConfigFromParsed(acto(raw)), decodeMarker(raw));
+    });
+
     it('should decode when prefixed with #mark or mark', () => {
       const raw = '#markCAM1500msLAYERsatelliteon';
       const decoded = decodeMarker(raw);
@@ -163,6 +173,21 @@ describe('marker ACTO data codec (REFACTOR.md spec)', () => {
       assert.ok(decoded.bbox && decoded.bbox.length === 2);
       assert.ok(Math.abs(decoded.bbox[0][0] - config.bbox![0][0]) < 0.001);
       assert.ok(Math.abs(decoded.bbox[0][1] - config.bbox![0][1]) < 0.001);
+    });
+
+    it('should roundtrip fitGlobe on and off', () => {
+      assert.strictEqual(decodeMarker(encodeMarker({ fitGlobe: true })).fitGlobe, true);
+      assert.strictEqual(decodeMarker(encodeMarker({ fitGlobe: false })).fitGlobe, false);
+      assert.strictEqual(decodeMarker(encodeMarker({})).fitGlobe, undefined);
+    });
+
+    it('should roundtrip a fit-globe centre point', () => {
+      const config: MarkerConfig = { fitGlobe: true, center: [151.2093, -33.8688] };
+      const decoded = decodeMarker(encodeMarker(config));
+      assert.strictEqual(decoded.fitGlobe, true);
+      assert.ok(decoded.center);
+      assert.ok(Math.abs(decoded.center![0] - config.center![0]) < 0.001);
+      assert.ok(Math.abs(decoded.center![1] - config.center![1]) < 0.001);
     });
 
     it('should handle single layer encoding correctly without breaking into array', () => {

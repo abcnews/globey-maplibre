@@ -20,6 +20,13 @@ export interface MarkerConfig {
   bbox?: [number, number][];
   /** Camera fly-to duration in milliseconds. If undefined, tracking is scroll-tied. */
   cam?: number;
+  /** Force-fit the whole globe to the viewport, overriding BBOX. Undefined inherits the master config. */
+  fitGlobe?: boolean;
+  /** Rotation centre [lng, lat] to fit the globe around — only meaningful alongside `fitGlobe`,
+   *  since a BBOX's own extents already determine rotation. Captured from the live map's
+   *  centre at the moment `fitGlobe` is turned on, since the map can't be rotated afterwards
+   *  (fit-globe mode locks map interaction). */
+  center?: [number, number];
   /** Base map layer style */
   base?: BaseStyle;
   /** Base vector labels toggle */
@@ -97,22 +104,12 @@ export function encodeGeohashBounds(bounds: [number, number][]): string {
 }
 
 /**
- * Decodes an ACTO marker string into a typed MarkerConfig object.
- *
- * Example input:
- * `BBOXxxxxxxCAM1500msLAYERsatelliteonLAYERfireson2000msff3300LAYERevacoffBASEstreetLABELSonMINIMAPoff`
- * (or with `#mark` / `mark` prefix)
+ * Builds a typed MarkerConfig from an already ACTO-parsed object — e.g. `panel.data` from
+ * `@abcnews/svelte-scrollyteller`'s `loadScrollyteller`, which runs `acto()` on each
+ * `#mark...` mount's id internally and hands panels the parsed object directly, never a
+ * raw string. Use `decodeMarker` instead when you only have the raw marker text.
  */
-export function decodeMarker(raw: string): MarkerConfig {
-  if (!raw) return {};
-
-  // Strip leading hashtag or anchor prefixes if present (e.g. #mark... or mark...)
-  let cleanInput = raw.trim().replace(/^#/, '');
-  if (cleanInput.startsWith('mark')) {
-    cleanInput = cleanInput.slice(4);
-  }
-
-  const parsed = parse(cleanInput) as Record<string, any>;
+export function markerConfigFromParsed(parsed: Record<string, any>): MarkerConfig {
   const config: MarkerConfig = {};
 
   if (parsed.bbox && typeof parsed.bbox === 'string') {
@@ -131,6 +128,16 @@ export function decodeMarker(raw: string): MarkerConfig {
     if (baseValue === 'satellite' || baseValue === 'street' || baseValue === 'dark') {
       config.base = baseValue as BaseStyle;
     }
+  }
+
+  if (parsed.fitglobe !== undefined) {
+    if (parsed.fitglobe === 'on' || parsed.fitglobe === true) config.fitGlobe = true;
+    if (parsed.fitglobe === 'off' || parsed.fitglobe === false) config.fitGlobe = false;
+  }
+
+  if (parsed.center && typeof parsed.center === 'string') {
+    const [point] = decodeGeohashBounds(parsed.center);
+    if (point) config.center = point;
   }
 
   if (parsed.labels !== undefined) {
@@ -158,6 +165,26 @@ export function decodeMarker(raw: string): MarkerConfig {
 }
 
 /**
+ * Decodes a raw ACTO marker string (e.g. `window.location.hash`, with or without a
+ * leading `#`/`mark` prefix) into a typed MarkerConfig object.
+ *
+ * Example input:
+ * `BBOXxxxxxxCAM1500msLAYERsatelliteonLAYERfireson2000msff3300LAYERevacoffBASEstreetLABELSonMINIMAPoff`
+ * (or with `#mark` / `mark` prefix)
+ */
+export function decodeMarker(raw: string): MarkerConfig {
+  if (!raw) return {};
+
+  // Strip leading hashtag or anchor prefixes if present (e.g. #mark... or mark...)
+  let cleanInput = raw.trim().replace(/^#/, '');
+  if (cleanInput.startsWith('mark')) {
+    cleanInput = cleanInput.slice(4);
+  }
+
+  return markerConfigFromParsed(parse(cleanInput) as Record<string, any>);
+}
+
+/**
  * Encodes a MarkerConfig object into an ACTO marker string.
  *
  * Example output:
@@ -172,6 +199,14 @@ export function encodeMarker(config: MarkerConfig): string {
 
   if (config.cam !== undefined) {
     actoData.cam = `${config.cam}ms`;
+  }
+
+  if (config.fitGlobe !== undefined) {
+    actoData.fitglobe = config.fitGlobe ? 'on' : 'off';
+  }
+
+  if (config.center) {
+    actoData.center = encodeGeohashBounds([config.center]);
   }
 
   if (config.layers && config.layers.length > 0) {

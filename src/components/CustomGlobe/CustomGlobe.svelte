@@ -229,7 +229,7 @@
 
       <MapRastersHandler perPanel={perPanel(d => d.rasterLayers ?? [])} />
 
-      <GeoJsonsHandler config={options.geoJson} />
+      <GeoJsonsHandler perPanel={perPanel(d => d.geoJson ?? [])} />
       <ImageSourcesHandler perPanel={perPanel(d => d.imageSources ?? [])} />
       <IconsHandler perPanel={perPanel(d => d.icons ?? [])} />
       {#if options.minimap && options.minimap.enabled !== false}

@@ -7,22 +7,30 @@
   import { safeFitBounds } from './utils.ts';
 
   /**
-   * Ports the legacy builder's "Positioning" feature (location search + click-to-pick
-   * bounds, see Builder.legacy/PropCoord.svelte + PropBounds.svelte) to Marker Mode.
-   * Unlike the legacy version this doesn't touch a whole-page `options` store — it
-   * writes straight to a marker's BBOX. The raw picked points are kept as-is (not
-   * reduced to a bounding rectangle) so reopening picking mode shows exactly what was
-   * picked before, and `encodeGeohashBounds`/`decodeGeohashBounds` round-trip any
-   * number of points.
+   * Ports the legacy builder's "Positioning" feature (mode select + location search +
+   * click-to-pick bounds, see Builder.legacy/PropCoord.svelte + PropBounds.svelte) to
+   * Marker Mode. Unlike the legacy version this doesn't touch a whole-page `options`
+   * store — it writes straight to a marker's BBOX/fitGlobe overrides. The legacy "pan and
+   * zoom to coord" mode has no equivalent here (markers have no raw coords/zoom field,
+   * only BBOX and fitGlobe per REFACTOR.md), so only "Fit bounds" and "Fit globe" survive.
    */
 
   interface Props {
     map?: MapLibreMap;
     bbox?: [number, number][];
-    onchange: (bbox: [number, number][] | undefined) => void;
+    fitGlobe?: boolean;
+    center?: [number, number];
+    onchange: (patch: {
+      bbox?: [number, number][];
+      fitGlobe?: boolean;
+      center?: [number, number];
+    }) => void;
   }
 
-  let { map, bbox, onchange }: Props = $props();
+  let { map, bbox, fitGlobe, center, onchange }: Props = $props();
+
+  type NavMode = 'bbox' | 'fit-globe';
+  const navMode = $derived(fitGlobe ? 'fit-globe' : 'bbox');
 
   let isSearchModalOpen = $state(false);
   let isPicking = $state(false);
@@ -101,6 +109,40 @@
     };
   });
 
+  /** Mirrors legacy PropCoord's `setNavMode`: entering fit-globe clears BBOX (it wins over
+   *  bounds anyway, so an unused BBOX left behind would just be stale); entering fit-bounds
+   *  forces fitGlobe off explicitly (not just "unset") so it can't fall back to an
+   *  inherited fit-globe from the master config while this mode is selected. Seeds `center`
+   *  from the current view immediately — the moveend listener below then keeps it in sync
+   *  as the user drags/spins the globe (PanZoomHandler leaves `dragPan` enabled in fit-globe
+   *  mode, only zoom/rotate/keyboard interactions are locked). */
+  function setNavMode(mode: NavMode) {
+    if (mode === 'fit-globe') {
+      isPicking = false;
+      const captured: [number, number] | undefined = map ? [map.getCenter().lng, map.getCenter().lat] : center;
+      onchange({ fitGlobe: true, bbox: undefined, center: captured });
+    } else {
+      onchange({ fitGlobe: false });
+    }
+  }
+
+  // Keep `center` in sync while spinning the globe in fit-globe mode. Guarded to
+  // user-originated moves only (`e.originalEvent`) so PanZoomHandler's own programmatic
+  // `flyTo` in `applyGlobeFit()` — which re-fits around whatever `center` already is —
+  // doesn't feed back into itself.
+  $effect(() => {
+    if (!map || navMode !== 'fit-globe') return;
+
+    const onMoveEnd = (e: any) => {
+      if (!e.originalEvent) return;
+      const c = map.getCenter();
+      onchange({ center: [c.lng, c.lat] });
+    };
+
+    map.on('moveend', onMoveEnd);
+    return () => map.off('moveend', onMoveEnd);
+  });
+
   function togglePicking() {
     if (isPicking && points.length > 0 && map) {
       const lats = points.map(p => p[1]);
@@ -113,14 +155,14 @@
         ],
         { padding: 50 }
       );
-      onchange(points);
+      onchange({ bbox: points });
     }
     isPicking = !isPicking;
   }
 
-  function clearBounds() {
+  function clearPositioning() {
     points = [];
-    onchange(undefined);
+    onchange({ bbox: undefined, fitGlobe: undefined, center: undefined });
   }
 
   function onGeoSelect(result: { name: string; coords: [number, number] }) {
@@ -140,20 +182,38 @@
     >
       <Search />
     </button>
-    <button type="button" onclick={togglePicking}>
-      {isPicking ? 'Finish picking' : 'Pick BBOX on map'}
-    </button>
-    {#if bbox && bbox.length > 0}
-      <button type="button" onclick={clearBounds}>Clear (scroll-tied)</button>
+
+    <select value={navMode} onchange={e => setNavMode(e.currentTarget.value as NavMode)}>
+      <option value="bbox">Fit bounds (BBOX)</option>
+      <option value="fit-globe">Fit globe to screen</option>
+    </select>
+
+    {#if (bbox && bbox.length > 0) || fitGlobe !== undefined}
+      <button type="button" onclick={clearPositioning}>Clear (scroll-tied)</button>
     {/if}
   </div>
 
-  {#if isPicking}
-    <small class="hint">Click on map to add points. Click a point to remove it.</small>
-  {:else if bbox && bbox.length > 0}
-    <small class="hint">{bbox.length} point{bbox.length === 1 ? '' : 's'} set.</small>
+  {#if navMode === 'fit-globe'}
+    <small class="hint">
+      The map will automatically zoom to fit the full globe circle in the viewport.
+    </small>
+    {#if center}
+      <small class="hint">Facing {center[0].toFixed(1)}, {center[1].toFixed(1)} — drag the globe to change it.</small>
+    {/if}
   {:else}
-    <small class="hint">No BBOX set — this marker inherits scroll-tied camera position.</small>
+    <div class="row">
+      <button type="button" onclick={togglePicking}>
+        {isPicking ? 'Finish picking' : 'Pick BBOX on map'}
+      </button>
+    </div>
+
+    {#if isPicking}
+      <small class="hint">Click on map to add points. Click a point to remove it.</small>
+    {:else if bbox && bbox.length > 0}
+      <small class="hint">{bbox.length} point{bbox.length === 1 ? '' : 's'} set.</small>
+    {:else}
+      <small class="hint">No BBOX set — this marker inherits scroll-tied camera position.</small>
+    {/if}
   {/if}
 </div>
 

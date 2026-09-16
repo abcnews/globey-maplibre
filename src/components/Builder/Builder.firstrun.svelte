@@ -1,7 +1,7 @@
 <script lang="ts">
   import { jsonBlob, hasStoredSession, loadStoredJsonBlob } from '../../lib/data/blobStore.ts';
   import { safeParseGlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
-  import { fetchDownloadObject } from '../../lib/fetchDownloadObject.ts';
+  import { loadGlobeJsonBlobByCmid } from '../../lib/data/loadBlobByCmid.ts';
   import { parseCmid, isValidCmid } from './CmidInput/utils.ts';
   import { Modal, Loader } from '@abcnews/components-builder';
 
@@ -50,12 +50,8 @@
     cmidError = null;
 
     try {
-      const data = await fetchDownloadObject(id);
-      const res = safeParseGlobeJsonBlob(data);
-      if (!res.success) {
-        throw new Error(`Data is not a valid Globy JSON schema: ${res.error.message}`);
-      }
-      jsonBlob.loadJson({ ...res.data, sourceCmid: id });
+      const blob = await loadGlobeJsonBlobByCmid(id);
+      jsonBlob.loadJson(blob);
       isCmidModalOpen = false;
       onsuccess?.();
     } catch (err: any) {

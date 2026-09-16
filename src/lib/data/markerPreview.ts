@@ -20,30 +20,71 @@ function filterLayers<T extends NamedLayerConfig>(items: T[], overrides: MarkerL
 }
 
 /**
+ * Stamps a layer's `animationClock` from its override's `duration` field. Only presence
+ * of a duration matters now, not its value — the actual immediate-fade duration always
+ * comes from the shared panel-level clock (`animationDuration`, set from `config.cam`
+ * below), not a per-layer number. See REFACTOR.md.
+ */
+function withClock<T extends NamedLayerConfig>(items: T[], overrides: MarkerLayerOverride[]): T[] {
+  return items.map(item => ({
+    ...item,
+    animationClock: overrideFor(overrides, item)?.duration !== undefined ? 'immediate' : 'scroll'
+  }));
+}
+
+/**
  * Overlays a marker's on/off, colour, camera and base/labels/minimap overrides onto a
- * base DecodedObject, producing what the marker should visually look like on `CustomGlobe`.
- * Deliberately does not simulate scroll-tied/immediate animation timing — only final state.
+ * base DecodedObject, producing what the marker should visually look like on `CustomGlobe`,
+ * including scroll-tied/immediate animation timing for the camera and per layer.
  */
 export function applyMarkerOverrides(base: DecodedObject, config: MarkerConfig): DecodedObject {
   const overrides = config.layers ?? [];
   const result: DecodedObject = { ...base };
 
-  result.geoJson = filterLayers<GeoJsonConfig>(base.geoJson ?? [], overrides).map(layer => {
-    const colour = overrideFor(overrides, layer)?.colour;
-    if (!colour) return layer;
-    return {
-      ...layer,
-      colourMode: 'basic',
-      colourConfig: { ...layer.colourConfig, basic: `#${colour}`, basicType: undefined }
-    };
-  });
+  result.geoJson = withClock(
+    filterLayers<GeoJsonConfig>(base.geoJson ?? [], overrides).map(layer => {
+      const colour = overrideFor(overrides, layer)?.colour;
+      if (!colour) return layer;
+      return {
+        ...layer,
+        colourMode: 'basic',
+        colourConfig: { ...layer.colourConfig, basic: `#${colour}`, basicType: undefined }
+      };
+    }),
+    overrides
+  );
 
-  result.icons = filterLayers<IconConfig>(base.icons ?? [], overrides);
-  result.imageSources = filterLayers<ImageSourceConfig>(base.imageSources ?? [], overrides);
-  result.rasterLayers = filterLayers<RasterLayerConfig>(base.rasterLayers ?? [], overrides);
+  result.icons = withClock(filterLayers<IconConfig>(base.icons ?? [], overrides), overrides);
+  result.imageSources = withClock(filterLayers<ImageSourceConfig>(base.imageSources ?? [], overrides), overrides);
+  result.rasterLayers = withClock(filterLayers<RasterLayerConfig>(base.rasterLayers ?? [], overrides), overrides);
+
+  // Camera: presence of `cam` means an immediate fly-to over that duration on arrival;
+  // absence means scroll-tied tracking, matching REFACTOR.md's CAM<duration>ms spec.
+  if (config.cam !== undefined) {
+    result.animationMode = 'immediate';
+    result.animationDuration = config.cam;
+  } else {
+    result.animationMode = 'scroll';
+  }
 
   if (config.bbox && config.bbox.length > 0) {
     result.bounds = config.bbox;
+  }
+
+  // Fit-globe takes priority over BBOX (matches PanZoomHandler's own precedence), so drop
+  // bounds here too rather than leaving a stale BBOX sitting unused in the preview state.
+  if (config.fitGlobe !== undefined) {
+    result.fitGlobe = config.fitGlobe;
+    if (config.fitGlobe) {
+      result.bounds = [];
+    }
+  }
+
+  // The globe's rotation while fit-globe is active comes from `coords`, not from BBOX
+  // (which has no extents to derive a centre from) — apply the captured centre so the
+  // globe faces the side the marker was set up to show, not the master config's default.
+  if (config.center) {
+    result.coords = config.center;
   }
 
   // DecodedObject only understands 'street' | 'dark' — 'satellite' comes from a dark

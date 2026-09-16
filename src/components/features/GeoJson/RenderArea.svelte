@@ -9,6 +9,7 @@
     buildFilterExpression
   } from './utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON, SUB_LAYER_OUTLINE_OFFSET } from '../layers/layerUtils.ts';
+  import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
@@ -16,13 +17,21 @@
     data,
     config,
     sourceId,
+    /** One opacity per panel (1 present / 0 absent), multiplied into every opacity paint property. */
+    opacityStops = [1],
+    /** Global-state key this layer's fade follows. */
+    posKey = MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
     config: GeoJsonConfig;
     sourceId: string;
+    opacityStops?: number[];
+    posKey?: string;
     zIndex?: number;
   } = $props();
+
+  const tweenFactor = $derived(tweenStopsExpression(opacityStops, posKey));
 
   const fillLayerId = $derived(`${sourceId}-fill`);
   const outlineLayerId = $derived(`${sourceId}-outline`);
@@ -63,10 +72,10 @@
     map.setFilter(outlineLayerId, filter);
 
     map.setPaintProperty(fillLayerId, 'fill-color', buildColourExpression(config, 'fill'));
-    map.setPaintProperty(fillLayerId, 'fill-opacity', buildOpacityExpression(config, 'fill'));
+    map.setPaintProperty(fillLayerId, 'fill-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'fill')]);
 
     map.setPaintProperty(outlineLayerId, 'line-color', buildColourExpression(config, 'stroke'));
     map.setPaintProperty(outlineLayerId, 'line-width', buildStrokeWidthExpression(config));
-    map.setPaintProperty(outlineLayerId, 'line-opacity', buildOpacityExpression(config, 'stroke'));
+    map.setPaintProperty(outlineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
   });
 </script>

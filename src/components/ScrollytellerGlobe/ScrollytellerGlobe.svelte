@@ -4,12 +4,19 @@
   import { onMount } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { DecodedObject } from '../../lib/marker';
+  import type { GlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
+  import { blobToDecodedObject } from '../../lib/data/blobAdapter.ts';
+  import { applyMarkerOverrides } from '../../lib/data/markerPreview.ts';
+  import { markerConfigFromParsed } from '../../lib/data/marker.ts';
   import type { Map } from 'maplibre-gl';
   import type { CustomLayerRegistration } from '../../lib/plugins/types.ts';
 
   interface Props {
-    /** Scrollyteller panels with pre-decoded marker options in panel.data */
-    panels: PanelDefinition<DecodedObject>[];
+    /** The master layer set every panel's marker overrides are applied against. */
+    jsonBlob: GlobeJsonBlob;
+    /** Scrollyteller panels as returned by `loadScrollyteller` — each panel.data is
+     *  already an ACTO-parsed marker object (see `markerConfigFromParsed`), not a raw string. */
+    panels: PanelDefinition<Record<string, any>>[];
     /** Optional callback invoked when active marker changes */
     onMarker?: (marker: DecodedObject) => void;
     /** Called with the MapLibre map instance as soon as it's constructed, before its style has loaded. */
@@ -18,13 +25,22 @@
     plugins?: CustomLayerRegistration[];
   }
 
-  let { panels, onMarker, onmap, plugins }: Props = $props();
+  let { jsonBlob, panels, onMarker, onmap, plugins }: Props = $props();
   let currentPanel = $state(0);
   let virtualPanel = $state(-1);
   let panelPct = $state(0);
   let scrollPct = $state(0);
   let scrollDelta = $state(-6);
-  let options = $derived(panels[currentPanel]?.data || panels[0]?.data);
+
+  // Derived state: master blob + each panel's parsed marker object -> one DecodedObject
+  // per panel. Computed once here so every consumer (CM, Storybook, pasted content) can
+  // just hand over a blob and marker panels without knowing how they combine.
+  const baseOptions = $derived(blobToDecodedObject(jsonBlob));
+  const decodedPanels = $derived(
+    panels.map(panel => ({ ...panel, data: applyMarkerOverrides(baseOptions, markerConfigFromParsed(panel.data)) }))
+  );
+
+  let options = $derived(decodedPanels[currentPanel]?.data || decodedPanels[0]?.data);
 
   $effect(() => {
     if (options && onMarker) {
@@ -59,7 +75,7 @@
       {/if}
       <CustomGlobe
         {options}
-        {panels}
+        panels={decodedPanels}
         {currentPanel}
         {virtualPanel}
         {panelPct}

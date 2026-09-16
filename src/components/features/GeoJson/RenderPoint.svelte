@@ -11,6 +11,7 @@
     getKilometreZoomScaleExpression
   } from './utils.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
 
@@ -18,13 +19,21 @@
     data,
     config,
     sourceId,
+    /** One opacity per panel (1 present / 0 absent), multiplied into every opacity paint property. */
+    opacityStops = [1],
+    /** Global-state key this layer's fade follows. */
+    posKey = MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
     zIndex = config.zIndex ?? Z_INDEX_GEOJSON
   }: {
     data: any;
     config: GeoJsonConfig;
     sourceId: string;
+    opacityStops?: number[];
+    posKey?: string;
     zIndex?: number;
   } = $props();
+
+  const tweenFactor = $derived(tweenStopsExpression(opacityStops, posKey));
 
   const circleLayerId = $derived(`${sourceId}-circle`);
 
@@ -66,9 +75,9 @@
 
     map.setPaintProperty(circleLayerId, 'circle-color', buildColourExpression(config, 'marker'));
     map.setPaintProperty(circleLayerId, 'circle-radius', radiusExpr);
-    map.setPaintProperty(circleLayerId, 'circle-opacity', buildOpacityExpression(config, 'circle'));
+    map.setPaintProperty(circleLayerId, 'circle-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'circle')]);
     map.setPaintProperty(circleLayerId, 'circle-stroke-color', buildColourExpression(config, 'stroke'));
     map.setPaintProperty(circleLayerId, 'circle-stroke-width', buildStrokeWidthExpression(config));
-    map.setPaintProperty(circleLayerId, 'circle-stroke-opacity', buildOpacityExpression(config, 'stroke'));
+    map.setPaintProperty(circleLayerId, 'circle-stroke-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
   });
 </script>

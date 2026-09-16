@@ -14,6 +14,11 @@
 
   let { layers, overrides, onchange }: Props = $props();
 
+  // The `LAYER<name>on<duration>ms` grammar still needs a number to stay valid ACTO, but
+  // only presence/absence of a duration is meaningful now (immediate vs scroll-tied) — the
+  // real fade duration always comes from the shared panel-level clock. See REFACTOR.md.
+  const IMMEDIATE_DURATION_SENTINEL = 1;
+
   /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id. */
   function keyFor(layer: GlobeLayer): string {
     return layer.name ?? layer.id;
@@ -75,24 +80,10 @@
               type="radio"
               name={`anim-${layer.id}`}
               checked={override.duration !== undefined}
-              onchange={() => updateOverride(layer, { duration: override.duration ?? 500 })}
+              onchange={() => updateOverride(layer, { duration: IMMEDIATE_DURATION_SENTINEL })}
             />
             Immediate
           </label>
-          {#if override.duration !== undefined}
-            <input
-              type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              class="duration-input"
-              value={override.duration}
-              oninput={e => {
-                const num = Number(e.currentTarget.value.trim());
-                updateOverride(layer, { duration: Number.isFinite(num) ? num : 0 });
-              }}
-            />
-            <small>ms</small>
-          {/if}
         </div>
 
         {#if layer.type === 'geojson'}
@@ -184,10 +175,6 @@
 
   .layer-name {
     font-weight: 600;
-  }
-
-  .duration-input {
-    width: 4.5rem;
   }
 
   .colour-label {
