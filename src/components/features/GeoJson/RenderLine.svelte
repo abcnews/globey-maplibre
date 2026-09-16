@@ -8,9 +8,15 @@
     buildStrokeWidthExpression,
     buildFilterExpression,
     getKilometreZoomScaleExpression,
-    widthPlus
+    widthPlus,
+    filterFeaturesType
   } from './utils.ts';
-  import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON, SUB_LAYER_OUTLINE_OFFSET } from '../layers/layerUtils.ts';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    Z_INDEX_GEOJSON,
+    SUB_LAYER_OUTLINE_OFFSET
+  } from '../layers/layerUtils.ts';
   import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
@@ -45,7 +51,9 @@
 
   // Fixed real-world width keeps its zoom expression; otherwise driven by config.
   const lineWidthExpr = $derived(
-    config.lineWidth?.unit === 'k' ? getKilometreZoomScaleExpression(config.lineWidth.value) : buildStrokeWidthExpression(config)
+    config.lineWidth?.unit === 'k'
+      ? getKilometreZoomScaleExpression(config.lineWidth.value)
+      : buildStrokeWidthExpression(config)
   );
 
   // Add the source and the line + outline layer once, on mount. Paint/filter are
@@ -57,13 +65,27 @@
 
     untrack(() => {
       if (!map.getSource(sourceId)) {
-        map.addSource(sourceId, { type: 'geojson', data: data || { type: 'FeatureCollection', features: [] } });
+        map.addSource(sourceId, {
+          type: 'geojson',
+          data: filterFeaturesType(data, ['LineString', 'MultiLineString']) || {
+            type: 'FeatureCollection',
+            features: []
+          }
+        });
       }
       if (!map.getLayer(outlineLayerId)) {
-        addLayerWithZIndex(map, { id: outlineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} }, outlineZ);
+        addLayerWithZIndex(
+          map,
+          { id: outlineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} },
+          outlineZ
+        );
       }
       if (!map.getLayer(lineLayerId)) {
-        addLayerWithZIndex(map, { id: lineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} }, zIndex);
+        addLayerWithZIndex(
+          map,
+          { id: lineLayerId, type: 'line', source: sourceId, layout: LINE_LAYOUT, paint: {} },
+          zIndex
+        );
       }
     });
 

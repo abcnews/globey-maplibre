@@ -13,6 +13,7 @@ import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
 import { resolveSchemeColour, type ColourSchemeName } from '../../../lib/colourScheme.ts';
 import { tweenStopsExpression } from '../Tween/utils.ts';
 import { THEMES, type GeoJsonTheme } from './themes.ts';
+import type { FeatureCollection } from 'geojson';
 
 /** `THEMES` only carries non-colour visuals (stroke width/opacity/radius) for `normal`/
  *  `highlighted` — `custom` has no preset of its own, so it visually behaves like `normal`
@@ -90,15 +91,7 @@ export const TILE_SIZE_PX = 512;
  */
 export function getKilometreZoomScaleExpression(valueInKm: number): any {
   const sizeAtZoom0 = (valueInKm / EARTH_CIRCUMFERENCE_KM) * TILE_SIZE_PX;
-  return [
-    'interpolate',
-    ['exponential', 2],
-    ['zoom'],
-    0,
-    sizeAtZoom0,
-    22,
-    sizeAtZoom0 * Math.pow(2, 22)
-  ];
+  return ['interpolate', ['exponential', 2], ['zoom'], 0, sizeAtZoom0, 22, sizeAtZoom0 * Math.pow(2, 22)];
 }
 
 export interface GeoJsonFeatureState {
@@ -419,4 +412,40 @@ export function buildStrokeWidthExpression(config: GeoJsonConfig): any {
 /** Adds a fixed amount to a width value that may be a constant or a MapLibre expression. */
 export function widthPlus(widthExpr: any, addition: number): any {
   return typeof widthExpr === 'number' ? widthExpr + addition : ['+', widthExpr, addition];
+}
+
+/**
+ * Creates a colour evaluator function for spikes and custom layers.
+ */
+export function getColourEvaluator(config: GeoJsonConfig): (feature: any) => string {
+  const evaluator = getFeatureStateEvaluator(config);
+  return feature => evaluator(feature, 0).color;
+}
+
+const MIN_HEIGHT_JANK_FACTOR = 3000;
+
+/**
+ * Creates a high-performance height evaluator function for spikes.
+ */
+export function getHeightEvaluator(config: GeoJsonConfig): (feature: { hVal: number }) => number {
+  const spikeConfig = config.spike;
+  if (!spikeConfig?.heightProp) return () => 0;
+
+  const min = spikeConfig.min ?? 0;
+  const max = spikeConfig.max ?? 100;
+  const scalar = spikeConfig.scalar ?? 2000000;
+  const range = max - min || 1;
+
+  return feature => {
+    const val = feature.hVal;
+    const factor = Math.max(0, Math.min(1, (val - min) / range));
+    return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);
+  };
+}
+
+export function filterFeaturesType(data: FeatureCollection, featureTypes = ['']) {
+  return {
+    ...data,
+    features: data.features.filter(feature => featureTypes.includes(feature.geometry?.type))
+  };
 }
