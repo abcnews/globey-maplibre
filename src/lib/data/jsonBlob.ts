@@ -237,6 +237,9 @@ export const globeJsonBlobSchema = z.object({
   version: z.literal(1).default(1),
   /** Title or name of the project / graphic */
   title: z.string().optional(),
+  /** CoreMedia ID this blob was loaded from, if any — used to build the scrollyteller
+   *  opener marker in Marker Mode. Not the same as a layer's own `cmid` (source data). */
+  sourceCmid: z.number().optional(),
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
   /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */

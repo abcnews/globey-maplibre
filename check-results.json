@@ -1,0 +1,72 @@
+{
+  "totalFiles": 1216,
+  "errorCount": 3,
+  "warningCount": 6,
+  "filesWithProblems": 4,
+  "diagnostics": [
+    {
+      "filename": "src/lib/data/blobAdapter.ts",
+      "line": 46,
+      "character": 22,
+      "type": "error",
+      "message": "Argument of type '{ id: string; cmid: number | undefined; url: string | undefined; type: \"areas\" | \"lines\" | \"points\" | \"spikes\"; colourMode: \"basic\" | \"scale\" | \"simple\"; colourProp: string | undefined; ... 8 more ...; name: string | undefined; }' is not assignable to parameter of type '{ type: \"areas\" | \"lines\" | \"points\" | \"spikes\"; colourMode: \"basic\" | \"scale\" | \"simple\"; opacity: number; isOpaque: boolean; name?: string | undefined; filter?: { values: (string | number)[]; prop: string; } | undefined; ... 9 more ...; animationClock?: \"scroll\" | ... 1 more ... | undefined; }'.\n  Property 'opacity' is missing in type '{ id: string; cmid: number | undefined; url: string | undefined; type: \"areas\" | \"lines\" | \"points\" | \"spikes\"; colourMode: \"basic\" | \"scale\" | \"simple\"; colourProp: string | undefined; ... 8 more ...; name: string | undefined; }' but required in type '{ type: \"areas\" | \"lines\" | \"points\" | \"spikes\"; colourMode: \"basic\" | \"scale\" | \"simple\"; opacity: number; isOpaque: boolean; name?: string | undefined; filter?: { values: (string | number)[]; prop: string; } | undefined; ... 9 more ...; animationClock?: \"scroll\" | ... 1 more ... | undefined; }'."
+    },
+    {
+      "filename": "src/lib/data/blobAdapter.ts",
+      "line": 77,
+      "character": 27,
+      "type": "error",
+      "message": "Argument of type '{ id: string; url: string; coordinates: any; zIndex: number; animationClock: \"scroll\" | \"immediate\" | undefined; name: string | undefined; }' is not assignable to parameter of type '{ url: string; opacity: number; coordinates: [number, number][]; name?: string | undefined; id?: string | undefined; zIndex?: number | undefined; animationClock?: \"scroll\" | \"immediate\" | undefined; }'.\n  Property 'opacity' is missing in type '{ id: string; url: string; coordinates: any; zIndex: number; animationClock: \"scroll\" | \"immediate\" | undefined; name: string | undefined; }' but required in type '{ url: string; opacity: number; coordinates: [number, number][]; name?: string | undefined; id?: string | undefined; zIndex?: number | undefined; animationClock?: \"scroll\" | \"immediate\" | undefined; }'."
+    },
+    {
+      "filename": "src/components/Builder/PropMarkerPosition.svelte",
+      "line": 29,
+      "character": 43,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `bbox`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "src/components/Builder/Builder.markers.svelte",
+      "line": 38,
+      "character": 27,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `markerConfig`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "src/components/Builder/Builder.markers.svelte",
+      "line": 39,
+      "character": 28,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `markerConfig`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "src/components/Builder/Builder.markers.svelte",
+      "line": 40,
+      "character": 30,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `markerConfig`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "src/components/Builder/Builder.markers.svelte",
+      "line": 41,
+      "character": 31,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `markerConfig`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "src/plugins/GeoJsonSpikes/GeoJsonSpikesLayer.svelte",
+      "line": 27,
+      "character": 28,
+      "type": "warning",
+      "message": "This reference only captures the initial value of `map`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
+    },
+    {
+      "filename": "vite.config.ts",
+      "line": 48,
+      "character": 3,
+      "type": "error",
+      "message": "No overload matches this call."
+    }
+  ],
+  "success": false
+}

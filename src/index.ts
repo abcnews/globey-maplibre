@@ -7,8 +7,7 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 import acto from '@abcnews/alternating-case-to-object';
 
 import { markerSchema } from './lib/marker';
-
-const MARKER_NAME = 'globey';
+import { MARKER_NAME } from './lib/constants.ts';
 
 await whenOdysseyLoaded;
 

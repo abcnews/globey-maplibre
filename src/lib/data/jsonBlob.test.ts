@@ -15,6 +15,12 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.deepStrictEqual(result.layers, []);
     assert.strictEqual(result.map.projection, 'globe');
     assert.strictEqual(result.map.base, 'street');
+    assert.strictEqual(result.sourceCmid, undefined);
+  });
+
+  it('should preserve sourceCmid when present', () => {
+    const result = parseGlobeJsonBlob({ sourceCmid: 106753230 });
+    assert.strictEqual(result.sourceCmid, 106753230);
   });
 
   it('should validate and parse complete JSON blob with multiple layer types', () => {

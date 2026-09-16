@@ -55,7 +55,7 @@
       if (!res.success) {
         throw new Error(`Data is not a valid Globy JSON schema: ${res.error.message}`);
       }
-      jsonBlob.loadJson(res.data);
+      jsonBlob.loadJson({ ...res.data, sourceCmid: id });
       isCmidModalOpen = false;
       onsuccess?.();
     } catch (err: any) {

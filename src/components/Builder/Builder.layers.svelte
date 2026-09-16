@@ -27,6 +27,14 @@
   import PropScreenshot from './PropScreenshot.svelte';
   import IframeUrl from './IframeUrl.svelte';
   import { Plus, X } from 'svelte-bootstrap-icons';
+  import type { Snippet } from 'svelte';
+
+  interface Props {
+    /** Layout/Markers mode switcher, rendered by the parent Builder.svelte router at the top of the sidebar. */
+    ModeSwitcher?: Snippet;
+  }
+
+  let { ModeSwitcher }: Props = $props();
 
   let map = $state<MapLibreMap>();
 
@@ -354,6 +362,7 @@
 {/snippet}
 
 {#snippet Sidebar()}
+  {@render ModeSwitcher?.()}
   {#if !map || !$jsonBlob}
     <Loader />
   {:else}
