@@ -153,7 +153,9 @@ export const rasterLayerSchema = z.object({
   tileSize: z.number().default(256),
   attribution: z.string().default(''),
   /** Whether this raster layer's imagery is visually dark, so label/UI styling should switch to a dark theme. */
-  darkTheme: z.boolean().default(false)
+  darkTheme: z.boolean().default(false),
+  /** Optional TL/TR/BR/BL bounding box restricting tile loading; unset means whole world. */
+  bounds: boundsSchema.optional()
 });
 export type RasterLayer = z.infer<typeof rasterLayerSchema>;
 

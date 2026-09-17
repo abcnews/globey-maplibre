@@ -93,6 +93,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           tileSize: layer.tileSize,
           attribution: layer.attribution,
           darkTheme: layer.darkTheme,
+          bounds: layer.bounds as any,
           zIndex: index,
           animationClock: layer.animationClock,
           name: layer.name
@@ -237,6 +238,7 @@ export function decodedObjectToBlob(
         tileSize: r.tileSize ?? 256,
         attribution: r.attribution ?? '',
         darkTheme: r.darkTheme ?? false,
+        bounds: (r.bounds as any) || undefined,
         animationClock: r.animationClock,
         name: r.name
       }

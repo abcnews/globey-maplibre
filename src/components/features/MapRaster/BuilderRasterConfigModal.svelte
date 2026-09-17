@@ -46,6 +46,36 @@
       config.darkTheme = preset.darkTheme;
     }
   }
+
+  let boundsString = $state(JSON.stringify(config.bounds ?? []));
+
+  function commitBounds() {
+    let bounds;
+    try {
+      bounds = JSON.parse(boundsString);
+    } catch (e) {
+      alert('Invalid bounds format. Must be [[lng, lat], [lng, lat], [lng, lat], [lng, lat]]');
+      boundsString = JSON.stringify(config.bounds ?? []);
+      return;
+    }
+    config.bounds = bounds?.length > 0 ? bounds : undefined;
+    boundsString = JSON.stringify(config.bounds ?? []);
+  }
+
+  function setWholeWorldBounds() {
+    boundsString = JSON.stringify([
+      [-180, 85.0511],
+      [180, 85.0511],
+      [180, -85.0511],
+      [-180, -85.0511]
+    ]);
+    commitBounds();
+  }
+
+  function clearBounds() {
+    boundsString = '[]';
+    commitBounds();
+  }
 </script>
 
 <Modal title="Raster Tile Layer" onClose={() => onclose?.()} position="right">
@@ -110,6 +140,25 @@
           Dark imagery
         </label>
         <small class="help-text">Enable for imagery with a dark background (e.g. satellite/night imagery) so labels switch to light-on-dark styling.</small>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Bounds (TL, TR, BR, BL) — optional, defaults to whole world</legend>
+      <div class="field-group">
+        <label for="raster-bounds">Bounds</label>
+        <textarea
+          id="raster-bounds"
+          rows="4"
+          bind:value={boundsString}
+          onblur={commitBounds}
+          placeholder="[[lng, lat], [lng, lat], [lng, lat], [lng, lat]]"
+        ></textarea>
+        <small class="help-text">Restricts tile loading to this box so tiles outside the tileset's coverage aren't requested. Leave empty for whole-world.</small>
+        <div class="preset-buttons">
+          <button type="button" class="btn-preset" onclick={setWholeWorldBounds}>Whole World</button>
+          <button type="button" class="btn-preset" onclick={clearBounds}>Clear</button>
+        </div>
       </div>
     </fieldset>
   </div>

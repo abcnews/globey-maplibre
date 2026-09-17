@@ -243,7 +243,9 @@ export const rasterItemSchema = object({
   zIndex: decimal(2).key('z').optional(),
   animationClock: animationClockSchema,
   name: layerNameSchema,
-  id: string().key('id').optional()
+  id: string().key('id').optional(),
+  /** Optional TL/TR/BR/BL bounding box restricting tile loading; unset means whole world. */
+  bounds: boundsCodec.key('bd').optional()
 }).asArray();
 
 /**

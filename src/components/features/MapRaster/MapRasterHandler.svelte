@@ -17,7 +17,9 @@
     zIndex = Z_INDEX_BASE_RASTER,
     /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
     opacityStops = [1],
-    animationClock
+    animationClock,
+    /** Optional TL/TR/BR/BL bounding box restricting tile loading; unset means whole world. */
+    bounds
   }: {
     url: string;
     attribution?: string;
@@ -28,6 +30,7 @@
     opacityStops?: number[];
     /** Clock this layer's fade follows; unset means the scroll-tied clock. */
     animationClock?: AnimationMode;
+    bounds?: number[][] | null;
   } = $props();
 
   const posKey = $derived(layerClockKey(animationClock));
@@ -45,17 +48,31 @@
     const s_maxZoom = maxZoom;
     const s_tileSize = tileSize;
     const s_opacityStops = opacityStops;
+    const s_bounds = bounds;
 
     const setup = () => {
       if (!map.getStyle() || map.getSource(sourceId)) return;
 
       try {
+        // MapLibre raster bounds are strictly axis-aligned, unlike the TL/TR/BR/BL
+        // corners stored on the layer — so any implied rotation is discarded by
+        // taking the bounding min/max of the 4 corners.
+        const axisAlignedBounds = s_bounds?.length
+          ? ([
+              Math.min(...s_bounds.map(([lng]) => lng)),
+              Math.min(...s_bounds.map(([, lat]) => lat)),
+              Math.max(...s_bounds.map(([lng]) => lng)),
+              Math.max(...s_bounds.map(([, lat]) => lat))
+            ] as [number, number, number, number])
+          : undefined;
+
         map.addSource(sourceId, {
           type: 'raster',
           tiles: [s_url],
           tileSize: s_tileSize,
           attribution: s_attribution,
-          maxzoom: s_maxZoom
+          maxzoom: s_maxZoom,
+          ...(axisAlignedBounds ? { bounds: axisAlignedBounds } : {})
         });
 
         addFadingLayer(

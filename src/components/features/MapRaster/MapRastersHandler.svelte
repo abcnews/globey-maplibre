@@ -21,6 +21,7 @@
     attribution={entry.representative.attribution}
     opacityStops={entry.opacityStops}
     animationClock={entry.representative.animationClock}
+    bounds={entry.representative.bounds}
     zIndex={entry.representative.zIndex ?? Z_INDEX_BASE_RASTER + entry.index * 0.1}
   />
 {/each}
