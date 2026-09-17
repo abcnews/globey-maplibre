@@ -245,7 +245,7 @@ export function decodedObjectToBlob(
       zIndex: options.labelsZIndex ?? Infinity,
       layer: {
         id: 'custom-labels',
-        name: 'Custom Labels',
+        name: 'customlabels',
         type: 'customLabels',
         labels: options.labels.map(l => ({
           name: l.name,
@@ -262,7 +262,7 @@ export function decodedObjectToBlob(
       zIndex: options.mapLabelsZIndex ?? Infinity,
       layer: {
         id: 'builtin-map-labels',
-        name: 'Map Labels',
+        name: 'maplabels',
         type: 'mapLabels',
         enabled: !(options.mapLabels as any)?._disabled,
         countriesMajor: options.mapLabels.countriesMajor ?? true,
@@ -284,7 +284,7 @@ export function decodedObjectToBlob(
       zIndex: options.streetMapZIndex ?? Infinity,
       layer: {
         id: 'street-map',
-        name: 'Street Map',
+        name: 'streetmap',
         type: 'streetMap',
         hideOsm: options.hideOsm ?? false
       }

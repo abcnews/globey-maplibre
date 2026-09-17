@@ -56,6 +56,7 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 Fading layer kinds (raster/image/icon/geojson) share `buildTweenedLayerEntries()` (`src/components/features/layers/tweenedLayers.ts`): `CustomGlobe` passes `perPanel: Config[][]` (all panels, not just current), entries stay mounted with an `opacityStops` array tweened via MapLibre `global-state`. Passing only the current panel's array (as `GeoJsonsHandler` used to) makes layers snap instead of fade — any new fading layer kind must use this pattern.
 - GeoJson colour also cross-fades this way: `TweenedLayerEntry.configStops` (each panel's own config, threaded through `GeoJsonHandler`/`RenderArea`/`RenderLine`/`RenderPoint`) feeds `buildTweenedColourExpression()` (`GeoJson/utils.ts`), which tweens between panels' literal colours in `basic` mode only — `scale`/`simple` modes are data-driven expressions with no single colour to interpolate, so those fall back to the current panel's own expression (no cross-fade).
+- `buildTweenedColourExpression` decides whether to tween per-panel, not off `representative` alone — `representative` is just "first panel with the item on" and may have no colour override itself (e.g. a layer switched on before its colour is ever changed), so gating on its mode alone silently skipped every override on other panels.
 
 ## Colour scheme
 
@@ -65,6 +66,11 @@ and the Marker Mode colour override (`PropMarkerLayers.svelte`), both via the sh
 `ColourSchemePicker.svelte` (`src/components/shared/`). Intended to be reused for CustomLabels
 colouring later. `schemeForColour()`/`resolveSchemeColour()` round-trip a scheme ⇄ hex; marker
 overrides only store a hex on the wire, so the scheme name is a best-effort guess on reload.
+- `resolveSchemeColour(scheme, customColour)` treats `scheme === undefined` the same as
+  `'custom'` (uses `customColour` if given) — `applyMarkerOverrides` always writes
+  `basicType: undefined` alongside a colour override, never `'custom'`. Treating `undefined`
+  like `'normal'` instead (an easy mistake — it was the actual bug the first time this
+  regressed) silently ignores every marker colour override.
 
 ## Conventions
 
