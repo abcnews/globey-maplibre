@@ -94,6 +94,7 @@ export const geoJsonLayerSchema = z.object({
   filter: geoJsonFilterSchema.optional(),
   pointSize: sizeSchema.optional(),
   lineWidth: sizeSchema.optional(),
+  lineAnimationStyle: z.enum(['fade', 'draw']).default('fade'),
   spike: geoJsonSpikeSchema.optional()
 });
 export type GeoJsonLayer = z.infer<typeof geoJsonLayerSchema>;

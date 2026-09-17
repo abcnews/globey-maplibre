@@ -96,6 +96,22 @@ export function tweenStopsExpression(perPanelValues: (number | string)[], posKey
 }
 
 /**
+ * The plain-number equivalent of `tweenStopsExpression`, for paint properties (like
+ * `line-gradient`'s `step` thresholds) that MapLibre requires a literal value for rather than a
+ * computed expression — so the caller must recompute and write it every frame itself instead of
+ * letting MapLibre interpolate it on the GPU.
+ */
+export function tweenStopsValue(perPanelValues: number[], position: number): number {
+  if (perPanelValues.length === 1) return perPanelValues[0];
+
+  const lastIndex = perPanelValues.length - 1;
+  const from = Math.min(Math.max(Math.floor(position), 0), lastIndex);
+  const to = Math.min(from + 1, lastIndex);
+  const t = Math.min(Math.max(position - from, 0), 1);
+  return lerp(perPanelValues[from], perPanelValues[to], t);
+}
+
+/**
  * Interpolates between two CSS colours. Falls back to whichever colour is
  * defined when one side is missing (a feature entering or leaving).
  */

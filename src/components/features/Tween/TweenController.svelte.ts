@@ -176,6 +176,23 @@ export class TweenController {
     return mode === 'immediate' ? this.immediate : this.scroll;
   }
 
+  /**
+   * The literal numeric position for one clock, shaped the same way `CustomGlobe` writes it into
+   * MapLibre's global-state (`scroll` blends via `fromPanel + easedT`, `immediate` is read raw —
+   * see `CustomGlobe.svelte`'s write effect for why). Reusable by anything that needs the tween
+   * value as a plain JS number rather than a `global-state` paint expression, e.g. a paint
+   * property MapLibre requires a literal for.
+   */
+  positionFor(mode: AnimationMode, reducedMotion: boolean): number {
+    if (this.panelCount === 0) return 0;
+
+    const clock = this.clock(mode);
+    if (reducedMotion) return clock.fromPanel;
+
+    const shaped = mode === 'immediate' ? clock.position : clock.fromPanel + clock.easedT;
+    return Math.min(Math.max(shaped, 0), Math.max(this.panelCount - 1, 0));
+  }
+
   /** Panels currently loaded. */
   get panels(): PanelDefinition<DecodedObject>[] {
     return this.#panels;

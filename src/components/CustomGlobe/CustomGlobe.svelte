@@ -18,7 +18,7 @@
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { DecodedObject } from '../../lib/marker';
-  import { TweenController, type TweenClock } from '../features/Tween/TweenController.svelte.ts';
+  import { TweenController } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
   import { MAPLIBRE_TWEEN_SCROLL_STATE_KEY, MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY } from '../features/Tween/utils.ts';
   import { prefersReducedMotion, disableMapAnimation } from '../../lib/stores';
@@ -106,29 +106,15 @@
   // is written raw.
   const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);
 
-  const clampToPanels = (position: number): number =>
-    Math.min(Math.max(position, 0), Math.max(tweenController.panelCount - 1, 0));
-
-  /**
-   * `shapedPosition` is read by the caller before this runs, so the effect tracks
-   * both clocks even when the value written ignores them (reduced motion, or no
-   * panels yet).
-   */
-  const clockPosition = (clock: TweenClock, shapedPosition: number): number => {
-    if (tweenController.panelCount === 0) return 0;
-    return reducedMotion ? clock.fromPanel : clampToPanels(shapedPosition);
-  };
-
   $effect(() => {
     const map = mapInstance.map;
     if (!map) return;
 
-    const { scroll, immediate } = tweenController;
-    const scrollPos = clockPosition(scroll, scroll.fromPanel + scroll.easedT);
-    const immediatePos = clockPosition(immediate, immediate.position);
-
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, scrollPos);
-    map.setGlobalStateProperty(MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY, immediatePos);
+    map.setGlobalStateProperty(MAPLIBRE_TWEEN_SCROLL_STATE_KEY, tweenController.positionFor('scroll', reducedMotion));
+    map.setGlobalStateProperty(
+      MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY,
+      tweenController.positionFor('immediate', reducedMotion)
+    );
   });
 
   const hasDarkRaster = $derived((options.rasterLayers || []).some(r => r.darkTheme));

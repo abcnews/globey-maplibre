@@ -28,6 +28,7 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
       colourMode: 'simple',
       opacity: 1,
       isOpaque: false,
+      lineAnimationStyle: 'fade',
       zIndex: maxZIndex
     };
   },

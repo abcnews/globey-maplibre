@@ -163,6 +163,7 @@
     config.filter = $state.snapshot(draftConfig.filter);
     config.pointSize = $state.snapshot(draftConfig.pointSize);
     config.lineWidth = $state.snapshot(draftConfig.lineWidth);
+    config.lineAnimationStyle = draftConfig.lineAnimationStyle;
     if (draftConfig.zIndex !== undefined) {
       config.zIndex = draftConfig.zIndex;
     }
@@ -332,6 +333,20 @@
 
         {#if draftConfig.type === 'lines'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="lineWidth" legend="Line Width" />
+
+          <fieldset>
+            <legend>Reveal Animation</legend>
+            <div style:display="flex" style:gap="1rem">
+              <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
+                <input type="radio" name="gj-line-anim" value="fade" bind:group={draftConfig.lineAnimationStyle} />
+                Fade in
+              </label>
+              <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
+                <input type="radio" name="gj-line-anim" value="draw" bind:group={draftConfig.lineAnimationStyle} />
+                Draw on
+              </label>
+            </div>
+          </fieldset>
         {/if}
       {/if}
     {:else if activeTab === 'style'}

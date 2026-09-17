@@ -172,7 +172,10 @@ export const geoJsonItemSchema = object({
   spike: geoJsonSpikeSchema.key('sp').optional(),
   zIndex: decimal(2).key('z').optional(),
   animationClock: animationClockSchema,
-  name: layerNameSchema
+  name: layerNameSchema,
+  lineAnimationStyle: oneOf(['fade', 'draw'] as const)
+    .key('las')
+    .default('fade')
 }).asArray();
 
 /**

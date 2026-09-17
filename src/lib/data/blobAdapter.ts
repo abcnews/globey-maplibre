@@ -55,6 +55,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
           filter: layer.filter as any,
           pointSize: layer.pointSize as any,
           lineWidth: layer.lineWidth as any,
+          lineAnimationStyle: layer.lineAnimationStyle,
           spike: layer.spike as any,
           zIndex: index,
           animationClock: layer.animationClock,
@@ -189,6 +190,7 @@ export function decodedObjectToBlob(
         filter: gj.filter as any,
         pointSize: gj.pointSize as any,
         lineWidth: gj.lineWidth as any,
+        lineAnimationStyle: (gj.lineAnimationStyle as any) || 'fade',
         spike: gj.spike as any,
         animationClock: gj.animationClock,
         name: gj.name
