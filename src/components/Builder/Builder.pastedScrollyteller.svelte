@@ -5,14 +5,6 @@
   import { MARKER_NAME } from '../../lib/constants.ts';
   import { onMount } from 'svelte';
   import type { ScrollytellerDefinition } from '@abcnews/svelte-scrollyteller';
-  import type { Snippet } from 'svelte';
-
-  interface Props {
-    /** Layout/Markers mode switcher, reused here so you can navigate back out. */
-    ModeSwitcher?: Snippet;
-  }
-
-  let { ModeSwitcher }: Props = $props();
 
   const STORAGE_KEY = 'GLOBEY_PASTED_SCROLLYTELLER_CONTENT';
 
@@ -52,13 +44,11 @@
 {#if !$jsonBlob}
   <div class="notice">
     <p>No JSON blob is loaded yet — load or create one in Layout Mode first.</p>
-    {@render ModeSwitcher?.()}
   </div>
 {:else if scrollytellerDefinition}
   <div style:min-height="10000vh" class="scrolly-root">
     <ScrollytellerGlobe jsonBlob={$jsonBlob} panels={scrollytellerDefinition.panels} />
     <div class="floaty">
-      {@render ModeSwitcher?.()}
       <button type="button" onclick={() => (scrollytellerDefinition = null)}>Paste another doc</button>
     </div>
   </div>
@@ -93,7 +83,6 @@
 
       <div class="builder__submit-row">
         <button type="submit">Preview scrollyteller</button>
-        {@render ModeSwitcher?.()}
       </div>
     </fieldset>
   </form>

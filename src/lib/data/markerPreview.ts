@@ -4,9 +4,21 @@ import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
 /** Anything in a `DecodedObject`'s per-layer arrays carries a `name` (builder slug) and/or `id`. */
 type NamedLayerConfig = { id?: string; name?: string };
 
-/** The `LAYER<name>` token matches a layer's builder-facing `name`, falling back to its `id`. */
-function overrideFor(overrides: MarkerLayerOverride[], layer: NamedLayerConfig): MarkerLayerOverride | undefined {
+/**
+ * The `LAYER<name>` token matches a layer's builder-facing `name`, falling back to its `id`.
+ * The ACTO codec (`src/lib/data/marker.ts`) only allows lowercase `[a-z0-9]` in encoded
+ * strings, but `id` is a free-form UUID (may contain hyphens etc) — sanitise it the same
+ * way friendly names already are, so an unnamed layer's fallback key stays ACTO-safe.
+ * Both the write side (`PropMarkerLayers.svelte`'s `keyFor`) and this read side must apply
+ * the exact same sanitisation, or overrides silently stop matching their layer.
+ */
+export function layerOverrideKey(layer: NamedLayerConfig): string | undefined {
   const key = layer.name ?? layer.id;
+  return key?.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function overrideFor(overrides: MarkerLayerOverride[], layer: NamedLayerConfig): MarkerLayerOverride | undefined {
+  const key = layerOverrideKey(layer);
   return overrides.find(o => o.name === key);
 }
 
@@ -79,6 +91,12 @@ export function applyMarkerOverrides(base: DecodedObject, config: MarkerConfig):
     if (config.fitGlobe) {
       result.bounds = [];
     }
+  }
+
+  // Fit vs Fill for the BBOX zoom calculation — only meaningful alongside bbox/bounds,
+  // but harmless to apply unconditionally since it's ignored otherwise.
+  if (config.constrainView !== undefined) {
+    result.constrainView = config.constrainView;
   }
 
   // The globe's rotation while fit-globe is active comes from `coords`, not from BBOX

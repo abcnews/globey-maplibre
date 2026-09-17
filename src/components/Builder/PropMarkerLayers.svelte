@@ -2,6 +2,7 @@
   import type { GlobeLayer } from '../../lib/data/jsonBlob.ts';
   import type { MarkerLayerOverride } from '../../lib/data/marker.ts';
   import { schemeForColour, resolveSchemeColour, DEFAULT_COLOUR_SCHEME } from '../../lib/colourScheme.ts';
+  import { layerOverrideKey } from '../../lib/data/markerPreview.ts';
   import ColourSchemePicker from '../shared/ColourSchemePicker.svelte';
   import { layerFeatureRegistry } from '../features';
   import { ArrowCounterclockwise } from 'svelte-bootstrap-icons';
@@ -21,9 +22,10 @@
   // real fade duration always comes from the shared panel-level clock. See REFACTOR.md.
   const IMMEDIATE_DURATION_SENTINEL = 1;
 
-  /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id. */
-  function keyFor(layer: GlobeLayer): string {
-    return layer.name ?? layer.id;
+  /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id
+   *  (sanitised to ACTO's `[a-z0-9]`-only alphabet — must match `layerOverrideKey`'s read side). */
+  function keyFor(layer: GlobeLayer): string | undefined {
+    return layerOverrideKey(layer);
   }
 
   function overrideFor(layer: GlobeLayer): MarkerLayerOverride | undefined {

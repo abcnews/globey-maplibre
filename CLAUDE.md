@@ -13,6 +13,7 @@ Two schemas represent layers, bridged by an adapter — always update both when 
 - `src/lib/data/jsonBlob.ts` — Zod schema for the persisted Builder blob (`GlobeJsonBlob`), stored in `src/lib/data/blobStore.ts` (`jsonBlob` store).
 - `src/lib/marker/schema.ts` — compact codec (`@abcnews/hash-codec`) for the published, URL-embeddable marker format (`DecodedObject`). Each field needs a short `.key('xx')` alias; item schemas are positional arrays (`.asArray()`), so add new fields at the end to avoid breaking existing encoded URLs.
 - `src/lib/data/blobAdapter.ts` — `blobToDecodedObject()` / `decodedObjectToBlob()` map every field between the two, per layer type. `LayerItemDescriptor.name`/`.animationClock` etc. all come from this bridge.
+- Every item schema needs an `id` field mapped through both adapter directions — Marker Mode's `overrideFor()` (`src/lib/data/markerPreview.ts`) matches overrides on `layer.name ?? layer.id`, so a layer kind missing `id` in its marker schema/adapter mapping (e.g. `rasterItemSchema` originally lacked it) can never be matched, making its on/off toggle a no-op regardless of state.
 
 Runtime feature code (buttons, modals, `getItems`) only ever touches `DecodedObject`/`LayerItemDescriptor`, never the blob schema directly.
 
@@ -34,11 +35,14 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 `handleCloseLayerModal()` commits via `feature.update`/`feature.isValid` — reuse it rather than writing new commit logic.
 
+## Top navigation / mode routing
+
+`Builder.svelte` routes between `Builder.firstrun.svelte` (New map), `Builder.layers.svelte` (Layout), `Builder.markers.svelte` (Markers) and `Builder.pastedScrollyteller.svelte` (Preview) purely by reading `window.location.hash`: starts with `new` → New map, `mark` → Markers, `paste` → Preview, else Layout. No separate mode flag — the hash is the single source of truth (`!hasBlob` also forces New map regardless of hash, since Firstrun requires no active blob). `BuilderTopBar.svelte` is the single full-width control (rendered once, above all four mode components — they no longer render their own switcher) with four numbered, arrow-shaped step buttons; Markers/Preview are disabled while `!hasBlob`, New map/Layout are always enabled. `Builder.svelte`'s `setMode()` confirms before navigating to New map while a blob is active (the old "Exit session" behaviour), and an `$effect` forces the hash to New map whenever there's no blob, so a stale `#mark`/`#paste` hash from a previous session can't strand a newly created/restored blob on the wrong step and so New map's step is the one highlighted while Firstrun shows.
+
 ## Marker Mode
 
-`Builder.svelte` routes between `Builder.layers.svelte` (Layout Mode) and `Builder.markers.svelte` (Marker Mode) purely by reading `window.location.hash`: starts with `mark` → Markers, else Layout. No separate mode flag — the hash is the single source of truth.
-
-- ACTO marker codec: `src/lib/data/marker.ts` (`encodeMarker`/`decodeMarker`/`MarkerConfig`) — distinct from `src/lib/marker/` (whole-page hash-codec above). Token spec (BBOX/CAM/FITGLOBE/CENTER/LAYER/BASE/LABELS/MINIMAP) is in `REFACTOR.md`.
+- ACTO marker codec: `src/lib/data/marker.ts` (`encodeMarker`/`decodeMarker`/`MarkerConfig`) — distinct from `src/lib/marker/` (whole-page hash-codec above). Token spec (BBOX/CAM/FITGLOBE/CENTER/FILL/LAYER/BASE/LABELS/MINIMAP) is in `REFACTOR.md`.
+- A marker's BBOX has its own Fit/Fill toggle (`MarkerConfig.constrainView`, `FILL<on|off>` token) — same `constrainView` field/`'fit'|'fill'` mode the Layout Mode bounds branch of `resolvePanelTargetView` (`src/components/features/PanZoom/utils.ts`) already used, just not previously exposed in Marker Mode's `PropMarkerPosition.svelte`. Only meaningful alongside `bbox`, not `fitGlobe` — the two positioning modes are mutually exclusive per marker.
 - `decodeMarker(raw: string)` expects a raw string; `markerConfigFromParsed(parsed)` expects an already `acto()`-parsed object (what `loadScrollyteller`/`parsePastedContent` panel data actually is) — passing a parsed object to `decodeMarker` breaks.
 - Markers live only in `window.location.hash`, never persisted. `Builder.markers.svelte` seeds `markerConfig` synchronously at setup, not `onMount` (avoids the hash-sync `$effect` stomping a real marker).
 - `MarkerAdmin` prefix must be `'#'` not `'#mark'` (our hash already starts with `mark`).
@@ -50,7 +54,7 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 - `ScrollytellerGlobe.svelte` takes `jsonBlob` + `panels: PanelDefinition<Record<string, any>>[]` (parsed marker objects) and derives per-panel `DecodedObject`s itself. `CustomGlobe` is unchanged.
 - `#staticglobey` mount = the real "iframe mode" (`CustomGlobeIframe.svelte` was dead, deleted).
-- `PastedScrollytellerGlobe.svelte` (dev paste tool) still runs the old `markerSchema` codec, bypassing `ScrollytellerGlobe`. `Builder.pastedScrollyteller.svelte` (`#paste` hash, not linked in UI) is the blob-aware equivalent, using the live `jsonBlob` store.
+- `PastedScrollytellerGlobe.svelte` (dev paste tool) still runs the old `markerSchema` codec, bypassing `ScrollytellerGlobe`. `Builder.pastedScrollyteller.svelte` (`#paste` hash, reachable via `BuilderTopBar`'s "Preview scrollyteller" step) is the blob-aware equivalent, using the live `jsonBlob` store.
 
 ## GeoJson cross-panel fades
 

@@ -15,7 +15,7 @@
   );
 </script>
 
-{#each entries as entry (entry.sig)}
+{#each entries as entry (entry.key)}
   <IconHandler
     config={entry.representative}
     id={entry.key}

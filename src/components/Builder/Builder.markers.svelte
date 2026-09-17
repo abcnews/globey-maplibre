@@ -9,14 +9,6 @@
   import PropMarkerLayers from './PropMarkerLayers.svelte';
   import PropMarkerPosition from './PropMarkerPosition.svelte';
   import { MARKER_NAME } from '../../lib/constants.ts';
-  import type { Snippet } from 'svelte';
-
-  interface Props {
-    /** Layout/Markers mode switcher, rendered by the parent Builder.svelte router at the top of the sidebar. */
-    ModeSwitcher?: Snippet;
-  }
-
-  let { ModeSwitcher }: Props = $props();
 
   let map = $state<MapLibreMap>();
 
@@ -91,7 +83,6 @@
 {/snippet}
 
 {#snippet Sidebar()}
-  {@render ModeSwitcher?.()}
   {#if !map || !$jsonBlob}
     <Loader />
   {:else}
@@ -103,6 +94,7 @@
           {map}
           bbox={markerConfig.bbox}
           fitGlobe={markerConfig.fitGlobe}
+          constrainView={markerConfig.constrainView}
           center={markerConfig.center}
           onchange={patch => (markerConfig = { ...markerConfig, ...patch })}
         />
@@ -141,7 +133,7 @@
     <fieldset>
       <legend>Layers</legend>
       <PropMarkerLayers
-        layers={$jsonBlob.layers}
+        layers={[...$jsonBlob.layers].reverse()}
         overrides={markerConfig.layers ?? []}
         onchange={next => (markerConfig = { ...markerConfig, layers: next })}
       />

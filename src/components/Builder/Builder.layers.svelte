@@ -27,14 +27,6 @@
   import PropScreenshot from './PropScreenshot.svelte';
   import IframeUrl from './IframeUrl.svelte';
   import { Plus, X } from 'svelte-bootstrap-icons';
-  import type { Snippet } from 'svelte';
-
-  interface Props {
-    /** Layout/Markers mode switcher, rendered by the parent Builder.svelte router at the top of the sidebar. */
-    ModeSwitcher?: Snippet;
-  }
-
-  let { ModeSwitcher }: Props = $props();
 
   let map = $state<MapLibreMap>();
 
@@ -303,7 +295,7 @@
     const blob = new Blob([formatted], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const filename = `${($jsonBlob.title || 'globy').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-blob.txt`;
+    const filename = `${($jsonBlob.title || 'globey').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-blob.txt`;
     a.href = url;
     a.download = filename;
     a.click();
@@ -362,7 +354,6 @@
 {/snippet}
 
 {#snippet Sidebar()}
-  {@render ModeSwitcher?.()}
   {#if !map || !$jsonBlob}
     <Loader />
   {:else}
@@ -580,9 +571,7 @@
       <IframeUrl />
       <PropScreenshot {map} />
 
-      <button type="button" onclick={handleSaveTxt}>
-        Save JSON as .txt
-      </button>
+      <button type="button" onclick={handleSaveTxt}> Save JSON as .txt </button>
 
       <input
         type="file"
@@ -591,24 +580,9 @@
         bind:this={fileInputEl}
         onchange={handleFileSelected}
       />
-      <button type="button" onclick={() => fileInputEl?.click()}>
-        Load JSON from .txt
-      </button>
+      <button type="button" onclick={() => fileInputEl?.click()}> Load JSON from .txt </button>
 
-      <button type="button" onclick={handleOpenInspectModal}>
-        Inspect JSON blob
-      </button>
-
-      <button
-        type="button"
-        onclick={() => {
-          if (confirm('Exit current session and return to first-run screen?')) {
-            jsonBlob.clear();
-          }
-        }}
-      >
-        Exit session
-      </button>
+      <button type="button" onclick={handleOpenInspectModal}> Inspect JSON blob </button>
     </fieldset>
   {/if}
 {/snippet}

@@ -22,6 +22,10 @@ export interface MarkerConfig {
   cam?: number;
   /** Force-fit the whole globe to the viewport, overriding BBOX. Undefined inherits the master config. */
   fitGlobe?: boolean;
+  /** Only meaningful alongside `bbox`: false (default) zooms so all BBOX points stay visible
+   *  ("Fit"); true zooms further so the view never shows anything outside the BBOX ("Fill") —
+   *  useful for filling the screen with satellite imagery. */
+  constrainView?: boolean;
   /** Rotation centre [lng, lat] to fit the globe around — only meaningful alongside `fitGlobe`,
    *  since a BBOX's own extents already determine rotation. Captured from the live map's
    *  centre at the moment `fitGlobe` is turned on, since the map can't be rotated afterwards
@@ -135,6 +139,11 @@ export function markerConfigFromParsed(parsed: Record<string, any>): MarkerConfi
     if (parsed.fitglobe === 'off' || parsed.fitglobe === false) config.fitGlobe = false;
   }
 
+  if (parsed.fill !== undefined) {
+    if (parsed.fill === 'on' || parsed.fill === true) config.constrainView = true;
+    if (parsed.fill === 'off' || parsed.fill === false) config.constrainView = false;
+  }
+
   if (parsed.center && typeof parsed.center === 'string') {
     const [point] = decodeGeohashBounds(parsed.center);
     if (point) config.center = point;
@@ -203,6 +212,10 @@ export function encodeMarker(config: MarkerConfig): string {
 
   if (config.fitGlobe !== undefined) {
     actoData.fitglobe = config.fitGlobe ? 'on' : 'off';
+  }
+
+  if (config.constrainView !== undefined) {
+    actoData.fill = config.constrainView ? 'on' : 'off';
   }
 
   if (config.center) {

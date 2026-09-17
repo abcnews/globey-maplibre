@@ -86,6 +86,7 @@ export function blobToDecodedObject(blob: GlobeJsonBlob | null | undefined): Dec
 
       case 'raster':
         rasterLayers.push({
+          id: layer.id,
           url: layer.url,
           maxZoom: layer.maxZoom,
           tileSize: layer.tileSize,
@@ -227,7 +228,7 @@ export function decodedObjectToBlob(
     entries.push({
       zIndex: r.zIndex ?? Infinity,
       layer: {
-        id: `raster-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+        id: r.id || `raster-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         type: 'raster',
         url: r.url,
         maxZoom: r.maxZoom ?? 7,

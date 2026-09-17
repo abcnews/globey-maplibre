@@ -19,15 +19,19 @@
     map?: MapLibreMap;
     bbox?: [number, number][];
     fitGlobe?: boolean;
+    /** Only meaningful alongside fitGlobe: false/undefined = "Fit" (contain the globe circle
+     *  within the viewport), true = "Fill" (crop it to fully cover the viewport). */
+    constrainView?: boolean;
     center?: [number, number];
     onchange: (patch: {
       bbox?: [number, number][];
       fitGlobe?: boolean;
+      constrainView?: boolean;
       center?: [number, number];
     }) => void;
   }
 
-  let { map, bbox, fitGlobe, center, onchange }: Props = $props();
+  let { map, bbox, fitGlobe, constrainView, center, onchange }: Props = $props();
 
   type NavMode = 'bbox' | 'fit-globe';
   const navMode = $derived(fitGlobe ? 'fit-globe' : 'bbox');
@@ -122,7 +126,7 @@
       const captured: [number, number] | undefined = map ? [map.getCenter().lng, map.getCenter().lat] : center;
       onchange({ fitGlobe: true, bbox: undefined, center: captured });
     } else {
-      onchange({ fitGlobe: false });
+      onchange({ fitGlobe: false, constrainView: undefined });
     }
   }
 
@@ -162,7 +166,7 @@
 
   function clearPositioning() {
     points = [];
-    onchange({ bbox: undefined, fitGlobe: undefined, center: undefined });
+    onchange({ bbox: undefined, fitGlobe: undefined, constrainView: undefined, center: undefined });
   }
 
   function onGeoSelect(result: { name: string; coords: [number, number] }) {
@@ -206,6 +210,36 @@
         {isPicking ? 'Finish picking' : 'Pick BBOX on map'}
       </button>
     </div>
+
+    {#if bbox && bbox.length > 0}
+      <div class="row">
+        <label>
+          <input
+            type="radio"
+            name="bbox-fit-mode"
+            checked={!constrainView}
+            onchange={() => onchange({ constrainView: false })}
+          />
+          Fit
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="bbox-fit-mode"
+            checked={!!constrainView}
+            onchange={() => onchange({ constrainView: true })}
+          />
+          Fill
+        </label>
+      </div>
+      <small class="hint">
+        {#if constrainView}
+          Fill zooms so the view never shows anything outside the BBOX — useful for filling the screen with imagery.
+        {:else}
+          Fit zooms so all BBOX points stay visible on screen.
+        {/if}
+      </small>
+    {/if}
 
     {#if isPicking}
       <small class="hint">Click on map to add points. Click a point to remove it.</small>

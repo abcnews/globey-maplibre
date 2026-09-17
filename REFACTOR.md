@@ -15,6 +15,7 @@ Markers are encoded as ACTO strings and are (mostly) human-readable. All layers 
 - `CAM<duration>ms`: Camera animation duration (e.g. `CAM2000ms` triggers an immediate fly-to on arrival). Absence indicates scroll-tied tracking.
 - `FITGLOBE<on|off>`: Force-fits the whole globe to the viewport, overriding `BBOX`. Absent means inherit whatever the previous marker/master config set.
 - `CENTER<geohash>`: Single-point rotation centre `[lng, lat]`, encoded as one geohash. Only meaningful alongside `FITGLOBE<on>` — a `BBOX` already implies its own centre from its extents. Captured from the live map's centre at the moment `FITGLOBE` is turned on in the Builder, since fit-globe mode locks map interaction afterwards.
+- `FILL<on|off>`: Only meaningful alongside `BBOX`. `off`/absent ("Fit") zooms so all BBOX points stay visible within the viewport; `on` ("Fill") zooms further so the view never shows anything outside the BBOX, with no letterboxing — useful for filling the screen with imagery.
 
 ### 2. Layer Overrides
 

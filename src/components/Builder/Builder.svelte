@@ -4,6 +4,7 @@
   import BuilderLayers from './Builder.layers.svelte';
   import BuilderMarkers from './Builder.markers.svelte';
   import BuilderPastedScrollyteller from './Builder.pastedScrollyteller.svelte';
+  import BuilderTopBar from './BuilderTopBar.svelte';
   import Favicon from './Favicon/Favicon.svelte';
   import { BuilderStyleRoot } from '@abcnews/components-builder';
 
@@ -14,18 +15,27 @@
    */
   const hasBlob = $derived($jsonBlob !== null);
 
-  type Mode = 'layout' | 'markers' | 'paste';
+  type Mode = 'newmap' | 'layout' | 'markers' | 'paste';
 
   /** Marker Mode's own ACTO string always starts with `mark` (see Builder.markers.svelte),
    *  so the hash itself is the source of truth for which mode we're in — no separate,
-   *  independently-persisted mode flag to fall out of sync with it. `#paste` is a test
-   *  harness (see Builder.pastedScrollyteller.svelte) — deliberately not exposed in
-   *  ModeSwitcher, reach it by typing the hash directly. */
+   *  independently-persisted mode flag to fall out of sync with it. `#paste` is the
+   *  pasted-scrollyteller preview (see Builder.pastedScrollyteller.svelte); `#new` is the
+   *  first-run/"new map" screen (see Builder.firstrun.svelte), reachable at any time via
+   *  BuilderTopBar's step 1, not just when there's no blob yet. */
   function modeFromHash(hash: string): Mode {
     const clean = hash.replace(/^#/, '');
     if (clean.startsWith('mark')) return 'markers';
     if (clean.startsWith('paste')) return 'paste';
+    if (clean.startsWith('new')) return 'newmap';
     return 'layout';
+  }
+
+  function hashForMode(mode: Mode): string {
+    if (mode === 'markers') return 'mark';
+    if (mode === 'paste') return 'paste';
+    if (mode === 'newmap') return 'new';
+    return '';
   }
 
   let currentHash = $state(window.location.hash);
@@ -33,63 +43,72 @@
 
   function setMode(mode: Mode) {
     if (mode === modeFromHash(window.location.hash)) return;
-    window.location.hash = mode === 'markers' ? 'mark' : '';
+    if (mode === 'newmap' && hasBlob && !confirm('Exit current session and return to first-run screen?')) {
+      return;
+    }
+    window.location.hash = hashForMode(mode);
     currentHash = window.location.hash;
   }
 
   function onHashChange() {
     currentHash = window.location.hash;
   }
+
+  /** Markers/Preview require a loaded blob — if one isn't loaded (e.g. a stale #mark/#paste
+   *  hash from a previous session), snap back to the New map step so it's the one
+   *  highlighted while Builder.firstrun.svelte is showing. */
+  $effect(() => {
+    if (!hasBlob && activeMode !== 'newmap') setMode('newmap');
+  });
 </script>
 
 <svelte:window onhashchange={onHashChange} />
 <Favicon />
 
-{#snippet ModeSwitcher()}
-  <div class="mode-switcher">
-    <button type="button" class:selected={activeMode === 'layout'} onclick={() => setMode('layout')}>
-      Layout
-    </button>
-    <button type="button" class:selected={activeMode === 'markers'} onclick={() => setMode('markers')}>
-      Markers
-    </button>
-  </div>
-{/snippet}
+<div class="app-shell">
+  <BuilderTopBar {activeMode} {hasBlob} onSetMode={setMode} />
 
-<BuilderStyleRoot>
-  {#if hasBlob}
-    {#if activeMode === 'layout'}
-      <BuilderLayers {ModeSwitcher} />
-    {:else if activeMode === 'markers'}
-      <BuilderMarkers {ModeSwitcher} />
-    {:else}
-      <BuilderPastedScrollyteller {ModeSwitcher} />
-    {/if}
-  {:else}
-    <BuilderFirstrun />
-  {/if}
-</BuilderStyleRoot>
+  <div class="builder-content">
+    <BuilderStyleRoot>
+      {#if activeMode === 'newmap' || !hasBlob}
+        <BuilderFirstrun onsuccess={() => setMode('layout')} />
+      {:else if activeMode === 'layout'}
+        <BuilderLayers />
+      {:else if activeMode === 'markers'}
+        <BuilderMarkers />
+      {:else}
+        <BuilderPastedScrollyteller />
+      {/if}
+    </BuilderStyleRoot>
+  </div>
+</div>
 
 <style>
-  .mode-switcher {
+  .app-shell {
     display: flex;
-    gap: 0.25rem;
-    margin-bottom: 0.75rem;
+    flex-direction: column;
+    height: 100vh;
   }
 
-  .mode-switcher button {
+  .builder-content {
+    position: relative;
     flex: 1;
-    padding: 0.4rem 0.9rem;
-    border: none;
-    border-radius: 3px;
-    background: var(--background-alt, #2c2c2f);
-    color: var(--text-light, #888);
-    cursor: pointer;
-    font-size: 0.85rem;
+    min-height: 0;
   }
 
-  .mode-switcher button.selected {
-    background: var(--builder-color-primary, #007bff);
-    color: #fff;
+  /* BuilderFrame (from @abcnews/components-builder) positions itself absolutely against
+     the viewport (position: absolute; top: 0; height: 100vh) — override it to fill this
+     container instead, so it sits below the top bar rather than overlapping it. */
+  .builder-content :global(.builder-frame) {
+    position: absolute;
+    top: 0;
+    height: 100%;
+  }
+
+  /* Builder.firstrun.svelte relies on percentage heights to vertically centre its
+     content instead of BuilderFrame's absolute-positioning trick — give the
+     BuilderStyleRoot wrapper an explicit height so that resolves correctly. */
+  .builder-content :global(.builder-style-root) {
+    height: 100%;
   }
 </style>

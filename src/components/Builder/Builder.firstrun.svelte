@@ -83,7 +83,7 @@
 
 <div class="firstrun-wrapper">
   <fieldset class="builder__spacious">
-    <legend>Globy Builder</legend>
+    <legend>Globey Builder</legend>
     <p class="description">Select how you would like to start this scrollyteller session:</p>
 
     <div class="firstrun-actions">
@@ -156,20 +156,14 @@
     </div>
 
     {#snippet footerChildren()}
-      <button
-        type="button"
-        onclick={handleLoadCmid}
-        disabled={isCmidLoading || !isValidCmid(cmidInput)}
-      >
+      <button type="button" onclick={handleLoadCmid} disabled={isCmidLoading || !isValidCmid(cmidInput)}>
         {#if isCmidLoading}
           <Loader /> Loading...
         {:else}
           Load
         {/if}
       </button>
-      <button type="button" onclick={() => (isCmidModalOpen = false)} disabled={isCmidLoading}>
-        Cancel
-      </button>
+      <button type="button" onclick={() => (isCmidModalOpen = false)} disabled={isCmidLoading}> Cancel </button>
     {/snippet}
   </Modal>
 {/if}
@@ -194,12 +188,8 @@
     </div>
 
     {#snippet footerChildren()}
-      <button type="button" onclick={handleLoadJson} disabled={!pastedJson.trim()}>
-        Import JSON
-      </button>
-      <button type="button" onclick={() => (isJsonModalOpen = false)}>
-        Cancel
-      </button>
+      <button type="button" onclick={handleLoadJson} disabled={!pastedJson.trim()}> Import JSON </button>
+      <button type="button" onclick={() => (isJsonModalOpen = false)}> Cancel </button>
     {/snippet}
   </Modal>
 {/if}
@@ -209,7 +199,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: 100%;
     padding: 1.5rem;
     box-sizing: border-box;
   }

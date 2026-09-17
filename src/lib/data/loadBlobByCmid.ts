@@ -10,7 +10,7 @@ export async function loadGlobeJsonBlobByCmid(cmid: number): Promise<GlobeJsonBl
   const data = await fetchDownloadObject(cmid);
   const res = safeParseGlobeJsonBlob(data);
   if (!res.success) {
-    throw new Error(`Data is not a valid Globy JSON schema: ${res.error.message}`);
+    throw new Error(`Data is not a valid Globey JSON schema: ${res.error.message}`);
   }
   return { ...res.data, sourceCmid: cmid };
 }

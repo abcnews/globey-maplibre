@@ -12,7 +12,7 @@
   const layerId = (url: string): string => `raster-${btoa(url).replace(/=/g, '').slice(-8)}`;
 </script>
 
-{#each entries as entry (entry.sig)}
+{#each entries as entry (entry.key)}
   <MapRasterHandler
     id={layerId(entry.representative.url)}
     url={entry.representative.url}

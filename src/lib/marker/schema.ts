@@ -239,7 +239,8 @@ export const rasterItemSchema = object({
   darkTheme: boolean().key('dt').default(false),
   zIndex: decimal(2).key('z').optional(),
   animationClock: animationClockSchema,
-  name: layerNameSchema
+  name: layerNameSchema,
+  id: string().key('id').optional()
 }).asArray();
 
 /**
