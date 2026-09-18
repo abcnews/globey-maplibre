@@ -2,7 +2,7 @@ import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
 import type { IconConfig, DecodedObject } from '../../../lib/marker';
 import { Z_INDEX_CUSTOM_LABELS } from '../layers/layerUtils.ts';
 import { GeoAlt } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderIconConfigModal from './BuilderIconConfigModal.svelte';
 import IconsHandler from './IconsHandler.svelte';
 
@@ -13,9 +13,8 @@ export const iconFeature: LayerFeatureDefinition<IconConfig> = {
   defaultZIndex: Z_INDEX_CUSTOM_LABELS,
   isMultiItem: true,
 
-  // A factory, not an array: the clock toggle's icon reflects the item's
-  // current `animationClock`, so it has to be resolved per item.
-  buttons: item => [createClockButton<IconConfig>(item),
+  // A factory, not an array: the goto button only appears once the item has coords.
+  buttons: item => [
     ...(item.data?.coords
       ? [
           createGoToButton<IconConfig>({

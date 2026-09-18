@@ -71,7 +71,12 @@
           getBaseStyleSource().layers.find(layer => layer.id === 'background') as
             maplibregl.BackgroundLayerSpecification | undefined
         )?.paint?.['background-color'];
-        map.setPaintProperty('background', 'background-color', defaultBackground);
+        // Guard against passing a literal `undefined` colour to setPaintProperty (e.g. if the
+        // base style's 'background' layer is ever renamed/removed) — MapLibre crashes trying
+        // to read channel values off an undefined colour at render time rather than failing loudly.
+        if (defaultBackground !== undefined) {
+          map.setPaintProperty('background', 'background-color', defaultBackground);
+        }
       }
 
       if (s_showBase) {

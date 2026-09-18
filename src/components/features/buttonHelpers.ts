@@ -1,4 +1,4 @@
-import { ClockHistory, Pencil, PinAngle, Trash } from 'svelte-bootstrap-icons';
+import { Pencil, Search, Trash } from 'svelte-bootstrap-icons';
 import type { LayerButton, LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
 import type { DecodedObject } from '../../lib/marker';
 import { safeFitBounds, safeFlyTo } from '../Builder/utils.ts';
@@ -43,25 +43,6 @@ export function createDeleteButton<T = any>({
   };
 }
 
-/**
- * Opens the shared clock/name modal for a layer item, where the reader picks
- * between the two animation clocks — scroll-tied (the default) scrubs the
- * layer's fade with scroll position, play-on-arrival holds until the reader
- * reaches the marker then plays the fade over the panel's `animationDuration`
- * — and sets an optional friendly name for the layer.
- */
-export function createClockButton<T = any>(item: LayerItemDescriptor<T>): LayerButton<T> {
-  return {
-    id: 'clock',
-    title: 'Layer settings (animation clock, name)',
-    ariaLabel: 'Layer settings',
-    icon: ClockHistory,
-    onclick: ({ openClockModal }) => {
-      openClockModal();
-    }
-  };
-}
-
 /** Where a "go to layer" click should fly/fit the map to. */
 export type GoToTarget = { type: 'point'; coords: [number, number] } | { type: 'bounds'; bounds: [number, number][] };
 
@@ -82,7 +63,7 @@ export function createGoToButton<T = any>({
     id: 'goto',
     title,
     ariaLabel: title,
-    icon: PinAngle,
+    icon: Search,
     onclick: ({ item, map }) => {
       if (!map) return;
 
@@ -114,15 +95,10 @@ export function createGoToButton<T = any>({
  */
 export function getDefaultLayerButtons<T = any>(
   feature: LayerFeatureDefinition<T>,
-  item?: LayerItemDescriptor<T>,
+  _item?: LayerItemDescriptor<T>,
   _options?: DecodedObject
 ): LayerButton<T>[] {
   const buttons: LayerButton<T>[] = [];
-  // Only the multi-item features carry a per-item `animationClock`; the
-  // singletons (map labels, custom labels, street map) have nowhere to store it.
-  if (feature.isMultiItem && item?.data) {
-    buttons.push(createClockButton<T>(item));
-  }
   if (feature.ConfigModal) {
     buttons.push(createEditButton<T>());
   }

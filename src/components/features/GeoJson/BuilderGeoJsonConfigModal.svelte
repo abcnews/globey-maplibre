@@ -7,6 +7,7 @@
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
   import VerticalTabs from '../../Builder/shared/VerticalTabs.svelte';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
   import { untrack } from 'svelte';
 
   interface Props {
@@ -164,6 +165,8 @@
     config.pointSize = $state.snapshot(draftConfig.pointSize);
     config.lineWidth = $state.snapshot(draftConfig.lineWidth);
     config.lineAnimationStyle = draftConfig.lineAnimationStyle;
+    config.animationClock = draftConfig.animationClock;
+    config.name = draftConfig.name;
     if (draftConfig.zIndex !== undefined) {
       config.zIndex = draftConfig.zIndex;
     }
@@ -217,6 +220,8 @@
     bind:activeTab
   >
     {#if activeTab === 'config'}
+      <LayerSettingsFields bind:animationClock={draftConfig.animationClock} bind:name={draftConfig.name} />
+
       <fieldset>
         <legend
           >Data source

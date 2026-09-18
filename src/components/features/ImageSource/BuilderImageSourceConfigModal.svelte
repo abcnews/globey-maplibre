@@ -8,6 +8,7 @@
   import FilenameImportButton from './FilenameImportButton.svelte';
   import { isValidUrl } from '../../../lib/marker';
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils.ts';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   let {
     config = $bindable(),
@@ -20,6 +21,8 @@
   let url = $state(untrack(() => $state.snapshot(config)?.url || ''));
   let opacity = $state(untrack(() => $state.snapshot(config)?.opacity ?? 1));
   let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config)?.coordinates || [])));
+  let animationClock = $state(untrack(() => $state.snapshot(config)?.animationClock));
+  let name = $state(untrack(() => $state.snapshot(config)?.name));
 
   $effect(() => {
     if (url) {
@@ -51,7 +54,9 @@
       id: config?.id || Date.now().toString(),
       url,
       opacity,
-      coordinates
+      coordinates,
+      animationClock,
+      name
     });
     onclose?.();
   }
@@ -141,6 +146,8 @@
           <button type="button" onclick={importFromGoogleEarth}>Import from coord + width</button>
         </div>
       </fieldset>
+
+      <LayerSettingsFields bind:animationClock bind:name />
     </div>
 
     <div class="modal-preview">

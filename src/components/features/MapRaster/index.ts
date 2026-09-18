@@ -2,7 +2,7 @@ import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
 import type { DecodedObject, RasterLayerConfig } from '../../../lib/marker/types.ts';
 import { Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
 import { GlobeAsiaAustralia as RasterIcon } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderRasterConfigModal from './BuilderRasterConfigModal.svelte';
 import MapRastersHandler from './MapRastersHandler.svelte';
 
@@ -13,9 +13,8 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayerConfig> = {
   defaultZIndex: Z_INDEX_BASE_RASTER,
   isMultiItem: true,
 
-  // A factory, not an array: the clock toggle's icon reflects the item's
-  // current `animationClock`, so it has to be resolved per item.
-  buttons: item => [createClockButton<RasterLayerConfig>(item),
+  // A factory, not an array: the goto button only appears once the item has bounds.
+  buttons: item => [
     ...(item.data?.bounds?.length
       ? [
           createGoToButton<RasterLayerConfig>({

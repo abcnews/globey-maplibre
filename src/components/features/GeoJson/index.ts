@@ -3,7 +3,7 @@ import type { GeoJsonConfig, DecodedObject } from '../../../lib/marker';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderGeoJsonConfigModal from './BuilderGeoJsonConfigModal.svelte';
 import GeoJsonsHandler from './GeoJsonsHandler.svelte';
 import { fetchGeoJsonData, getGeoJsonCoordinatePairs } from './utils.ts';
@@ -15,9 +15,8 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   defaultZIndex: Z_INDEX_GEOJSON,
   isMultiItem: true,
 
-  // A factory, not an array: the clock toggle's icon reflects the item's
-  // current `animationClock`, so it has to be resolved per item.
-  buttons: item => [createClockButton<GeoJsonConfig>(item),
+  // A factory, not an array: the goto button only appears once the item has a cmid/url.
+  buttons: item => [
     ...(item.data?.cmid || item.data?.url
       ? [
           createGoToButton<GeoJsonConfig>({

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type { RasterLayerConfig } from '../../../lib/marker/types.ts';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   interface Props {
     /** The RasterLayerConfig object being edited or drafted */
@@ -161,6 +162,8 @@
         </div>
       </div>
     </fieldset>
+
+    <LayerSettingsFields bind:animationClock={config.animationClock} bind:name={config.name} />
   </div>
 
   {#snippet footerChildren()}

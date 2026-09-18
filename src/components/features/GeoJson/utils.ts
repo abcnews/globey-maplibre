@@ -319,7 +319,10 @@ function buildScaleColourExpression(config: GeoJsonConfig): any {
   const max = colourConfig?.max ?? 100;
   const minColour = colourConfig?.minColour || '#ffffff';
   const maxColour = colourConfig?.maxColour || '#ff0000';
-  const propExpr = ['to-number', ['get', colourProp || ''], min];
+  // Wrap with `coalesce` before `to-number` — see `numericPropExpression`'s doc comment:
+  // MapLibre converts a missing/null property to 0 during `to-number` conversion and treats
+  // that as a successful conversion, so a bare fallback arg is never actually used.
+  const propExpr = numericPropExpression(colourProp || '', min);
 
   const interpolator = getPaletteInterpolator(config);
   if (!interpolator) {

@@ -3,7 +3,7 @@ import type { ImageSourceConfig, DecodedObject } from '../../../lib/marker';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import { Z_INDEX_IMAGE_LAYERS } from '../layers/layerUtils.ts';
 import { CardImage as ImageIcon } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderImageSourceConfigModal from './BuilderImageSourceConfigModal.svelte';
 import ImageSourcesHandler from './ImageSourcesHandler.svelte';
 
@@ -14,9 +14,8 @@ export const imageSourceFeature: LayerFeatureDefinition<ImageSourceConfig> = {
   defaultZIndex: Z_INDEX_IMAGE_LAYERS,
   isMultiItem: true,
 
-  // A factory, not an array: the clock toggle's icon reflects the item's
-  // current `animationClock`, so it has to be resolved per item.
-  buttons: item => [createClockButton<ImageSourceConfig>(item),
+  // A factory, not an array: the goto button only appears once the item has coordinates.
+  buttons: item => [
     ...(item.data?.coordinates?.length
       ? [
           createGoToButton<ImageSourceConfig>({

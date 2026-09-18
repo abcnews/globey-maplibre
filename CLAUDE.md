@@ -24,8 +24,9 @@ Runtime feature code (buttons, modals, `getItems`) only ever touches `DecodedObj
 `src/components/features/` — each layer kind (GeoJson, Icon, ImageSource, MapRaster, MapLabels, CustomLabels, MapVector) is a self-contained `LayerFeatureDefinition` (see `types.ts`), registered in `src/components/features/index.ts` (`layerFeatureRegistry`). See `src/components/features/README.md` for the template when adding a new one.
 
 - `getItems(options)` turns raw `DecodedObject` arrays into `LayerItemDescriptor[]` for the Builder's layer list. Prefer the item's own explicit `name` set by whoever creates it; fall back to `feature.label` — don't recompute clever names from other fields.
-- Buttons come from `buttonHelpers.ts` (`createEditButton`, `createDeleteButton`, `createClockButton`, `createGoToButton`) or a per-feature `buttons` factory.
+- Buttons come from `buttonHelpers.ts` (`createEditButton`, `createDeleteButton`, `createGoToButton`) or a per-feature `buttons` factory.
 - `createGoToButton` flies/fits the map to a layer item via `getTarget(item)`, which resolves either a `{ type: 'point' }` or `{ type: 'bounds' }` `GoToTarget` — sync for GeoJson/Icon/ImageSource/MapRaster (they already store `coords`/`coordinates`/`bounds`), except GeoJson, which has no stored bounds at all and re-fetches (`fetchGeoJsonData` + `getGeoJsonCoordinatePairs`, `GeoJson/utils.ts`) and recomputes on every click. Only shown when the item actually has usable location data (e.g. MapRaster's optional `bounds` unset = whole world → button omitted). Bounds arrays get axis-aligned via `getBoundingBox()` (`PanZoom/utils.ts`) before `fitBounds` — same reduction `MapRasterHandler.svelte` uses for its own source `bounds`.
+- `LayerSettingsFields.svelte` (`src/components/features/`) is a generic, bindable `animationClock`/`name` field pair (two fieldsets, no `<Modal>` wrapper) embedded directly inside each of GeoJson/ImageSource/MapRaster/Icon's own `ConfigModal` — there is no longer a separate "clock" propList button/modal (`createClockButton`/`BuilderLayerClockConfigModal.svelte` were removed); editing a layer's timing and friendly name is folded into its own config modal, both on create (since `addLayer()` opens `ConfigModal` immediately after `createDefault()`) and on edit. Each host modal binds it to wherever that modal already tracks its draft (`config.x` directly for the two direct-bind modals, `draftConfig.x` for GeoJson, local `$state` vars for ImageSource/Icon) and is responsible for copying those fields onto `config` in its own save/commit step — `LayerSettingsFields` itself never touches `config`.
 - `src/components/Builder.legacy/` is dead code, not routed to anywhere active — don't extend it. A few standalone pieces (`GeoSearch`, `Favicon`) are directly reused by the active Builder rather than ported/duplicated; everything else there is off-limits.
 
 ## Modals
@@ -33,7 +34,7 @@ Runtime feature code (buttons, modals, `getItems`) only ever touches `DecodedObj
 All Builder config modals wrap `@abcnews/components-builder`'s `Modal` (native `<dialog>`, opens/closes itself, `footerChildren` snippet for Save/Cancel). Pattern: draft `$state` seeded via `untrack($state.snapshot(config))`, mutate the draft, commit onto the bindable `config` prop in a `handleSave()`, call `onclose?.()`.
 
 Two ways a modal gets opened from `Builder.layers.svelte`:
-- Per-item edit: `editingItem` state + `feature.ConfigModal`, or `editingItem.modalOverride` to force a shared modal (e.g. `BuilderLayerClockConfigModal.svelte`) regardless of feature kind.
+- Per-item edit: `editingItem` state + `feature.ConfigModal`.
 - Add-menu custom modal: `activeCustomModal` / `customModalOptions`.
 
 `handleCloseLayerModal()` commits via `feature.update`/`feature.isValid` — reuse it rather than writing new commit logic.

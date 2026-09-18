@@ -21,7 +21,6 @@
     type LayerButton,
     type LayerAddMenuItem
   } from '../features';
-  import BuilderLayerClockConfigModal from '../features/BuilderLayerClockConfigModal.svelte';
   import { safeFitBounds } from './utils.ts';
   import PropList from './PropList.svelte';
   import PropScreenshot from './PropScreenshot.svelte';
@@ -43,9 +42,6 @@
     feature: LayerFeatureDefinition<any>;
     descriptor: LayerItemDescriptor<any>;
     data: any;
-    // Overrides feature.ConfigModal — used by the shared clock/name modal, which
-    // applies to any multi-item feature rather than one specific layer kind.
-    modalOverride?: Component<any>;
   } | null>(null);
 
   let activeCustomModal = $state<Component<any> | null>(null);
@@ -149,16 +145,11 @@
     });
   }
 
-  function openEditModal(
-    feature: LayerFeatureDefinition<any>,
-    item: LayerItemDescriptor<any>,
-    modalOverride?: Component<any>
-  ) {
+  function openEditModal(feature: LayerFeatureDefinition<any>, item: LayerItemDescriptor<any>) {
     editingItem = {
       feature,
       descriptor: item,
-      data: JSON.parse(JSON.stringify(item.data)),
-      modalOverride
+      data: JSON.parse(JSON.stringify(item.data))
     };
     showAddMenu = false;
   }
@@ -557,12 +548,6 @@
                         const currentItems = item.feature.getItems(source);
                         const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
                         openEditModal(item.feature, matchingItem);
-                      },
-                      openClockModal: (overrideOptions?: typeof currentOptions) => {
-                        const source = overrideOptions ?? currentOptions;
-                        const currentItems = item.feature.getItems(source);
-                        const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
-                        openEditModal(item.feature, matchingItem, BuilderLayerClockConfigModal);
                       }
                     });
                   });
@@ -616,9 +601,7 @@
 <BuilderFrame {Viz} {Sidebar} />
 
 <!-- Modals -->
-{#if editingItem?.modalOverride}
-  <editingItem.modalOverride bind:config={editingItem.data} {map} onclose={handleCloseLayerModal} />
-{:else if editingItem?.feature.ConfigModal}
+{#if editingItem?.feature.ConfigModal}
   <editingItem.feature.ConfigModal bind:config={editingItem.data} {map} onclose={handleCloseLayerModal} />
 {/if}
 

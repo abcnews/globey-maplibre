@@ -101,8 +101,7 @@ describe('CustomLabels Feature Definition', () => {
       options,
       item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', zIndex: 600, data: options.labels },
       startInteractivePlacement: mockStartPlacement,
-      openModal: mockAddOpenModal,
-      openClockModal: vi.fn()
+      openModal: mockAddOpenModal
     });
 
     assert.strictEqual(mockStartPlacement.mock.calls.length, 1);
@@ -127,8 +126,7 @@ describe('CustomLabels Feature Definition', () => {
       options,
       item: { id: 'custom-labels', kind: 'customLabels', name: 'Custom Labels', zIndex: 600, data: options.labels },
       startInteractivePlacement: vi.fn(),
-      openModal: mockOpenModal,
-      openClockModal: vi.fn()
+      openModal: mockOpenModal
     });
     assert.strictEqual(mockOpenModal.mock.calls.length, 1);
   });

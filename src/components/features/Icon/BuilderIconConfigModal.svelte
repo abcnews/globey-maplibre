@@ -4,6 +4,7 @@
   import type { IconConfig } from '../../../lib/marker';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
   import CmidInput from '../../Builder/CmidInput/CmidInput.svelte';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   interface Props {
     /** The IconConfig object being edited or drafted */
@@ -17,6 +18,8 @@
   let committedCmid = $state<number>(untrack(() => config.cmid || 0));
   let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
   let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
+  let animationClock = $state(untrack(() => config.animationClock));
+  let name = $state(untrack(() => config.name));
 
   let imageState = $state<ImageState>({ status: 'loading' });
 
@@ -39,6 +42,8 @@
   function handleSave() {
     config.cmid = committedCmid;
     config.coords = [lng, lat];
+    config.animationClock = animationClock;
+    config.name = name;
     onclose?.();
   }
 
@@ -89,6 +94,8 @@
         />
       </div>
     </div>
+
+    <LayerSettingsFields bind:animationClock bind:name />
   </div>
 
   {#snippet footerChildren()}

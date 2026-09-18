@@ -25,8 +25,6 @@ export interface LayerButtonContext<T = any> {
    * otherwise reopen the modal with a stale, pre-mutation snapshot.
    */
   openModal: (options?: DecodedObject) => void;
-  /** Opens the shared animation clock / friendly name modal for this item */
-  openClockModal: (options?: DecodedObject) => void;
 }
 
 /**
