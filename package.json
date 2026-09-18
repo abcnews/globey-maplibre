@@ -1,7 +1,7 @@
 {
   "name": "globey-maplibre",
   "private": true,
-  "version": "0.2.0-prerelease.6",
+  "version": "0.2.0-prerelease.7",
   "description": "A MapLibre globe scrollyteller and builder",
   "license": "MIT",
   "type": "module",
