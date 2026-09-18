@@ -5,6 +5,7 @@
   import PastedScrollytellerGlobe from './PastedScrollytellerGlobe.svelte';
   import { parsePastedContent } from './parsePastedContent';
   import type { ScrollytellerDefinition } from '@abcnews/svelte-scrollyteller';
+  import type { DecodedObject } from '../../lib/marker';
 
   interface Props {
     /** Optional callback when returning to builder mode */
@@ -18,7 +19,14 @@
   let pastedContent = $state('');
   let scrollytellerDefinition = $state<ScrollytellerDefinition | null>(null);
   let error = $state('');
-  let activePanelData = $state<any>(null);
+  /** The panel currently active in PastedScrollytellerGlobe, plus the raw ACTO-parsed
+   *  object openInBuilder() needs to re-encode it as a hash. */
+  let activePanelData = $state<(DecodedObject & { originalData?: unknown }) | null>(null);
+  // Bumped on every successful parse so the {#key} below always forces a full
+  // destroy/recreate of PastedScrollytellerGlobe, even if the same text is pasted twice
+  // in a row — its internal state (currentPanel, the MapLibre instance, etc.) must never
+  // carry over between two different pasted docs.
+  let pasteId = $state(0);
 
   function loadFromText(text: string) {
     if (!text.trim()) {
@@ -29,6 +37,7 @@
       error = '';
       const definition = parsePastedContent({ text, name: 'globey' });
       scrollytellerDefinition = definition;
+      pasteId += 1;
       sessionStorage.setItem(STORAGE_KEY, text);
     } catch (e: any) {
       error = e.message || 'Unable to parse pasted content.';
@@ -80,12 +89,14 @@
 <BuilderStyleRoot>
   {#if scrollytellerDefinition}
     <div style:min-height="10000vh" class="scrolly-root">
-      <PastedScrollytellerGlobe
-        panels={scrollytellerDefinition.panels}
-        onMarker={data => {
-          activePanelData = data;
-        }}
-      />
+      {#key pasteId}
+        <PastedScrollytellerGlobe
+          panels={scrollytellerDefinition.panels}
+          onMarker={data => {
+            activePanelData = data;
+          }}
+        />
+      {/key}
       <div class="floaty">
         <button
           type="button"
@@ -122,7 +133,15 @@
             name="pastedContent"
             rows="14"
             bind:value={pastedContent}
-            placeholder={`#scrollytellerNAMEglobey1\n\nIntroductory story text...\n\n#mark...\n\nSecond panel text...\n\n#endscrollyteller`}
+            placeholder="#scrollytellerNAMEglobey1
+
+Introductory story text...
+
+#mark...
+
+Second panel text...
+
+#endscrollyteller"
           ></textarea>
         </label>
 

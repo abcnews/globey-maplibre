@@ -33,7 +33,7 @@
   let naturalWidth = $state(0);
   let naturalHeight = $state(0);
 
-  function handleSave(goto = false) {
+  function handleSave() {
     if (!isValidUrl(url)) {
       alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
       return;
@@ -53,8 +53,7 @@
       opacity,
       coordinates
     });
-    const bounds = goto && coordinates?.length > 0 ? (coordinates as [number, number][]) : undefined;
-    onclose?.(bounds);
+    onclose?.();
   }
 
   function handleImageLoad(e: Event) {
@@ -108,7 +107,6 @@
 
 {#snippet footerChildren()}
   <button onclick={() => handleSave()}>Save</button>
-  <button onclick={() => handleSave(true)}>Save and Go To</button>
   <button onclick={() => onclose?.()}>Cancel</button>
 {/snippet}
 

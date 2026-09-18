@@ -11,6 +11,11 @@
   let pastedContent = $state('');
   let scrollytellerDefinition = $state<ScrollytellerDefinition | null>(null);
   let error = $state('');
+  // Bumped on every successful parse so the {#key} below always forces a full
+  // destroy/recreate of ScrollytellerGlobe, even if the same text is pasted twice in a
+  // row — the mode component's own internal state (currentPanel, the MapLibre instance,
+  // TweenController, etc.) must never carry over between two different pasted docs.
+  let pasteId = $state(0);
 
   function loadFromText(text: string) {
     if (!text.trim()) {
@@ -20,6 +25,7 @@
     try {
       error = '';
       scrollytellerDefinition = parsePastedContent({ text, name: MARKER_NAME });
+      pasteId += 1;
       sessionStorage.setItem(STORAGE_KEY, text);
     } catch (e: any) {
       error = e.message || 'Unable to parse pasted content.';
@@ -47,7 +53,9 @@
   </div>
 {:else if scrollytellerDefinition}
   <div style:min-height="10000vh" class="scrolly-root">
-    <ScrollytellerGlobe jsonBlob={$jsonBlob} panels={scrollytellerDefinition.panels} />
+    {#key pasteId}
+      <ScrollytellerGlobe jsonBlob={$jsonBlob} panels={scrollytellerDefinition.panels} />
+    {/key}
     <div class="floaty">
       <button type="button" onclick={() => (scrollytellerDefinition = null)}>Paste another doc</button>
     </div>

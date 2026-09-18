@@ -13,7 +13,7 @@
     /** The GeoJsonConfig object being edited or drafted */
     config: GeoJsonConfig;
     /** Callback fired when the modal requests to close */
-    onclose?: (bounds?: [number, number][]) => void;
+    onclose?: () => void;
   }
 
   let { config = $bindable(), onclose }: Props = $props();
@@ -169,7 +169,7 @@
     }
   }
 
-  function handleSave(goto = false) {
+  function handleSave() {
     const trimmed = rawSourceInput.trim();
     if (!trimmed) {
       alert('Please enter a valid CMID or URL.');
@@ -199,70 +199,12 @@
     }
     console.log('[BuilderGeoJsonConfigModal handleSave] Saved config:', $state.snapshot(config));
 
-    let bounds: [number, number][] | undefined = undefined;
-    if (goto && rawFeatures.length > 0) {
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
-
-      const processGeometry = (geom: any) => {
-        if (!geom) return;
-        if (geom.type === 'Point') {
-          const [x, y] = geom.coordinates;
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
-        } else if (geom.type === 'LineString' || geom.type === 'MultiPoint') {
-          geom.coordinates.forEach(([x, y]: [number, number]) => {
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-          });
-        } else if (geom.type === 'Polygon' || geom.type === 'MultiLineString') {
-          geom.coordinates.forEach((ring: any) => {
-            ring.forEach(([x, y]: [number, number]) => {
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x);
-              maxY = Math.max(maxY, y);
-            });
-          });
-        } else if (geom.type === 'MultiPolygon') {
-          geom.coordinates.forEach((poly: any) => {
-            poly.forEach((ring: any) => {
-              ring.forEach(([x, y]: [number, number]) => {
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
-              });
-            });
-          });
-        } else if (geom.type === 'GeometryCollection') {
-          geom.geometries.forEach(processGeometry);
-        }
-      };
-
-      rawFeatures.forEach(f => processGeometry(f.geometry));
-
-      if (minX !== Infinity) {
-        bounds = [
-          [minX, minY],
-          [maxX, maxY]
-        ];
-      }
-    }
-
-    onclose?.(bounds);
+    onclose?.();
   }
 </script>
 
 {#snippet footerChildren()}
-  <button onclick={() => handleSave(false)}>Save</button>
-  <button onclick={() => handleSave(true)}>Save and Go To</button>
+  <button onclick={handleSave}>Save</button>
   <button onclick={() => onclose?.()}>Cancel</button>
 {/snippet}
 

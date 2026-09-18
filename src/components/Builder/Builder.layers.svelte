@@ -51,6 +51,14 @@
   let activeCustomModal = $state<Component<any> | null>(null);
   let customModalOptions = $state<typeof currentOptions | null>(null);
   let showAddMenu = $state(false);
+  let addMenuContainer = $state<HTMLDivElement>();
+
+  /** Closes the add-layer menu on any click outside its own trigger/dropdown. */
+  function handleWindowClick(event: MouseEvent) {
+    if (showAddMenu && !addMenuContainer?.contains(event.target as Node)) {
+      showAddMenu = false;
+    }
+  }
 
   let activePlacement = $state<{
     feature?: LayerFeatureDefinition<any>;
@@ -477,7 +485,7 @@
     <fieldset class="prop-layers">
       <legend>
         <span>Layers ({layers.length})</span>
-        <div class="add-container">
+        <div class="add-container" bind:this={addMenuContainer}>
           <button
             class="btn-icon"
             aria-label="Add Layer"
@@ -602,6 +610,8 @@
     </fieldset>
   {/if}
 {/snippet}
+
+<svelte:window onclick={handleWindowClick} />
 
 <BuilderFrame {Viz} {Sidebar} />
 
