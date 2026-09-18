@@ -53,6 +53,12 @@ export const Z_INDEX_UI_OVERLAYS = 700;
 export const SUB_LAYER_OUTLINE_OFFSET = 0.001;
 
 /**
+ * Small step used to stack one dynamically-placed layer directly above another
+ * without colliding with its exact Z-Index.
+ */
+export const Z_INDEX_STACK_STEP = 0.0001;
+
+/**
  * Registry mapping Map instance -> Map<layerId, zIndex>.
  * Using WeakMap ensures layer registries are automatically garbage-collected when the map is destroyed.
  */
@@ -108,6 +114,32 @@ export function findBeforeIdForZIndex(map: MapLibreMap, targetZIndex: number): s
   });
 
   return targetLayer?.id;
+}
+
+/**
+ * Finds the highest currently-registered Z-Index strictly below a ceiling.
+ *
+ * Used to stack a new layer directly above whatever is currently the topmost
+ * layer within a given tier (e.g. base raster/vector layers), rather than
+ * pinning it to a fixed tier constant regardless of what else is on the map.
+ *
+ * @param map MapLibre Map instance
+ * @param ceiling Exclusive upper bound - only registered Z-Indices below this are considered
+ * @returns The highest registered Z-Index below `ceiling`, or undefined if none are registered
+ */
+export function getHighestZIndexBelow(map: MapLibreMap, ceiling: number): number | undefined {
+  if (!map) return undefined;
+
+  const registry = getMapRegistry(map);
+  let highest: number | undefined;
+
+  for (const registeredZ of registry.values()) {
+    if (registeredZ < ceiling && (highest === undefined || registeredZ > highest)) {
+      highest = registeredZ;
+    }
+  }
+
+  return highest;
 }
 
 /**

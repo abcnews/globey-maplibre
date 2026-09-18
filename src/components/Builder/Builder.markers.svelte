@@ -47,7 +47,7 @@
   // must replace before publishing. Editable in case the auto-filled value is wrong or
   // the JSON wasn't loaded from CoreMedia at all.
   let openerCmid = $state($jsonBlob?.sourceCmid ? String($jsonBlob.sourceCmid) : 'fixme');
-  const scrollytellerOpener = $derived(`#scrollytellerNAME${MARKER_NAME}${openerCmid}`);
+  const scrollytellerOpener = $derived(`#scrollytellerNAME${MARKER_NAME}CMID${openerCmid}`);
 
   $effect(() => {
     const hash = `mark${encodeMarker($state.snapshot(markerConfig))}`;

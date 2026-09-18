@@ -98,10 +98,17 @@
 
   /* BuilderFrame (from @abcnews/components-builder) positions itself absolutely against
      the viewport (position: absolute; top: 0; height: 100vh) — override it to fill this
-     container instead, so it sits below the top bar rather than overlapping it. */
+     container instead, so it sits below the top bar rather than overlapping it.
+     Its sidebar column sets its own explicit height: 100vh independently of the frame's
+     height, so it also needs overriding — otherwise it overflows the bottom of the
+     viewport by the top bar's height even though the frame itself is sized correctly. */
   .builder-content :global(.builder-frame) {
     position: absolute;
     top: 0;
+    height: 100%;
+  }
+
+  .builder-content :global(.builder-frame__sidebar) {
     height: 100%;
   }
 

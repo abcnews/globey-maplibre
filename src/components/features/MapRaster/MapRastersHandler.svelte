@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { RasterLayerConfig } from '../../../lib/marker/types.ts';
-  import { Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
   import { buildTweenedLayerEntries } from '../layers/tweenedLayers.ts';
   import MapRasterHandler from './MapRasterHandler.svelte';
 
@@ -22,6 +21,6 @@
     opacityStops={entry.opacityStops}
     animationClock={entry.representative.animationClock}
     bounds={entry.representative.bounds}
-    zIndex={entry.representative.zIndex ?? Z_INDEX_BASE_RASTER + entry.index * 0.1}
+    zIndex={entry.representative.zIndex}
   />
 {/each}
