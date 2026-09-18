@@ -43,7 +43,7 @@
 
 {#if !$jsonBlob}
   <div class="notice">
-    <p>No JSON blob is loaded yet — load or create one in Layout Mode first.</p>
+    <p>No JSON blob is loaded yet — load or create one in Layers Mode first.</p>
   </div>
 {:else if scrollytellerDefinition}
   <div style:min-height="10000vh" class="scrolly-root">

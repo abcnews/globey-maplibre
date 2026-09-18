@@ -28,7 +28,12 @@
   import IframeUrl from './IframeUrl.svelte';
   import { Plus, X } from 'svelte-bootstrap-icons';
 
-  let map = $state<MapLibreMap>();
+  interface Props {
+    /** Shared MapLibre instance, lifted to Builder.svelte so BuilderTopBar's location search can drive it too. */
+    map?: MapLibreMap;
+  }
+
+  let { map = $bindable() }: Props = $props();
 
   // Reactive DecodedObject derived from $jsonBlob
   const currentOptions = $derived(blobToDecodedObject($jsonBlob));
@@ -51,7 +56,7 @@
     feature?: LayerFeatureDefinition<any>;
     prompt: string;
     item?: any;
-    customHandler?: (coords: [number, number], item?: any) => void;
+    customHandler?: (coords: [number, number], item: any, options: typeof currentOptions) => void;
   } | null>(null);
 
   // JSON Inspect / Edit Modal state
@@ -219,7 +224,12 @@
       const handler = activePlacement.customHandler;
       const item = activePlacement.item;
       activePlacement = null;
-      handler(coords, item);
+      // Re-enter mutateDecoded here (at actual click time) rather than relying on the
+      // draft passed to the button's onclick — that draft is already discarded by the
+      // time an async map click fires, so mutating it silently loses the change.
+      mutateDecoded(draft => {
+        handler(coords, item, draft);
+      });
       return;
     }
 
@@ -530,13 +540,19 @@
                       item: draftItem,
                       map,
                       startInteractivePlacement,
-                      openModal: () => {
-                        const currentItems = item.feature.getItems(currentOptions);
+                      openModal: (overrideOptions?: typeof currentOptions) => {
+                        // Interactive-placement handlers (e.g. CustomLabels' "add label")
+                        // call this from inside the current mutateDecoded's fn, before
+                        // jsonBlob.set() commits — currentOptions is still stale at that
+                        // point, so prefer the caller's own mutated draft when given one.
+                        const source = overrideOptions ?? currentOptions;
+                        const currentItems = item.feature.getItems(source);
                         const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
                         openEditModal(item.feature, matchingItem);
                       },
-                      openClockModal: () => {
-                        const currentItems = item.feature.getItems(currentOptions);
+                      openClockModal: (overrideOptions?: typeof currentOptions) => {
+                        const source = overrideOptions ?? currentOptions;
+                        const currentItems = item.feature.getItems(source);
                         const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
                         openEditModal(item.feature, matchingItem, BuilderLayerClockConfigModal);
                       }

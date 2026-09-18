@@ -169,10 +169,12 @@ buttons: [
     title: 'Add label',
     ariaLabel: 'Add label',
     icon: Plus,
-    onclick: ({ options, startInteractivePlacement }) => {
+    onclick: ({ startInteractivePlacement }) => {
       startInteractivePlacement({
         prompt: 'Click on the map to place a label',
-        onMapClick: (coords) => {
+        // `options` here is a fresh draft supplied at actual click time — don't close
+        // over the outer `options`/`draft`, which is discarded before the map is clicked.
+        onMapClick: (coords, _item, options) => {
           options.labels = [...(options.labels || []), { name: 'Label', coords, style: 'country-large', number: 0 }];
         }
       });

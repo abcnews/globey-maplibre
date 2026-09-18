@@ -44,18 +44,18 @@ export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
       title: 'Add label',
       ariaLabel: 'Add label',
       icon: Plus,
-      onclick: ({ options, startInteractivePlacement, openModal }) => {
+      onclick: ({ startInteractivePlacement, openModal }) => {
         startInteractivePlacement({
           prompt: 'Click on the map to place a label',
-          onMapClick: coords => {
+          onMapClick: (coords, _item, freshOptions) => {
             const newLabel: Label = {
               name: 'Label',
               coords,
               style: 'country-large',
               number: 0
             };
-            options.labels = [...(options.labels || []), newLabel];
-            openModal();
+            freshOptions.labels = [...(freshOptions.labels || []), newLabel];
+            openModal(freshOptions);
           }
         });
       }

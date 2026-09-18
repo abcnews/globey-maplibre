@@ -7,6 +7,12 @@
   import BuilderTopBar from './BuilderTopBar.svelte';
   import Favicon from './Favicon/Favicon.svelte';
   import { BuilderStyleRoot } from '@abcnews/components-builder';
+  import type { Map as MapLibreMap } from 'maplibre-gl';
+
+  /** Shared MapLibre instance — whichever of Layers/Markers mode is mounted binds its own
+   *  CustomGlobe map into this, so BuilderTopBar's location search can drive it regardless
+   *  of which mode is active (only one mode is ever mounted at a time). */
+  let map = $state<MapLibreMap>();
 
   /**
    * Router determines whether a project JSON blob is active.
@@ -66,16 +72,16 @@
 <Favicon />
 
 <div class="app-shell">
-  <BuilderTopBar {activeMode} {hasBlob} onSetMode={setMode} />
+  <BuilderTopBar {activeMode} {hasBlob} {map} onSetMode={setMode} />
 
   <div class="builder-content">
     <BuilderStyleRoot>
       {#if activeMode === 'newmap' || !hasBlob}
         <BuilderFirstrun onsuccess={() => setMode('layout')} />
       {:else if activeMode === 'layout'}
-        <BuilderLayers />
+        <BuilderLayers bind:map />
       {:else if activeMode === 'markers'}
-        <BuilderMarkers />
+        <BuilderMarkers bind:map />
       {:else}
         <BuilderPastedScrollyteller />
       {/if}

@@ -15,12 +15,18 @@ export interface LayerButtonContext<T = any> {
   /** Starts interactive map click placement */
   startInteractivePlacement: (placement: {
     prompt: string;
-    onMapClick: (coords: [number, number], item?: any) => void;
+    /** `options` is a fresh draft supplied at actual click time, not the stale one from button-click time */
+    onMapClick: (coords: [number, number], item: any, options: DecodedObject) => void;
   }) => void;
-  /** Opens the layer's configuration modal */
-  openModal: () => void;
+  /**
+   * Opens the layer's configuration modal. Pass the mutated draft/options directly
+   * (e.g. from an interactive-placement `onMapClick`) rather than relying on the
+   * live store — calling this before the enclosing `mutateDecoded` commits would
+   * otherwise reopen the modal with a stale, pre-mutation snapshot.
+   */
+  openModal: (options?: DecodedObject) => void;
   /** Opens the shared animation clock / friendly name modal for this item */
-  openClockModal: () => void;
+  openClockModal: (options?: DecodedObject) => void;
 }
 
 /**

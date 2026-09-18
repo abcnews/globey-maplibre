@@ -119,7 +119,7 @@
 </ul>
 
 {#if layers.length === 0}
-  <small>No layers defined yet — add some in Layout Mode first.</small>
+  <small>No layers defined yet — add some in Layers Mode first.</small>
 {/if}
 
 <style>

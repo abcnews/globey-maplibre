@@ -10,7 +10,12 @@
   import PropMarkerPosition from './PropMarkerPosition.svelte';
   import { MARKER_NAME } from '../../lib/constants.ts';
 
-  let map = $state<MapLibreMap>();
+  interface Props {
+    /** Shared MapLibre instance, lifted to Builder.svelte so BuilderTopBar's location search can drive it too. */
+    map?: MapLibreMap;
+  }
+
+  let { map = $bindable() }: Props = $props();
 
   // The marker currently being edited. Kept in sync with `window.location.hash` — not
   // persisted by the app at all, since markers live in the published story's URL hash,

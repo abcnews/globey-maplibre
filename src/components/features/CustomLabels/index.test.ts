@@ -109,11 +109,17 @@ describe('CustomLabels Feature Definition', () => {
     const placementArg = mockStartPlacement.mock.calls[0][0];
     assert.strictEqual(placementArg.prompt, 'Click on the map to place a label');
 
-    // Simulate placing a label
-    placementArg.onMapClick([120, -20]);
+    // Simulate placing a label — Builder.layers.svelte passes a fresh options draft
+    // as the third arg at actual click time, not the (possibly stale) options above.
+    placementArg.onMapClick([120, -20], undefined, options);
     assert.strictEqual(options.labels?.length, 1);
     assert.deepStrictEqual(options.labels?.[0].coords, [120, -20]);
     assert.strictEqual(mockAddOpenModal.mock.calls.length, 1);
+
+    // Simulate placing a second label — this should append, not replace
+    placementArg.onMapClick([130, -10], undefined, options);
+    assert.strictEqual(options.labels?.length, 2);
+    assert.deepStrictEqual(options.labels?.[1].coords, [130, -10]);
 
     // Test edit button onclick
     const mockOpenModal = vi.fn();
