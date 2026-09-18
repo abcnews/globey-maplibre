@@ -1,6 +1,8 @@
-import { ClockHistory, Pencil, Trash } from 'svelte-bootstrap-icons';
+import { ClockHistory, Pencil, PinAngle, Trash } from 'svelte-bootstrap-icons';
 import type { LayerButton, LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
 import type { DecodedObject } from '../../lib/marker';
+import { safeFitBounds, safeFlyTo } from '../Builder/utils.ts';
+import { getBoundingBox } from './PanZoom/utils.ts';
 
 /**
  * Creates a standard Edit action button that opens the feature's configuration modal.
@@ -56,6 +58,53 @@ export function createClockButton<T = any>(item: LayerItemDescriptor<T>): LayerB
     icon: ClockHistory,
     onclick: ({ openClockModal }) => {
       openClockModal();
+    }
+  };
+}
+
+/** Where a "go to layer" click should fly/fit the map to. */
+export type GoToTarget = { type: 'point'; coords: [number, number] } | { type: 'bounds'; bounds: [number, number][] };
+
+/**
+ * Creates a standard "Go to layer" action button that flies/fits the map to wherever the
+ * layer item currently is. `getTarget` may resolve synchronously (icon/image/raster, which
+ * already store their own coordinates) or asynchronously (GeoJSON, which has no stored bounds
+ * and must be re-fetched on every click to compute them).
+ */
+export function createGoToButton<T = any>({
+  title = 'Go to layer',
+  getTarget
+}: {
+  title?: string;
+  getTarget: (item: LayerItemDescriptor<T>) => GoToTarget | undefined | Promise<GoToTarget | undefined>;
+}): LayerButton<T> {
+  return {
+    id: 'goto',
+    title,
+    ariaLabel: title,
+    icon: PinAngle,
+    onclick: ({ item, map }) => {
+      if (!map) return;
+
+      Promise.resolve(getTarget(item))
+        .then(target => {
+          if (!target || !map) return;
+
+          if (target.type === 'point') {
+            safeFlyTo(map, { center: target.coords, zoom: Math.max(map.getZoom(), 6) });
+          } else {
+            const { minLng, minLat, maxLng, maxLat } = getBoundingBox(target.bounds);
+            safeFitBounds(
+              map,
+              [
+                [minLng, minLat],
+                [maxLng, maxLat]
+              ],
+              { padding: 50 }
+            );
+          }
+        })
+        .catch(err => console.error('[createGoToButton] Failed to resolve go-to target:', err));
     }
   };
 }

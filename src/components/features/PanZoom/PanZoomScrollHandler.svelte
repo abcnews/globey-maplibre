@@ -44,7 +44,9 @@
   let startView = $derived(views[tween.fromPanel]);
   let targetView = $derived(views[tween.toPanel] ?? startView);
   let interpolator = $derived(
-    startView && targetView && startView !== targetView ? createZoomInterpolator(startView, targetView) : null
+    startView && targetView && startView !== targetView
+      ? createZoomInterpolator(startView, targetView, undefined, containerDimensions.width)
+      : null
   );
 
   // Apply the blended camera position each time the tween advances. The central

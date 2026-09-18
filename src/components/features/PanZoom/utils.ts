@@ -210,7 +210,8 @@ export function easeInOutCubic(t: number): number {
 export function createZoomInterpolator(
   from: ViewState,
   to: ViewState,
-  ease: (t: number) => number = easeInOutCubic
+  ease: (t: number) => number = easeInOutCubic,
+  viewportWidthPx: number = WORLD_SIZE_AT_ZOOM_0
 ): (t: number) => ViewState {
   const [ux0, uy0, w0] = latLngZoomToViewport(from.center, from.zoom);
   let [ux1, uy1, w1] = latLngZoomToViewport(to.center, to.zoom);
@@ -221,6 +222,31 @@ export function createZoomInterpolator(
     ux1 -= 1.0;
   } else if (dx < -0.5) {
     ux1 += 1.0;
+  }
+
+  // w is proportional to a single WORLD_SIZE_AT_ZOOM_0-px tile at that zoom, not the
+  // actual on-screen viewport (which is usually much wider) -- scale it up to the real
+  // container width before using it as a viewport half-extent, or every overlap check
+  // undercounts by however much wider than one tile the container actually is.
+  const widthScale = viewportWidthPx / WORLD_SIZE_AT_ZOOM_0;
+
+  // The Van Wijk & Nuij path always zooms out to frame both viewports before
+  // zooming back in to the target -- dramatic for far-apart locations, but
+  // overkill (and visually jarring) when the destination viewport already
+  // overlaps the starting one. In that case a straight linear zoom (centre
+  // and zoom each eased independently) reads as a simple pan/zoom instead.
+  const viewportsOverlap =
+    Math.abs(ux1 - ux0) < ((w0 + w1) / 2) * widthScale &&
+    Math.abs(uy1 - uy0) < ((w0 + w1) / 2) * widthScale;
+
+  if (viewportsOverlap) {
+    return (t: number) => {
+      const easedT = ease(Math.max(0, Math.min(1, t)));
+      const ux = ux0 + (ux1 - ux0) * easedT;
+      const uy = uy0 + (uy1 - uy0) * easedT;
+      const zoom = from.zoom + (to.zoom - from.zoom) * easedT;
+      return viewportToLatLngZoom([ux, uy, Math.pow(2, -zoom)]);
+    };
   }
 
   const interpolator = interpolateZoom([ux0, uy0, w0], [ux1, uy1, w1]);

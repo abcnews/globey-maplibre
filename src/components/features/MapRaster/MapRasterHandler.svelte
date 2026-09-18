@@ -12,6 +12,7 @@
   import { addFadingLayer } from '../layers/tweenedLayers.ts';
   import { layerClockKey } from '../Tween/utils.ts';
   import type { AnimationMode } from '../Tween/types.ts';
+  import { getBoundingBox } from '../PanZoom/utils.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
@@ -74,14 +75,11 @@
         // MapLibre raster bounds are strictly axis-aligned, unlike the TL/TR/BR/BL
         // corners stored on the layer — so any implied rotation is discarded by
         // taking the bounding min/max of the 4 corners.
-        const axisAlignedBounds = s_bounds?.length
-          ? ([
-              Math.min(...s_bounds.map(([lng]) => lng)),
-              Math.min(...s_bounds.map(([, lat]) => lat)),
-              Math.max(...s_bounds.map(([lng]) => lng)),
-              Math.max(...s_bounds.map(([, lat]) => lat))
-            ] as [number, number, number, number])
-          : undefined;
+        let axisAlignedBounds: [number, number, number, number] | undefined;
+        if (s_bounds?.length) {
+          const { minLng, minLat, maxLng, maxLat } = getBoundingBox(s_bounds as [number, number][]);
+          axisAlignedBounds = [minLng, minLat, maxLng, maxLat];
+        }
 
         map.addSource(sourceId, {
           type: 'raster',

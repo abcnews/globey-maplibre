@@ -77,6 +77,41 @@ export async function fetchGeoJsonData(source: { cmid?: number | string; url?: s
   return geojson;
 }
 
+/** Recursively flattens a GeoJSON geometry's nested `coordinates` array into `[lng, lat]` pairs. */
+function collectCoordinatePairs(geometry: any, out: [number, number][]): void {
+  if (!geometry) return;
+
+  if (geometry.type === 'GeometryCollection') {
+    geometry.geometries?.forEach((g: any) => collectCoordinatePairs(g, out));
+    return;
+  }
+
+  const flatten = (value: any): void => {
+    if (typeof value[0] === 'number') {
+      out.push([value[0], value[1]]);
+    } else {
+      value.forEach(flatten);
+    }
+  };
+
+  if (geometry.coordinates) flatten(geometry.coordinates);
+}
+
+/**
+ * Extracts every coordinate pair from a fetched GeoJSON/TopoJSON payload (as normalized by
+ * `fetchGeoJsonData`), for bounds-fitting — e.g. the "Go to layer" button, which has no
+ * stored bounds to work from and must derive them from the live data on each click.
+ */
+export function getGeoJsonCoordinatePairs(geojson: any): [number, number][] {
+  const out: [number, number][] = [];
+  const features =
+    geojson?.type === 'FeatureCollection' ? geojson.features : geojson?.type === 'Feature' ? [geojson] : geojson ? [{ geometry: geojson }] : [];
+
+  features?.forEach((f: any) => collectCoordinatePairs(f.geometry ?? f, out));
+
+  return out;
+}
+
 /** Earth equatorial circumference in kilometres */
 export const EARTH_CIRCUMFERENCE_KM = 40075;
 

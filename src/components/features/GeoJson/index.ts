@@ -3,9 +3,10 @@ import type { GeoJsonConfig, DecodedObject } from '../../../lib/marker';
 import { isValidUrl } from '../../../lib/marker/utils.ts';
 import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton } from '../buttonHelpers.ts';
+import { createClockButton, createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderGeoJsonConfigModal from './BuilderGeoJsonConfigModal.svelte';
 import GeoJsonsHandler from './GeoJsonsHandler.svelte';
+import { fetchGeoJsonData, getGeoJsonCoordinatePairs } from './utils.ts';
 
 export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   kind: 'geojson',
@@ -17,6 +18,24 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonConfig> = {
   // A factory, not an array: the clock toggle's icon reflects the item's
   // current `animationClock`, so it has to be resolved per item.
   buttons: item => [createClockButton<GeoJsonConfig>(item),
+    ...(item.data?.cmid || item.data?.url
+      ? [
+          createGoToButton<GeoJsonConfig>({
+            title: 'Go to GeoJSON layer',
+            getTarget: async i => {
+              if (!i.data?.cmid && !i.data?.url) return undefined;
+              try {
+                const geojson = await fetchGeoJsonData({ cmid: i.data.cmid, url: i.data.url });
+                const bounds = getGeoJsonCoordinatePairs(geojson);
+                return bounds.length ? { type: 'bounds', bounds } : undefined;
+              } catch (err) {
+                console.error('[geoJsonFeature] Go-to fetch failed:', err);
+                return undefined;
+              }
+            }
+          })
+        ]
+      : []),
     createEditButton<GeoJsonConfig>({ title: 'Edit GeoJSON layer' }),
     createDeleteButton<GeoJsonConfig>({ title: 'Delete GeoJSON layer' })
   ],
