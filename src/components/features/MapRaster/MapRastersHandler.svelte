@@ -17,7 +17,6 @@
     url={entry.representative.url}
     maxZoom={entry.representative.maxZoom ?? 7}
     tileSize={entry.representative.tileSize ?? 256}
-    attribution={entry.representative.attribution}
     opacityStops={entry.opacityStops}
     animationClock={entry.representative.animationClock}
     bounds={entry.representative.bounds}

@@ -6,11 +6,14 @@
   let {
     attribution,
     base,
-    hideOsm = false
+    hideOsm = false,
+    layerAttributions = []
   }: {
     attribution?: string;
     base?: string;
     hideOsm?: boolean;
+    /** Visible layer credits for the active panel; passed as custom attribution to prevent MapLibre crediting zero-opacity layers. */
+    layerAttributions?: string[];
   } = $props();
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
@@ -32,11 +35,18 @@
       );
     }
 
+    customAttribution.push(
+      ...layerAttributions
+        .flatMap(entry => entry.split(','))
+        .map(entry => escapeHTML(entry))
+        .filter(Boolean)
+    );
+
     if (!hideOsm && isOsmBase(base)) {
       customAttribution.push('<a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>');
     }
 
-    const finalAttribution = customAttribution.join(', ');
+    const finalAttribution = [...new Set(customAttribution)].join(', ');
 
     if (attributionControl) {
       map.removeControl(attributionControl);

@@ -117,6 +117,13 @@
     );
   });
 
+  // Credits only the layers present in the panel on screen — raster sources stay
+  // mounted (faded out) across every panel, so their own source `attribution`
+  // would credit layers that aren't visible.
+  const visibleLayerAttributions = $derived(
+    (options.rasterLayers ?? []).map(raster => raster.attribution ?? '').filter(Boolean)
+  );
+
   const hasDarkRaster = $derived((options.rasterLayers || []).some(r => r.darkTheme));
   const isSatellite = $derived(hasDarkRaster);
   const isDark = $derived(isSatellite || isDarkBase(options.base || 'street'));
@@ -187,7 +194,12 @@
 >
   <div class="maplibre" bind:this={mapContainer} style={rootElStyle}>
     {#if mapInstance.map}
-      <AttributionHandler attribution={options.attribution} base={options.base} hideOsm={options.hideOsm} />
+      <AttributionHandler
+        attribution={options.attribution}
+        base={options.base}
+        hideOsm={options.hideOsm}
+        layerAttributions={visibleLayerAttributions}
+      />
       <ProjectionHandler projection={options.projection} />
       {#if panels && panelPct !== undefined}
         <PanZoomScrollHandler />

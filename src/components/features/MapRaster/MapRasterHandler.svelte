@@ -28,7 +28,6 @@
 
   let {
     url,
-    attribution,
     id = 'raster-base',
     maxZoom = 7,
     tileSize = 256,
@@ -40,7 +39,6 @@
     bounds
   }: {
     url: string;
-    attribution?: string;
     id?: string;
     maxZoom?: number;
     tileSize?: number;
@@ -62,7 +60,6 @@
 
     const sourceId = `${id}-source`;
     const s_url = url;
-    const s_attribution = attribution;
     const s_maxZoom = maxZoom;
     const s_tileSize = tileSize;
     const s_opacityStops = opacityStops;
@@ -85,7 +82,6 @@
           type: 'raster',
           tiles: [s_url],
           tileSize: s_tileSize,
-          attribution: s_attribution,
           maxzoom: s_maxZoom,
           ...(axisAlignedBounds ? { bounds: axisAlignedBounds } : {})
         });
