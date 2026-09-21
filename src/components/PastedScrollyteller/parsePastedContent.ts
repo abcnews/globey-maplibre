@@ -49,7 +49,10 @@ export function parsePastedContent({
     });
     elements = Array.from(body.children) as HTMLElement[];
   } else {
-    const rawLines = trimmed.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+    const rawLines = trimmed
+      .split(/\r?\n/)
+      .map(line => line.trim())
+      .filter(Boolean);
     elements = rawLines.map(line => {
       if (line.startsWith('#')) {
         return mountTextToMountEl(line);

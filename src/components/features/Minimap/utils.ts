@@ -1,9 +1,9 @@
 import type { Map } from 'maplibre-gl';
 
-export const LONGITUDE_SPAN_DEGREES = 360;
+const LONGITUDE_SPAN_DEGREES = 360;
 
 /** Pixel size below which the projected viewport rectangle collapses to a single dot. */
-export const MIN_RECTANGLE_PX = 5;
+const MIN_RECTANGLE_PX = 5;
 
 /**
  * Shifts `lng` by whole turns of 360 so it lands within 180 degrees of `referenceLng`.
@@ -29,13 +29,8 @@ export function normaliseLongitude(lng: number): number {
  * maplibre accepts longitudes outside [-180, 180] and renders them in the correct world copy,
  * so the outline wraps the short way across the date line.
  */
-export function buildViewportRing(
-  corners: [number, number][],
-  centreLng: number
-): [number, number][] {
-  const ring = corners.map(
-    ([lng, lat]) => [unwrapLongitude(lng, centreLng), lat] as [number, number]
-  );
+export function buildViewportRing(corners: [number, number][], centreLng: number): [number, number][] {
+  const ring = corners.map(([lng, lat]) => [unwrapLongitude(lng, centreLng), lat] as [number, number]);
   return [...ring, ring[0]];
 }
 

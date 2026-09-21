@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { IconConfig } from '../../../lib/marker';
+  import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Stacked } from '../../../lib/data/stack.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
@@ -23,13 +24,13 @@
   let {
     config,
     id = config.id,
-    zIndex = config.zIndex ?? Z_INDEX_CUSTOM_LABELS,
+    zIndex = config.zIndex,
     /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
     opacityStops = [1],
     /** One `[lng, lat]` per panel; null where the icon is absent. */
     coordStops = [config.coords ?? null]
   }: {
-    config: IconConfig;
+    config: Stacked<IconLayer>;
     id?: string;
     zIndex?: number;
     opacityStops?: number[];
@@ -199,7 +200,7 @@
   // Z-INDEX EFFECT: Updates stacking position when zIndex changes
   $effect(() => {
     const map = mapRoot.map;
-    const targetZ = zIndex ?? config.zIndex;
+    const targetZ = zIndex;
     const lid = currentLid;
     if (!map || !map.getLayer(lid) || targetZ === undefined) return;
 

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { IconConfig } from '../../../lib/marker';
-  import { Z_INDEX_CUSTOM_LABELS } from '../layers/layerUtils.ts';
+  import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Stacked } from '../../../lib/data/stack.ts';
   import { buildTweenedLayerEntries } from '../layers/tweenedLayers.ts';
   import IconHandler from './IconHandler.svelte';
 
   // One icon array per panel (built by CustomGlobe).
-  let { perPanel = [] }: { perPanel?: IconConfig[][] } = $props();
+  let { perPanel = [] }: { perPanel?: Stacked<IconLayer>[][] } = $props();
 
   const entries = $derived(
     buildTweenedLayerEntries(perPanel, {
-      keyOf: icon => icon.id || (icon.cmid ? String(icon.cmid) : ''),
+      keyOf: icon => icon.id,
       coordsOf: icon => icon.coords
     })
   );
@@ -21,6 +21,6 @@
     id={entry.key}
     opacityStops={entry.opacityStops}
     coordStops={entry.coordStops}
-    zIndex={entry.representative.zIndex ?? Z_INDEX_CUSTOM_LABELS + entry.index * 0.1}
+    zIndex={entry.representative.zIndex}
   />
 {/each}

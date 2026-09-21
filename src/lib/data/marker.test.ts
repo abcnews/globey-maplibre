@@ -1,9 +1,9 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { GEOHASH_PRECISION } from '../marker/schema.ts';
 import acto from '@abcnews/alternating-case-to-object';
 import {
+  GEOHASH_PRECISION,
   decodeMarker,
   encodeMarker,
   markerConfigFromParsed,
@@ -68,30 +68,15 @@ describe('marker ACTO data codec (REFACTOR.md spec)', () => {
     });
 
     it('should format layer overrides to ACTO token strings', () => {
-      assert.strictEqual(
-        formatLayerOverride({ name: 'fires', state: 'on' }),
-        'fireson'
-      );
-      assert.strictEqual(
-        formatLayerOverride({ name: 'fires', state: 'on', duration: 2000 }),
-        'fireson2000ms'
-      );
-      assert.strictEqual(
-        formatLayerOverride({ name: 'fires', state: 'on', colour: 'ff3300' }),
-        'firesonff3300'
-      );
-      assert.strictEqual(
-        formatLayerOverride({ name: 'fires', state: 'on', colour: '#ff3300' }),
-        'firesonff3300'
-      );
+      assert.strictEqual(formatLayerOverride({ name: 'fires', state: 'on' }), 'fireson');
+      assert.strictEqual(formatLayerOverride({ name: 'fires', state: 'on', duration: 2000 }), 'fireson2000ms');
+      assert.strictEqual(formatLayerOverride({ name: 'fires', state: 'on', colour: 'ff3300' }), 'firesonff3300');
+      assert.strictEqual(formatLayerOverride({ name: 'fires', state: 'on', colour: '#ff3300' }), 'firesonff3300');
       assert.strictEqual(
         formatLayerOverride({ name: 'fires', state: 'on', duration: 2000, colour: 'ff3300' }),
         'fireson2000msff3300'
       );
-      assert.strictEqual(
-        formatLayerOverride({ name: 'fires', state: 'off', duration: 500 }),
-        'firesoff500ms'
-      );
+      assert.strictEqual(formatLayerOverride({ name: 'fires', state: 'off', duration: 500 }), 'firesoff500ms');
     });
   });
 
@@ -115,7 +100,8 @@ describe('marker ACTO data codec (REFACTOR.md spec)', () => {
 
   describe('decodeMarker & encodeMarker', () => {
     it('should decode full example from REFACTOR.md', () => {
-      const hash = 'BBOXknpp5e9cbbknpp5e9cbbCAM1500msLAYERsatelliteonLAYERfireson2000msff3300LAYERevacoffBASEstreetLABELSonMINIMAPoff';
+      const hash =
+        'BBOXknpp5e9cbbknpp5e9cbbCAM1500msLAYERsatelliteonLAYERfireson2000msff3300LAYERevacoffBASEstreetLABELSonMINIMAPoff';
       const decoded = decodeMarker(hash);
 
       assert.strictEqual(decoded.cam, 1500);

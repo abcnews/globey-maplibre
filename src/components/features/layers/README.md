@@ -58,7 +58,7 @@ The satellite base map is handled by `CustomGlobe`, which folds the tile layer i
 
 ## Adding a new whole-layer feature
 
-1. **Schema**: Add the configuration schema in [`../../../lib/marker/schema.ts`](../../../lib/marker/schema.ts).
+1. **Schema**: Add the layer schema to `globeLayerSchema` in [`../../../lib/data/jsonBlob.ts`](../../../lib/data/jsonBlob.ts).
 2. **Collection handler**: Model after `IconsHandler.svelte` using `buildTweenedLayerEntries`.
 3. **Leaf handler**: Model after `IconHandler.svelte` or `MapRasterHandler.svelte` using `addFadingLayer`.
 4. **Mounting**: Add the handler to [`CustomGlobe.svelte`](../../CustomGlobe/CustomGlobe.svelte), passing `perPanel={perPanel(d => d.myFeature ?? [])}`.

@@ -4,7 +4,11 @@ import type { Map as MapLibreMap, AddLayerObject, CustomLayerInterface } from 'm
  * Standard default Z-Index constants for MapLibre visual layers.
  *
  * Layers are rendered from lowest Z-Index to highest Z-Index (bottom-to-top).
- * Users or builder modules can supply custom Z-Indices to interleave or reorder layers.
+ *
+ * A blob layer's own z-index is derived from its position in `GlobeJsonBlob.layers`
+ * by `stackLayers()` (`src/lib/data/stack.ts`), not from these constants. They remain
+ * as the base offset and as fallbacks for handlers rendered outside a blob (and for
+ * a layer's internal sub-layer offsets).
  */
 
 /**
@@ -51,6 +55,12 @@ export const Z_INDEX_UI_OVERLAYS = 700;
  * Offset subtracted for sub-layer outlines so that outlines render directly underneath fills/strokes.
  */
 export const SUB_LAYER_OUTLINE_OFFSET = 0.001;
+
+/**
+ * Small step used to stack one dynamically-placed layer directly above another
+ * without colliding with its exact Z-Index.
+ */
+export const Z_INDEX_STACK_STEP = 0.0001;
 
 /**
  * Registry mapping Map instance -> Map<layerId, zIndex>.
@@ -176,12 +186,7 @@ export function setLayerZIndex(map: MapLibreMap, layerId: string, zIndex: number
  * First updates all layer Z-Indices in the registry to prevent sibling layers from
  * intercepting each other in `findBeforeIdForZIndex`, then moves each layer in order.
  */
-export function setLayersZIndex(
-  map: MapLibreMap,
-  layerIds: string[],
-  baseZIndex: number,
-  step = 0.0001
-): void {
+export function setLayersZIndex(map: MapLibreMap, layerIds: string[], baseZIndex: number, step = 0.0001): void {
   if (!map || !layerIds?.length) return;
 
   const registry = getMapRegistry(map);

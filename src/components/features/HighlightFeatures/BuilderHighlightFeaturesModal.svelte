@@ -1,13 +1,13 @@
 <script lang="ts">
   import { Modal, Typeahead, Loader } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
-  import type { DecodedObject, GeoJsonConfig } from '../../../lib/marker';
-  import { Z_INDEX_BASE_RASTER, Z_INDEX_BASE_VECTOR } from '../layers/layerUtils.ts';
+  import type { GlobeJsonBlob, GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
+  import { newLayerId } from '../layerOps.ts';
   import { DEFAULT_FEATURE_SETS, fetchFeatureSetIndex, getFeatureFileUrl, type FeatureSetItem } from './featureSets.ts';
 
   interface Props {
     /** Decoded marker options */
-    options: DecodedObject;
+    options: GlobeJsonBlob;
     /** MapLibre map instance if available */
     map?: MapLibreMap;
     /** Callback when the modal requests to close */
@@ -69,40 +69,26 @@
     const selectedItems = allItems.filter(item => selectedFilenames.includes(item.filename));
     if (selectedItems.length === 0) return;
 
-    // Place GeoJSON layers directly above the street map and raster tile layers
-    const streetMapZ = options.streetMapZIndex ?? Z_INDEX_BASE_VECTOR;
-    const rasterZs = (options.rasterLayers || []).map(r => r.zIndex ?? Z_INDEX_BASE_RASTER);
-    const existingGeoJsonZs = (options.geoJson || []).map(g => g.zIndex ?? 0);
-    const baseZ = Math.max(streetMapZ, ...rasterZs, ...existingGeoJsonZs);
+    const newLayers: GeoJsonLayer[] = selectedItems.map(item => ({
+      id: newLayerId('geojson'),
+      type: 'geojson',
+      geometryType: 'areas',
+      url: getFeatureFileUrl(activeSet, item),
+      colourMode: 'basic',
+      colourConfig: {
+        basicType: 'normal',
+        minColour: '#ffffff',
+        maxColour: '#ff0000',
+        paletteType: 'sequential',
+        paletteVariant: 'Blue'
+      },
+      isOpaque: false,
+      lineAnimationStyle: 'fade',
+      name: item.name.toLowerCase().replace(/[^a-z0-9]/g, '')
+    }));
 
-    const newLayers: GeoJsonConfig[] = selectedItems.map((item, idx) => {
-      const slug = item.filename.replace(/\.geojson$/i, '').toLowerCase();
-      return {
-        id: `${slug}-${Date.now()}-${idx}`,
-        type: 'areas',
-        url: getFeatureFileUrl(activeSet, item),
-        colourMode: 'basic',
-        colourConfig: {
-          basicType: 'normal',
-          minColour: '#ffffff',
-          maxColour: '#ff0000',
-          paletteType: 'sequential',
-          paletteVariant: 'Blue'
-        },
-        opacity: 1,
-        isOpaque: false,
-        zIndex: Number((baseZ + 1 + idx * 0.1).toFixed(2)),
-        name: item.name.toLowerCase().replace(/[^a-z0-9]/g, '')
-      };
-    });
-
-    options.geoJson = [...(options.geoJson || []), ...newLayers];
-
-    // Trigger reactivity
-    options = {
-      ...options,
-      geoJson: [...options.geoJson]
-    };
+    // Appended, so they land on top of the stack in selection order.
+    options.layers = [...options.layers, ...newLayers];
 
     onclose?.();
   }

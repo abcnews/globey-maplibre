@@ -7,7 +7,6 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 import acto from '@abcnews/alternating-case-to-object';
 
 import { loadGlobeJsonBlobByCmid } from './lib/data/loadBlobByCmid.ts';
-import { blobToDecodedObject } from './lib/data/blobAdapter.ts';
 import { applyMarkerOverrides } from './lib/data/markerPreview.ts';
 import { decodeMarker } from './lib/data/marker.ts';
 import { getMountCmid } from './lib/mountCmid.ts';
@@ -22,10 +21,14 @@ const mounts = selectMounts('scrollytellerNAME' + MARKER_NAME, {
 
 await Promise.all(
   mounts.map(async mountEl => {
-    const scrollyName = acto(mountEl.id || '').name;
+    const parsedMountId = acto(mountEl.id || '');
+    const scrollyName = parsedMountId.name;
     const cmid = getMountCmid(mountEl);
 
     if (typeof scrollyName !== 'string' || cmid === undefined) {
+      console.error(
+        `Globey: scrollyteller opener "${mountEl.id}" is missing a valid CMID (found: ${JSON.stringify(parsedMountId.cmid)}). Replace CMIDfixme with the real CoreMedia ID before publishing.`
+      );
       return;
     }
 
@@ -53,10 +56,14 @@ const [staticMountEl] = selectMounts('staticglobey');
 if (staticMountEl) {
   const cmid = getMountCmid(staticMountEl);
 
-  if (cmid !== undefined) {
+  if (cmid === undefined) {
+    console.error(
+      `Globey: "staticglobey" mount "${staticMountEl.id}" is missing a valid CMID (found: ${JSON.stringify(acto(staticMountEl.id || '').cmid)}). Replace CMIDfixme with the real CoreMedia ID before publishing.`
+    );
+  } else {
     const jsonBlob = await loadGlobeJsonBlobByCmid(cmid);
     const markerConfig = decodeMarker(window.location.hash.slice(1));
-    const staticMountProps = applyMarkerOverrides(blobToDecodedObject(jsonBlob), markerConfig);
+    const staticMountProps = applyMarkerOverrides(jsonBlob, markerConfig);
     mount(CustomGlobe, {
       target: staticMountEl,
       props: { options: staticMountProps, interactive: false, rootElStyle: 'height: 100dvh; width: 100%;' }

@@ -24,7 +24,7 @@
 
   /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id
    *  (sanitised to ACTO's `[a-z0-9]`-only alphabet — must match `layerOverrideKey`'s read side). */
-  function keyFor(layer: GlobeLayer): string | undefined {
+  function keyFor(layer: GlobeLayer): string {
     return layerOverrideKey(layer);
   }
 
@@ -119,7 +119,7 @@
 </ul>
 
 {#if layers.length === 0}
-  <small>No layers defined yet — add some in Layout Mode first.</small>
+  <small>No layers defined yet — add some in Layers Mode first.</small>
 {/if}
 
 <style>

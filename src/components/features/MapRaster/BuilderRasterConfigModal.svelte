@@ -1,17 +1,21 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
-  import type { RasterLayerConfig } from '../../../lib/marker/types.ts';
+  import type { RasterLayer } from '../../../lib/data/jsonBlob.ts';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   interface Props {
-    /** The RasterLayerConfig object being edited or drafted */
-    config: Partial<RasterLayerConfig>;
+    /** The RasterLayer object being edited or drafted */
+    config: Partial<RasterLayer>;
     /** Callback fired when the modal requests to close */
     onclose?: () => void;
   }
 
   let { config = $bindable(), onclose }: Props = $props();
 
-  const PRESETS: Record<string, { label: string; url: string; maxZoom: number; attribution: string; darkTheme: boolean }> = {
+  const PRESETS: Record<
+    string,
+    { label: string; url: string; maxZoom: number; attribution: string; darkTheme: boolean }
+  > = {
     blueMarble: {
       label: 'NASA Blue Marble',
       url: 'https://abcnewsdata.sgp1.digitaloceanspaces.com/map-raster-tiles-blue-marble/{z}/{x}/{y}.webp',
@@ -99,12 +103,7 @@
         >
           NASA Black Marble
         </button>
-        <button
-          type="button"
-          class="btn-preset"
-          class:active={selectedPreset === 'custom'}
-          onclick={() => {}}
-        >
+        <button type="button" class="btn-preset" class:active={selectedPreset === 'custom'} onclick={() => {}}>
           Custom URL
         </button>
       </div>
@@ -120,7 +119,9 @@
           bind:value={config.url}
           placeholder={'https://example.com/{z}/{x}/{y}.png'}
         />
-        <small class="help-text">Must include <code>&#123;z&#125;</code>, <code>&#123;x&#125;</code>, and <code>&#123;y&#125;</code> parameters.</small>
+        <small class="help-text"
+          >Must include <code>&#123;z&#125;</code>, <code>&#123;x&#125;</code>, and <code>&#123;y&#125;</code> parameters.</small
+        >
       </div>
 
       <div class="field-row">
@@ -139,7 +140,10 @@
           <input type="checkbox" bind:checked={config.darkTheme} />
           Dark imagery
         </label>
-        <small class="help-text">Enable for imagery with a dark background (e.g. satellite/night imagery) so labels switch to light-on-dark styling.</small>
+        <small class="help-text"
+          >Enable for imagery with a dark background (e.g. satellite/night imagery) so labels switch to light-on-dark
+          styling.</small
+        >
       </div>
     </fieldset>
 
@@ -154,13 +158,18 @@
           onblur={commitBounds}
           placeholder="[[lng, lat], [lng, lat], [lng, lat], [lng, lat]]"
         ></textarea>
-        <small class="help-text">Restricts tile loading to this box so tiles outside the tileset's coverage aren't requested. Leave empty for whole-world.</small>
+        <small class="help-text"
+          >Restricts tile loading to this box so tiles outside the tileset's coverage aren't requested. Leave empty for
+          whole-world.</small
+        >
         <div class="preset-buttons">
           <button type="button" class="btn-preset" onclick={setWholeWorldBounds}>Whole World</button>
           <button type="button" class="btn-preset" onclick={clearBounds}>Clear</button>
         </div>
       </div>
     </fieldset>
+
+    <LayerSettingsFields bind:animationClock={config.animationClock} bind:name={config.name} />
   </div>
 
   {#snippet footerChildren()}

@@ -1,6 +1,6 @@
 import { getSequentialContinuousPaletteInterpolator, ColourMode, type SequentialPalette } from '@abcnews/palette';
 
-export const SEQUENTIAL_PALETTE_OFFSET_PCT = 0.05;
+const SEQUENTIAL_PALETTE_OFFSET_PCT = 0.05;
 
 /**
  * Gets a sequential palette interpolator that applies a global offset

@@ -46,22 +46,9 @@
 
 <div class="search-input-wrapper">
   <Search class="search-icon" />
-  <input
-    bind:this={inputEl}
-    type="text"
-    {placeholder}
-    {value}
-    oninput={handleInput}
-    class="search-input"
-  />
+  <input bind:this={inputEl} type="text" {placeholder} {value} oninput={handleInput} class="search-input" />
   {#if value.trim().length > 0}
-    <button
-      type="button"
-      class="clear-button"
-      aria-label="Clear search"
-      title="Clear search"
-      onclick={handleClear}
-    >
+    <button type="button" class="clear-button" aria-label="Clear search" title="Clear search" onclick={handleClear}>
       <XCircleFill />
     </button>
   {/if}

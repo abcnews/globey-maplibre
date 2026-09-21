@@ -1,32 +1,38 @@
-import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
-import type { IconConfig, DecodedObject } from '../../../lib/marker';
-import { Z_INDEX_CUSTOM_LABELS } from '../layers/layerUtils.ts';
+import type { LayerFeatureDefinition } from '../types.ts';
+import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
+import { newLayerId } from '../layerOps.ts';
 import { GeoAlt } from 'svelte-bootstrap-icons';
-import { createClockButton, createEditButton, createDeleteButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
 import BuilderIconConfigModal from './BuilderIconConfigModal.svelte';
 import IconsHandler from './IconsHandler.svelte';
 
-export const iconFeature: LayerFeatureDefinition<IconConfig> = {
+export const iconFeature: LayerFeatureDefinition<IconLayer> = {
   kind: 'icon',
   label: 'Icon Marker',
   icon: GeoAlt,
-  defaultZIndex: Z_INDEX_CUSTOM_LABELS,
   isMultiItem: true,
 
-  // A factory, not an array: the clock toggle's icon reflects the item's
-  // current `animationClock`, so it has to be resolved per item.
-  buttons: item => [createClockButton<IconConfig>(item),
-    createEditButton<IconConfig>({ title: 'Edit icon marker' }),
-    createDeleteButton<IconConfig>({ title: 'Delete icon marker' })
+  // A factory, not an array: the goto button only appears once the item has coords.
+  buttons: item => [
+    ...(item.data?.coords
+      ? [
+          createGoToButton<IconLayer>({
+            title: 'Go to icon marker',
+            getTarget: i => (i.data?.coords ? { type: 'point', coords: i.data.coords } : undefined)
+          })
+        ]
+      : []),
+    createEditButton<IconLayer>({ title: 'Edit icon marker' }),
+    createDeleteButton<IconLayer>({ title: 'Delete icon marker' })
   ],
 
-  createDefault({ maxZIndex, map }) {
+  createDefault({ map }) {
     const center = map?.getCenter() || { lng: 133.7751, lat: -25.2744 };
     return {
-      id: Date.now().toString(),
+      id: newLayerId('icon'),
+      type: 'icon',
       cmid: 0,
-      coords: [center.lng, center.lat],
-      zIndex: maxZIndex
+      coords: [center.lng, center.lat]
     };
   },
 
@@ -37,41 +43,8 @@ export const iconFeature: LayerFeatureDefinition<IconConfig> = {
     }
   },
 
-  getItems(options: DecodedObject): LayerItemDescriptor<IconConfig>[] {
-    return (options.icons || []).map((item, idx) => {
-      return {
-        id: `icon-${item.id || item.cmid || idx}`,
-        kind: 'icon',
-        name: item.name || iconFeature.label,
-        zIndex: item.zIndex ?? Z_INDEX_CUSTOM_LABELS + idx * 0.1,
-        data: item
-      };
-    });
-  },
-
-  setZIndex(options: DecodedObject, item: LayerItemDescriptor<IconConfig>, newZIndex: number) {
-    const entry = iconFeature.getItems(options).find(i => i.id === item.id)?.data;
-    if (entry) entry.zIndex = newZIndex;
-  },
-
-  add(options: DecodedObject, item: IconConfig) {
-    options.icons = [...(options.icons || []), item];
-  },
-
-  isValid(data: IconConfig) {
+  isValid(data: IconLayer) {
     return Boolean(data?.cmid && Number(data.cmid) > 0);
-  },
-
-  update(options: DecodedObject, descriptor: LayerItemDescriptor<IconConfig>, data: IconConfig) {
-    if (options.icons) {
-      options.icons = options.icons.map(item =>
-        item === descriptor.data || (item.id && item.id === data.id) ? data : item
-      );
-    }
-  },
-
-  delete(options: DecodedObject, item: LayerItemDescriptor<IconConfig>) {
-    options.icons = (options.icons || []).filter(entry => entry !== item.data);
   },
 
   ConfigModal: BuilderIconConfigModal,

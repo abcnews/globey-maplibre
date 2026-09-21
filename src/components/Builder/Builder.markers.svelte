@@ -1,6 +1,5 @@
 <script lang="ts">
   import { jsonBlob } from '../../lib/data/blobStore.ts';
-  import { blobToDecodedObject } from '../../lib/data/blobAdapter.ts';
   import { applyMarkerOverrides } from '../../lib/data/markerPreview.ts';
   import { decodeMarker, encodeMarker, type MarkerConfig, type BaseStyle } from '../../lib/data/marker.ts';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
@@ -10,12 +9,17 @@
   import PropMarkerPosition from './PropMarkerPosition.svelte';
   import { MARKER_NAME } from '../../lib/constants.ts';
 
-  let map = $state<MapLibreMap>();
+  interface Props {
+    /** Shared MapLibre instance, lifted to Builder.svelte so BuilderTopBar's location search can drive it too. */
+    map?: MapLibreMap;
+  }
+
+  let { map = $bindable() }: Props = $props();
 
   // The marker currently being edited. Kept in sync with `window.location.hash` — not
   // persisted by the app at all, since markers live in the published story's URL hash,
   // outside Globeyteller. `MarkerAdmin` (below) provides the save/copy/paste/list UI on
-  // top of that same hash, the same way `Builder.legacy/Builder.svelte` already does for
+  // top of that same hash, the same way the old builder did for
   // its whole-page state.
   //
   // `markerConfig`'s initial value is decoded from whatever hash is already in the URL
@@ -39,15 +43,14 @@
     minimapEnabled = config.minimap !== undefined;
   }
 
-  const currentOptions = $derived(blobToDecodedObject($jsonBlob));
-  const previewOptions = $derived(applyMarkerOverrides(currentOptions, markerConfig));
+  const previewOptions = $derived($jsonBlob ? applyMarkerOverrides($jsonBlob, markerConfig) : undefined);
 
   // Scrollyteller opener CMID — pre-filled from the loaded blob's source CMID (see
   // Builder.firstrun.svelte's `handleLoadCmid`), otherwise a placeholder the producer
   // must replace before publishing. Editable in case the auto-filled value is wrong or
   // the JSON wasn't loaded from CoreMedia at all.
   let openerCmid = $state($jsonBlob?.sourceCmid ? String($jsonBlob.sourceCmid) : 'fixme');
-  const scrollytellerOpener = $derived(`#scrollytellerNAME${MARKER_NAME}${openerCmid}`);
+  const scrollytellerOpener = $derived(`#scrollytellerNAME${MARKER_NAME}CMID${openerCmid}`);
 
   $effect(() => {
     const hash = `mark${encodeMarker($state.snapshot(markerConfig))}`;
@@ -71,7 +74,7 @@
 
 {#snippet Viz()}
   <div class="frame">
-    {#if previewOptions.coords}
+    {#if previewOptions}
       <CustomGlobe
         interactive={true}
         options={previewOptions}

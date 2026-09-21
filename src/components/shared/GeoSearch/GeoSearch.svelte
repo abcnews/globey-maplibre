@@ -1,7 +1,7 @@
 <script lang="ts">
   import { debounce } from 'throttle-debounce';
   import { searchGeoNames, type GeoNameResult } from './utils';
-  import SearchInput from '../shared/SearchInput.svelte';
+  import SearchInput from '../SearchInput.svelte';
 
   interface Props {
     /** Callback fired when a location is selected */
@@ -90,7 +90,6 @@
     }}
   />
 
-
   {#if isDropdownOpen && (isSearching || results.length > 0 || searchTerm.trim().length > 1)}
     <div class="results-dropdown">
       {#if isSearching && results.length === 0}
@@ -101,11 +100,7 @@
         <ul class="results-list">
           {#each results as row (row.id)}
             <li>
-              <button
-                type="button"
-                class="result-item"
-                onclick={() => handleSelect(row)}
-              >
+              <button type="button" class="result-item" onclick={() => handleSelect(row)}>
                 <div class="result-main">
                   <strong class="result-name">{row.name}</strong>
                   {#if row.countrycode}

@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Map as MapLibreMap, GeoJSONSource } from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import type { Label } from '../../../lib/marker';
+  import type { GlobeJsonBlob, LabelItem } from '../../../lib/data/jsonBlob.ts';
+  import { stackLayers, singletonOfKind } from '../../../lib/data/stack.ts';
   import {
     addLayerWithZIndex,
     setLayerZIndex,
@@ -17,7 +18,7 @@
 
   interface Props {
     /** Array of custom user labels to render (builder / static fallback) */
-    labels?: Label[];
+    labels?: LabelItem[];
     /** Virtual Z-Index layer order for stacking */
     zIndex?: number;
     /** Whether the current map style is in dark/satellite mode */
@@ -33,8 +34,10 @@
   // blending. With no panels loaded (builder / static), fall back to the `labels`
   // prop with no transition.
   const active = $derived(tween.panelCount > 0);
-  const fromLabels = $derived(active ? (tween.fromConfig.labels ?? []) : labels);
-  const toLabels = $derived(active ? (tween.toConfig.labels ?? []) : labels);
+  const labelsOf = (blob: GlobeJsonBlob): LabelItem[] =>
+    singletonOfKind(stackLayers(blob), 'customLabels')?.labels ?? [];
+  const fromLabels = $derived(active ? labelsOf(tween.fromConfig) : labels);
+  const toLabels = $derived(active ? labelsOf(tween.toConfig) : labels);
   // Reduced motion: show the current panel's labels with no fade. The set
   // switches when the next panel triggers (`fromPanel` changes).
   const reducedMotion = $derived($prefersReducedMotion || $disableMapAnimation);

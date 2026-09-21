@@ -2,13 +2,13 @@
   import type { Map as MapLibreMap } from 'maplibre-gl';
   import { Search } from 'svelte-bootstrap-icons';
   import { Modal } from '@abcnews/components-builder';
-  import GeoSearch from '../Builder.legacy/GeoSearch/GeoSearch.svelte';
+  import GeoSearch from '../shared/GeoSearch/GeoSearch.svelte';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_UI_OVERLAYS } from '../features';
   import { safeFitBounds } from './utils.ts';
 
   /**
    * Ports the legacy builder's "Positioning" feature (mode select + location search +
-   * click-to-pick bounds, see Builder.legacy/PropCoord.svelte + PropBounds.svelte) to
+   * click-to-pick bounds, which the old builder had) to
    * Marker Mode. Unlike the legacy version this doesn't touch a whole-page `options`
    * store — it writes straight to a marker's BBOX/fitGlobe overrides. The legacy "pan and
    * zoom to coord" mode has no equivalent here (markers have no raw coords/zoom field,
@@ -198,9 +198,7 @@
   </div>
 
   {#if navMode === 'fit-globe'}
-    <small class="hint">
-      The map will automatically zoom to fit the full globe circle in the viewport.
-    </small>
+    <small class="hint"> The map will automatically zoom to fit the full globe circle in the viewport. </small>
     {#if center}
       <small class="hint">Facing {center[0].toFixed(1)}, {center[1].toFixed(1)} — drag the globe to change it.</small>
     {/if}

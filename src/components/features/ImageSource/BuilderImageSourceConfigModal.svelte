@@ -1,25 +1,27 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import { untrack } from 'svelte';
-  import type { ImageSourceConfig } from '../../../lib/marker';
+  import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
   import GeoTiffImportButton from './GeoTiffImportButton.svelte';
   import FilenameImportButton from './FilenameImportButton.svelte';
-  import { isValidUrl } from '../../../lib/marker';
+  import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils.ts';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   let {
     config = $bindable(),
     onclose
   }: {
-    config: ImageSourceConfig;
+    config: ImageLayer;
     onclose?: (bounds?: [number, number][]) => void;
   } = $props();
 
   let url = $state(untrack(() => $state.snapshot(config)?.url || ''));
-  let opacity = $state(untrack(() => $state.snapshot(config)?.opacity ?? 1));
   let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config)?.coordinates || [])));
+  let animationClock = $state(untrack(() => $state.snapshot(config)?.animationClock));
+  let name = $state(untrack(() => $state.snapshot(config)?.name));
 
   $effect(() => {
     if (url) {
@@ -33,7 +35,7 @@
   let naturalWidth = $state(0);
   let naturalHeight = $state(0);
 
-  function handleSave(goto = false) {
+  function handleSave() {
     if (!isValidUrl(url)) {
       alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
       return;
@@ -50,11 +52,11 @@
     Object.assign(config, {
       id: config?.id || Date.now().toString(),
       url,
-      opacity,
-      coordinates
+      coordinates,
+      animationClock,
+      name
     });
-    const bounds = goto && coordinates?.length > 0 ? (coordinates as [number, number][]) : undefined;
-    onclose?.(bounds);
+    onclose?.();
   }
 
   function handleImageLoad(e: Event) {
@@ -108,7 +110,6 @@
 
 {#snippet footerChildren()}
   <button onclick={() => handleSave()}>Save</button>
-  <button onclick={() => handleSave(true)}>Save and Go To</button>
   <button onclick={() => onclose?.()}>Cancel</button>
 {/snippet}
 
@@ -125,12 +126,6 @@
       </fieldset>
 
       <fieldset>
-        <legend>Appearance</legend>
-        <label for="img-opacity">Opacity ({Math.round(opacity * 100)}%)</label>
-        <input id="img-opacity" type="range" min="0" max="1" step="0.01" bind:value={opacity} />
-      </fieldset>
-
-      <fieldset>
         <legend>Coordinates (TL, TR, BR, BL)</legend>
         <textarea id="img-coords" bind:value={coordsString} rows="4" style="width: 100%; font-family: monospace;"
         ></textarea>
@@ -143,6 +138,8 @@
           <button type="button" onclick={importFromGoogleEarth}>Import from coord + width</button>
         </div>
       </fieldset>
+
+      <LayerSettingsFields bind:animationClock bind:name />
     </div>
 
     <div class="modal-preview">

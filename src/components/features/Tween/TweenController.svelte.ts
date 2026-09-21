@@ -2,7 +2,7 @@ import { Tween } from 'svelte/motion';
 import { cubicOut, cubicInOut } from 'svelte/easing';
 import { get } from 'svelte/store';
 import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-import type { DecodedObject } from '../../../lib/marker';
+import { globeJsonBlobSchema, type GlobeJsonBlob } from '../../../lib/data/jsonBlob.ts';
 import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
 import type { AnimationMode } from './types.ts';
 import { computeDesiredPosition, easeInOutCubic, lerp, lerpColour, lerpCoords } from './utils.ts';
@@ -14,10 +14,10 @@ const SCROLL_SMOOTHING_MS = 150;
 const DEFAULT_IMMEDIATE_DURATION_MS = 2000;
 
 /** Stable reference returned by `fromConfig`/`toConfig` before panels load. */
-const EMPTY_CONFIG: DecodedObject = Object.freeze({});
+const EMPTY_CONFIG: GlobeJsonBlob = Object.freeze(globeJsonBlobSchema.parse({}));
 
 export interface TweenSyncInput {
-  panels: PanelDefinition<DecodedObject>[];
+  panels: PanelDefinition<GlobeJsonBlob>[];
   /** Clamped active panel index (0..N-1). */
   currentPanel: number;
   /** Raw lifecycle index: -1 prelude, 0..N-1 panels, N outro. */
@@ -123,7 +123,7 @@ export class TweenClock {
  */
 export class TweenController {
   // Use $state.raw to avoid re-proxying on every scroll frame, which triggers unnecessary map layer reloads.
-  #panels = $state.raw<PanelDefinition<DecodedObject>[]>([]);
+  #panels = $state.raw<PanelDefinition<GlobeJsonBlob>[]>([]);
   #mode = $state<AnimationMode>('scroll');
 
   /** Always-scroll-tied clock. */
@@ -145,8 +145,9 @@ export class TweenController {
     this.#panels = input.panels;
 
     const segTo = Math.min(input.currentPanel + 1, input.panels.length - 1);
-    const activePanelMode = input.panels[input.currentPanel]?.data.animationMode;
-    this.#mode = activePanelMode === 'immediate' ? 'immediate' : (input.panels[segTo]?.data.animationMode ?? 'scroll');
+    const activePanelMode = input.panels[input.currentPanel]?.data.map.animationMode;
+    this.#mode =
+      activePanelMode === 'immediate' ? 'immediate' : (input.panels[segTo]?.data.map.animationMode ?? 'scroll');
 
     const base = {
       currentPanel: input.currentPanel,
@@ -159,7 +160,8 @@ export class TweenController {
     const scrollTarget = computeDesiredPosition({ ...base, mode: 'scroll' });
     const immediateTarget = computeDesiredPosition({ ...base, mode: 'immediate' });
     const immediateFrom = this.immediate.position;
-    const immediateDuration = input.panels[immediateTarget]?.data.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
+    const immediateDuration =
+      input.panels[immediateTarget]?.data.map.animationDuration ?? DEFAULT_IMMEDIATE_DURATION_MS;
 
     this.scroll.set(scrollTarget, {
       duration: reduced || input.isTouch ? 0 : SCROLL_SMOOTHING_MS,
@@ -194,7 +196,7 @@ export class TweenController {
   }
 
   /** Panels currently loaded. */
-  get panels(): PanelDefinition<DecodedObject>[] {
+  get panels(): PanelDefinition<GlobeJsonBlob>[] {
     return this.#panels;
   }
 
@@ -234,11 +236,11 @@ export class TweenController {
     return this.clock(this.#mode).easedT;
   }
 
-  get fromConfig(): DecodedObject {
+  get fromConfig(): GlobeJsonBlob {
     return this.#panels[this.fromPanel]?.data ?? EMPTY_CONFIG;
   }
 
-  get toConfig(): DecodedObject {
+  get toConfig(): GlobeJsonBlob {
     return this.#panels[this.toPanel]?.data ?? EMPTY_CONFIG;
   }
 

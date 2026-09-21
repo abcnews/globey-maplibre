@@ -1,6 +1,6 @@
 import type { SymbolLayerSpecification } from 'maplibre-gl';
 import { getBaseStyleSource } from './streetMap.ts';
-import type { LabelStyle } from '../../../lib/marker';
+import type { LabelStyle } from '../../../lib/data/jsonBlob.ts';
 
 const SATELLITE_TEXT_COLOUR = '#FFF';
 const SATELLITE_HALO_COLOUR = 'rgba(0,0,0,0.8)';
@@ -30,10 +30,7 @@ export const STYLE_LAYER_MAP: Record<LabelStyle, string> = {
  * @param isDark Whether the active base map theme is dark/satellite (applies white text & dark halo)
  * @param sourceId The GeoJSON source ID containing custom label features
  */
-export function getCustomLabelLayers(
-  isDark = false,
-  sourceId = 'custom-labels'
-): SymbolLayerSpecification[] {
+export function getCustomLabelLayers(isDark = false, sourceId = 'custom-labels'): SymbolLayerSpecification[] {
   const baseStyle = getBaseStyleSource();
 
   return (Object.entries(STYLE_LAYER_MAP) as [LabelStyle, string][]).map(([styleKey, layerId]) => {

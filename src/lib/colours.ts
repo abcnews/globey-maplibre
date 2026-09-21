@@ -1,15 +1,15 @@
-export function parseColor(color: string): [number, number, number] {
+function parseColor(color: string): [number, number, number] {
   if (color.startsWith('#')) {
     return hexToRgb(color);
   }
   const rgbMatch = color.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
   if (rgbMatch) {
-    return [parseInt(rgbMatch[1], 10), parseInt(rgbMatch[2], 10), parseInt(rgbMatch[3], 10)];
+    return [Number(rgbMatch[1]), Number(rgbMatch[2]), Number(rgbMatch[3])];
   }
   return [128, 128, 128]; // Default grey
 }
 
-export function hexToRgb(hex: string): [number, number, number] {
+function hexToRgb(hex: string): [number, number, number] {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return [0, 0, 0];
   return [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)];

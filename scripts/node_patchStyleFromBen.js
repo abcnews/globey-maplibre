@@ -12,8 +12,8 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const INPUT_FILE = path.resolve(__dirname, 'styleStoryLabFromBen.json');
-const OUTPUT_FILE = path.resolve(__dirname, 'styleStoryLab.json');
+const INPUT_FILE = path.resolve(__dirname, '../src/components/CustomGlobe/mapStyle/styleStoryLabFromBen.json');
+const OUTPUT_FILE = path.resolve(__dirname, '../src/components/CustomGlobe/mapStyle/styleStoryLab.json');
 
 const OPENMAPTILES_URL = 'https://www.abc.net.au/res/sites/news-projects/map-vector-tiles-world/world.json';
 const SPRITE_URL = 'https://www.abc.net.au/res/sites/news-projects/map-vector-style-bright/sprite';

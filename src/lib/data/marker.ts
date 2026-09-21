@@ -1,6 +1,7 @@
 import Geohash from 'latlon-geohash';
 import { parse, stringify } from '@abcnews/alternating-case-to-object';
-import { GEOHASH_PRECISION } from '../marker/schema.ts';
+/** Geohash digits per coordinate in an encoded marker. Fixed-width, so bounds can be split back apart. */
+export const GEOHASH_PRECISION = 10;
 
 export interface MarkerLayerOverride {
   /** Layer ID or slug matching the layer in the global JSON blob */
@@ -69,9 +70,14 @@ export function parseLayerOverride(token: string): MarkerLayerOverride | null {
 
   if (colour) {
     // Normalise 3-char hex to 6-char hex
-    result.colour = colour.length === 3
-      ? colour.split('').map(c => c + c).join('').toLowerCase()
-      : colour.toLowerCase();
+    result.colour =
+      colour.length === 3
+        ? colour
+            .split('')
+            .map(c => c + c)
+            .join('')
+            .toLowerCase()
+        : colour.toLowerCase();
   }
 
   return result;

@@ -11,6 +11,11 @@
   let pastedContent = $state('');
   let scrollytellerDefinition = $state<ScrollytellerDefinition | null>(null);
   let error = $state('');
+  // Bumped on every successful parse so the {#key} below always forces a full
+  // destroy/recreate of ScrollytellerGlobe, even if the same text is pasted twice in a
+  // row — the mode component's own internal state (currentPanel, the MapLibre instance,
+  // TweenController, etc.) must never carry over between two different pasted docs.
+  let pasteId = $state(0);
 
   function loadFromText(text: string) {
     if (!text.trim()) {
@@ -20,6 +25,7 @@
     try {
       error = '';
       scrollytellerDefinition = parsePastedContent({ text, name: MARKER_NAME });
+      pasteId += 1;
       sessionStorage.setItem(STORAGE_KEY, text);
     } catch (e: any) {
       error = e.message || 'Unable to parse pasted content.';
@@ -43,11 +49,13 @@
 
 {#if !$jsonBlob}
   <div class="notice">
-    <p>No JSON blob is loaded yet — load or create one in Layout Mode first.</p>
+    <p>No JSON blob is loaded yet — load or create one in Layers Mode first.</p>
   </div>
 {:else if scrollytellerDefinition}
   <div style:min-height="10000vh" class="scrolly-root">
-    <ScrollytellerGlobe jsonBlob={$jsonBlob} panels={scrollytellerDefinition.panels} />
+    {#key pasteId}
+      <ScrollytellerGlobe jsonBlob={$jsonBlob} panels={scrollytellerDefinition.panels} />
+    {/key}
     <div class="floaty">
       <button type="button" onclick={() => (scrollytellerDefinition = null)}>Paste another doc</button>
     </div>
@@ -57,13 +65,15 @@
     <fieldset class="builder__spacious">
       <legend>Pasted Scrollyteller (test harness)</legend>
       <p>
-        Paste the marker text of a scrollyteller below to preview it against the currently loaded JSON blob
-        (<strong>{$jsonBlob.title || 'untitled'}</strong>).
+        Paste the marker text of a scrollyteller below to preview it against the currently loaded JSON blob (<strong
+          >{$jsonBlob.title || 'untitled'}</strong
+        >).
       </p>
       <p>
         <small>
-          Ensure your text includes an opener marker (e.g. <code>#scrollytellerNAME{MARKER_NAME}1</code>), one or
-          more <code>#mark...</code> tags, and an <code>#endscrollyteller</code> tag.
+          Ensure your text includes an opener marker (e.g. <code>#scrollytellerNAME{MARKER_NAME}1</code>), one or more
+          <code>#mark...</code>
+          tags, and an <code>#endscrollyteller</code> tag.
         </small>
       </p>
 

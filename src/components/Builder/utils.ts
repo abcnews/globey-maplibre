@@ -19,11 +19,3 @@ export function safeFitBounds(
 ) {
   map.fitBounds(bounds as any, options, { builderInitiated: true });
 }
-
-/**
- * Triggers a map.jumpTo event and let the builder know it should update the
- * state with the new coords.
- */
-export function safeJumpTo(map: maplibregl.Map, options: any) {
-  map.jumpTo(options, { builderInitiated: true });
-}

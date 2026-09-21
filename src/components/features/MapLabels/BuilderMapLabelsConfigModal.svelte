@@ -1,17 +1,18 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
-  import type { MapLabelsConfig } from '../../../lib/marker/types.ts';
+  import type { MapLabelsLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { MapLabelFlags } from '../../../lib/data/layerHelpers.ts';
 
   interface Props {
-    /** The MapLabelsConfig object being edited or drafted */
-    config: Partial<MapLabelsConfig>;
+    /** The MapLabelsLayer object being edited or drafted */
+    config: Partial<MapLabelsLayer>;
     /** Callback fired when the modal requests to close */
     onclose?: () => void;
   }
 
   let { config = $bindable(), onclose }: Props = $props();
 
-  function updateCheckbox(key: keyof MapLabelsConfig, value: boolean) {
+  function updateCheckbox(key: keyof MapLabelFlags, value: boolean) {
     config[key] = value;
   }
 

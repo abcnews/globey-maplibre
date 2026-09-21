@@ -6,8 +6,9 @@
    * base map geometry (land, water, roads) and administrative labels.
    */
   import type * as maplibregl from 'maplibre-gl';
-  import type { MapLabelsConfig } from '../../../lib/marker/types';
-  import { hasMapLabels, DEFAULT_MAP_LABELS } from '../../../lib/marker/utils';
+  import type { MapLabelsLayer, StreetMapLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Stacked } from '../../../lib/data/stack.ts';
+  import { hasMapLabels } from '../../../lib/data/layerHelpers.ts';
   import { getContext, untrack } from 'svelte';
   import {
     OPENMAPTILES_SOURCE_ID,
@@ -26,24 +27,25 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let {
-    base,
-    hideOsm = false,
-    streetMapZIndex = Z_INDEX_BASE_VECTOR,
-    labels = DEFAULT_MAP_LABELS,
-    zIndex = Z_INDEX_BASE_LABELS,
-    isSatellite = false
-  }: {
+  interface Props {
+    /** `GlobeJsonBlob.map.base` — the base style the vector geometry is drawn for */
     base?: string;
-    hideOsm?: boolean;
-    streetMapZIndex?: number;
-    labels?: MapLabelsConfig;
-    zIndex?: number;
+    /** The blob's `streetMap` layer, if it has one. Absent means the user removed it. */
+    streetMap?: Stacked<StreetMapLayer>;
+    /** The blob's `mapLabels` layer, if it has one. Absent means no built-in labels. */
+    mapLabels?: Stacked<MapLabelsLayer>;
     isSatellite?: boolean;
-  } = $props();
+  }
 
-  const hasLabels = $derived(hasMapLabels(labels));
-  const showBase = $derived(!hideOsm && (base === 'street' || !base));
+  let { base, streetMap, mapLabels, isSatellite = false }: Props = $props();
+
+  const streetMapZIndex = $derived(streetMap?.zIndex ?? Z_INDEX_BASE_VECTOR);
+  const zIndex = $derived(mapLabels?.zIndex ?? Z_INDEX_BASE_LABELS);
+
+  // `enabled: false` is an older blob's way of saying the layer was deleted; a layer
+  // with every individual toggle off is equally nothing to draw.
+  const hasLabels = $derived(mapLabels?.enabled !== false && hasMapLabels(mapLabels));
+  const showBase = $derived(Boolean(streetMap) && !streetMap?.hideOsm && (base === 'street' || !base));
   const needsSource = $derived(showBase || hasLabels);
 
   // Effect for Source and Layer lifecycle
@@ -71,7 +73,12 @@
           getBaseStyleSource().layers.find(layer => layer.id === 'background') as
             maplibregl.BackgroundLayerSpecification | undefined
         )?.paint?.['background-color'];
-        map.setPaintProperty('background', 'background-color', defaultBackground);
+        // Guard against passing a literal `undefined` colour to setPaintProperty (e.g. if the
+        // base style's 'background' layer is ever renamed/removed) — MapLibre crashes trying
+        // to read channel values off an undefined colour at render time rather than failing loudly.
+        if (defaultBackground !== undefined) {
+          map.setPaintProperty('background', 'background-color', defaultBackground);
+        }
       }
 
       if (s_showBase) {
@@ -144,14 +151,14 @@
     if (!mapRoot.map) return;
     const map = mapRoot.map;
 
-    const countriesMajor = labels?.countriesMajor ?? true;
-    const countriesMedium = labels?.countriesMedium ?? true;
-    const countriesMinor = labels?.countriesMinor ?? true;
-    const continents = labels?.continents ?? false;
-    const states = labels?.states ?? false;
-    const cities = labels?.cities ?? false;
-    const towns = labels?.towns ?? false;
-    const oceans = labels?.oceans ?? false;
+    const countriesMajor = mapLabels?.countriesMajor ?? true;
+    const countriesMedium = mapLabels?.countriesMedium ?? true;
+    const countriesMinor = mapLabels?.countriesMinor ?? true;
+    const continents = mapLabels?.continents ?? false;
+    const states = mapLabels?.states ?? false;
+    const cities = mapLabels?.cities ?? false;
+    const towns = mapLabels?.towns ?? false;
+    const oceans = mapLabels?.oceans ?? false;
 
     const syncVisibility = () => {
       // COUNTRIES

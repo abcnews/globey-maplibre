@@ -35,7 +35,7 @@ export interface LoadImageOptions {
 }
 
 /** Standard breakpoints in pixels corresponding to CoreMedia/Odyssey alt keys */
-export const BREAKPOINT_WIDTHS: Record<string, number> = {
+const BREAKPOINT_WIDTHS: Record<string, number> = {
   gt_sm: 700,
   gt_md: 980,
   gt_lg: 1800
@@ -50,7 +50,7 @@ const imageStateCache = new Map<string, ImageState>();
 /**
  * Fetches a CoreMedia document via Terminus with caching and error handling.
  */
-export function fetchTerminusDocument(cmid: number, apiKey?: string): Promise<any> {
+function fetchTerminusDocument(cmid: number, apiKey?: string): Promise<any> {
   if (!documentCache.has(cmid)) {
     const fetchPromise = fetchOne({ id: cmid }, apiKey || import.meta.env.VITE_TERMINUS_FETCH_API_KEY).catch(
       (err: unknown) => {
@@ -66,7 +66,7 @@ export function fetchTerminusDocument(cmid: number, apiKey?: string): Promise<an
 /**
  * Selects the best rendition for a given target width and preferred aspect ratio.
  */
-export function pickRendition(
+function pickRendition(
   renditions: Array<{ width: number; height: number; ratio: string; url: string }>,
   targetWidth?: number,
   preferredRatio?: string

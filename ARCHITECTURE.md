@@ -28,24 +28,30 @@ The script at `/coremedia.js` bootstraps the CoreMedia Scrollyteller. This is wh
 
 ## Data Flow
 
-The application state is serializable to the URL hash, allowing configurations to be shared and restored.
+There is one representation of a globe's state: the `GlobeJsonBlob`, defined in
+`[src/lib/data/jsonBlob.ts](src/lib/data/jsonBlob.ts)`. It holds global map settings plus a
+single `layers: GlobeLayer[]` discriminated union, whose array order is the rendering stack
+order. The Builder edits it, `blobStore` persists it, and `CustomGlobe` renders it directly.
 
-1.  **State Definition**: The state schema is defined in `src/lib/marker.ts` via `markerSchema`.
-2.  **Encoding/Decoding**:
-    - `markerSchema` defines how each property (e.g., `coords`, `z`, `highlightCountries`) is encoded into the URL hash and decoded back into the application state.
-    - Custom codecs (e.g., `geohashCodec`, `countriesCodec`) handle efficient string representation of complex data.
-3.  **Updates**:
-    - The `Builder` updates the local state.
-    - Changes in state are serialized and update the URL hash.
-    - `CustomGlobe` reacts to these state changes (passed as props) and updates the map accordingly.
+1.  **State Definition**: `globeJsonBlobSchema` (Zod) in `src/lib/data/jsonBlob.ts`.
+2.  **Per-panel overrides**: a scrollyteller panel's ACTO marker
+    (`[src/lib/data/marker.ts](src/lib/data/marker.ts)`, `MarkerConfig`) carries only overrides —
+    which layers are on, camera, base/labels/minimap. `applyMarkerOverrides()`
+    (`[src/lib/data/markerPreview.ts](src/lib/data/markerPreview.ts)`) combines blob + marker into
+    the blob that panel should render.
+3.  **Stacking**: nothing stores a z-index. `stackLayers()`
+    (`[src/lib/data/stack.ts](src/lib/data/stack.ts)`) derives one from each layer's array index at
+    the render boundary.
+4.  **Updates**: the Builder clones the blob, mutates it via the generic operations in
+    `src/components/features/layerOps.ts`, and commits it to the store.
 
 ## Adding a new MapLibre feature/layer
 
-To add a new feature that is configurable via the Builder and persistent in the URL:
+To add a new feature that is configurable via the Builder and persisted in the blob:
 
 1.  **Define State**:
-    - Add a new property to the `markerSchema` in `[src/lib/marker.ts](src/lib/marker.ts)`.
-    - Define a codec if the data type requires special handling for URL serialization.
+    - Add a layer schema to `globeLayerSchema` in `[src/lib/data/jsonBlob.ts](src/lib/data/jsonBlob.ts)`, built on `baseLayerObject`.
+    - See `[src/components/features/README.md](src/components/features/README.md)` for the full template.
 
 2.  **Add Builder UI**:
     - Create a new property editor component in `src/components/Builder/` (e.g., `PropNewFeature.svelte`).

@@ -1,19 +1,20 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
-  import type { GeoJsonConfig } from '../../../lib/marker';
+  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
   import { fetchGeoJsonData } from './utils.ts';
-  import { isValidUrl } from '../../../lib/marker/utils.ts';
+  import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import BuilderPropGeoJsonFilter from './BuilderPropGeoJsonFilter.svelte';
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
   import VerticalTabs from '../../Builder/shared/VerticalTabs.svelte';
+  import LayerSettingsFields from '../LayerSettingsFields.svelte';
   import { untrack } from 'svelte';
 
   interface Props {
-    /** The GeoJsonConfig object being edited or drafted */
-    config: GeoJsonConfig;
+    /** The GeoJsonLayer object being edited or drafted */
+    config: GeoJsonLayer;
     /** Callback fired when the modal requests to close */
-    onclose?: (bounds?: [number, number][]) => void;
+    onclose?: () => void;
   }
 
   let { config = $bindable(), onclose }: Props = $props();
@@ -23,16 +24,16 @@
   let rawSourceInput = $state<string>(
     untrack(() => {
       const snap = $state.snapshot(config);
-      return snap?.url ? snap.url : (snap?.cmid ? String(snap.cmid) : '');
+      return snap?.url ? snap.url : snap?.cmid ? String(snap.cmid) : '';
     })
   );
 
-  let draftConfig = $state<GeoJsonConfig>(
+  let draftConfig = $state<GeoJsonLayer>(
     untrack(() => {
       const snap = $state.snapshot(config) || ({} as any);
       return {
         ...snap,
-        type: snap.type ?? 'areas',
+        geometryType: snap.geometryType ?? 'areas',
         colourMode: snap.colourMode ?? 'simple',
         cmid: snap.cmid ? snap.cmid : undefined,
         url: snap.url ?? undefined
@@ -154,22 +155,20 @@
 
   function commitDraft() {
     config.id = draftConfig.id || config.id;
-    config.type = draftConfig.type;
+    config.geometryType = draftConfig.geometryType;
     config.colourMode = draftConfig.colourMode;
     config.colourProp = draftConfig.colourProp;
     config.colourConfig = $state.snapshot(draftConfig.colourConfig);
-    config.opacity = draftConfig.opacity;
     config.isOpaque = draftConfig.isOpaque;
     config.filter = $state.snapshot(draftConfig.filter);
     config.pointSize = $state.snapshot(draftConfig.pointSize);
     config.lineWidth = $state.snapshot(draftConfig.lineWidth);
     config.lineAnimationStyle = draftConfig.lineAnimationStyle;
-    if (draftConfig.zIndex !== undefined) {
-      config.zIndex = draftConfig.zIndex;
-    }
+    config.animationClock = draftConfig.animationClock;
+    config.name = draftConfig.name;
   }
 
-  function handleSave(goto = false) {
+  function handleSave() {
     const trimmed = rawSourceInput.trim();
     if (!trimmed) {
       alert('Please enter a valid CMID or URL.');
@@ -199,70 +198,12 @@
     }
     console.log('[BuilderGeoJsonConfigModal handleSave] Saved config:', $state.snapshot(config));
 
-    let bounds: [number, number][] | undefined = undefined;
-    if (goto && rawFeatures.length > 0) {
-      let minX = Infinity,
-        minY = Infinity,
-        maxX = -Infinity,
-        maxY = -Infinity;
-
-      const processGeometry = (geom: any) => {
-        if (!geom) return;
-        if (geom.type === 'Point') {
-          const [x, y] = geom.coordinates;
-          minX = Math.min(minX, x);
-          minY = Math.min(minY, y);
-          maxX = Math.max(maxX, x);
-          maxY = Math.max(maxY, y);
-        } else if (geom.type === 'LineString' || geom.type === 'MultiPoint') {
-          geom.coordinates.forEach(([x, y]: [number, number]) => {
-            minX = Math.min(minX, x);
-            minY = Math.min(minY, y);
-            maxX = Math.max(maxX, x);
-            maxY = Math.max(maxY, y);
-          });
-        } else if (geom.type === 'Polygon' || geom.type === 'MultiLineString') {
-          geom.coordinates.forEach((ring: any) => {
-            ring.forEach(([x, y]: [number, number]) => {
-              minX = Math.min(minX, x);
-              minY = Math.min(minY, y);
-              maxX = Math.max(maxX, x);
-              maxY = Math.max(maxY, y);
-            });
-          });
-        } else if (geom.type === 'MultiPolygon') {
-          geom.coordinates.forEach((poly: any) => {
-            poly.forEach((ring: any) => {
-              ring.forEach(([x, y]: [number, number]) => {
-                minX = Math.min(minX, x);
-                minY = Math.min(minY, y);
-                maxX = Math.max(maxX, x);
-                maxY = Math.max(maxY, y);
-              });
-            });
-          });
-        } else if (geom.type === 'GeometryCollection') {
-          geom.geometries.forEach(processGeometry);
-        }
-      };
-
-      rawFeatures.forEach(f => processGeometry(f.geometry));
-
-      if (minX !== Infinity) {
-        bounds = [
-          [minX, minY],
-          [maxX, maxY]
-        ];
-      }
-    }
-
-    onclose?.(bounds);
+    onclose?.();
   }
 </script>
 
 {#snippet footerChildren()}
-  <button onclick={() => handleSave(false)}>Save</button>
-  <button onclick={() => handleSave(true)}>Save and Go To</button>
+  <button onclick={handleSave}>Save</button>
   <button onclick={() => onclose?.()}>Cancel</button>
 {/snippet}
 
@@ -275,6 +216,8 @@
     bind:activeTab
   >
     {#if activeTab === 'config'}
+      <LayerSettingsFields bind:animationClock={draftConfig.animationClock} bind:name={draftConfig.name} />
+
       <fieldset>
         <legend
           >Data source
@@ -285,12 +228,7 @@
         <div class="field-group">
           <label for="gj-source">CMID or GeoJSON / TopoJSON URL</label>
           <div class="source-input-row">
-            <input
-              id="gj-source"
-              type="text"
-              placeholder="e.g. 106753230 or https://..."
-              bind:value={rawSourceInput}
-            />
+            <input id="gj-source" type="text" placeholder="e.g. 106753230 or https://..." bind:value={rawSourceInput} />
             {#if status === 'loading'}
               <span class="source-loading-badge">Loading...</span>
             {/if}
@@ -320,18 +258,18 @@
                 style:cursor="pointer"
                 style:text-transform="capitalize"
               >
-                <input type="radio" name="gj-type" value={type} bind:group={draftConfig.type} />
+                <input type="radio" name="gj-type" value={type} bind:group={draftConfig.geometryType} />
                 {type}
               </label>
             {/each}
           </div>
         </fieldset>
 
-        {#if draftConfig.type === 'points'}
+        {#if draftConfig.geometryType === 'points'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="pointSize" legend="Point Size" />
         {/if}
 
-        {#if draftConfig.type === 'lines'}
+        {#if draftConfig.geometryType === 'lines'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="lineWidth" legend="Line Width" />
 
           <fieldset>

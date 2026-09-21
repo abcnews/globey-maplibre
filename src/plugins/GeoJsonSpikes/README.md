@@ -47,6 +47,6 @@ If `colourProp` is omitted, each feature's simplestyle-spec `fill` property is u
 
 Use this plugin as the template:
 
-1. Define a `Config` type for your layer's data/styling — self-contained, no dependency on `lib/marker`.
+1. Define a `Config` type for your layer's data/styling — self-contained, no dependency on `lib/data/jsonBlob.ts`.
 2. Write a component satisfying `CustomLayerProps<Config>` (`map`, `config`, `zIndex`), adding/removing its layer(s) on mount/unmount with `addLayerWithZIndex`/`removeLayerWithZIndex` from `../../components/features/layers/layerUtils.ts`, and updating data in place (not re-adding layers) when `config` changes.
 3. Register an instance via `CustomGlobe`'s `plugins` prop: `{ id, component, config, zIndex? }`.

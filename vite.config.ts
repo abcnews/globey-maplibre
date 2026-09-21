@@ -8,7 +8,7 @@
  * for now they're inline so we can test and modify.
  */
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { abcCorsPlugin, es5EntryPlugin, getServer } from '@abcnews/aunty/vite';

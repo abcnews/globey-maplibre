@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { ImageSourceConfig } from '../../../lib/marker';
+  import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Stacked } from '../../../lib/data/stack.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
   import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_IMAGE_LAYERS } from '../layers/layerUtils.ts';
@@ -12,13 +13,13 @@
 
   let {
     config,
-    zIndex = config.zIndex ?? Z_INDEX_IMAGE_LAYERS,
-    /** One opacity per panel (config.opacity where present, 0 where absent). */
-    opacityStops = [config.opacity ?? 1],
+    zIndex = config.zIndex,
+    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
+    opacityStops = [1],
     /** One coordinate set per panel; null where the image is absent. */
     coordStops = [config.coordinates ?? null]
   }: {
-    config: ImageSourceConfig;
+    config: Stacked<ImageLayer>;
     zIndex?: number;
     opacityStops?: number[];
     coordStops?: (number[][] | null)[];
@@ -108,7 +109,7 @@
   // Z-INDEX STACKING EFFECT: updates layer stacking position when zIndex changes.
   $effect(() => {
     const map = mapRoot.map;
-    const targetZ = zIndex ?? config.zIndex;
+    const targetZ = zIndex;
     if (!map || !map.getLayer(currentLid) || targetZ === undefined) return;
 
     setLayerZIndex(map, currentLid, targetZ);
