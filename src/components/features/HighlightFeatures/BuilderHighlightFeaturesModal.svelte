@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Modal, Typeahead, Loader } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
-  import type { GlobeJsonBlob, GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
-  import { newLayerId } from '../layerOps.ts';
+  import type { GlobeJsonBlob, GeoJsonAreasLayer } from '../../../lib/data/jsonBlob.ts';
+  import { newLayerId } from '../utils/layerOps.ts';
   import { DEFAULT_FEATURE_SETS, fetchFeatureSetIndex, getFeatureFileUrl, type FeatureSetItem } from './featureSets.ts';
 
   interface Props {
@@ -69,10 +69,9 @@
     const selectedItems = allItems.filter(item => selectedFilenames.includes(item.filename));
     if (selectedItems.length === 0) return;
 
-    const newLayers: GeoJsonLayer[] = selectedItems.map(item => ({
-      id: newLayerId('geojson'),
-      type: 'geojson',
-      geometryType: 'areas',
+    const newLayers: GeoJsonAreasLayer[] = selectedItems.map(item => ({
+      id: newLayerId('geojsonAreas'),
+      type: 'geojsonAreas',
       url: getFeatureFileUrl(activeSet, item),
       colourMode: 'basic',
       colourConfig: {
@@ -83,7 +82,6 @@
         paletteVariant: 'Blue'
       },
       isOpaque: false,
-      lineAnimationStyle: 'fade',
       name: item.name.toLowerCase().replace(/[^a-z0-9]/g, '')
     }));
 

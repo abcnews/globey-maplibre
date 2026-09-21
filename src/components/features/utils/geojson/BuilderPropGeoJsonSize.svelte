@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Size } from '../../../../lib/data/jsonBlob.ts';
   import { untrack } from 'svelte';
 
   let {
@@ -7,7 +7,7 @@
     prop,
     legend = 'Size'
   } = $props<{
-    config: GeoJsonLayer;
+    config: { pointSize?: Size; lineWidth?: Size };
     prop: 'pointSize' | 'lineWidth';
     legend?: string;
   }>();

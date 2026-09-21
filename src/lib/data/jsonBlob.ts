@@ -47,19 +47,6 @@ export const geoJsonColourConfigSchema = z.object({
 export type GeoJsonColourConfig = z.infer<typeof geoJsonColourConfigSchema>;
 
 /**
- * 3D spike configuration schema
- */
-export const geoJsonSpikeSchema = z.object({
-  heightProp: z.string().optional(),
-  scalar: z.number().optional(),
-  maxHeight: z.number().optional(),
-  radius: z.number().optional(),
-  min: z.number().optional(),
-  max: z.number().optional()
-});
-export type GeoJsonSpike = z.infer<typeof geoJsonSpikeSchema>;
-
-/**
  * Animation clock transition mode for an individual layer
  */
 export const animationClockSchema = z.enum(['scroll', 'immediate']);
@@ -82,25 +69,53 @@ const baseLayerObject = {
 };
 
 /**
- * GeoJSON Layer schema
+ * Fields shared by every GeoJSON layer kind (Areas, Lines, Points): the data source plus
+ * filter and colour styling.
  */
-export const geoJsonLayerSchema = z.object({
+const geoJsonCommonObject = {
   ...baseLayerObject,
-  type: z.literal('geojson'),
   cmid: z.number().optional(),
   url: z.string().optional(),
-  geometryType: z.enum(['areas', 'lines', 'points', 'spikes']).default('areas'),
   colourMode: z.enum(['scale', 'simple', 'basic']).default('simple'),
   colourProp: z.string().optional(),
   colourConfig: geoJsonColourConfigSchema.optional(),
-  isOpaque: z.boolean().default(false),
-  filter: geoJsonFilterSchema.optional(),
-  pointSize: sizeSchema.optional(),
-  lineWidth: sizeSchema.optional(),
-  lineAnimationStyle: z.enum(['fade', 'draw']).default('fade'),
-  spike: geoJsonSpikeSchema.optional()
+  filter: geoJsonFilterSchema.optional()
+};
+
+/** GeoJSON polygon layer (Polygon / MultiPolygon features) */
+export const geoJsonAreasLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonAreas'),
+  isOpaque: z.boolean().default(false)
 });
-export type GeoJsonLayer = z.infer<typeof geoJsonLayerSchema>;
+export type GeoJsonAreasLayer = z.infer<typeof geoJsonAreasLayerSchema>;
+
+/** GeoJSON line layer (LineString / MultiLineString features) */
+export const geoJsonLinesLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonLines'),
+  lineWidth: sizeSchema.optional(),
+  lineAnimationStyle: z.enum(['fade', 'draw']).default('fade')
+});
+export type GeoJsonLinesLayer = z.infer<typeof geoJsonLinesLayerSchema>;
+
+/** GeoJSON point layer (Point / MultiPoint features) */
+export const geoJsonPointsLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonPoints'),
+  isOpaque: z.boolean().default(false),
+  pointSize: sizeSchema.optional()
+});
+export type GeoJsonPointsLayer = z.infer<typeof geoJsonPointsLayerSchema>;
+
+export type GeoJsonAnyLayer = GeoJsonAreasLayer | GeoJsonLinesLayer | GeoJsonPointsLayer;
+type GeoJsonLayerKind = GeoJsonAnyLayer['type'];
+
+/** Every GeoJSON layer kind, e.g. for marker colour overrides that apply to all three. */
+export const GEOJSON_LAYER_KINDS: GeoJsonLayerKind[] = ['geojsonAreas', 'geojsonLines', 'geojsonPoints'];
+
+export const isGeoJsonLayer = (layer: { type: string }): layer is GeoJsonAnyLayer =>
+  (GEOJSON_LAYER_KINDS as string[]).includes(layer.type);
 
 /**
  * Custom text label item schema
@@ -199,7 +214,9 @@ export type StreetMapLayer = z.infer<typeof streetMapLayerSchema>;
  * Discriminated union of all supported globe layers
  */
 export const globeLayerSchema = z.discriminatedUnion('type', [
-  geoJsonLayerSchema,
+  geoJsonAreasLayerSchema,
+  geoJsonLinesLayerSchema,
+  geoJsonPointsLayerSchema,
   customLabelsLayerSchema,
   iconLayerSchema,
   imageLayerSchema,

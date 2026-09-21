@@ -6,8 +6,8 @@
     getDivergentContinuousPaletteInterpolator,
     ColourMode
   } from '@abcnews/palette';
-  import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
-  import { getCustomPaletteInterpolator } from '../../../lib/colours.ts';
+  import { getSequentialInterpolator } from '../../../../lib/sequentialPalette.ts';
+  import { getCustomPaletteInterpolator } from '../../../../lib/colours.ts';
 
   let { paletteType, paletteVariant, customPalette } = $props<{
     paletteType?: 'sequential' | 'divergent' | 'custom';

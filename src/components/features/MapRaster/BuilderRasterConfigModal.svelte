@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type { RasterLayer } from '../../../lib/data/jsonBlob.ts';
-  import LayerSettingsFields from '../LayerSettingsFields.svelte';
+  import LayerSettingsFields from '../utils/LayerSettingsFields.svelte';
 
   interface Props {
     /** The RasterLayer object being edited or drafted */

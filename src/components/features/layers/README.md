@@ -1,6 +1,6 @@
 # Whole-layer fades
 
-How raster, image, and icon layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../GeoJson/README.md`](../GeoJson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
+How raster, image, and icon layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../utils/geojson/README.md`](../utils/geojson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
 
 ---
 

@@ -1,8 +1,8 @@
-import type { GlobeJsonBlob, GlobeLayer } from './jsonBlob.ts';
+import { GEOJSON_LAYER_KINDS, isGeoJsonLayer, type GlobeJsonBlob, type GlobeLayer } from './jsonBlob.ts';
 import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
 
 /** Layer kinds a marker's `LAYER<name>` tokens can switch on and off. */
-const OVERRIDABLE_KINDS: GlobeLayer['type'][] = ['geojson', 'icon', 'image', 'raster'];
+const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [...GEOJSON_LAYER_KINDS, 'icon', 'image', 'raster'];
 
 /**
  * The `LAYER<name>` token matches a layer's builder-facing `name`, falling back to its `id`.
@@ -53,7 +53,7 @@ export function applyMarkerOverrides(base: GlobeJsonBlob, config: MarkerConfig):
       animationClock: override.duration !== undefined ? ('immediate' as const) : ('scroll' as const)
     };
 
-    if (withClock.type !== 'geojson' || !override.colour) return [withClock];
+    if (!isGeoJsonLayer(withClock) || !override.colour) return [withClock];
 
     return [
       {

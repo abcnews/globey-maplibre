@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GlobeLayer } from '../../lib/data/jsonBlob.ts';
+  import { isGeoJsonLayer, type GlobeLayer } from '../../lib/data/jsonBlob.ts';
   import type { MarkerLayerOverride } from '../../lib/data/marker.ts';
   import { schemeForColour, resolveSchemeColour, DEFAULT_COLOUR_SCHEME } from '../../lib/colourScheme.ts';
   import { layerOverrideKey } from '../../lib/data/markerPreview.ts';
@@ -90,7 +90,7 @@
           </label>
         </div>
 
-        {#if layer.type === 'geojson'}
+        {#if isGeoJsonLayer(layer)}
           <div class="row sub-row">
             <span class="colour-label">Colour</span>
             <ColourSchemePicker

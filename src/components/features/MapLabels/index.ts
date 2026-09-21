@@ -1,9 +1,9 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { MapLabelsLayer } from '../../../lib/data/jsonBlob.ts';
 import { DEFAULT_MAP_LABELS } from '../../../lib/data/layerHelpers.ts';
-import { newLayerId } from '../layerOps.ts';
+import { newLayerId } from '../utils/layerOps.ts';
 import { Tag as LabelIcon } from 'svelte-bootstrap-icons';
-import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton } from '../utils/buttonHelpers.ts';
 import BuilderMapLabelsConfigModal from './BuilderMapLabelsConfigModal.svelte';
 
 export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsLayer> = {

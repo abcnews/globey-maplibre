@@ -1,19 +1,25 @@
-import { feature } from 'topojson-client';
 import {
   getDivergentContinuousPaletteInterpolator,
   SequentialPalette,
   DivergentPalette,
   ColourMode
 } from '@abcnews/palette';
-import { interpolateColour, getCustomPaletteInterpolator } from '../../../lib/colours.ts';
-import { fetchDownloadObject } from '../../../lib/fetchDownloadObject.ts';
-import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
-import type { GeoJsonLayer, GeoJsonFilter } from '../../../lib/data/jsonBlob.ts';
-import { getSequentialInterpolator } from '../../../lib/sequentialPalette.ts';
-import { resolveSchemeColour, type ColourSchemeName } from '../../../lib/colourScheme.ts';
-import { tweenStopsExpression } from '../Tween/utils.ts';
+import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours.ts';
+import type { GeoJsonAnyLayer, GeoJsonFilter, Size } from '../../../../lib/data/jsonBlob.ts';
+import { getSequentialInterpolator } from '../../../../lib/sequentialPalette.ts';
+import { resolveSchemeColour, type ColourSchemeName } from '../../../../lib/colourScheme.ts';
+import { tweenStopsExpression } from '../../Tween/utils.ts';
 import { THEMES, type GeoJsonTheme } from './themes.ts';
-import type { FeatureCollection } from 'geojson';
+
+/**
+ * The styling fields every GeoJSON kind shares, plus the kind-specific ones as optional.
+ * Areas/Lines/Points layers are all assignable to it, so one set of builders serves all three.
+ */
+export type GeoJsonStyle = Pick<GeoJsonAnyLayer, 'colourMode' | 'colourProp' | 'colourConfig' | 'filter'> & {
+  isOpaque?: boolean;
+  pointSize?: Size;
+  lineWidth?: Size;
+};
 
 /** `THEMES` only carries non-colour visuals (stroke width/opacity/radius) for `normal`/
  *  `highlighted` — `custom` has no preset of its own, so it visually behaves like `normal`
@@ -21,101 +27,6 @@ import type { FeatureCollection } from 'geojson';
 function resolveBasicPreset(basicType: ColourSchemeName | undefined): GeoJsonTheme {
   return (basicType && basicType !== 'custom' && THEMES[basicType]) || THEMES.normal;
 }
-
-/**
- * Fetches and normalizes GeoJSON or TopoJSON data from either a CMID or a URL.
- *
- * @param source Object containing either a cmid (number or string) or a url (string)
- * @returns GeoJSON feature collection or geometry
- */
-export async function fetchGeoJsonData(source: { cmid?: number | string; url?: string }): Promise<any> {
-  const { cmid, url } = source;
-  let rawData: any;
-
-  if (url) {
-    if (!isValidUrl(url)) {
-      throw new Error(`Invalid or preview URL provided: ${url}`);
-    }
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`Failed to fetch GeoJSON from ${url}: ${res.status}`);
-    }
-    rawData = await res.json();
-  } else if (cmid) {
-    const id = typeof cmid === 'string' ? Number(cmid) : cmid;
-    if (!id || isNaN(id) || id <= 0) {
-      throw new Error(`Invalid CMID provided: ${cmid}`);
-    }
-    rawData = await fetchDownloadObject(id);
-  } else {
-    throw new Error('Neither CMID nor URL provided for GeoJSON source');
-  }
-
-  let geojson: any = rawData;
-  if (rawData && rawData.type === 'Topology' && rawData.objects) {
-    const key = Object.keys(rawData.objects)[0];
-    if (key) {
-      geojson = feature(rawData, rawData.objects[key]);
-    }
-  }
-
-  // Ensure every feature has a defined ID for MapLibre setFeatureState
-  if (geojson && geojson.type === 'FeatureCollection' && Array.isArray(geojson.features)) {
-    geojson.features.forEach((f: any, index: number) => {
-      if (f.id === undefined || f.id === null) {
-        f.id = index;
-      }
-    });
-  } else if (geojson && geojson.type === 'Feature') {
-    if (geojson.id === undefined || geojson.id === null) {
-      geojson.id = 0;
-    }
-  }
-
-  return geojson;
-}
-
-/** Recursively flattens a GeoJSON geometry's nested `coordinates` array into `[lng, lat]` pairs. */
-function collectCoordinatePairs(geometry: any, out: [number, number][]): void {
-  if (!geometry) return;
-
-  if (geometry.type === 'GeometryCollection') {
-    geometry.geometries?.forEach((g: any) => collectCoordinatePairs(g, out));
-    return;
-  }
-
-  const flatten = (value: any): void => {
-    if (typeof value[0] === 'number') {
-      out.push([value[0], value[1]]);
-    } else {
-      value.forEach(flatten);
-    }
-  };
-
-  if (geometry.coordinates) flatten(geometry.coordinates);
-}
-
-/**
- * Extracts every coordinate pair from a fetched GeoJSON/TopoJSON payload (as normalized by
- * `fetchGeoJsonData`), for bounds-fitting — e.g. the "Go to layer" button, which has no
- * stored bounds to work from and must derive them from the live data on each click.
- */
-export function getGeoJsonCoordinatePairs(geojson: any): [number, number][] {
-  const out: [number, number][] = [];
-  const features =
-    geojson?.type === 'FeatureCollection'
-      ? geojson.features
-      : geojson?.type === 'Feature'
-        ? [geojson]
-        : geojson
-          ? [{ geometry: geojson }]
-          : [];
-
-  features?.forEach((f: any) => collectCoordinatePairs(f.geometry ?? f, out));
-
-  return out;
-}
-
 /** Earth equatorial circumference in kilometres */
 const EARTH_CIRCUMFERENCE_KM = 40075;
 
@@ -154,7 +65,7 @@ interface GeoJsonFeatureState {
  * @param config The GeoJSON layer configuration
  * @returns An interpolator function for mapping 0-1 values to CSS colours
  */
-function getPaletteInterpolator(config: GeoJsonLayer): ((t: number) => string) | null {
+function getPaletteInterpolator(config: GeoJsonStyle): ((t: number) => string) | null {
   const { paletteType, paletteVariant, customPalette } = config.colourConfig || {};
   if (!paletteType) return null;
 
@@ -182,7 +93,7 @@ function getPaletteInterpolator(config: GeoJsonLayer): ((t: number) => string) |
  * @param config The GeoJSON layer configuration
  * @returns A function that takes a GeoJSON feature and returns its GeoJsonFeatureState
  */
-function getFeatureStateEvaluator(config: GeoJsonLayer): (feature: any, index: number) => GeoJsonFeatureState {
+function getFeatureStateEvaluator(config: GeoJsonStyle): (feature: any, index: number) => GeoJsonFeatureState {
   const isOpaque = config.isOpaque ?? false;
   const colourMode = config.colourMode || 'basic';
   const colourConfig = config.colourConfig;
@@ -314,7 +225,7 @@ export function buildFilterExpression(filter?: GeoJsonFilter): any {
 /** Number of stops sampled from a palette interpolator when building a scale-mode paint expression. */
 const SCALE_EXPRESSION_STOPS = 16;
 
-function buildScaleColourExpression(config: GeoJsonLayer): any {
+function buildScaleColourExpression(config: GeoJsonStyle): any {
   const { colourProp, colourConfig } = config;
   const min = colourConfig?.min ?? 0;
   const max = colourConfig?.max ?? 100;
@@ -353,7 +264,7 @@ function numericPropExpression(prop: string, fallback: number): any {
  * channel. `fill`/`stroke` differ under `simple` mode (reading distinct GeoJSON simplestyle-spec
  * properties); `marker` is used for point/spike colour.
  */
-export function buildColourExpression(config: GeoJsonLayer, channel: 'fill' | 'stroke' | 'marker' = 'marker'): any {
+export function buildColourExpression(config: GeoJsonStyle, channel: 'fill' | 'stroke' | 'marker' = 'marker'): any {
   const { colourMode = 'basic', colourConfig } = config;
 
   if (colourMode === 'simple') {
@@ -381,8 +292,8 @@ export function buildColourExpression(config: GeoJsonLayer, channel: 'fill' | 's
  * it has no single colour of its own to show anyway.
  */
 export function buildTweenedColourExpression(
-  configStops: (GeoJsonLayer | undefined)[] | undefined,
-  representative: GeoJsonLayer,
+  configStops: (GeoJsonStyle | undefined)[] | undefined,
+  representative: GeoJsonStyle,
   channel: 'fill' | 'stroke' | 'marker',
   posKey: string
 ): any {
@@ -405,7 +316,7 @@ export function buildTweenedColourExpression(
 }
 
 /** Builds the native MapLibre paint expression (or constant) for a layer's opacity on the given channel. */
-export function buildOpacityExpression(config: GeoJsonLayer, channel: 'fill' | 'stroke' | 'circle' = 'fill'): any {
+export function buildOpacityExpression(config: GeoJsonStyle, channel: 'fill' | 'stroke' | 'circle' = 'fill'): any {
   const { colourMode = 'basic', isOpaque = false, colourConfig } = config;
   const basicPreset = resolveBasicPreset(colourConfig?.basicType);
 
@@ -419,7 +330,7 @@ export function buildOpacityExpression(config: GeoJsonLayer, channel: 'fill' | '
 }
 
 /** Builds the native MapLibre paint expression (or constant) for a point/circle radius. */
-export function buildRadiusExpression(config: GeoJsonLayer): any {
+export function buildRadiusExpression(config: GeoJsonStyle): any {
   if (config.pointSize?.unit === 'p') return config.pointSize.value;
 
   const basicPreset = resolveBasicPreset(config.colourConfig?.basicType);
@@ -437,7 +348,7 @@ export function buildRadiusExpression(config: GeoJsonLayer): any {
 }
 
 /** Builds the native MapLibre paint expression (or constant) for a stroke/line width. */
-export function buildStrokeWidthExpression(config: GeoJsonLayer): any {
+export function buildStrokeWidthExpression(config: GeoJsonStyle): any {
   if (config.lineWidth?.unit === 'p') return config.lineWidth.value;
 
   const basicPreset = resolveBasicPreset(config.colourConfig?.basicType);
@@ -450,11 +361,4 @@ export function buildStrokeWidthExpression(config: GeoJsonLayer): any {
 /** Adds a fixed amount to a width value that may be a constant or a MapLibre expression. */
 export function widthPlus(widthExpr: any, addition: number): any {
   return typeof widthExpr === 'number' ? widthExpr + addition : ['+', widthExpr, addition];
-}
-
-export function filterFeaturesType(data: FeatureCollection, featureTypes = ['']) {
-  return {
-    ...data,
-    features: data.features.filter(feature => featureTypes.includes(feature.geometry?.type))
-  };
 }

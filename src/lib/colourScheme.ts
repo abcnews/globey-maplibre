@@ -1,7 +1,7 @@
 /**
  * Shared "normal / highlighted / custom" colour scheme, used anywhere a layer needs a quick
  * on-brand colour choice instead of a raw hex picker. Currently drives GeoJson's `basic`
- * colour mode (`src/components/features/GeoJson/themes.ts`) and the Marker Mode layer colour
+ * colour mode (`src/components/features/utils/geojson/themes.ts`) and the Marker Mode layer colour
  * override (`PropMarkerLayers.svelte`); intended to be reused for CustomLabels colouring later
  * (likely via a CSS class per scheme, rather than a paint-expression colour).
  */

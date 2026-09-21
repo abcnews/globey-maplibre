@@ -1,7 +1,7 @@
-import type { GlobeJsonBlob, GlobeLayer } from '../../lib/data/jsonBlob.ts';
-import { moveLayer } from '../../lib/data/stack.ts';
-import { randomId } from '../../lib/randomId.ts';
-import type { LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
+import type { GlobeJsonBlob, GlobeLayer } from '../../../lib/data/jsonBlob.ts';
+import { moveLayer } from '../../../lib/data/stack.ts';
+import { randomId } from '../../../lib/randomId.ts';
+import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
 
 /**
  * Generic add/update/delete/reorder over `GlobeJsonBlob.layers`.

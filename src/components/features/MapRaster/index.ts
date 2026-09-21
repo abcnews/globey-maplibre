@@ -1,8 +1,8 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { RasterLayer } from '../../../lib/data/jsonBlob.ts';
-import { newLayerId } from '../layerOps.ts';
+import { newLayerId } from '../utils/layerOps.ts';
 import { GlobeAsiaAustralia as RasterIcon } from 'svelte-bootstrap-icons';
-import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
 import BuilderRasterConfigModal from './BuilderRasterConfigModal.svelte';
 import MapRastersHandler from './MapRastersHandler.svelte';
 

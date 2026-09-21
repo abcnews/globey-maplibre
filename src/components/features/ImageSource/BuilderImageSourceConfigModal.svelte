@@ -8,7 +8,7 @@
   import FilenameImportButton from './FilenameImportButton.svelte';
   import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils.ts';
-  import LayerSettingsFields from '../LayerSettingsFields.svelte';
+  import LayerSettingsFields from '../utils/LayerSettingsFields.svelte';
 
   let {
     config = $bindable(),

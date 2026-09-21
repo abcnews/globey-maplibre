@@ -3,7 +3,9 @@
   import PanZoomScrollHandler from '../features/PanZoom/PanZoomScrollHandler.svelte';
   import MapVectorHandler from '../features/MapVector/MapVectorHandler.svelte';
   import MapCustomLabelHandler from '../features/CustomLabels/MapCustomLabelHandler.svelte';
-  import GeoJsonsHandler from '../features/GeoJson/GeoJsonsHandler.svelte';
+  import GeoJsonAreasHandler from '../features/GeoJsonAreas/GeoJsonAreasHandler.svelte';
+  import GeoJsonLinesHandler from '../features/GeoJsonLines/GeoJsonLinesHandler.svelte';
+  import GeoJsonPointsHandler from '../features/GeoJsonPoints/GeoJsonPointsHandler.svelte';
   import ImageSourcesHandler from '../features/ImageSource/ImageSourcesHandler.svelte';
   import IconsHandler from '../features/Icon/IconsHandler.svelte';
   import MapRastersHandler from '../features/MapRaster/MapRastersHandler.svelte';
@@ -229,7 +231,9 @@
 
       <MapRastersHandler perPanel={perPanel('raster')} />
 
-      <GeoJsonsHandler perPanel={perPanel('geojson')} />
+      <GeoJsonAreasHandler perPanel={perPanel('geojsonAreas')} />
+      <GeoJsonLinesHandler perPanel={perPanel('geojsonLines')} />
+      <GeoJsonPointsHandler perPanel={perPanel('geojsonPoints')} />
       <ImageSourcesHandler perPanel={perPanel('image')} />
       <IconsHandler perPanel={perPanel('icon')} />
       {#if options.map.minimap && options.map.minimap.enabled !== false}

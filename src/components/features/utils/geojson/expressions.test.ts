@@ -6,7 +6,7 @@ import {
   buildRadiusExpression,
   buildColourExpression,
   buildTweenedColourExpression
-} from './utils.ts';
+} from './expressions.ts';
 
 /**
  * Evaluates a MapLibre paint expression against a test feature.

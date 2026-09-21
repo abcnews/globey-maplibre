@@ -1,23 +1,28 @@
-<script lang="ts">
+<script lang="ts" generics="Layer extends GeoJsonAnyLayer">
   import { Modal } from '@abcnews/components-builder';
-  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
-  import { fetchGeoJsonData } from './utils.ts';
-  import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
+  import type { Snippet } from 'svelte';
+  import type { GeoJsonAnyLayer } from '../../../../lib/data/jsonBlob.ts';
+  import { fetchGeoJsonData } from './data.ts';
+  import { isValidUrl } from '../../../../lib/data/layerHelpers.ts';
   import BuilderPropGeoJsonFilter from './BuilderPropGeoJsonFilter.svelte';
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
-  import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
-  import VerticalTabs from '../../shared/VerticalTabs.svelte';
+  import VerticalTabs from '../../../shared/VerticalTabs.svelte';
   import LayerSettingsFields from '../LayerSettingsFields.svelte';
   import { untrack } from 'svelte';
 
   interface Props {
-    /** The GeoJsonLayer object being edited or drafted */
-    config: GeoJsonLayer;
+    /** The GeoJSON layer (any kind) being edited or drafted */
+    config: Layer;
+    /** Modal heading, e.g. "Edit areas" */
+    title: string;
+    /** Kind-specific fields (size, reveal animation…) shown on the Config tab once data loads.
+     *  Receives the draft, which it may mutate directly. */
+    kindFields?: Snippet<[Layer]>;
     /** Callback fired when the modal requests to close */
     onclose?: () => void;
   }
 
-  let { config = $bindable(), onclose }: Props = $props();
+  let { config = $bindable(), title, kindFields, onclose }: Props = $props();
 
   let activeTab = $state<'config' | 'style'>('config');
 
@@ -28,12 +33,11 @@
     })
   );
 
-  let draftConfig = $state<GeoJsonLayer>(
+  let draftConfig = $state<Layer>(
     untrack(() => {
-      const snap = $state.snapshot(config) || ({} as any);
+      const snap = $state.snapshot(config) as Layer;
       return {
         ...snap,
-        geometryType: snap.geometryType ?? 'areas',
         colourMode: snap.colourMode ?? 'simple',
         cmid: snap.cmid ? snap.cmid : undefined,
         url: snap.url ?? undefined
@@ -101,7 +105,7 @@
       rawFeatures = features;
       status = 'loaded';
     } catch (e: any) {
-      console.error('[BuilderGeoJsonConfigModal fetchAndParse:error]', e);
+      console.error('[BuilderGeoJsonModal fetchAndParse:error]', e);
       errorMessage = e.message;
       properties = [];
       featureCount = 0;
@@ -153,19 +157,10 @@
     return Array.from(set).sort();
   }
 
+  /** Copies every drafted field onto `config` — source fields (`cmid`/`url`) are set by `handleSave` first. */
   function commitDraft() {
-    config.id = draftConfig.id || config.id;
-    config.geometryType = draftConfig.geometryType;
-    config.colourMode = draftConfig.colourMode;
-    config.colourProp = draftConfig.colourProp;
-    config.colourConfig = $state.snapshot(draftConfig.colourConfig);
-    config.isOpaque = draftConfig.isOpaque;
-    config.filter = $state.snapshot(draftConfig.filter);
-    config.pointSize = $state.snapshot(draftConfig.pointSize);
-    config.lineWidth = $state.snapshot(draftConfig.lineWidth);
-    config.lineAnimationStyle = draftConfig.lineAnimationStyle;
-    config.animationClock = draftConfig.animationClock;
-    config.name = draftConfig.name;
+    const { cmid: _cmid, url: _url, ...draftFields } = $state.snapshot(draftConfig) as Layer;
+    Object.assign(config, draftFields);
   }
 
   function handleSave() {
@@ -178,7 +173,7 @@
     const isUrl = isUrlInput(trimmed);
     if (isUrl) {
       if (!isValidUrl(trimmed)) {
-        console.warn('[BuilderGeoJsonConfigModal handleSave:invalid_url]', trimmed);
+        console.warn('[BuilderGeoJsonModal handleSave:invalid_url]', trimmed);
         alert('Preview URLs are not allowed. Please use a live-production or res/sites URL.');
         return;
       }
@@ -188,7 +183,7 @@
     } else {
       const numericCmid = Number(trimmed);
       if (!numericCmid || isNaN(numericCmid) || numericCmid <= 0) {
-        console.warn('[BuilderGeoJsonConfigModal handleSave:invalid_cmid]', trimmed);
+        console.warn('[BuilderGeoJsonModal handleSave:invalid_cmid]', trimmed);
         alert('Please enter a valid CMID.');
         return;
       }
@@ -196,7 +191,7 @@
       delete (config as any).url;
       commitDraft();
     }
-    console.log('[BuilderGeoJsonConfigModal handleSave] Saved config:', $state.snapshot(config));
+    console.log('[BuilderGeoJsonModal handleSave] Saved config:', $state.snapshot(config));
 
     onclose?.();
   }
@@ -207,7 +202,7 @@
   <button onclick={() => onclose?.()}>Cancel</button>
 {/snippet}
 
-<Modal onClose={() => onclose?.()} title="Edit GeoJSON" {footerChildren}>
+<Modal onClose={() => onclose?.()} {title} {footerChildren}>
   <VerticalTabs
     tabs={[
       { id: 'config', label: 'Config' },
@@ -247,45 +242,7 @@
       </fieldset>
 
       {#if status === 'loaded'}
-        <fieldset>
-          <legend>Geometry Type</legend>
-          <div style:display="flex" style:gap="1rem">
-            {#each ['areas', 'lines', 'points'] as type}
-              <label
-                style:display="flex"
-                style:align-items="center"
-                style:gap="0.5rem"
-                style:cursor="pointer"
-                style:text-transform="capitalize"
-              >
-                <input type="radio" name="gj-type" value={type} bind:group={draftConfig.geometryType} />
-                {type}
-              </label>
-            {/each}
-          </div>
-        </fieldset>
-
-        {#if draftConfig.geometryType === 'points'}
-          <BuilderPropGeoJsonSize bind:config={draftConfig} prop="pointSize" legend="Point Size" />
-        {/if}
-
-        {#if draftConfig.geometryType === 'lines'}
-          <BuilderPropGeoJsonSize bind:config={draftConfig} prop="lineWidth" legend="Line Width" />
-
-          <fieldset>
-            <legend>Reveal Animation</legend>
-            <div style:display="flex" style:gap="1rem">
-              <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
-                <input type="radio" name="gj-line-anim" value="fade" bind:group={draftConfig.lineAnimationStyle} />
-                Fade in
-              </label>
-              <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
-                <input type="radio" name="gj-line-anim" value="draw" bind:group={draftConfig.lineAnimationStyle} />
-                Draw on
-              </label>
-            </div>
-          </fieldset>
-        {/if}
+        {@render kindFields?.(draftConfig)}
       {/if}
     {:else if activeTab === 'style'}
       {#if status === 'loaded'}

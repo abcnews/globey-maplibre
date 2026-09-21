@@ -1,5 +1,5 @@
 import type * as maplibregl from 'maplibre-gl';
-import type { ImageLayer, GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
+import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
 
 export * from './layerManager.ts';
 

@@ -1,4 +1,4 @@
-import { COLOUR_SCHEME_COLOURS } from '../../../lib/colourScheme.ts';
+import { COLOUR_SCHEME_COLOURS } from '../../../../lib/colourScheme.ts';
 
 export interface GeoJsonTheme {
   color: string;

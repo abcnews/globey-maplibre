@@ -51,9 +51,8 @@ describe('globeJsonBlobSchema (Zod)', () => {
         {
           id: 'layer-geojson-fires',
           name: 'fires',
-          type: 'geojson',
+          type: 'geojsonPoints',
           cmid: 123456,
-          geometryType: 'points',
           colourMode: 'simple'
         },
         {
@@ -107,10 +106,9 @@ describe('globeJsonBlobSchema (Zod)', () => {
     const parsed = parseGlobeJsonBlob(rawBlob);
     assert.strictEqual(parsed.title, 'Bushfire Scrollyteller 2026');
     assert.strictEqual(parsed.layers.length, 7);
-    assert.strictEqual(parsed.layers[1].type, 'geojson');
-    if (parsed.layers[1].type === 'geojson') {
+    assert.strictEqual(parsed.layers[1].type, 'geojsonPoints');
+    if (parsed.layers[1].type === 'geojsonPoints') {
       assert.strictEqual(parsed.layers[1].cmid, 123456);
-      assert.strictEqual(parsed.layers[1].geometryType, 'points');
     }
   });
 
@@ -130,8 +128,7 @@ describe('globeJsonBlobSchema (Zod)', () => {
         {
           id: 'fires-layer',
           name: 'fires',
-          type: 'geojson',
-          geometryType: 'areas',
+          type: 'geojsonAreas',
           colourMode: 'scale',
           isOpaque: false
         }

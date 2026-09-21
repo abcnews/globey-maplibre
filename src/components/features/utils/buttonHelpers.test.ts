@@ -1,9 +1,9 @@
 import { describe, it, assert, vi } from 'vitest';
 import { createEditButton, createDeleteButton, getDefaultLayerButtons } from './buttonHelpers.ts';
-import { parseGlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
-import type { LayerFeatureDefinition } from './types.ts';
+import { parseGlobeJsonBlob } from '../../../lib/data/jsonBlob.ts';
+import type { LayerFeatureDefinition } from '../types.ts';
 
-const blobWith = (ids: string[]) => parseGlobeJsonBlob({ layers: ids.map(id => ({ id, type: 'geojson', cmid: 1 })) });
+const blobWith = (ids: string[]) => parseGlobeJsonBlob({ layers: ids.map(id => ({ id, type: 'geojsonAreas', cmid: 1 })) });
 
 describe('createEditButton', () => {
   it('onclick should call openModal', () => {

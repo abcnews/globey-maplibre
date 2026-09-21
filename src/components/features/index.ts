@@ -1,12 +1,14 @@
 export * from './types.ts';
-export * from './layerOps.ts';
-export * from './buttonHelpers.ts';
+export * from './utils/layerOps.ts';
+export * from './utils/buttonHelpers.ts';
 export * from './layers/layerManager.ts';
 export * from './layers/layerUtils.ts';
 
 import type { LayerAddMenuItem, LayerFeatureDefinition } from './types.ts';
 
-import { geoJsonFeature } from './GeoJson/index.ts';
+import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
+import { geoJsonLinesFeature } from './GeoJsonLines/index.ts';
+import { geoJsonPointsFeature } from './GeoJsonPoints/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
 import { iconFeature } from './Icon/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
@@ -16,7 +18,9 @@ import { streetMapFeature } from './MapVector/index.ts';
 import { rasterFeature } from './MapRaster/index.ts';
 
 export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
-  geoJsonFeature,
+  geoJsonAreasFeature,
+  geoJsonLinesFeature,
+  geoJsonPointsFeature,
   iconFeature,
   imageSourceFeature,
   mapLabelsFeature,
@@ -39,9 +43,9 @@ const menuItemFor = (feature: LayerFeatureDefinition<any>): LayerAddMenuItem => 
 
 /**
  * The Add Layer menu is the feature registry, in registry order, plus the one entry that
- * generates layers rather than adding a blank one. Whether an entry is currently selectable
+ * generates (Areas) layers rather than adding a blank one. Whether an entry is currently selectable
  * is `canAddFeature()`'s call, not a per-entry `canAdd`.
  */
 export const layerAddMenuRegistry: LayerAddMenuItem[] = layerFeatureRegistry.flatMap(feature =>
-  feature === geoJsonFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
+  feature === geoJsonPointsFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
 );

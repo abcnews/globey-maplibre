@@ -3,7 +3,7 @@ import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
 import type { GlobeJsonBlob } from '../../../lib/data/jsonBlob.ts';
 import { TweenController } from './TweenController.svelte.ts';
 
-const panelBlob = () => ({ map: {}, layers: [{ id: 'a', type: 'geojson', geometryType: 'lines' }] });
+const panelBlob = () => ({ map: {}, layers: [{ id: 'a', type: 'geojsonLines' }] });
 
 const makePanels = (): PanelDefinition<GlobeJsonBlob>[] =>
   [

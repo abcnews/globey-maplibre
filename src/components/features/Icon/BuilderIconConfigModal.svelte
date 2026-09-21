@@ -4,7 +4,7 @@
   import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
   import CmidInput from '../../shared/CmidInput/CmidInput.svelte';
-  import LayerSettingsFields from '../LayerSettingsFields.svelte';
+  import LayerSettingsFields from '../utils/LayerSettingsFields.svelte';
 
   interface Props {
     /** The IconLayer object being edited or drafted */

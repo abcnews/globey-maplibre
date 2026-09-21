@@ -138,10 +138,11 @@
       .toReversed()
   );
 
-  /** Standard clone→mutate→commit wrapper for any change to the blob. */
+  /** Standard clone→mutate→commit wrapper for any change to the blob. Snapshots first:
+   *  `structuredClone` throws on any Svelte `$state` proxy that reached the store. */
   function mutateBlob(fn: (draft: GlobeJsonBlob) => void) {
     if (!$jsonBlob) return;
-    const draft = structuredClone($jsonBlob);
+    const draft = structuredClone($state.snapshot($jsonBlob));
     fn(draft);
     jsonBlob.set(draft);
   }
@@ -272,7 +273,8 @@
 
     if (editingItem) {
       const { feature, descriptor, data } = editingItem;
-      const currentData = editingItem.data ?? data;
+      // `editingItem` is `$state`, so its data is a proxy — store a plain copy in the blob.
+      const currentData = $state.snapshot(editingItem.data ?? data);
       console.log('[Builder.layers] Closing layer modal for:', descriptor.name, { descriptor, currentData });
 
       mutateBlob(draft => {

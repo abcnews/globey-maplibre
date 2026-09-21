@@ -1,16 +1,16 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
   import type { Map } from 'maplibre-gl';
-  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { GeoJsonPointsLayer } from '../../../lib/data/jsonBlob.ts';
   import {
     buildTweenedColourExpression,
     buildOpacityExpression,
     buildStrokeWidthExpression,
     buildRadiusExpression,
     buildFilterExpression,
-    getKilometreZoomScaleExpression,
-    filterFeaturesType
-  } from './utils.ts';
+    getKilometreZoomScaleExpression
+  } from '../utils/geojson/expressions.ts';
+  import { filterFeaturesType } from '../utils/geojson/data.ts';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
   import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
 
@@ -29,10 +29,10 @@
     zIndex = Z_INDEX_GEOJSON
   }: {
     data: any;
-    config: GeoJsonLayer;
+    config: GeoJsonPointsLayer;
     sourceId: string;
     opacityStops?: number[];
-    configStops?: (GeoJsonLayer | undefined)[];
+    configStops?: (GeoJsonPointsLayer | undefined)[];
     posKey?: string;
     zIndex?: number;
   } = $props();

@@ -1,9 +1,9 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
 import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
-import { newLayerId } from '../layerOps.ts';
+import { newLayerId } from '../utils/layerOps.ts';
 import { CardImage as ImageIcon } from 'svelte-bootstrap-icons';
-import { createEditButton, createDeleteButton, createGoToButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
 import BuilderImageSourceConfigModal from './BuilderImageSourceConfigModal.svelte';
 import ImageSourcesHandler from './ImageSourcesHandler.svelte';
 
