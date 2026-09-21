@@ -53,17 +53,22 @@ export const animationClockSchema = z.enum(['scroll', 'immediate']);
 export type AnimationClock = z.infer<typeof animationClockSchema>;
 
 /**
- * Base layer definition schema with common properties: UUID and user-facing label/name.
+ * Base layer definition schema with common properties: the layer's unique `id` and animation clock.
  * Rendering stack order comes from each layer's position in `GlobeJsonBlob.layers`, not a stored field.
  */
+/** Valid layer id: lowercase letters and numbers only (ACTO-safe). */
+export const LAYER_ID_PATTERN = /^[a-z0-9]+$/;
+
 const baseLayerObject = {
-  /** Unique identifier / UUID for the layer */
-  id: z.string(),
-  /** Friendly, lowercase-alphanumeric name for identifying the layer in the Builder */
-  name: z
+  /**
+   * Unique, user-editable, lowercase-alphanumeric id. It is at once the MapLibre source/layer
+   * key, the Builder's display title, and the marker token key (`LAYER<id>on`) — hence ACTO's
+   * `[a-z0-9]` alphabet.
+   */
+  id: z
     .string()
-    .regex(/^[a-z0-9]*$/, 'Lowercase letters and numbers only')
-    .optional(),
+    .min(1, 'Layer ID cannot be empty')
+    .regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
@@ -270,7 +275,12 @@ export const globeJsonBlobSchema = z.object({
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
   /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */
-  layers: z.array(globeLayerSchema).default([])
+  layers: z
+    .array(globeLayerSchema)
+    .default([])
+    .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
+      message: 'Layer IDs must be unique within the globe'
+    })
 });
 export type GlobeJsonBlob = z.infer<typeof globeJsonBlobSchema>;
 

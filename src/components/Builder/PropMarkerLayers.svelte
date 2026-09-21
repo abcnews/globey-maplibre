@@ -22,8 +22,7 @@
   // real fade duration always comes from the shared panel-level clock. See REFACTOR.md.
   const IMMEDIATE_DURATION_SENTINEL = 1;
 
-  /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id
-   *  (sanitised to ACTO's `[a-z0-9]`-only alphabet — must match `layerOverrideKey`'s read side). */
+  /** `LAYER<name>` tokens key off the layer's id — must match `layerOverrideKey`'s read side. */
   function keyFor(layer: GlobeLayer): string {
     return layerOverrideKey(layer);
   }
@@ -64,7 +63,7 @@
             {@const Icon = icon}
             <Icon class="layer-icon" />
           {/if}
-          <span class="layer-name">{layer.name ?? layer.id}</span>
+          <span class="layer-name">{layer.id}</span>
         </label>
       </div>
 

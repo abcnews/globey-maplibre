@@ -16,26 +16,26 @@ describe('createEditButton', () => {
 
 describe('createDeleteButton', () => {
   it("onclick should remove the item's layer from the blob, leaving the others in order", () => {
-    const options = blobWith(['geojson-1', 'geojson-2', 'geojson-3']);
-    const item = { id: 'geojson-2' } as any;
+    const options = blobWith(['geojson1', 'geojson2', 'geojson3']);
+    const item = { id: 'geojson2' } as any;
 
     createDeleteButton().onclick({ options, item, startInteractivePlacement: vi.fn(), openModal: vi.fn() });
 
     assert.deepStrictEqual(
       options.layers.map(l => l.id),
-      ['geojson-1', 'geojson-3']
+      ['geojson1', 'geojson3']
     );
   });
 
   it('onclick should be a no-op when the id is not in the blob', () => {
-    const options = blobWith(['geojson-1']);
+    const options = blobWith(['geojson1']);
     const item = { id: 'gone' } as any;
 
     createDeleteButton().onclick({ options, item, startInteractivePlacement: vi.fn(), openModal: vi.fn() });
 
     assert.deepStrictEqual(
       options.layers.map(l => l.id),
-      ['geojson-1']
+      ['geojson1']
     );
   });
 });

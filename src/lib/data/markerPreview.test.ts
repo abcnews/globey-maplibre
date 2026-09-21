@@ -7,9 +7,9 @@ function baseOptions(): GlobeJsonBlob {
   return parseGlobeJsonBlob({
     map: { coords: [0, 0], z: 2, base: 'street', projection: 'globe', minimap: { enabled: true, bounds: [] } },
     layers: [
-      { type: 'geojsonAreas', name: 'fires', id: 'fires', cmid: 1, colourMode: 'simple' },
-      { type: 'icon', name: 'city', id: 'city', cmid: 2, coords: [0, 0] },
-      { type: 'mapLabels', id: 'builtin-map-labels', countriesMajor: true }
+      { type: 'geojsonAreas', id: 'fires', cmid: 1, colourMode: 'simple' },
+      { type: 'icon', id: 'city', cmid: 2, coords: [0, 0] },
+      { type: 'mapLabels', id: 'builtinmaplabels', countriesMajor: true }
     ]
   });
 }
@@ -31,9 +31,9 @@ describe('applyMarkerOverrides', () => {
     assert.strictEqual(firstGeoJson(result)?.id, 'fires');
   });
 
-  it('matches an unnamed layer by its sanitised id', () => {
+  it('matches a layer by its id', () => {
     const base = parseGlobeJsonBlob({
-      layers: [{ type: 'raster', id: 'raster-ab12', url: 'https://example.com/{z}/{x}/{y}.png' }]
+      layers: [{ type: 'raster', id: 'rasterab12', url: 'https://example.com/{z}/{x}/{y}.png' }]
     });
     const result = applyMarkerOverrides(base, { layers: [{ name: 'rasterab12', state: 'on' }] });
     assert.strictEqual(kept(result, 'raster').length, 1);
@@ -42,9 +42,9 @@ describe('applyMarkerOverrides', () => {
   it('preserves the master blob stack order among the layers it keeps', () => {
     const base = parseGlobeJsonBlob({
       layers: [
-        { type: 'geojsonAreas', id: 'bottom', name: 'bottom', cmid: 1 },
-        { type: 'geojsonAreas', id: 'middle', name: 'middle', cmid: 2 },
-        { type: 'geojsonAreas', id: 'top', name: 'top', cmid: 3 }
+        { type: 'geojsonAreas', id: 'bottom', cmid: 1 },
+        { type: 'geojsonAreas', id: 'middle', cmid: 2 },
+        { type: 'geojsonAreas', id: 'top', cmid: 3 }
       ]
     });
     const result = applyMarkerOverrides(base, {

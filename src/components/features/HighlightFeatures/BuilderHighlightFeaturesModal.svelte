@@ -2,7 +2,7 @@
   import { Modal, Typeahead, Loader } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
   import type { GlobeJsonBlob, GeoJsonAreasLayer } from '../../../lib/data/jsonBlob.ts';
-  import { newLayerId } from '../utils/layerOps.ts';
+  import { uniqueLayerId } from '../utils/layerOps.ts';
   import { DEFAULT_FEATURE_SETS, fetchFeatureSetIndex, getFeatureFileUrl, type FeatureSetItem } from './featureSets.ts';
 
   interface Props {
@@ -69,21 +69,27 @@
     const selectedItems = allItems.filter(item => selectedFilenames.includes(item.filename));
     if (selectedItems.length === 0) return;
 
-    const newLayers: GeoJsonAreasLayer[] = selectedItems.map(item => ({
-      id: newLayerId('geojsonAreas'),
-      type: 'geojsonAreas',
-      url: getFeatureFileUrl(activeSet, item),
-      colourMode: 'basic',
-      colourConfig: {
-        basicType: 'normal',
-        minColour: '#ffffff',
-        maxColour: '#ff0000',
-        paletteType: 'sequential',
-        paletteVariant: 'Blue'
-      },
-      isOpaque: false,
-      name: item.name.toLowerCase().replace(/[^a-z0-9]/g, '')
-    }));
+    // Each layer's id is its slugged place name (e.g. `australia`), so marker tokens read
+    // `LAYERaustraliaon`; suffixed when taken, including by an earlier item in this batch.
+    const takenIds = new Set(options.layers.map(({ id }) => id));
+    const newLayers: GeoJsonAreasLayer[] = selectedItems.map(item => {
+      const id = uniqueLayerId(item.name, 'geojsonAreas', takenIds);
+      takenIds.add(id);
+      return {
+        id,
+        type: 'geojsonAreas',
+        url: getFeatureFileUrl(activeSet, item),
+        colourMode: 'basic',
+        colourConfig: {
+          basicType: 'normal',
+          minColour: '#ffffff',
+          maxColour: '#ff0000',
+          paletteType: 'sequential',
+          paletteVariant: 'Blue'
+        },
+        isOpaque: false
+      };
+    });
 
     // Appended, so they land on top of the stack in selection order.
     options.layers = [...options.layers, ...newLayers];

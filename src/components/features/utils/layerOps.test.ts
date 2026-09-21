@@ -8,7 +8,9 @@ import {
   findLayerIndex,
   describeLayer,
   canAddFeature,
-  newLayerId
+  newLayerId,
+  uniqueLayerId,
+  isLayerIdUnique
 } from './layerOps.ts';
 import { layerFeatureRegistry, featureForKind } from '../index.ts';
 import { parseGlobeJsonBlob, type GlobeJsonBlob, type GlobeLayer } from '../../../lib/data/jsonBlob.ts';
@@ -26,11 +28,11 @@ describe('layerOps', () => {
     expect(ids(blob)).toEqual(['a', 'b']);
   });
 
-  it('replaces a layer in place, preserving its stack position', () => {
+  it('replaces (and can rename) a layer in place, preserving its stack position', () => {
     const blob = blobWith([layer('a', 'geojsonAreas'), layer('b', 'geojsonAreas'), layer('c', 'geojsonAreas')]);
-    updateLayer(blob, 'b', layer('b', 'geojsonAreas', { name: 'renamed' }));
-    expect(ids(blob)).toEqual(['a', 'b', 'c']);
-    expect(findLayer(blob, 'b')?.name).toBe('renamed');
+    updateLayer(blob, 'b', layer('renamed', 'geojsonAreas'));
+    expect(ids(blob)).toEqual(['a', 'renamed', 'c']);
+    expect(findLayer(blob, 'b')).toBeUndefined();
   });
 
   it('ignores an update or move for an id that is not in the blob', () => {
@@ -56,25 +58,40 @@ describe('layerOps', () => {
 
   it('generates distinct ids', () => {
     expect(newLayerId('geojsonAreas')).not.toBe(newLayerId('geojsonAreas'));
-    expect(newLayerId('geojsonAreas').startsWith('geojsonareas-')).toBe(true);
+    expect(newLayerId('geojsonAreas')).toMatch(/^areas[a-z0-9]+$/);
+  });
+
+  it('re-rolls a colliding id on add', () => {
+    const blob = blobWith([layer('a', 'geojsonAreas')]);
+    addLayer(blob, layer('a', 'geojsonAreas'));
+    expect(new Set(ids(blob)).size).toBe(2);
+  });
+
+  it('builds unique ids from free text', () => {
+    expect(uniqueLayerId('New Zealand', 'geojsonAreas', [])).toBe('newzealand');
+    expect(uniqueLayerId('Georgia', 'geojsonAreas', ['georgia', 'georgia2'])).toBe('georgia3');
+    expect(uniqueLayerId('!!', 'geojsonAreas', [])).toMatch(/^areas[a-z0-9]+$/);
+  });
+
+  it('checks id uniqueness, ignoring the layer being edited', () => {
+    const layers = [layer('a', 'geojsonAreas'), layer('b', 'geojsonAreas')];
+    expect(isLayerIdUnique(layers, 'a', 'a')).toBe(true);
+    expect(isLayerIdUnique(layers, 'a', 'b')).toBe(false);
+    expect(isLayerIdUnique(layers, 'c')).toBe(true);
   });
 });
 
 describe('describeLayer', () => {
   const feature = featureForKind('raster')!;
 
-  it("prefers the layer's own name", () => {
-    const item = describeLayer(feature, layer('r1', 'raster', { name: 'satellite' }) as any, 2);
-    expect(item.name).toBe('satellite');
+  it('titles the row by the layer id', () => {
+    const item = describeLayer(feature, layer('r1', 'raster') as any, 2);
+    expect(item.name).toBe('r1');
     expect(item.index).toBe(2);
     expect(item.id).toBe('r1');
     expect(item.kind).toBe('raster');
   });
 
-  it("falls back to the feature's label when unnamed", () => {
-    const item = describeLayer(feature, layer('r1', 'raster') as any, 0);
-    expect(item.name).toBe(feature.label);
-  });
 });
 
 describe('canAddFeature', () => {

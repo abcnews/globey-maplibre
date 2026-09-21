@@ -1,24 +1,31 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import { jsonBlob } from '../../../lib/data/blobStore.ts';
+  import { isLayerIdUnique, toLayerIdSlug } from './layerOps.ts';
+
   interface Props {
     /** 'immediate' = plays on arrival, holding until the panel is reached; unset/'scroll' = tied to scroll position */
     animationClock?: 'scroll' | 'immediate';
-    /** Friendly layer name, lowercase-alphanumeric only. Purely for identifying layers in the Builder UI. */
-    name?: string;
+    /** Unique lowercase-alphanumeric layer id — also the Builder title and marker `LAYER<id>` token. */
+    id?: string;
   }
 
-  let { animationClock = $bindable(), name = $bindable() }: Props = $props();
+  let { animationClock = $bindable(), id = $bindable('') }: Props = $props();
+
+  // The id this layer had when the modal opened, so it doesn't count as a clash with itself.
+  const originalId = untrack(() => id);
+  const isUnique = $derived(isLayerIdUnique($jsonBlob?.layers ?? [], id ?? '', originalId));
 
   function setClock(mode: 'scroll' | 'immediate') {
     animationClock = mode === 'immediate' ? 'immediate' : undefined;
   }
 
-  // Strips anything outside a-z0-9 and forces lowercase as the reader types,
-  // so the friendly name is always already valid rather than just validated on save.
-  function handleNameInput(e: Event) {
+  // Strips anything outside a-z0-9 and forces lowercase as the reader types, so the id is
+  // always well-formed. Empty/duplicate ids are reverted on commit by `handleCloseLayerModal`.
+  function handleIdInput(e: Event) {
     const input = e.currentTarget as HTMLInputElement;
-    const sanitised = input.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-    name = sanitised || undefined;
-    input.value = sanitised;
+    id = toLayerIdSlug(input.value);
+    input.value = id;
   }
 </script>
 
@@ -53,11 +60,17 @@
 </fieldset>
 
 <fieldset>
-  <legend>Layer Name</legend>
+  <legend>Layer ID</legend>
   <div class="field-group">
-    <label for="layer-name">Friendly name</label>
-    <input id="layer-name" type="text" placeholder="e.g. capitalcities" value={name ?? ''} oninput={handleNameInput} />
-    <small class="help-text">Lowercase letters and numbers only (a-z, 0-9). Optional.</small>
+    <label for="layer-id">Identifier / marker token</label>
+    <input id="layer-id" type="text" placeholder="e.g. fires" value={id} oninput={handleIdInput} />
+    {#if !id}
+      <small class="error-text">Layer ID cannot be empty — the previous ID will be kept.</small>
+    {:else if !isUnique}
+      <small class="error-text">This Layer ID is already in use — the previous ID will be kept.</small>
+    {:else}
+      <small class="help-text">Lowercase letters and numbers only (a-z, 0-9). Used in markers, e.g. LAYER{id}on.</small>
+    {/if}
   </div>
 </fieldset>
 
@@ -71,6 +84,11 @@
   .field-group label {
     font-size: 0.85rem;
     font-weight: 500;
+  }
+
+  .error-text {
+    font-size: 0.75rem;
+    color: var(--error, #c62828);
   }
 
   .help-text {

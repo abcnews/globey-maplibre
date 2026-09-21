@@ -169,7 +169,7 @@
       </div>
     </fieldset>
 
-    <LayerSettingsFields bind:animationClock={config.animationClock} bind:name={config.name} />
+    <LayerSettingsFields bind:animationClock={config.animationClock} bind:id={config.id} />
   </div>
 
   {#snippet footerChildren()}

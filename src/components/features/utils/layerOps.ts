@@ -12,9 +12,41 @@ import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
  * contract in `Builder.layers.svelte`.
  */
 
-/** Generates an id for a new layer: stable once assigned, and unique within a blob. */
-export function newLayerId(kind: GlobeLayer['type']): string {
-  return `${kind.toLowerCase()}-${randomId()}`;
+/** Sanitises free text to the layer id alphabet (`[a-z0-9]`). */
+export function toLayerIdSlug(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+/**
+ * Generates an ACTO-safe default id for a new layer, e.g. `areas8x2b1`, `icon4k7e0`.
+ * Pass `takenIds` to guarantee it doesn't collide with an existing layer.
+ */
+export function newLayerId(kind: GlobeLayer['type'], takenIds: Iterable<string> = []): string {
+  const prefix = toLayerIdSlug(kind.replace(/^geojson/, ''));
+  const taken = new Set(takenIds);
+  const candidate = () => `${prefix}${randomId().slice(0, 5)}`;
+  let id = candidate();
+  while (taken.has(id)) id = candidate();
+  return id;
+}
+
+/**
+ * Returns `base` slugged, or with a numeric suffix if already taken (`georgia`, `georgia2`).
+ * Falls back to `newLayerId(kind)` when the slug is empty.
+ */
+export function uniqueLayerId(base: string, kind: GlobeLayer['type'], takenIds: Iterable<string>): string {
+  const taken = new Set(takenIds);
+  const slug = toLayerIdSlug(base);
+  if (!slug) return newLayerId(kind, taken);
+  if (!taken.has(slug)) return slug;
+  let suffix = 2;
+  while (taken.has(`${slug}${suffix}`)) suffix++;
+  return `${slug}${suffix}`;
+}
+
+/** Whether `id` is free to use, ignoring the layer currently being edited (`currentLayerId`). */
+export function isLayerIdUnique(layers: GlobeLayer[], id: string, currentLayerId?: string): boolean {
+  return !layers.some(layer => layer.id === id && layer.id !== currentLayerId);
 }
 
 export function findLayerIndex(options: GlobeJsonBlob, id: string): number {
@@ -25,12 +57,18 @@ export function findLayer(options: GlobeJsonBlob, id: string): GlobeLayer | unde
   return options.layers.find(layer => layer.id === id);
 }
 
-/** Appends a layer to the top of the stack. */
+/**
+ * Appends a layer to the top of the stack. Re-rolls the layer's id in place if it's already
+ * taken, since the schema rejects duplicate ids (mutating `layer` keeps any caller-held
+ * reference, e.g. the Builder's `editingItem`, pointing at the right id).
+ */
 export function addLayer(options: GlobeJsonBlob, layer: GlobeLayer): void {
+  const takenIds = options.layers.map(({ id }) => id);
+  if (takenIds.includes(layer.id)) layer.id = newLayerId(layer.type, takenIds);
   options.layers = [...options.layers, layer];
 }
 
-/** Replaces a layer in place, preserving its stack position. */
+/** Replaces a layer in place, preserving its stack position. `data.id` may differ from `id` (a rename). */
 export function updateLayer(options: GlobeJsonBlob, id: string, data: GlobeLayer): void {
   const index = findLayerIndex(options, id);
   if (index === -1) return;
@@ -49,8 +87,8 @@ export function moveLayerTo(options: GlobeJsonBlob, id: string, toIndex: number)
 }
 
 /**
- * Builds the Builder's list row for a layer. Prefers the layer's own explicit `name`,
- * falling back to the feature's label — never a name recomputed from other fields.
+ * Builds the Builder's list row for a layer, titled by its `id` — never a name recomputed
+ * from other fields.
  */
 export function describeLayer<T extends GlobeLayer>(
   feature: LayerFeatureDefinition<T>,
@@ -60,7 +98,7 @@ export function describeLayer<T extends GlobeLayer>(
   return {
     id: layer.id,
     kind: layer.type,
-    name: layer.name || feature.label,
+    name: layer.id || feature.label,
     index,
     data: layer
   };

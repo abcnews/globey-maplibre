@@ -7,7 +7,10 @@ import {
   createDefaultJsonBlob,
   JSON_BLOB_STORAGE_KEY
 } from './blobStore.ts';
-import { formatGlobeJsonBlob } from './jsonBlob.ts';
+import { get } from 'svelte/store';
+import { formatGlobeJsonBlob, type GlobeJsonBlob, type GlobeLayer } from './jsonBlob.ts';
+
+const raster = (id: string) => ({ id, type: 'raster', url: 'https://example.com/{z}/{x}/{y}.png' }) as GlobeLayer;
 
 describe('blobStore', () => {
   const mockStorage: Record<string, string> = {};
@@ -78,5 +81,19 @@ describe('blobStore', () => {
     jsonBlob.clear();
     assert.strictEqual(mockStorage[JSON_BLOB_STORAGE_KEY], undefined);
     assert.strictEqual(hasStoredSession(), false);
+  });
+
+  it('rejects writes with invalid or duplicate layer ids, keeping the last valid blob', () => {
+    const valid = jsonBlob.initNew('Test');
+    jsonBlob.set({ ...valid, layers: [raster('fire-layer')] } as GlobeJsonBlob);
+    jsonBlob.update(blob => ({ ...blob!, layers: [raster('fires'), raster('fires')] }));
+    assert.deepStrictEqual(get(jsonBlob)?.layers, []);
+    assert.ok(!mockStorage[JSON_BLOB_STORAGE_KEY]?.includes('fire-layer'));
+  });
+
+  it('accepts valid layer writes', () => {
+    jsonBlob.initNew('Test');
+    jsonBlob.update(blob => ({ ...blob!, layers: [raster('fires')] }));
+    assert.deepStrictEqual(get(jsonBlob)?.layers.map(({ id }) => id), ['fires']);
   });
 });

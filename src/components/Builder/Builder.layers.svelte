@@ -4,6 +4,7 @@
     safeParseGlobeJsonBlob,
     formatGlobeJsonBlob,
     globeJsonBlobSchema,
+    LAYER_ID_PATTERN,
     type GlobeJsonBlob,
     type GlobeLayer
   } from '../../lib/data/jsonBlob.ts';
@@ -22,6 +23,7 @@
     describeLayer,
     canAddFeature,
     findLayer,
+    isLayerIdUnique,
     type LayerItemDescriptor,
     type LayerFeatureDefinition,
     type LayerButton,
@@ -211,7 +213,7 @@
     }
 
     mutateBlob(draft => addLayerToBlob(draft, newItem));
-    // Opened straight away so the layer's own settings (timing, friendly name) are
+    // Opened straight away so the layer's own settings (timing, id) are
     // editable on create, not just on a later edit.
     if (feature.ConfigModal) {
       openEditModal(feature, describeLayer(feature, newItem, currentOptions.layers.length - 1));
@@ -278,6 +280,13 @@
       console.log('[Builder.layers] Closing layer modal for:', descriptor.name, { descriptor, currentData });
 
       mutateBlob(draft => {
+        // A rename to an empty/malformed/taken id would make the blob unparseable, so keep
+        // the old id instead. Otherwise `updateLayer` swaps in the renamed layer in place, and
+        // the id-keyed renderers remount under the new MapLibre source/layer ids.
+        if (!LAYER_ID_PATTERN.test(currentData.id) || !isLayerIdUnique(draft.layers, currentData.id, descriptor.id)) {
+          console.warn('[Builder.layers] Invalid or duplicate layer id, keeping:', descriptor.id);
+          currentData.id = descriptor.id;
+        }
         if (feature.isValid && !feature.isValid(currentData, draft)) {
           console.warn('[Builder.layers] Layer invalid on close, deleting:', descriptor.name);
           deleteLayer(draft, descriptor.id);

@@ -211,7 +211,7 @@
     bind:activeTab
   >
     {#if activeTab === 'config'}
-      <LayerSettingsFields bind:animationClock={draftConfig.animationClock} bind:name={draftConfig.name} />
+      <LayerSettingsFields bind:animationClock={draftConfig.animationClock} bind:id={draftConfig.id} />
 
       <fieldset>
         <legend

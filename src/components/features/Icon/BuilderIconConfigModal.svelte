@@ -19,7 +19,7 @@
   let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
   let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
   let animationClock = $state(untrack(() => config.animationClock));
-  let name = $state(untrack(() => config.name));
+  let id = $state(untrack(() => config.id));
 
   let imageState = $state<ImageState>({ status: 'loading' });
 
@@ -43,7 +43,7 @@
     config.cmid = committedCmid;
     config.coords = [lng, lat];
     config.animationClock = animationClock;
-    config.name = name;
+    config.id = id;
     onclose?.();
   }
 
@@ -85,7 +85,7 @@
       </div>
     </div>
 
-    <LayerSettingsFields bind:animationClock bind:name />
+    <LayerSettingsFields bind:animationClock bind:id />
   </div>
 
   {#snippet footerChildren()}

@@ -5,18 +5,11 @@ import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
 const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [...GEOJSON_LAYER_KINDS, 'icon', 'image', 'raster'];
 
 /**
- * The `LAYER<name>` token matches a layer's builder-facing `name`, falling back to its `id`.
- * The ACTO codec (`src/lib/data/marker.ts`) only allows lowercase `[a-z0-9]` in encoded
- * strings, but `id` is a free-form UUID (may contain hyphens etc) — sanitise it the same
- * way friendly names already are, so an unnamed layer's fallback key stays ACTO-safe.
- * Both the write side (`PropMarkerLayers.svelte`'s `keyFor`) and this read side must apply
- * the exact same sanitisation, or overrides silently stop matching their layer.
- *
- * Every blob layer has an `id`, so this always resolves to a key — the class of bug where a
- * layer kind was simply unaddressable can't recur.
+ * The `LAYER<name>` token matches a layer's `id` exactly — ids are already constrained to
+ * ACTO's `[a-z0-9]` alphabet by the schema, so no sanitisation is needed.
  */
-export function layerOverrideKey(layer: { id: string; name?: string }): string {
-  return (layer.name ?? layer.id).toLowerCase().replace(/[^a-z0-9]/g, '');
+export function layerOverrideKey(layer: { id: string }): string {
+  return layer.id;
 }
 
 function overrideFor(overrides: MarkerLayerOverride[], layer: GlobeLayer): MarkerLayerOverride | undefined {
