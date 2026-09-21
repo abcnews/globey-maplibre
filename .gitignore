@@ -27,3 +27,5 @@ test-results.json
 
 *storybook.log
 storybook-static
+fallow.json
+check-results.json

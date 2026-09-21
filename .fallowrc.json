@@ -1,6 +1,30 @@
 {
   "$schema": "./node_modules/fallow/schema.json",
-  "ignoreDependencies": ["@maplibre/maplibre-gl-style-spec"],
+  "ignoreDependencies": [
+    "@maplibre/maplibre-gl-style-spec",
+    "@abcnews/palette",
+    "d3-scale",
+    "geotiff",
+    "latlon-geohash",
+    "layercake",
+    "maplibre-gl",
+    "svelte",
+    "svelte-bootstrap-icons",
+    "svelte-check",
+    "throttle-debounce",
+    "topojson-client"
+  ],
+  "ignorePatterns": [
+    "scripts/storybook.js",
+    "src/lib/mocks/**",
+    "src/stories/**",
+    "svelte.config.js"
+  ],
+  "usedClassMembers": [
+    "easedT",
+    "fromConfig",
+    "toConfig"
+  ],
   "rules": {
     "boundary-violation": "error"
   },

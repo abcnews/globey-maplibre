@@ -38,7 +38,7 @@ const prefersReducedMotionNow = (): boolean => get(prefersReducedMotion) || get(
  * next one. `TweenController` runs two of these side by side — a scroll-tied one
  * and a play-on-arrival one — and retargets both from `sync()` each tick.
  */
-export class TweenClock {
+class TweenClock {
   #position: Tween<number>;
   #panelCount: () => number;
   #target: number;

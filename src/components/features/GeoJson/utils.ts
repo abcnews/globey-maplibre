@@ -133,7 +133,7 @@ export function getKilometreZoomScaleExpression(valueInKm: number): any {
   return ['interpolate', ['exponential', 2], ['zoom'], 0, sizeAtZoom0, 22, sizeAtZoom0 * Math.pow(2, 22)];
 }
 
-export interface GeoJsonFeatureState {
+interface GeoJsonFeatureState {
   color: string;
   fillColor: string;
   strokeColor: string;
@@ -154,7 +154,7 @@ export interface GeoJsonFeatureState {
  * @param config The GeoJSON layer configuration
  * @returns An interpolator function for mapping 0-1 values to CSS colours
  */
-export function getPaletteInterpolator(config: GeoJsonLayer): ((t: number) => string) | null {
+function getPaletteInterpolator(config: GeoJsonLayer): ((t: number) => string) | null {
   const { paletteType, paletteVariant, customPalette } = config.colourConfig || {};
   if (!paletteType) return null;
 
@@ -182,7 +182,7 @@ export function getPaletteInterpolator(config: GeoJsonLayer): ((t: number) => st
  * @param config The GeoJSON layer configuration
  * @returns A function that takes a GeoJSON feature and returns its GeoJsonFeatureState
  */
-export function getFeatureStateEvaluator(config: GeoJsonLayer): (feature: any, index: number) => GeoJsonFeatureState {
+function getFeatureStateEvaluator(config: GeoJsonLayer): (feature: any, index: number) => GeoJsonFeatureState {
   const isOpaque = config.isOpaque ?? false;
   const colourMode = config.colourMode || 'basic';
   const colourConfig = config.colourConfig;
@@ -292,7 +292,7 @@ export function getFeatureStateEvaluator(config: GeoJsonLayer): (feature: any, i
 }
 
 /** State applied to a feature that doesn't match the layer's filter — fully transparent. */
-export const HIDDEN_FEATURE_STATE: GeoJsonFeatureState = Object.freeze({
+const HIDDEN_FEATURE_STATE: GeoJsonFeatureState = Object.freeze({
   color: '#00267E',
   fillColor: '#00267E',
   strokeColor: '#00267E',
@@ -450,35 +450,6 @@ export function buildStrokeWidthExpression(config: GeoJsonLayer): any {
 /** Adds a fixed amount to a width value that may be a constant or a MapLibre expression. */
 export function widthPlus(widthExpr: any, addition: number): any {
   return typeof widthExpr === 'number' ? widthExpr + addition : ['+', widthExpr, addition];
-}
-
-/**
- * Creates a colour evaluator function for spikes and custom layers.
- */
-export function getColourEvaluator(config: GeoJsonLayer): (feature: any) => string {
-  const evaluator = getFeatureStateEvaluator(config);
-  return feature => evaluator(feature, 0).color;
-}
-
-const MIN_HEIGHT_JANK_FACTOR = 3000;
-
-/**
- * Creates a high-performance height evaluator function for spikes.
- */
-export function getHeightEvaluator(config: GeoJsonLayer): (feature: { hVal: number }) => number {
-  const spikeConfig = config.spike;
-  if (!spikeConfig?.heightProp) return () => 0;
-
-  const min = spikeConfig.min ?? 0;
-  const max = spikeConfig.max ?? 100;
-  const scalar = spikeConfig.scalar ?? 2000000;
-  const range = max - min || 1;
-
-  return feature => {
-    const val = feature.hVal;
-    const factor = Math.max(0, Math.min(1, (val - min) / range));
-    return Math.max(MIN_HEIGHT_JANK_FACTOR, factor * scalar);
-  };
 }
 
 export function filterFeaturesType(data: FeatureCollection, featureTypes = ['']) {

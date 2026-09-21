@@ -3,7 +3,7 @@ import type * as maplibregl from 'maplibre-gl';
 /**
  * Base layer configuration to define theme and other properties.
  */
-export interface BaseLayerConfig {
+interface BaseLayerConfig {
   id: string;
   theme: 'light' | 'dark';
 }

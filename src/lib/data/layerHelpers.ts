@@ -13,7 +13,7 @@ export function isValidUrl(url: string | undefined): boolean {
  * bookkeeping fields. Enumerated rather than derived so `hasMapLabels` can't be fooled by
  * a truthy `id` string.
  */
-export const MAP_LABEL_FLAG_KEYS = [
+const MAP_LABEL_FLAG_KEYS = [
   'countriesMajor',
   'countriesMedium',
   'countriesMinor',
