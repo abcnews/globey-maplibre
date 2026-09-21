@@ -3,7 +3,7 @@
   import { Map } from 'maplibre-gl';
   import 'maplibre-gl/dist/maplibre-gl.css';
   import type { MinimapConfig } from '../../../lib/data/jsonBlob.ts';
-  import mapStyle from '../../CustomGlobe/mapStyle/streetMap.ts';
+  import mapStyle from '../../../lib/mapStyle/streetMap.ts';
   import { getMainMapBoundsFeature, unwrapLongitude } from './utils.ts';
 
   interface Props {

@@ -1,8 +1,8 @@
 import type * as maplibregl from 'maplibre-gl';
 import _styleSource from './styleStoryLab.json';
-import { getStyleColor } from './utils';
+
 //@ts-ignore
-export const styleSource = _styleSource as maplibregl.StyleSpecification;
+const styleSource = _styleSource as maplibregl.StyleSpecification;
 
 export const OPENMAPTILES_SOURCE_ID = 'openmaptiles';
 export const OPENMAPTILES_SOURCE_DEF = styleSource.sources.openmaptiles;
@@ -13,7 +13,7 @@ export const getBaseStyleSource = () => {
   return style as maplibregl.StyleSpecification;
 };
 
-export function getProcessedLayers(): maplibregl.LayerSpecification[] {
+function getProcessedLayers(): maplibregl.LayerSpecification[] {
   const style = getBaseStyleSource();
 
   return style.layers.map(layer => {

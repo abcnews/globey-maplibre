@@ -9,7 +9,7 @@
     removeLayerWithZIndex,
     Z_INDEX_CUSTOM_LABELS
   } from '../layers/layerUtils.ts';
-  import { getCustomLabelLayers } from '../../CustomGlobe/mapStyle/customLabelStyle';
+  import { getCustomLabelLayers } from '../../../lib/mapStyle/customLabelStyle';
   import { prefersReducedMotion, disableMapAnimation } from '../../../lib/stores';
   import { getTween } from '../Tween/context.ts';
   import { resolveLabelTransition } from './utils.ts';

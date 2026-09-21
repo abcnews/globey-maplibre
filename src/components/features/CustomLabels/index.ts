@@ -67,6 +67,3 @@ export const customLabelsFeature: LayerFeatureDefinition<CustomLabelsLayer> = {
   ConfigModal: BuilderCustomLabelsConfigModal,
   MapRenderer: MapCustomLabelHandler
 };
-
-export { default as MapCustomLabelHandler } from './MapCustomLabelHandler.svelte';
-export { default as BuilderCustomLabelsConfigModal } from './BuilderCustomLabelsConfigModal.svelte';

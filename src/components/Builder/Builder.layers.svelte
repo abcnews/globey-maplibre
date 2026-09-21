@@ -27,7 +27,7 @@
     type LayerButton,
     type LayerAddMenuItem
   } from '../features';
-  import { safeFitBounds } from './utils.ts';
+  import { safeFitBounds } from '../features/PanZoom/utils.ts';
   import PropList from './PropList.svelte';
   import PropScreenshot from './PropScreenshot.svelte';
   import IframeUrl from './IframeUrl.svelte';

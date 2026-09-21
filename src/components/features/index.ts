@@ -45,16 +45,3 @@ const menuItemFor = (feature: LayerFeatureDefinition<any>): LayerAddMenuItem => 
 export const layerAddMenuRegistry: LayerAddMenuItem[] = layerFeatureRegistry.flatMap(feature =>
   feature === geoJsonFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
 );
-
-export * from './GeoJson/index.ts';
-export * from './HighlightFeatures/index.ts';
-export * from './Icon/index.ts';
-export * from './ImageSource/index.ts';
-export * from './MapLabels/index.ts';
-export * from './CustomLabels/index.ts';
-export * from './PanZoom/index.ts';
-export * from './MapRaster/index.ts';
-export * from './MapVector/index.ts';
-export * from './Minimap/index.ts';
-export * from './Attribution/index.ts';
-export * from './Projection/index.ts';

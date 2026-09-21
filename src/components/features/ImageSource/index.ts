@@ -50,6 +50,3 @@ export const imageSourceFeature: LayerFeatureDefinition<ImageLayer> = {
 };
 
 export * from './utils.ts';
-export { default as ImageSourceHandler } from './ImageSourceHandler.svelte';
-export { default as ImageSourcesHandler } from './ImageSourcesHandler.svelte';
-export { default as BuilderImageSourceConfigModal } from './BuilderImageSourceConfigModal.svelte';

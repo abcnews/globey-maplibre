@@ -3,7 +3,7 @@
   import { untrack } from 'svelte';
   import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
-  import CmidInput from '../../Builder/CmidInput/CmidInput.svelte';
+  import CmidInput from '../../shared/CmidInput/CmidInput.svelte';
   import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   interface Props {

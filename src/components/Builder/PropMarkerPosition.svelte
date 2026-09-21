@@ -4,7 +4,7 @@
   import { Modal } from '@abcnews/components-builder';
   import GeoSearch from '../shared/GeoSearch/GeoSearch.svelte';
   import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_UI_OVERLAYS } from '../features';
-  import { safeFitBounds } from './utils.ts';
+  import { safeFitBounds } from '../features/PanZoom/utils.ts';
 
   /**
    * Ports the legacy builder's "Positioning" feature (mode select + location search +

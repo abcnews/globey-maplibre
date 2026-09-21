@@ -1,6 +1,6 @@
 import type { SymbolLayerSpecification } from 'maplibre-gl';
 import { getBaseStyleSource } from './streetMap.ts';
-import type { LabelStyle } from '../../../lib/data/jsonBlob.ts';
+import type { LabelStyle } from '../data/jsonBlob.ts';
 
 const SATELLITE_TEXT_COLOUR = '#FFF';
 const SATELLITE_HALO_COLOUR = 'rgba(0,0,0,0.8)';

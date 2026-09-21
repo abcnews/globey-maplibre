@@ -35,5 +35,3 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsLayer> = {
 
   ConfigModal: BuilderMapLabelsConfigModal
 };
-
-export { default as BuilderMapLabelsConfigModal } from './BuilderMapLabelsConfigModal.svelte';

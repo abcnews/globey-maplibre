@@ -14,7 +14,7 @@
   import { Map, setWorkerUrl } from 'maplibre-gl';
   import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url';
   import 'maplibre-gl/dist/maplibre-gl.css';
-  import { isDarkBase } from './mapStyle/utils';
+  import { isDarkBase } from '../../lib/mapStyle/utils';
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
   import type { GlobeJsonBlob } from '../../lib/data/jsonBlob.ts';

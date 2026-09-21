@@ -3,7 +3,6 @@ import assert from 'node:assert';
 import {
   jsonBlob,
   loadStoredJsonBlob,
-  clearStoredJsonBlob,
   hasStoredSession,
   createDefaultJsonBlob,
   JSON_BLOB_STORAGE_KEY

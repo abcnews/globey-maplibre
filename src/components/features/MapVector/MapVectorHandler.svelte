@@ -16,7 +16,7 @@
     getStreetBaseLayers,
     getLabelLayers,
     getBaseStyleSource
-  } from '../../CustomGlobe/mapStyle/streetMap';
+  } from '../../../lib/mapStyle/streetMap';
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,

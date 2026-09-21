@@ -55,7 +55,7 @@ export function hasStoredSession(): boolean {
 /**
  * Clears the stored draft JSON blob from localStorage.
  */
-export function clearStoredJsonBlob(): void {
+function clearStoredJsonBlob(): void {
   const storage = getLocalStorage();
   if (storage) {
     try {

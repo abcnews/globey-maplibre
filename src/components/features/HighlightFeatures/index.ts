@@ -10,4 +10,3 @@ export const highlightFeaturesMenuItem: LayerAddMenuItem = {
 };
 
 export * from './featureSets.ts';
-export { default as BuilderHighlightFeaturesModal } from './BuilderHighlightFeaturesModal.svelte';

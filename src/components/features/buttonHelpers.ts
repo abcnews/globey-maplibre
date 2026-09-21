@@ -2,7 +2,7 @@ import { Pencil, Search, Trash } from 'svelte-bootstrap-icons';
 import type { LayerButton, LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
 import type { GlobeJsonBlob, GlobeLayer } from '../../lib/data/jsonBlob.ts';
 import { deleteLayer } from './layerOps.ts';
-import { safeFitBounds, safeFlyTo } from '../Builder/utils.ts';
+import { safeFitBounds, safeFlyTo } from './PanZoom/utils.ts';
 import { getBoundingBox } from './PanZoom/utils.ts';
 
 /**

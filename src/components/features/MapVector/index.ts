@@ -24,5 +24,3 @@ export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
 
   MapRenderer: MapVectorHandler
 };
-
-export { default as MapVectorHandler } from './MapVectorHandler.svelte';

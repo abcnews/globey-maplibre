@@ -1,1 +1,1 @@
-export { default as MinimapHandler } from './MinimapHandler.svelte';
+export {};

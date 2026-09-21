@@ -2,7 +2,7 @@
   import { jsonBlob, hasStoredSession, loadStoredJsonBlob } from '../../lib/data/blobStore.ts';
   import { safeParseGlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
   import { loadGlobeJsonBlobByCmid } from '../../lib/data/loadBlobByCmid.ts';
-  import { parseCmid, isValidCmid } from './CmidInput/utils.ts';
+  import { parseCmid, isValidCmid } from '../shared/CmidInput/utils.ts';
   import { Modal, Loader } from '@abcnews/components-builder';
 
   interface Props {

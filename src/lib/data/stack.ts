@@ -1,5 +1,5 @@
 import type { GlobeJsonBlob, GlobeLayer } from './jsonBlob.ts';
-import { Z_INDEX_BASE_RASTER } from '../../components/features/layers/layerManager.ts';
+import { Z_INDEX_BASE_RASTER } from '../zIndex.ts';
 
 /**
  * A blob layer annotated with the render z-index derived from its position in

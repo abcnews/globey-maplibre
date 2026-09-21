@@ -64,6 +64,3 @@ export const geoJsonFeature: LayerFeatureDefinition<GeoJsonLayer> = {
 
 export * from './utils.ts';
 export * from './themes.ts';
-export { default as GeoJsonHandler } from './GeoJsonHandler.svelte';
-export { default as GeoJsonsHandler } from './GeoJsonsHandler.svelte';
-export { default as BuilderGeoJsonConfigModal } from './BuilderGeoJsonConfigModal.svelte';

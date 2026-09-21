@@ -63,7 +63,7 @@ If the feature is configurable by the user in the builder interface, create a mo
 - **Real-time Live Editing**: Bind form inputs directly to `config` (e.g. `bind:value={config.field}`, `bind:checked={config.field}`) so the user sees changes update live on the map as they interact.
 - Provide a single **OK** dismissal button in `footerChildren` (`<button type="button" onclick={() => onclose?.()}>OK</button>`).
 - For string attributes containing literal curly braces (such as tile URL templates `{z}/{x}/{y}`), pass them as JavaScript string expressions (`placeholder={'https://example.com/{z}/{x}/{y}.png'}`) to avoid Svelte template expression parsing errors.
-- For CMID inputs, use [../Builder/CmidInput/CmidInput.svelte](../Builder/CmidInput/CmidInput.svelte) with `type="text"`, `inputmode="numeric"`, and `pattern="[0-9]*"`.
+- For CMID inputs, use [../shared/CmidInput/CmidInput.svelte](../shared/CmidInput/CmidInput.svelte) with `type="text"`, `inputmode="numeric"`, and `pattern="[0-9]*"`.
 
 ### Example Reference
 

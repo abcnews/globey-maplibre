@@ -6,7 +6,7 @@
   import BuilderPropGeoJsonFilter from './BuilderPropGeoJsonFilter.svelte';
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
-  import VerticalTabs from '../../Builder/shared/VerticalTabs.svelte';
+  import VerticalTabs from '../../shared/VerticalTabs.svelte';
   import LayerSettingsFields from '../LayerSettingsFields.svelte';
   import { untrack } from 'svelte';
 

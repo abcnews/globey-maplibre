@@ -204,11 +204,6 @@ export class TweenController {
     return this.#panels.length;
   }
 
-  /** Mode of the segment currently being entered. */
-  get mode(): AnimationMode {
-    return this.#mode;
-  }
-
   // ---- single-clock API: delegates to the clock `animationMode` selects ----
 
   /** Continuous tween position, e.g. `2.37`. */
@@ -243,9 +238,4 @@ export class TweenController {
   get toConfig(): GlobeJsonBlob {
     return this.#panels[this.toPanel]?.data ?? EMPTY_CONFIG;
   }
-
-  // Interpolation helpers, also importable from ./utils.ts for tests and non-context callers.
-  lerp = lerp;
-  lerpColour = lerpColour;
-  lerpCoords = lerpCoords;
 }

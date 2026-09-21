@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AttributionControl, type Map } from 'maplibre-gl';
   import { getContext } from 'svelte';
-  import { isOsmBase, escapeHTML } from '../../CustomGlobe/mapStyle/utils';
+  import { isOsmBase, escapeHTML } from '../../../lib/mapStyle/utils';
 
   let {
     attribution,

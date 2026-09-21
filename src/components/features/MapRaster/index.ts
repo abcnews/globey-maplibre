@@ -46,7 +46,3 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayer> = {
   ConfigModal: BuilderRasterConfigModal,
   MapRenderer: MapRastersHandler
 };
-
-export { default as MapRasterHandler } from './MapRasterHandler.svelte';
-export { default as MapRastersHandler } from './MapRastersHandler.svelte';
-export { default as BuilderRasterConfigModal } from './BuilderRasterConfigModal.svelte';

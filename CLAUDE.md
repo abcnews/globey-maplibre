@@ -83,6 +83,21 @@ overrides only store a hex on the wire, so the scheme name is a best-effort gues
   like `'normal'` instead (an easy mistake — it was the actual bug the first time this
   regressed) silently ignores every marker colour override.
 
+## Layering
+
+Import direction is `lib` ← `shared` ← `features` ← `globe` ← `builder`, enforced by
+`.fallowrc.json` (`boundaries.zones` / `boundaries.rules`, `boundary-violation` = error).
+`npx fallow check` fails on an upward import.
+
+- `src/lib/**` is the base and imports nothing from `src/components/**` — that includes
+  `src/lib/zIndex.ts` (the `Z_INDEX_*` constants, re-exported by `features/layers/layerManager.ts`
+  for existing callers) and `src/lib/mapStyle/` (street-map style, custom label style, `isOsmBase`),
+  both of which `features/` and `CustomGlobe/` may import.
+- `src/components/shared/` is the single home for cross-layer UI (`CmidInput/`, `VerticalTabs.svelte`,
+  `SearchInput.svelte`, `GeoSearch/`, `ColourSchemePicker.svelte`) — there is no `Builder/shared/`.
+- `safeFlyTo` / `safeFitBounds` live in `features/PanZoom/utils.ts` alongside the camera maths, not
+  in `Builder/` — a `features/` file must never import from `Builder/`.
+
 ## Conventions
 
 - Friendly layer names (`name` field) are lowercase-alphanumeric only (`a-z0-9`, no separators) — sanitize on input (`toLowerCase().replace(/[^a-z0-9]/g, '')`), don't just validate-and-reject.

@@ -50,7 +50,3 @@ export const iconFeature: LayerFeatureDefinition<IconLayer> = {
   ConfigModal: BuilderIconConfigModal,
   MapRenderer: IconsHandler
 };
-
-export { default as IconHandler } from './IconHandler.svelte';
-export { default as IconsHandler } from './IconsHandler.svelte';
-export { default as BuilderIconConfigModal } from './BuilderIconConfigModal.svelte';
