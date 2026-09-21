@@ -21,7 +21,7 @@
     "patch-style": "node scripts/node_patchStyleFromBen.js",
     "format": "prettier --write .",
     "fallow": "fallow; fallow --format json > fallow.json",
-    "storybook": "storybook dev -p 6006 --ci --host `hostname`.aus.aunty.abc.net.au",
+    "storybook": "storybook dev -p 6006 --ci --host `hostname -s | tr '[:upper:]' '[:lower:]'`.aus.aunty.abc.net.au",
     "build-storybook": "storybook build"
   },
   "devDependencies": {

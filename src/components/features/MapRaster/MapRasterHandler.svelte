@@ -3,7 +3,7 @@
   import { getContext, untrack } from 'svelte';
   import { removeLayerWithZIndex, setLayerZIndex } from '../layers/layerUtils.ts';
   import { addFadingLayer } from '../layers/tweenedLayers.ts';
-  import { layerClockKey } from '../Tween/utils.ts';
+  import { layerClockKey, tweenStopsExpression } from '../Tween/utils.ts';
   import type { RasterLayer } from '../../../lib/data/jsonBlob.ts';
   import type { LayerRendererProps } from '../types.ts';
   import { getBoundingBox } from '../PanZoom/utils.ts';
@@ -25,7 +25,9 @@
 
   const posKey = $derived(layerClockKey(animationClock));
 
-  // Effect for source and layer lifecycle
+  // Effect for source and layer lifecycle. `opacityStops` is untracked: it's a fresh array on
+  // every blob change, and tracking it re-added the source (reloading every tile) on each
+  // toggle of any other layer. The opacity effect below updates it in place instead.
   $effect(() => {
     const map = mapRoot.map;
     if (!map || !url) {
@@ -36,7 +38,6 @@
     const s_url = url;
     const s_maxZoom = maxZoom;
     const s_tileSize = tileSize;
-    const s_opacityStops = opacityStops;
     const s_bounds = bounds;
 
     const setup = () => {
@@ -68,7 +69,7 @@
             type: 'raster',
             paint: { 'raster-fade-duration': 0 },
             opacityKey: 'raster-opacity',
-            opacityStops: s_opacityStops,
+            opacityStops: untrack(() => opacityStops),
             posKey: untrack(() => posKey)
           },
           untrack(() => zIndex)
@@ -90,6 +91,15 @@
         map.removeSource(sourceId);
       }
     };
+  });
+
+  // Effect for opacity updates, without touching the source
+  $effect(() => {
+    const map = mapRoot.map;
+    const expression = tweenStopsExpression(opacityStops, posKey);
+    if (!map || !map.getLayer(id)) return;
+
+    map.setPaintProperty(id, 'raster-opacity', expression);
   });
 
   // Effect for dynamic z-index updates

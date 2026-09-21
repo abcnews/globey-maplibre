@@ -16,11 +16,15 @@
   const sourceId = $derived(generateGeoJsonSourceId(config.id));
   const posKey = $derived(layerClockKey(config.animationClock));
 
-  // Fetched once per dataset (URL/CMID never change for a given layer instance).
+  // Fetched once per dataset. `config` is a fresh object on every blob change, so the
+  // effect depends on these primitives rather than `config` itself — otherwise every
+  // toggle of an unrelated layer refetched the data.
+  const cmid = $derived(config.cmid);
+  const url = $derived(config.url);
   let data = $state<any>();
 
   $effect(() => {
-    fetchGeoJsonData({ cmid: config.cmid, url: config.url })
+    fetchGeoJsonData({ cmid, url })
       .then(result => {
         data = result;
       })

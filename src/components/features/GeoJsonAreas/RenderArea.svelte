@@ -12,6 +12,7 @@
   import {
     addLayerWithZIndex,
     removeLayerWithZIndex,
+    setLayerZIndex,
     Z_INDEX_GEOJSON,
     SUB_LAYER_OUTLINE_OFFSET
   } from '../layers/layerUtils.ts';
@@ -50,10 +51,13 @@
   // edits update live without tearing down and re-adding the layers (no flash).
   $effect(() => {
     const map = mapRoot.map;
-    const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
     if (!map) return;
 
+    // zIndex is read untracked: tracking it tore down and re-added the layers (a visible
+    // flash) whenever another layer's toggle shifted this one's stack position. The
+    // restack effect below moves them in place instead.
     untrack(() => {
+      const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
       if (!map.getSource(sourceId)) {
         map.addSource(sourceId, {
           type: 'geojson',
@@ -73,6 +77,16 @@
       removeLayerWithZIndex(map, outlineLayerId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
     };
+  });
+
+  // Restack in place when this layer's position in `blob.layers` shifts.
+  $effect(() => {
+    const map = mapRoot.map;
+    const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
+    if (!map || !map.getLayer(fillLayerId) || !map.getLayer(outlineLayerId)) return;
+
+    setLayerZIndex(map, fillLayerId, outlineZ);
+    setLayerZIndex(map, outlineLayerId, zIndex);
   });
 
   $effect(() => {

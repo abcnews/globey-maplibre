@@ -125,6 +125,14 @@ export class TweenController {
   // Use $state.raw to avoid re-proxying on every scroll frame, which triggers unnecessary map layer reloads.
   #panels = $state.raw<PanelDefinition<GlobeJsonBlob>[]>([]);
   #mode = $state<AnimationMode>('scroll');
+  /**
+   * Panel index the camera holds at, or null. Set while a scroll-tied panel is followed by an
+   * immediate one: the camera must wait there for the fly-on-arrival, not pre-pan with scroll.
+   * It uses the scroll clock capped at this index, because the immediate clock still sits on the
+   * *previous* panel until arrival — reading it made the camera jump back a panel and fly again.
+   * On scroll-up out of the immediate panel, the immediate clock is followed back down instead.
+   */
+  #holdAt = $state<number | null>(null);
 
   /** Always-scroll-tied clock. */
   readonly scroll: TweenClock;
@@ -146,8 +154,10 @@ export class TweenController {
 
     const segTo = Math.min(input.currentPanel + 1, input.panels.length - 1);
     const activePanelMode = input.panels[input.currentPanel]?.data.map.animationMode;
-    this.#mode =
-      activePanelMode === 'immediate' ? 'immediate' : (input.panels[segTo]?.data.map.animationMode ?? 'scroll');
+    const nextPanelMode = input.panels[segTo]?.data.map.animationMode ?? 'scroll';
+    const holdForNextPanel = activePanelMode !== 'immediate' && nextPanelMode === 'immediate';
+    this.#mode = activePanelMode === 'immediate' ? 'immediate' : 'scroll';
+    this.#holdAt = holdForNextPanel ? input.currentPanel : null;
 
     const base = {
       currentPanel: input.currentPanel,
@@ -206,29 +216,37 @@ export class TweenController {
 
   // ---- single-clock API: delegates to the clock `animationMode` selects ----
 
-  /** Continuous tween position, e.g. `2.37`. */
+  /** Continuous tween position, e.g. `2.37` — capped at `#holdAt` while holding. */
   get position(): number {
-    return this.clock(this.#mode).position;
+    if (this.#holdAt === null) return this.clock(this.#mode).position;
+
+    // Scrolled back up out of an immediate panel: the immediate clock is still reversing
+    // towards `#holdAt`, so follow it — the camera flies back instead of snapping.
+    if (this.immediate.position > this.#holdAt) return this.immediate.position;
+
+    return Math.min(this.scroll.position, this.#holdAt);
   }
 
   /** Lower index of the panel pair currently being blended. */
   get fromPanel(): number {
-    return this.clock(this.#mode).fromPanel;
+    if (this.panelCount === 0) return 0;
+    return Math.min(Math.max(Math.floor(this.position), 0), this.panelCount - 1);
   }
 
   /** Upper index of the panel pair currently being blended. */
   get toPanel(): number {
-    return this.clock(this.#mode).toPanel;
+    if (this.panelCount === 0) return 0;
+    return Math.min(this.fromPanel + 1, this.panelCount - 1);
   }
 
   /** Linear blend factor between `fromPanel` and `toPanel` (0..1). */
   get t(): number {
-    return this.clock(this.#mode).t;
+    return Math.min(Math.max(this.position - this.fromPanel, 0), 1);
   }
 
   /** `t` shaped by a cubic ease-in-out, for features that want an eased curve. */
   get easedT(): number {
-    return this.clock(this.#mode).easedT;
+    return easeInOutCubic(this.t);
   }
 
   get fromConfig(): GlobeJsonBlob {

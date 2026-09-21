@@ -11,7 +11,7 @@
     getKilometreZoomScaleExpression
   } from '../utils/geojson/expressions.ts';
   import { filterFeaturesType } from '../utils/geojson/data.ts';
-  import { addLayerWithZIndex, removeLayerWithZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
   import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
 
   const mapRoot = getContext<{ map: Map }>('mapInstance');
@@ -74,6 +74,15 @@
       removeLayerWithZIndex(map, circleLayerId);
       if (map.getSource(sourceId)) map.removeSource(sourceId);
     };
+  });
+
+  // Restack in place when this layer's position in `blob.layers` shifts.
+  $effect(() => {
+    const map = mapRoot.map;
+    const targetZ = zIndex;
+    if (!map || !map.getLayer(circleLayerId)) return;
+
+    setLayerZIndex(map, circleLayerId, targetZ);
   });
 
   $effect(() => {
