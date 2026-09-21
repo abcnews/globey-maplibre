@@ -22,8 +22,6 @@ function resolveBasicPreset(basicType: ColourSchemeName | undefined): GeoJsonThe
   return (basicType && basicType !== 'custom' && THEMES[basicType]) || THEMES.normal;
 }
 
-export { generateGeoJsonSourceId as generateId, getLabelAnchor } from '../layers/layerUtils.ts';
-
 /**
  * Fetches and normalizes GeoJSON or TopoJSON data from either a CMID or a URL.
  *
@@ -119,10 +117,10 @@ export function getGeoJsonCoordinatePairs(geojson: any): [number, number][] {
 }
 
 /** Earth equatorial circumference in kilometres */
-export const EARTH_CIRCUMFERENCE_KM = 40075;
+const EARTH_CIRCUMFERENCE_KM = 40075;
 
 /** Standard Web Mercator tile size in pixels at zoom 0 */
-export const TILE_SIZE_PX = 512;
+const TILE_SIZE_PX = 512;
 
 /**
  * Generates a MapLibre zoom-interpolation expression to scale kilometre-based dimensions (points or lines)

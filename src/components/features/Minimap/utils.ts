@@ -1,9 +1,9 @@
 import type { Map } from 'maplibre-gl';
 
-export const LONGITUDE_SPAN_DEGREES = 360;
+const LONGITUDE_SPAN_DEGREES = 360;
 
 /** Pixel size below which the projected viewport rectangle collapses to a single dot. */
-export const MIN_RECTANGLE_PX = 5;
+const MIN_RECTANGLE_PX = 5;
 
 /**
  * Shifts `lng` by whole turns of 360 so it lands within 180 degrees of `referenceLng`.

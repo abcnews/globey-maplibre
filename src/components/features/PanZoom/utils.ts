@@ -3,14 +3,14 @@ import { interpolateZoom } from 'd3-interpolate';
 import type { ViewState, FitMode, ZoomPoint } from './types.ts';
 import type { GlobeJsonBlob, MapDefaults } from '../../../lib/data/jsonBlob.ts';
 
-export const WORLD_SIZE_AT_ZOOM_0 = 512;
-export const LONGITUDE_SPAN_DEGREES = 360;
-export const MERCATOR_SPAN_UNITS = 2 * Math.PI;
-export const CALCULATION_EPSILON = 0.0001;
-export const GLOBE_FIT_PADDING_PX = -20;
-export const MAX_MERCATOR_LAT = 85.0511287798066;
+const WORLD_SIZE_AT_ZOOM_0 = 512;
+const LONGITUDE_SPAN_DEGREES = 360;
+const MERCATOR_SPAN_UNITS = 2 * Math.PI;
+const CALCULATION_EPSILON = 0.0001;
+const GLOBE_FIT_PADDING_PX = -20;
+const MAX_MERCATOR_LAT = 85.0511287798066;
 
-export function latToMercator(lat: number): number {
+function latToMercator(lat: number): number {
   const clampedLat = Math.max(-MAX_MERCATOR_LAT, Math.min(MAX_MERCATOR_LAT, lat));
   const latRad = (clampedLat * Math.PI) / 180;
   return Math.log(Math.tan(Math.PI / 4 + latRad / 2));
@@ -54,7 +54,7 @@ export function calculateTargetView(
   return { center: centre, zoom };
 }
 
-export function calculateGlobeFitZoom(map: maplibregl.Map, coords?: [number, number]): number {
+function calculateGlobeFitZoom(map: maplibregl.Map, coords?: [number, number]): number {
   const container = map.getContainer();
   if (!container) return 0;
 
@@ -73,7 +73,7 @@ export function calculateGlobeFitZoom(map: maplibregl.Map, coords?: [number, num
   return Math.log2(requiredWorldCircumferencePx / WORLD_SIZE_AT_ZOOM_0);
 }
 
-export function isProgrammaticMove(eventData: any): boolean {
+function isProgrammaticMove(eventData: any): boolean {
   return !!(eventData?.builderInitiated || eventData?.essential);
 }
 

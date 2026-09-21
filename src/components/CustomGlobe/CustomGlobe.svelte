@@ -39,8 +39,6 @@
     currentPanel?: number;
     virtualPanel?: number;
     panelPct?: number;
-    scrollPct?: number;
-    scrollDelta?: number;
     children?: import('svelte').Snippet;
     /** Consumer-defined custom layers, mounted once the map is ready. */
     plugins?: CustomLayerRegistration[];
@@ -56,8 +54,6 @@
     currentPanel,
     virtualPanel,
     panelPct,
-    scrollPct,
-    scrollDelta,
     children,
     plugins
   }: Props = $props();

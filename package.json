@@ -18,6 +18,7 @@
     "build": "vite build",
     "test": "vitest run",
     "check": "node scripts/runCheck.js",
+    "patch-style": "node scripts/node_patchStyleFromBen.js",
     "format": "prettier --write .",
     "storybook": "storybook dev -p 6006 --ci --host `hostname`.aus.aunty.abc.net.au",
     "build-storybook": "storybook build"

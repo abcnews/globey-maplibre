@@ -75,8 +75,6 @@
         {currentPanel}
         {virtualPanel}
         {panelPct}
-        {scrollPct}
-        {scrollDelta}
         {onmap}
         {plugins}
         rootElStyle="width:100%;height:100%"

@@ -184,20 +184,6 @@ export function parseCoordinates(input: string): { lat: number; lng: number } | 
   return null;
 }
 
-/**
- * parseDMS
- * Converts a DMS string to decimal degrees.
- */
-export function parseDMS(dms: string): number | null {
-  const dmsRegex = /(\d+)°\s*(\d+)'\s*(\d+\.?\d*)"\s*([NSEW])/i;
-  const match = dms.match(dmsRegex);
-  if (!match) return null;
-
-  const [_, d, m, s, dir] = match;
-  let deg = Number(d) + Number(m) / 60 + Number(s) / 3600;
-  if (dir.toUpperCase() === 'S' || dir.toUpperCase() === 'W') deg = -deg;
-  return deg;
-}
 
 /**
  * calculateBoundsFromWidth

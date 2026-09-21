@@ -1,8 +1,8 @@
 {
-  "totalFiles": 1191,
-  "errorCount": 1,
-  "warningCount": 6,
-  "filesWithProblems": 3,
+  "totalFiles": 741,
+  "errorCount": 0,
+  "warningCount": 5,
+  "filesWithProblems": 2,
   "diagnostics": [
     {
       "filename": "src/components/Builder/PropMarkerPosition.svelte",
@@ -38,21 +38,7 @@
       "character": 31,
       "type": "warning",
       "message": "This reference only captures the initial value of `markerConfig`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
-    },
-    {
-      "filename": "src/plugins/GeoJsonSpikes/GeoJsonSpikesLayer.svelte",
-      "line": 33,
-      "character": 28,
-      "type": "warning",
-      "message": "This reference only captures the initial value of `map`. Did you mean to reference it inside a derived instead?\nhttps://svelte.dev/e/state_referenced_locally"
-    },
-    {
-      "filename": "vite.config.ts",
-      "line": 48,
-      "character": 3,
-      "type": "error",
-      "message": "No overload matches this call."
     }
   ],
-  "success": false
+  "success": true
 }

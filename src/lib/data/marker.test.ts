@@ -1,9 +1,9 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import Geohash from 'latlon-geohash';
-import { GEOHASH_PRECISION } from '../marker/schema.ts';
 import acto from '@abcnews/alternating-case-to-object';
 import {
+  GEOHASH_PRECISION,
   decodeMarker,
   encodeMarker,
   markerConfigFromParsed,
