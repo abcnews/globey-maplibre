@@ -1,28 +1,15 @@
 <script lang="ts">
   import type { GeoJsonLinesLayer } from '../../../lib/data/jsonBlob.ts';
-  import type { Stacked } from '../../../lib/data/stack.ts';
-  import { buildTweenedLayerEntries } from '../layers/tweenedLayers.ts';
+  import type { LayerRendererProps } from '../types.ts';
   import GeoJsonLoader from '../utils/geojson/GeoJsonLoader.svelte';
   import RenderLine from './RenderLine.svelte';
 
-  // One layer array per panel (built by CustomGlobe) — all panels, so layers fade rather than snap.
-  let { perPanel = [] }: { perPanel?: Stacked<GeoJsonLinesLayer>[][] } = $props();
-
-  const entries = $derived(buildTweenedLayerEntries(perPanel, { keyOf: item => item.id }));
+  // One layer, mounted by LayerManager. The loader fetches the GeoJSON; RenderLine draws it.
+  let { config, opacityStops, configStops }: LayerRendererProps<GeoJsonLinesLayer> = $props();
 </script>
 
-{#each entries as entry (entry.key)}
-  <GeoJsonLoader config={entry.representative}>
-    {#snippet children({ data, sourceId, posKey })}
-      <RenderLine
-        {data}
-        config={entry.representative}
-        {sourceId}
-        {posKey}
-        opacityStops={entry.opacityStops}
-        configStops={entry.configStops}
-        zIndex={entry.representative.zIndex}
-      />
-    {/snippet}
-  </GeoJsonLoader>
-{/each}
+<GeoJsonLoader {config}>
+  {#snippet children({ data, sourceId, posKey })}
+    <RenderLine {data} {config} {sourceId} {posKey} {opacityStops} {configStops} zIndex={config.zIndex} />
+  {/snippet}
+</GeoJsonLoader>

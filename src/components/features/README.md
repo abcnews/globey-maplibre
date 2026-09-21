@@ -41,14 +41,14 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 - Use `addLayerWithZIndex` and `removeLayerWithZIndex` from [./layers/layerUtils.ts](./layers/layerUtils.ts). Never call `map.addLayer()` or `map.removeLayer()` directly.
 - Separate layer lifecycle (adding/removing layers on mount/unmount) from data updates. Combining both in one effect tears down the layer each time it updates, resulting in a visual flash of that layer.
 - Update data in place (e.g. `source.setData()`, `source.setCoordinates()`, `map.setPaintProperty()`, `map.setLayoutProperty()`) rather than re-creating layers whenever possible.
-- For collections, use stable keys in `{#each}` loops (`item.id || index`).
+- The renderer handles one layer, taking `LayerRendererProps<T>` (`types.ts`). `LayerManager` (`layers/LayerManager.svelte`) mounts one per layer id across all panels.
 
 ### Example Reference
 
-- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte) and [Icon/IconsHandler.svelte](./Icon/IconsHandler.svelte)
-- Tweened collection renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
+- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte)
+- Renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
-- Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte) and [MapRaster/MapRastersHandler.svelte](./MapRaster/MapRastersHandler.svelte)
+- Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte)
 
 ---
 
@@ -110,7 +110,7 @@ export const myFeature: LayerFeatureDefinition<MyFeatureLayer> = {
   },
 
   ConfigModal: BuilderMyFeatureModal,
-  MapRenderer: MyFeatureHandler
+  LayerRenderer: MyFeatureHandler
 };
 ```
 

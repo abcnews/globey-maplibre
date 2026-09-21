@@ -26,7 +26,7 @@ export interface TweenedLayerEntry<Config, Coord> {
 
 /**
  * Turns per-panel config arrays into one entry per distinct item (first-seen
- * order). Used by `MapRastersHandler`, `ImageSourcesHandler` and `IconsHandler`.
+ * order). Used by `LayerManager.svelte` for every feature with a `LayerRenderer`.
  *
  * @param perPanel One config array per panel (length 1 on the builder path).
  */

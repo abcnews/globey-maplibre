@@ -24,5 +24,5 @@ export const geoJsonAreasFeature: LayerFeatureDefinition<GeoJsonAreasLayer> = {
 
   isValid: hasValidGeoJsonSource,
   ConfigModal: BuilderGeoJsonAreasModal,
-  MapRenderer: GeoJsonAreasHandler
+  LayerRenderer: GeoJsonAreasHandler
 };

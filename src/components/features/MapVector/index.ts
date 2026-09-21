@@ -3,8 +3,6 @@ import type { GlobeJsonBlob, StreetMapLayer } from '../../../lib/data/jsonBlob.t
 import { newLayerId } from '../utils/layerOps.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
 import { createDeleteButton } from '../utils/buttonHelpers.ts';
-import MapVectorHandler from './MapVectorHandler.svelte';
-
 
 export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
   kind: 'streetMap',
@@ -20,7 +18,5 @@ export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
       type: 'streetMap',
       hideOsm: false
     };
-  },
-
-  MapRenderer: MapVectorHandler
+  }
 };

@@ -1,37 +1,27 @@
 <script lang="ts">
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
+  import { removeLayerWithZIndex, setLayerZIndex } from '../layers/layerUtils.ts';
   import { addFadingLayer } from '../layers/tweenedLayers.ts';
   import { layerClockKey } from '../Tween/utils.ts';
-  import type { AnimationMode } from '../Tween/types.ts';
+  import type { RasterLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { LayerRendererProps } from '../types.ts';
   import { getBoundingBox } from '../PanZoom/utils.ts';
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  let {
-    url,
-    id = 'raster-base',
-    maxZoom = 7,
-    tileSize = 256,
-    /** Derived from the layer's position in `blob.layers` (see `stackLayers`). */
-    zIndex = Z_INDEX_BASE_RASTER,
-    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
-    opacityStops = [1],
-    animationClock,
-    /** Optional TL/TR/BR/BL bounding box restricting tile loading; unset means whole world. */
-    bounds
-  }: {
-    url: string;
-    id?: string;
-    maxZoom?: number;
-    tileSize?: number;
-    zIndex?: number;
-    opacityStops?: number[];
-    /** Clock this layer's fade follows; unset means the scroll-tied clock. */
-    animationClock?: AnimationMode;
-    bounds?: number[][] | null;
-  } = $props();
+  let { config, opacityStops }: LayerRendererProps<RasterLayer> = $props();
+
+  const id = $derived(`raster-${config.id}`);
+  const url = $derived(config.url);
+  const maxZoom = $derived(config.maxZoom ?? 7);
+  const tileSize = $derived(config.tileSize ?? 256);
+  /** Derived from the layer's position in `blob.layers` (see `stackLayers`). */
+  const zIndex = $derived(config.zIndex);
+  /** Clock this layer's fade follows; unset means the scroll-tied clock. */
+  const animationClock = $derived(config.animationClock);
+  /** Optional TL/TR/BR/BL bounding box restricting tile loading; unset means whole world. */
+  const bounds = $derived(config.bounds);
 
   const posKey = $derived(layerClockKey(animationClock));
 

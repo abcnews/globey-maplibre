@@ -4,7 +4,7 @@ import { newLayerId } from '../utils/layerOps.ts';
 import { GeoAlt } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
 import BuilderIconConfigModal from './BuilderIconConfigModal.svelte';
-import IconsHandler from './IconsHandler.svelte';
+import IconHandler from './IconHandler.svelte';
 
 export const iconFeature: LayerFeatureDefinition<IconLayer> = {
   kind: 'icon',
@@ -48,5 +48,6 @@ export const iconFeature: LayerFeatureDefinition<IconLayer> = {
   },
 
   ConfigModal: BuilderIconConfigModal,
-  MapRenderer: IconsHandler
+  LayerRenderer: IconHandler,
+  coordsOf: item => item.coords
 };

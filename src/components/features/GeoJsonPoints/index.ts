@@ -24,5 +24,5 @@ export const geoJsonPointsFeature: LayerFeatureDefinition<GeoJsonPointsLayer> = 
 
   isValid: hasValidGeoJsonSource,
   ConfigModal: BuilderGeoJsonPointsModal,
-  MapRenderer: GeoJsonPointsHandler
+  LayerRenderer: GeoJsonPointsHandler
 };

@@ -5,7 +5,7 @@ import { newLayerId } from '../utils/layerOps.ts';
 import { CardImage as ImageIcon } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
 import BuilderImageSourceConfigModal from './BuilderImageSourceConfigModal.svelte';
-import ImageSourcesHandler from './ImageSourcesHandler.svelte';
+import ImageSourceHandler from './ImageSourceHandler.svelte';
 
 export const imageSourceFeature: LayerFeatureDefinition<ImageLayer> = {
   kind: 'image',
@@ -46,7 +46,8 @@ export const imageSourceFeature: LayerFeatureDefinition<ImageLayer> = {
   },
 
   ConfigModal: BuilderImageSourceConfigModal,
-  MapRenderer: ImageSourcesHandler
+  LayerRenderer: ImageSourceHandler,
+  coordsOf: item => item.coordinates
 };
 
 export * from './utils.ts';

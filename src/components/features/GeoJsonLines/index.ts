@@ -24,5 +24,5 @@ export const geoJsonLinesFeature: LayerFeatureDefinition<GeoJsonLinesLayer> = {
 
   isValid: hasValidGeoJsonSource,
   ConfigModal: BuilderGeoJsonLinesModal,
-  MapRenderer: GeoJsonLinesHandler
+  LayerRenderer: GeoJsonLinesHandler
 };

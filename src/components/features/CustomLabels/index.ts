@@ -3,7 +3,6 @@ import type { CustomLabelsLayer, LabelItem } from '../../../lib/data/jsonBlob.ts
 import { newLayerId, findLayer } from '../utils/layerOps.ts';
 import { Fonts as TypeIcon, Plus } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton } from '../utils/buttonHelpers.ts';
-import MapCustomLabelHandler from './MapCustomLabelHandler.svelte';
 import BuilderCustomLabelsConfigModal from './BuilderCustomLabelsConfigModal.svelte';
 
 /** A label pinned at `coords`, with the defaults a freshly-placed one gets. */
@@ -64,6 +63,5 @@ export const customLabelsFeature: LayerFeatureDefinition<CustomLabelsLayer> = {
     return Boolean(data?.labels?.length);
   },
 
-  ConfigModal: BuilderCustomLabelsConfigModal,
-  MapRenderer: MapCustomLabelHandler
+  ConfigModal: BuilderCustomLabelsConfigModal
 };

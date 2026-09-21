@@ -1,6 +1,22 @@
 import type { Component } from 'svelte';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { GlobeJsonBlob, GlobeLayer } from '../../lib/data/jsonBlob.ts';
+import type { Stacked } from '../../lib/data/stack.ts';
+
+/**
+ * The one prop contract every `LayerRenderer` implements. `LayerManager` builds these from
+ * `buildTweenedLayerEntries()` across every panel, so a layer fades rather than snaps.
+ */
+export interface LayerRendererProps<T extends GlobeLayer = GlobeLayer> {
+  /** First panel's copy of the layer; its `zIndex` is the derived stacking position */
+  config: Stacked<T>;
+  /** Opacity per panel; `0` where the layer is absent */
+  opacityStops: number[];
+  /** `coordsOf(layer)` per panel, `null` where absent; empty when the feature has no `coordsOf` */
+  coordStops: unknown[];
+  /** The layer's own config per panel, `undefined` where absent */
+  configStops: (Stacked<T> | undefined)[];
+}
 
 /**
  * Context passed to a LayerButton's onclick handler.
@@ -121,11 +137,14 @@ export interface LayerFeatureDefinition<T extends GlobeLayer = GlobeLayer> {
   }>;
 
   /**
-   * The layer's map-rendering component. Metadata only — CustomGlobe imports each
-   * handler directly and passes whatever props it needs, so the prop shape varies
-   * per feature.
+   * Renders one layer of this kind on the map. `LayerManager` mounts it once per layer id
+   * across all panels. Singletons with blob-wide props (MapVector, MapLabels, CustomLabels)
+   * omit this and are mounted directly by `CustomGlobe`.
    */
-  MapRenderer?: Component<any>;
+  LayerRenderer?: Component<LayerRendererProps<T>>;
+
+  /** Per-panel coordinate to snap between panels (fed into `LayerRendererProps.coordStops`) */
+  coordsOf?: (item: T) => unknown;
 }
 
 /**

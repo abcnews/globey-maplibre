@@ -4,7 +4,7 @@ import { newLayerId } from '../utils/layerOps.ts';
 import { GlobeAsiaAustralia as RasterIcon } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
 import BuilderRasterConfigModal from './BuilderRasterConfigModal.svelte';
-import MapRastersHandler from './MapRastersHandler.svelte';
+import MapRasterHandler from './MapRasterHandler.svelte';
 
 export const rasterFeature: LayerFeatureDefinition<RasterLayer> = {
   kind: 'raster',
@@ -44,5 +44,5 @@ export const rasterFeature: LayerFeatureDefinition<RasterLayer> = {
   },
 
   ConfigModal: BuilderRasterConfigModal,
-  MapRenderer: MapRastersHandler
+  LayerRenderer: MapRasterHandler
 };

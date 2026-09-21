@@ -3,12 +3,7 @@
   import PanZoomScrollHandler from '../features/PanZoom/PanZoomScrollHandler.svelte';
   import MapVectorHandler from '../features/MapVector/MapVectorHandler.svelte';
   import MapCustomLabelHandler from '../features/CustomLabels/MapCustomLabelHandler.svelte';
-  import GeoJsonAreasHandler from '../features/GeoJsonAreas/GeoJsonAreasHandler.svelte';
-  import GeoJsonLinesHandler from '../features/GeoJsonLines/GeoJsonLinesHandler.svelte';
-  import GeoJsonPointsHandler from '../features/GeoJsonPoints/GeoJsonPointsHandler.svelte';
-  import ImageSourcesHandler from '../features/ImageSource/ImageSourcesHandler.svelte';
-  import IconsHandler from '../features/Icon/IconsHandler.svelte';
-  import MapRastersHandler from '../features/MapRaster/MapRastersHandler.svelte';
+  import LayerManager from '../features/layers/LayerManager.svelte';
   import ProjectionHandler from '../features/Projection/ProjectionHandler.svelte';
   import AttributionHandler from '../features/Attribution/AttributionHandler.svelte';
   import MinimapHandler from '../features/Minimap/MinimapHandler.svelte';
@@ -143,7 +138,6 @@
   const perPanelStacked = $derived(
     tweenController.panelCount > 0 ? tweenController.panels.map(p => stackLayers(p.data)) : [stacked]
   );
-  const perPanel = <K extends Stacked['type']>(kind: K) => perPanelStacked.map(panel => layersOfKind(panel, kind));
 
   onMount(() => {
     if (!mapContainer) return;
@@ -229,13 +223,7 @@
 
       <MapCustomLabelHandler labels={customLabels?.labels} zIndex={customLabels?.zIndex} {isDark} />
 
-      <MapRastersHandler perPanel={perPanel('raster')} />
-
-      <GeoJsonAreasHandler perPanel={perPanel('geojsonAreas')} />
-      <GeoJsonLinesHandler perPanel={perPanel('geojsonLines')} />
-      <GeoJsonPointsHandler perPanel={perPanel('geojsonPoints')} />
-      <ImageSourcesHandler perPanel={perPanel('image')} />
-      <IconsHandler perPanel={perPanel('icon')} />
+      <LayerManager {perPanelStacked} />
       {#if options.map.minimap && options.map.minimap.enabled !== false}
         <MinimapHandler bind:config={options.map.minimap} {interactive} />
       {/if}
