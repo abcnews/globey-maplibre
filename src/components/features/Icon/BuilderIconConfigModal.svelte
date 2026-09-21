@@ -1,14 +1,14 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import { untrack } from 'svelte';
-  import type { IconConfig } from '../../../lib/marker';
+  import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
   import CmidInput from '../../Builder/CmidInput/CmidInput.svelte';
   import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
   interface Props {
-    /** The IconConfig object being edited or drafted */
-    config: Partial<IconConfig>;
+    /** The IconLayer object being edited or drafted */
+    config: Partial<IconLayer>;
     /** Callback fired when the modal requests to close */
     onclose?: () => void;
   }
@@ -77,21 +77,11 @@
     <div class="form-row coords-row">
       <div>
         <label for="icon-lng">Longitude</label>
-        <input
-          id="icon-lng"
-          type="number"
-          step="0.0001"
-          bind:value={lng}
-        />
+        <input id="icon-lng" type="number" step="0.0001" bind:value={lng} />
       </div>
       <div>
         <label for="icon-lat">Latitude</label>
-        <input
-          id="icon-lat"
-          type="number"
-          step="0.0001"
-          bind:value={lat}
-        />
+        <input id="icon-lat" type="number" step="0.0001" bind:value={lat} />
       </div>
     </div>
 

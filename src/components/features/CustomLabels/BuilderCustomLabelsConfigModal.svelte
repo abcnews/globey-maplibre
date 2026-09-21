@@ -1,13 +1,13 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type * as maplibregl from 'maplibre-gl';
-  import type { Label } from '../../../lib/marker';
+  import type { LabelItem } from '../../../lib/data/jsonBlob.ts';
   import { GeoAlt } from 'svelte-bootstrap-icons';
   import { safeFlyTo } from '../../Builder/utils';
 
   interface Props {
     /** The array of Custom Labels being configured */
-    config: Label[];
+    config: LabelItem[];
     /** MapLibre map instance for zooming */
     map?: maplibregl.Map;
     /** Callback fired when closing the modal */
@@ -25,7 +25,7 @@
     }
   }
 
-  function updateLabel(index: number, key: keyof Label, value: any) {
+  function updateLabel(index: number, key: keyof LabelItem, value: any) {
     const updated = [...(config || [])];
     updated[index] = { ...updated[index], [key]: value };
     config = updated;
@@ -35,7 +35,7 @@
     config = (config || []).filter((_, i) => i !== index);
   }
 
-  function zoomToLabel(label: Label) {
+  function zoomToLabel(label: LabelItem) {
     if (!map) return;
     safeFlyTo(map, {
       center: label.coords,
@@ -48,7 +48,9 @@
   <div class="custom-labels-modal">
     <div class="label-list">
       {#if !config || config.length === 0}
-        <div class="empty-state">No custom labels placed yet. Use the + button on the Custom Labels layer to place labels on the map.</div>
+        <div class="empty-state">
+          No custom labels placed yet. Use the + button on the Custom Labels layer to place labels on the map.
+        </div>
       {:else}
         {#each config as label, i (label.coords ? `${label.coords[0]}_${label.coords[1]}_${i}` : i)}
           <div class="label-item">
@@ -57,7 +59,7 @@
               value={label.name}
               use:autoFocusLast={i === config.length - 1}
               oninput={e => updateLabel(i, 'name', e.currentTarget.value)}
-              placeholder="Label text"
+              placeholder="LabelItem text"
             />
             <select
               value={label.style}

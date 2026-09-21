@@ -84,12 +84,7 @@
         if (isValid) handleLoad();
       }}
     />
-    <button
-      type="button"
-      class="load-btn"
-      onclick={handleLoad}
-      disabled={disabled || !isValid || loading}
-    >
+    <button type="button" class="load-btn" onclick={handleLoad} disabled={disabled || !isValid || loading}>
       {loading ? 'Loading...' : value && parsedNum === value ? 'Reload' : 'Load'}
     </button>
   </div>

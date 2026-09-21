@@ -12,11 +12,7 @@
     children?: Snippet;
   }
 
-  let {
-    tabs,
-    activeTab = $bindable(),
-    children
-  }: Props = $props();
+  let { tabs, activeTab = $bindable(), children }: Props = $props();
 </script>
 
 <div class="tabs-root">

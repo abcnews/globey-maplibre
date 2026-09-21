@@ -1,55 +1,33 @@
-import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
-import type { DecodedObject } from '../../../lib/marker/types.ts';
-import { Z_INDEX_BASE_VECTOR } from '../layers/layerUtils.ts';
+import type { LayerFeatureDefinition } from '../types.ts';
+import type { GlobeJsonBlob, StreetMapLayer } from '../../../lib/data/jsonBlob.ts';
+import { newLayerId } from '../layerOps.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
 import { createDeleteButton } from '../buttonHelpers.ts';
 import MapVectorHandler from './MapVectorHandler.svelte';
 
-export function isStreetMapActive(options: DecodedObject): boolean {
-  if (options.hideOsm) return false;
-  return options.base === 'street' || !options.base;
+/**
+ * Whether the base vector street map should render. Deleting the layer removes it
+ * outright; `hideOsm` additionally suppresses it while the layer is kept for its
+ * stack position.
+ */
+export function isStreetMapActive(options: GlobeJsonBlob): boolean {
+  return options.layers.some(layer => layer.type === 'streetMap' && !layer.hideOsm);
 }
 
-export const streetMapFeature: LayerFeatureDefinition<void> = {
+export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
   kind: 'streetMap',
   label: 'Street Map',
   icon: MapIcon,
-  defaultZIndex: Z_INDEX_BASE_VECTOR,
   isMultiItem: false,
 
-  buttons: [createDeleteButton({ title: 'Hide street map', ariaLabel: 'Hide street map' })],
-
-  canAdd(options: DecodedObject) {
-    return !isStreetMapActive(options);
-  },
+  buttons: [createDeleteButton<StreetMapLayer>({ title: 'Hide street map', ariaLabel: 'Hide street map' })],
 
   createDefault() {
-    return undefined as void;
-  },
-
-  getItems(options: DecodedObject): LayerItemDescriptor<void>[] {
-    if (!isStreetMapActive(options)) return [];
-    return [
-      {
-        id: 'street-map',
-        kind: 'streetMap',
-        name: 'Street Map',
-        zIndex: options.streetMapZIndex ?? Z_INDEX_BASE_VECTOR
-      }
-    ];
-  },
-
-  setZIndex(options: DecodedObject, _item: LayerItemDescriptor<void>, newZIndex: number) {
-    options.streetMapZIndex = newZIndex;
-  },
-
-  add(options: DecodedObject) {
-    options.base = 'street';
-    options.hideOsm = false;
-  },
-
-  delete(options: DecodedObject) {
-    options.hideOsm = true;
+    return {
+      id: newLayerId('streetMap'),
+      type: 'streetMap',
+      hideOsm: false
+    };
   },
 
   MapRenderer: MapVectorHandler

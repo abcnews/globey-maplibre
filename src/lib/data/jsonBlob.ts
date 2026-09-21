@@ -73,7 +73,10 @@ const baseLayerObject = {
   /** Unique identifier / UUID for the layer */
   id: z.string(),
   /** Friendly, lowercase-alphanumeric name for identifying the layer in the Builder */
-  name: z.string().regex(/^[a-z0-9]*$/, 'Lowercase letters and numbers only').optional(),
+  name: z
+    .string()
+    .regex(/^[a-z0-9]*$/, 'Lowercase letters and numbers only')
+    .optional(),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
@@ -109,6 +112,7 @@ export const labelItemSchema = z.object({
   number: z.number().default(0)
 });
 export type LabelItem = z.infer<typeof labelItemSchema>;
+export type LabelStyle = LabelItem['style'];
 
 /**
  * Custom text labels layer schema
@@ -222,6 +226,9 @@ export const mapDefaultsSchema = z.object({
   base: z.enum(['street', 'dark']).default('street'),
   attribution: z.string().default(''),
   animationDuration: z.number().default(500),
+  /** Panel-level camera clock. Set per panel by `applyMarkerOverrides` from the marker's
+   *  `CAM` token; absent on a stored blob, which always tracks scroll. */
+  animationMode: z.enum(['scroll', 'immediate']).optional(),
   fitGlobe: z.boolean().default(false),
   constrainView: z.boolean().default(false),
   coords: coordinatesSchema.optional(),

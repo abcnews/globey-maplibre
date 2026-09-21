@@ -25,9 +25,7 @@ describe('HighlightFeatures featureSets', () => {
       { filename: 'AUT.geojson', name: 'Austria' }
     ]);
 
-    expect(searchFeatureSetItems(sampleItems, 'zealand')).toEqual([
-      { filename: 'NZL.geojson', name: 'New Zealand' }
-    ]);
+    expect(searchFeatureSetItems(sampleItems, 'zealand')).toEqual([{ filename: 'NZL.geojson', name: 'New Zealand' }]);
 
     expect(searchFeatureSetItems(sampleItems, '')).toHaveLength(3);
   });

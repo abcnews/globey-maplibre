@@ -1,13 +1,14 @@
 import { Pencil, Search, Trash } from 'svelte-bootstrap-icons';
 import type { LayerButton, LayerFeatureDefinition, LayerItemDescriptor } from './types.ts';
-import type { DecodedObject } from '../../lib/marker';
+import type { GlobeJsonBlob, GlobeLayer } from '../../lib/data/jsonBlob.ts';
+import { deleteLayer } from './layerOps.ts';
 import { safeFitBounds, safeFlyTo } from '../Builder/utils.ts';
 import { getBoundingBox } from './PanZoom/utils.ts';
 
 /**
  * Creates a standard Edit action button that opens the feature's configuration modal.
  */
-export function createEditButton<T = any>({
+export function createEditButton<T extends GlobeLayer = GlobeLayer>({
   title = 'Edit',
   ariaLabel
 }: { title?: string; ariaLabel?: string } = {}): LayerButton<T> {
@@ -25,7 +26,7 @@ export function createEditButton<T = any>({
 /**
  * Creates a standard Delete action button that removes the layer item.
  */
-export function createDeleteButton<T = any>({
+export function createDeleteButton<T extends GlobeLayer = GlobeLayer>({
   title = 'Delete',
   ariaLabel
 }: { title?: string; ariaLabel?: string } = {}): LayerButton<T> {
@@ -35,10 +36,7 @@ export function createDeleteButton<T = any>({
     ariaLabel: ariaLabel || title,
     icon: Trash,
     onclick: ({ options, item }) => {
-      const feature = (item as any).feature as LayerFeatureDefinition<T> | undefined;
-      if (feature?.delete) {
-        feature.delete(options, item);
-      }
+      deleteLayer(options, item.id);
     }
   };
 }
@@ -52,7 +50,7 @@ export type GoToTarget = { type: 'point'; coords: [number, number] } | { type: '
  * already store their own coordinates) or asynchronously (GeoJSON, which has no stored bounds
  * and must be re-fetched on every click to compute them).
  */
-export function createGoToButton<T = any>({
+export function createGoToButton<T extends GlobeLayer = GlobeLayer>({
   title = 'Go to layer',
   getTarget
 }: {
@@ -93,10 +91,10 @@ export function createGoToButton<T = any>({
 /**
  * Resolves the default action buttons for a feature item if none are explicitly declared.
  */
-export function getDefaultLayerButtons<T = any>(
+export function getDefaultLayerButtons<T extends GlobeLayer = GlobeLayer>(
   feature: LayerFeatureDefinition<T>,
   _item?: LayerItemDescriptor<T>,
-  _options?: DecodedObject
+  _options?: GlobeJsonBlob
 ): LayerButton<T>[] {
   const buttons: LayerButton<T>[] = [];
   if (feature.ConfigModal) {

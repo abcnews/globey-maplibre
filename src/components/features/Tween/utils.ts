@@ -68,9 +68,7 @@ export const MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY = 'tweenPosImmediate';
 
 /** The global-state key a layer should read for a given clock. */
 export function clockStateKey(mode: AnimationMode): string {
-  return mode === 'immediate'
-    ? MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY
-    : MAPLIBRE_TWEEN_SCROLL_STATE_KEY;
+  return mode === 'immediate' ? MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY : MAPLIBRE_TWEEN_SCROLL_STATE_KEY;
 }
 
 /**
@@ -126,11 +124,7 @@ export function lerpColour(from: string | undefined, to: string | undefined, t: 
  * the antimeridian so a Fiji → Samoa move crosses ±180 rather than unwinding the
  * long way round.
  */
-export function lerpCoords(
-  from: [number, number],
-  to: [number, number],
-  t: number
-): [number, number] {
+export function lerpCoords(from: [number, number], to: [number, number], t: number): [number, number] {
   const [fromLng, fromLat] = from;
   let [toLng] = to;
   const toLat = to[1];

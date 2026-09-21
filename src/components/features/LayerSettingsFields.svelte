@@ -47,8 +47,8 @@
     </label>
   </div>
   <small class="help-text">
-    Scroll-tied layers fade in as the reader scrolls. Arrival layers hold until the panel is reached, then play
-    over the panel's animation duration.
+    Scroll-tied layers fade in as the reader scrolls. Arrival layers hold until the panel is reached, then play over the
+    panel's animation duration.
   </small>
 </fieldset>
 

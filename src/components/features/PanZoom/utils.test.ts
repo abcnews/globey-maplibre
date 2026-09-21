@@ -121,11 +121,12 @@ describe('Target View Inheritance', () => {
   });
 
   it('sequentially resolves panel views with forward inheritance', () => {
+    const panel = (map: Record<string, unknown>) => ({ data: { map } }) as any;
     const panels = [
-      { data: { coords: [151.2093, -33.8688] as [number, number], z: 10 } }, // Panel 0: Sydney
-      { data: { someOtherProp: 'narrative step without map' } as any },        // Panel 1: should inherit Sydney
-      { data: { z: 12 } as any },                                              // Panel 2: should inherit Sydney centre + zoom 12
-      { data: { coords: [-0.1278, 51.5074] as [number, number], z: 8 } }       // Panel 3: London
+      panel({ coords: [151.2093, -33.8688], z: 10 }), // Panel 0: Sydney
+      panel({}), // Panel 1: narrative step without map — should inherit Sydney
+      panel({ z: 12 }), // Panel 2: should inherit Sydney centre + zoom 12
+      panel({ coords: [-0.1278, 51.5074], z: 8 }) // Panel 3: London
     ];
 
     const views = resolveAllPanelViews(mockMap, panels);
@@ -149,5 +150,3 @@ describe('Target View Inheritance', () => {
     expect(views[3].zoom).toBe(8);
   });
 });
-
-

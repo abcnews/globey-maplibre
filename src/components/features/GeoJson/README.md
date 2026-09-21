@@ -9,7 +9,7 @@ Each `GeoJsonConfig` item is one dataset, one fixed filter, one fixed colour mod
 ## Component Architecture
 
 - **`GeoJsonsHandler.svelte`**: Plural wrapper — iterates `options.geoJson` and renders one `GeoJsonHandler` per item.
-- **`GeoJsonHandler.svelte`**: Fetches one dataset (by CMID or URL) and dispatches it to the geometry-specific renderer for `config.type`.
+- **`GeoJsonHandler.svelte`**: Fetches one dataset (by CMID or URL) and dispatches it to the geometry-specific renderer for `config.geometryType`.
 - **`RenderArea.svelte`**: Renders a single polygon fill + outline layer.
 - **`RenderLine.svelte`**: Renders a single line + casing outline layer.
 - **`RenderPoint.svelte`**: Renders a single circle layer, with screen- or kilometre-based sizing.
@@ -37,7 +37,7 @@ Each renderer adds its source/layer(s) once on mount, then keeps paint propertie
 
 ## Adding a New 2D Geometry Type
 
-1. Add the identifier to the `type` enum in `src/lib/marker/schema.ts`.
+1. Add the identifier to the `geometryType` enum in `geoJsonLayerSchema` (`src/lib/data/jsonBlob.ts`).
 2. Create a renderer component (e.g. `RenderHeatmap.svelte`) following `RenderArea.svelte`: add the source/layer once on mount, then reactively set paint/filter from `config` using the `build*Expression` helpers in `utils.ts`.
 3. Add the type case in `GeoJsonHandler.svelte`.
 4. Add any necessary property controls to `BuilderGeoJsonConfigModal.svelte`.

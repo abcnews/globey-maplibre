@@ -2,13 +2,19 @@
   import { getSpikeLayer } from './SpikeLayer.ts';
   import { getColourEvaluator, getHeightEvaluator } from './utils.ts';
   import { parseColor } from '../../lib/colours.ts';
-  import { addLayerWithZIndex, removeLayerWithZIndex, setLayerZIndex, Z_INDEX_GEOJSON } from '../../components/features/layers/layerUtils.ts';
+  import { randomId } from '../../lib/randomId.ts';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON
+  } from '../../components/features/layers/layerUtils.ts';
   import type { CustomLayerProps } from '../../lib/plugins/types.ts';
   import type { GeoJsonSpikesConfig } from './types.ts';
 
   let { map, config, zIndex = Z_INDEX_GEOJSON }: CustomLayerProps<GeoJsonSpikesConfig> = $props();
 
-  const layerId = `spikes-${crypto.randomUUID()}`;
+  const layerId = `spikes-${randomId()}`;
 
   let SpikeLayerClass = $state<any>();
 

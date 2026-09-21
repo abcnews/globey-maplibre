@@ -1,7 +1,8 @@
 <script lang="ts">
-  import type { GeoJsonConfig } from '../../../lib/marker';
+  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { Stacked } from '../../../lib/data/stack.ts';
   import { fetchGeoJsonData } from './utils.ts';
-  import { generateGeoJsonSourceId, Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+  import { generateGeoJsonSourceId } from '../layers/layerUtils.ts';
   import { layerClockKey } from '../Tween/utils.ts';
   import RenderArea from './RenderArea.svelte';
   import RenderLine from './RenderLine.svelte';
@@ -14,9 +15,9 @@
     /** This item's own config per panel (undefined where absent) — lets colour cross-fade
      *  between panels, e.g. a marker LAYER override changing colour panel to panel. */
     configStops
-  }: { config: GeoJsonConfig; opacityStops?: number[]; configStops?: (GeoJsonConfig | undefined)[] } = $props();
+  }: { config: Stacked<GeoJsonLayer>; opacityStops?: number[]; configStops?: (GeoJsonLayer | undefined)[] } = $props();
 
-  const sourceId = $derived(generateGeoJsonSourceId(config.id || config.url || config.cmid));
+  const sourceId = $derived(generateGeoJsonSourceId(config.id));
   const posKey = $derived(layerClockKey(config.animationClock));
 
   // Fetched once per dataset (URL/CMID never change for a given layer instance).
@@ -34,11 +35,11 @@
 </script>
 
 {#if data}
-  {#if config.type === 'areas'}
-    <RenderArea {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
-  {:else if config.type === 'lines'}
-    <RenderLine {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
-  {:else if config.type === 'points'}
-    <RenderPoint {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex ?? Z_INDEX_GEOJSON} />
+  {#if config.geometryType === 'areas'}
+    <RenderArea {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex} />
+  {:else if config.geometryType === 'lines'}
+    <RenderLine {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex} />
+  {:else if config.geometryType === 'points'}
+    <RenderPoint {data} {config} {sourceId} {opacityStops} {configStops} {posKey} zIndex={config.zIndex} />
   {/if}
 {/if}

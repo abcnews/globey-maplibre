@@ -24,7 +24,7 @@
 
   /** `LAYER<name>` tokens key off the layer's builder-facing name, falling back to its id
    *  (sanitised to ACTO's `[a-z0-9]`-only alphabet — must match `layerOverrideKey`'s read side). */
-  function keyFor(layer: GlobeLayer): string | undefined {
+  function keyFor(layer: GlobeLayer): string {
     return layerOverrideKey(layer);
   }
 

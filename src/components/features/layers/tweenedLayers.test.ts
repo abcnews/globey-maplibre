@@ -5,7 +5,10 @@ type Item = { id: string; opacity?: number; coords?: [number, number] };
 
 describe('buildTweenedLayerEntries', () => {
   it('makes one entry per distinct item, in first-seen order', () => {
-    const perPanel: Item[][] = [[{ id: 'a' }, { id: 'b' }], [{ id: 'b' }, { id: 'c' }]];
+    const perPanel: Item[][] = [
+      [{ id: 'a' }, { id: 'b' }],
+      [{ id: 'b' }, { id: 'c' }]
+    ];
 
     const entries = buildTweenedLayerEntries(perPanel, { keyOf: i => i.id });
 

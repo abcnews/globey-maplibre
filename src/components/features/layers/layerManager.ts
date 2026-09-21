@@ -4,7 +4,11 @@ import type { Map as MapLibreMap, AddLayerObject, CustomLayerInterface } from 'm
  * Standard default Z-Index constants for MapLibre visual layers.
  *
  * Layers are rendered from lowest Z-Index to highest Z-Index (bottom-to-top).
- * Users or builder modules can supply custom Z-Indices to interleave or reorder layers.
+ *
+ * A blob layer's own z-index is derived from its position in `GlobeJsonBlob.layers`
+ * by `stackLayers()` (`src/lib/data/stack.ts`), not from these constants. They remain
+ * as the base offset and as fallbacks for handlers rendered outside a blob (and for
+ * a layer's internal sub-layer offsets).
  */
 
 /**
@@ -117,32 +121,6 @@ export function findBeforeIdForZIndex(map: MapLibreMap, targetZIndex: number): s
 }
 
 /**
- * Finds the highest currently-registered Z-Index strictly below a ceiling.
- *
- * Used to stack a new layer directly above whatever is currently the topmost
- * layer within a given tier (e.g. base raster/vector layers), rather than
- * pinning it to a fixed tier constant regardless of what else is on the map.
- *
- * @param map MapLibre Map instance
- * @param ceiling Exclusive upper bound - only registered Z-Indices below this are considered
- * @returns The highest registered Z-Index below `ceiling`, or undefined if none are registered
- */
-export function getHighestZIndexBelow(map: MapLibreMap, ceiling: number): number | undefined {
-  if (!map) return undefined;
-
-  const registry = getMapRegistry(map);
-  let highest: number | undefined;
-
-  for (const registeredZ of registry.values()) {
-    if (registeredZ < ceiling && (highest === undefined || registeredZ > highest)) {
-      highest = registeredZ;
-    }
-  }
-
-  return highest;
-}
-
-/**
  * Adds a layer to the map using a Z-Index to calculate stable visual placement.
  *
  * z-indexes work similarly to CSS in that A layer with a higher z-index appears
@@ -208,12 +186,7 @@ export function setLayerZIndex(map: MapLibreMap, layerId: string, zIndex: number
  * First updates all layer Z-Indices in the registry to prevent sibling layers from
  * intercepting each other in `findBeforeIdForZIndex`, then moves each layer in order.
  */
-export function setLayersZIndex(
-  map: MapLibreMap,
-  layerIds: string[],
-  baseZIndex: number,
-  step = 0.0001
-): void {
+export function setLayersZIndex(map: MapLibreMap, layerIds: string[], baseZIndex: number, step = 0.0001): void {
   if (!map || !layerIds?.length) return;
 
   const registry = getMapRegistry(map);

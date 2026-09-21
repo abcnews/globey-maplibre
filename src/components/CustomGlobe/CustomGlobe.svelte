@@ -17,7 +17,8 @@
   import { isDarkBase } from './mapStyle/utils';
   import { onMount, setContext } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-  import type { DecodedObject } from '../../lib/marker';
+  import type { GlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
+  import { stackLayers, layersOfKind, singletonOfKind, type Stacked } from '../../lib/data/stack.ts';
   import { TweenController } from '../features/Tween/TweenController.svelte.ts';
   import { setTween } from '../features/Tween/context.ts';
   import { MAPLIBRE_TWEEN_SCROLL_STATE_KEY, MAPLIBRE_TWEEN_IMMEDIATE_STATE_KEY } from '../features/Tween/utils.ts';
@@ -32,9 +33,9 @@
     onLoad?: (map: Map) => void;
     /** Called with the MapLibre map instance as soon as it's constructed, before its style has loaded. */
     onmap?: (map: Map) => void;
-    options: DecodedObject;
+    options: GlobeJsonBlob;
     preserveDrawingBuffer?: boolean;
-    panels?: PanelDefinition<DecodedObject>[];
+    panels?: PanelDefinition<GlobeJsonBlob>[];
     currentPanel?: number;
     virtualPanel?: number;
     panelPct?: number;
@@ -117,22 +118,34 @@
     );
   });
 
+  // Stacking order comes from each layer's position in `blob.layers`; `zIndex` is
+  // derived here at the render boundary and never persisted.
+  const stacked = $derived(stackLayers(options));
+  const view = $derived(options.map);
+
+  const rasters = $derived(layersOfKind(stacked, 'raster'));
+  const streetMap = $derived(singletonOfKind(stacked, 'streetMap'));
+  const mapLabels = $derived(singletonOfKind(stacked, 'mapLabels'));
+  const customLabels = $derived(singletonOfKind(stacked, 'customLabels'));
+
   // Credits only the layers present in the panel on screen — raster sources stay
   // mounted (faded out) across every panel, so their own source `attribution`
   // would credit layers that aren't visible.
-  const visibleLayerAttributions = $derived(
-    (options.rasterLayers ?? []).map(raster => raster.attribution ?? '').filter(Boolean)
-  );
+  const visibleLayerAttributions = $derived(rasters.map(raster => raster.attribution ?? '').filter(Boolean));
 
-  const hasDarkRaster = $derived((options.rasterLayers || []).some(r => r.darkTheme));
+  const hasDarkRaster = $derived(rasters.some(r => r.darkTheme));
   const isSatellite = $derived(hasDarkRaster);
-  const isDark = $derived(isSatellite || isDarkBase(options.base || 'street'));
-  const isVectorLight = $derived(options.base === 'street' && !hasDarkRaster);
+  const isDark = $derived(isSatellite || isDarkBase(view.base || 'street'));
+  const isVectorLight = $derived(view.base === 'street' && !hasDarkRaster);
 
-  // A feature's config in each panel — one array per panel on the scrollyteller
-  // path, the current panel's array on the builder / static path.
-  const perPanel = <T,>(pick: (d: DecodedObject) => T[]): T[][] =>
-    tweenController.panelCount > 0 ? tweenController.panels.map(p => pick(p.data)) : [pick(options)];
+  // Each panel's layers, stacked once and reused by every handler below — one entry
+  // per panel on the scrollyteller path, the current panel's alone on the builder /
+  // static path. Cross-panel fades need every panel mounted at once, so handlers take
+  // the whole array rather than just the current panel's.
+  const perPanelStacked = $derived(
+    tweenController.panelCount > 0 ? tweenController.panels.map(p => stackLayers(p.data)) : [stacked]
+  );
+  const perPanel = <K extends Stacked['type']>(kind: K) => perPanelStacked.map(panel => layersOfKind(panel, kind));
 
   onMount(() => {
     if (!mapContainer) return;
@@ -144,7 +157,7 @@
     // events until load so the browser never dispatches one to the canvas.
     mapContainer.style.pointerEvents = 'none';
     const map = new Map({
-      zoom: options.z || 3,
+      zoom: view.z || 3,
       minZoom: -1,
       maxZoom: MAX_ZOOM,
       attributionControl: false,
@@ -159,8 +172,8 @@
       },
       container: mapContainer,
       interactive: !!interactive,
-      center: options.coords,
-      projection: { type: options.projection || 'globe' },
+      center: view.coords,
+      projection: { type: view.projection || 'globe' },
       preserveDrawingBuffer
     } as any);
 
@@ -195,43 +208,36 @@
   <div class="maplibre" bind:this={mapContainer} style={rootElStyle}>
     {#if mapInstance.map}
       <AttributionHandler
-        attribution={options.attribution}
-        base={options.base}
-        hideOsm={options.hideOsm}
+        attribution={view.attribution}
+        base={view.base}
+        hideOsm={!streetMap || streetMap.hideOsm}
         layerAttributions={visibleLayerAttributions}
       />
-      <ProjectionHandler projection={options.projection} />
+      <ProjectionHandler projection={view.projection} />
       {#if panels && panelPct !== undefined}
         <PanZoomScrollHandler />
       {:else}
         <PanZoomHandler
-          coords={options.coords}
-          z={options.z}
-          bounds={options.bounds}
-          fitGlobe={options.fitGlobe}
-          constrainView={options.constrainView}
-          animationDuration={options.animationDuration}
+          coords={view.coords}
+          z={view.z}
+          bounds={view.bounds}
+          fitGlobe={view.fitGlobe}
+          constrainView={view.constrainView}
+          animationDuration={view.animationDuration}
         />
       {/if}
 
-      <MapVectorHandler
-        base={options.base}
-        hideOsm={options.hideOsm}
-        streetMapZIndex={options.streetMapZIndex}
-        labels={options.mapLabels}
-        zIndex={options.mapLabelsZIndex}
-        {isSatellite}
-      />
+      <MapVectorHandler base={view.base} {streetMap} {mapLabels} {isSatellite} />
 
-      <MapCustomLabelHandler labels={options.labels} zIndex={options.labelsZIndex} {isDark} />
+      <MapCustomLabelHandler labels={customLabels?.labels} zIndex={customLabels?.zIndex} {isDark} />
 
-      <MapRastersHandler perPanel={perPanel(d => d.rasterLayers ?? [])} />
+      <MapRastersHandler perPanel={perPanel('raster')} />
 
-      <GeoJsonsHandler perPanel={perPanel(d => d.geoJson ?? [])} />
-      <ImageSourcesHandler perPanel={perPanel(d => d.imageSources ?? [])} />
-      <IconsHandler perPanel={perPanel(d => d.icons ?? [])} />
-      {#if options.minimap && options.minimap.enabled !== false}
-        <MinimapHandler bind:config={options.minimap} {interactive} />
+      <GeoJsonsHandler perPanel={perPanel('geojson')} />
+      <ImageSourcesHandler perPanel={perPanel('image')} />
+      <IconsHandler perPanel={perPanel('icon')} />
+      {#if options.map.minimap && options.map.minimap.enabled !== false}
+        <MinimapHandler bind:config={options.map.minimap} {interactive} />
       {/if}
       {#each plugins ?? [] as plugin (plugin.id)}
         <plugin.component map={mapInstance.map} config={plugin.config} zIndex={plugin.zIndex} />

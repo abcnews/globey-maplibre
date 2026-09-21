@@ -1,7 +1,7 @@
 import type * as maplibregl from 'maplibre-gl';
 import { interpolateZoom } from 'd3-interpolate';
 import type { ViewState, FitMode, ZoomPoint } from './types.ts';
-import type { DecodedObject } from '../../../lib/marker';
+import type { GlobeJsonBlob, MapDefaults } from '../../../lib/data/jsonBlob.ts';
 
 export const WORLD_SIZE_AT_ZOOM_0 = 512;
 export const LONGITUDE_SPAN_DEGREES = 360;
@@ -117,17 +117,17 @@ export function viewportToLatLngZoom(point: ZoomPoint): ViewState {
 }
 
 /**
- * Resolves a panel's decoded options into an absolute ViewState based on current container dimensions.
+ * Resolves a panel's map view settings (`GlobeJsonBlob.map`) into an absolute ViewState based on current container dimensions.
  * If the panel does not define geographic view options, it inherits from fallbackView if provided,
  * or defaults to the current map centre and zoom.
  */
 export function resolvePanelTargetView(
   map: maplibregl.Map,
-  panelData?: DecodedObject,
+  view?: Partial<MapDefaults>,
   mode: FitMode = 'fit',
   fallbackView?: ViewState
 ): ViewState {
-  if (!panelData) {
+  if (!view) {
     return (
       fallbackView || {
         center: [map.getCenter().lng, map.getCenter().lat],
@@ -136,40 +136,40 @@ export function resolvePanelTargetView(
     );
   }
 
-  if (panelData.fitGlobe) {
-    const targetZoom = calculateGlobeFitZoom(map, panelData.coords);
-    const centre = panelData.coords || [map.getCenter().lng, map.getCenter().lat];
+  if (view.fitGlobe) {
+    const targetZoom = calculateGlobeFitZoom(map, view.coords);
+    const centre = view.coords || [map.getCenter().lng, map.getCenter().lat];
     return { center: centre, zoom: targetZoom };
   }
 
-  if (panelData.bounds && panelData.bounds.length > 0) {
+  if (view.bounds && view.bounds.length > 0) {
     const container = map.getContainer();
     const target = calculateTargetView(
-      panelData.bounds,
+      view.bounds,
       container.clientWidth,
       container.clientHeight,
-      panelData.constrainView ? 'fill' : mode
+      view.constrainView ? 'fill' : mode
     );
     if (target) return target;
   }
 
-  if (panelData.coords) {
+  if (view.coords) {
     return {
-      center: panelData.coords,
-      zoom: panelData.z ?? (fallbackView ? fallbackView.zoom : map.getZoom())
+      center: view.coords,
+      zoom: view.z ?? (fallbackView ? fallbackView.zoom : map.getZoom())
     };
   }
 
   if (fallbackView) {
     return {
       center: fallbackView.center,
-      zoom: panelData.z ?? fallbackView.zoom
+      zoom: view.z ?? fallbackView.zoom
     };
   }
 
   return {
     center: [map.getCenter().lng, map.getCenter().lat],
-    zoom: panelData.z ?? map.getZoom()
+    zoom: view.z ?? map.getZoom()
   };
 }
 
@@ -177,15 +177,13 @@ export function resolvePanelTargetView(
  * Resolves all panels in sequence, ensuring panels without geographic view options
  * automatically inherit camera positioning from the most recent valid preceding panel.
  */
-export function resolveAllPanelViews(
-  map: maplibregl.Map,
-  panels: Array<{ data?: DecodedObject }>
-): ViewState[] {
+export function resolveAllPanelViews(map: maplibregl.Map, panels: Array<{ data?: GlobeJsonBlob }>): ViewState[] {
   let lastGoodView: ViewState | undefined;
 
   return panels.map(panel => {
-    const view = resolvePanelTargetView(map, panel.data, 'fit', lastGoodView);
-    if (panel.data && (panel.data.fitGlobe || (panel.data.bounds && panel.data.bounds.length > 0) || panel.data.coords)) {
+    const panelView = panel.data?.map;
+    const view = resolvePanelTargetView(map, panelView, 'fit', lastGoodView);
+    if (panelView && (panelView.fitGlobe || (panelView.bounds && panelView.bounds.length > 0) || panelView.coords)) {
       lastGoodView = view;
     } else if (!lastGoodView) {
       lastGoodView = view;
@@ -236,8 +234,7 @@ export function createZoomInterpolator(
   // overlaps the starting one. In that case a straight linear zoom (centre
   // and zoom each eased independently) reads as a simple pan/zoom instead.
   const viewportsOverlap =
-    Math.abs(ux1 - ux0) < ((w0 + w1) / 2) * widthScale &&
-    Math.abs(uy1 - uy0) < ((w0 + w1) / 2) * widthScale;
+    Math.abs(ux1 - ux0) < ((w0 + w1) / 2) * widthScale && Math.abs(uy1 - uy0) < ((w0 + w1) / 2) * widthScale;
 
   if (viewportsOverlap) {
     return (t: number) => {
@@ -257,5 +254,3 @@ export function createZoomInterpolator(
     return viewportToLatLngZoom(point as ZoomPoint);
   };
 }
-
-

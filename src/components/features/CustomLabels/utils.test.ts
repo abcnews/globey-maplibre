@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import type { Label, LabelStyle } from '../../../lib/marker';
+import type { LabelItem, LabelStyle } from '../../../lib/data/jsonBlob.ts';
 import { resolveLabelTransition } from './utils.ts';
 
-const label = (name: string, coords: [number, number], style: LabelStyle = 'country-large'): Label => ({
+const label = (name: string, coords: [number, number], style: LabelStyle = 'country-large'): LabelItem => ({
   name,
   coords,
   style,
@@ -58,7 +58,7 @@ describe('resolveLabelTransition', () => {
   });
 
   it('drops labels with no coordinates', () => {
-    const broken = { name: 'B', style: 'country-large', number: 0 } as unknown as Label;
+    const broken = { name: 'B', style: 'country-large', number: 0 } as unknown as LabelItem;
     const out = resolveLabelTransition([X, broken], [X], 0.5);
     expect(out.map(f => f.name)).toEqual(['X']);
   });

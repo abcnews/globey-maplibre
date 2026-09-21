@@ -1,7 +1,7 @@
 <script lang="ts">
   import { getContext, untrack } from 'svelte';
   import type { Map } from 'maplibre-gl';
-  import type { GeoJsonConfig } from '../../../lib/marker';
+  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
   import {
     buildTweenedColourExpression,
     buildOpacityExpression,
@@ -34,13 +34,13 @@
     configStops,
     /** Global-state key this layer's fade follows. */
     posKey = MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
-    zIndex = config.zIndex ?? Z_INDEX_GEOJSON
+    zIndex = Z_INDEX_GEOJSON
   }: {
     data: any;
-    config: GeoJsonConfig;
+    config: GeoJsonLayer;
     sourceId: string;
     opacityStops?: number[];
-    configStops?: (GeoJsonConfig | undefined)[];
+    configStops?: (GeoJsonLayer | undefined)[];
     posKey?: string;
     zIndex?: number;
   } = $props();
@@ -142,11 +142,27 @@
       // when cross-fading a non-basic mode.
       const drawColour = resolveSchemeColour(config.colourConfig?.basicType, config.colourConfig?.basic);
       map.setPaintProperty(outlineLayerId, 'line-opacity', buildOpacityExpression(config, 'stroke'));
-      map.setPaintProperty(outlineLayerId, 'line-gradient', ['step', ['line-progress'], '#ffffff', revealFraction, 'transparent']);
+      map.setPaintProperty(outlineLayerId, 'line-gradient', [
+        'step',
+        ['line-progress'],
+        '#ffffff',
+        revealFraction,
+        'transparent'
+      ]);
       map.setPaintProperty(lineLayerId, 'line-opacity', buildOpacityExpression(config, 'stroke'));
-      map.setPaintProperty(lineLayerId, 'line-gradient', ['step', ['line-progress'], drawColour, revealFraction, 'transparent']);
+      map.setPaintProperty(lineLayerId, 'line-gradient', [
+        'step',
+        ['line-progress'],
+        drawColour,
+        revealFraction,
+        'transparent'
+      ]);
     } else {
-      map.setPaintProperty(outlineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
+      map.setPaintProperty(outlineLayerId, 'line-opacity', [
+        '*',
+        tweenFactor,
+        buildOpacityExpression(config, 'stroke')
+      ]);
       map.setPaintProperty(outlineLayerId, 'line-gradient', undefined);
       map.setPaintProperty(lineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
       map.setPaintProperty(lineLayerId, 'line-gradient', undefined);

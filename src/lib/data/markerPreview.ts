@@ -1,8 +1,8 @@
-import type { DecodedObject, GeoJsonConfig, IconConfig, ImageSourceConfig, RasterLayerConfig } from '../marker/types.ts';
+import type { GlobeJsonBlob, GlobeLayer } from './jsonBlob.ts';
 import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
 
-/** Anything in a `DecodedObject`'s per-layer arrays carries a `name` (builder slug) and/or `id`. */
-type NamedLayerConfig = { id?: string; name?: string };
+/** Layer kinds a marker's `LAYER<name>` tokens can switch on and off. */
+const OVERRIDABLE_KINDS: GlobeLayer['type'][] = ['geojson', 'icon', 'image', 'raster'];
 
 /**
  * The `LAYER<name>` token matches a layer's builder-facing `name`, falling back to its `id`.
@@ -11,118 +11,111 @@ type NamedLayerConfig = { id?: string; name?: string };
  * way friendly names already are, so an unnamed layer's fallback key stays ACTO-safe.
  * Both the write side (`PropMarkerLayers.svelte`'s `keyFor`) and this read side must apply
  * the exact same sanitisation, or overrides silently stop matching their layer.
+ *
+ * Every blob layer has an `id`, so this always resolves to a key — the class of bug where a
+ * layer kind was simply unaddressable can't recur.
  */
-export function layerOverrideKey(layer: NamedLayerConfig): string | undefined {
-  const key = layer.name ?? layer.id;
-  return key?.toLowerCase().replace(/[^a-z0-9]/g, '');
+export function layerOverrideKey(layer: { id: string; name?: string }): string {
+  return (layer.name ?? layer.id).toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
-function overrideFor(overrides: MarkerLayerOverride[], layer: NamedLayerConfig): MarkerLayerOverride | undefined {
+function overrideFor(overrides: MarkerLayerOverride[], layer: GlobeLayer): MarkerLayerOverride | undefined {
   const key = layerOverrideKey(layer);
   return overrides.find(o => o.name === key);
 }
 
 /**
- * Applies a marker's layer on/off + colour overrides to one of DecodedObject's
- * per-layer arrays. Layers with no matching "on" override are dropped — the
- * ACTO spec treats every layer as off by default.
- */
-function filterLayers<T extends NamedLayerConfig>(items: T[], overrides: MarkerLayerOverride[]): T[] {
-  return items.filter(item => overrideFor(overrides, item)?.state === 'on');
-}
-
-/**
- * Stamps a layer's `animationClock` from its override's `duration` field. Only presence
- * of a duration matters now, not its value — the actual immediate-fade duration always
- * comes from the shared panel-level clock (`animationDuration`, set from `config.cam`
- * below), not a per-layer number. See REFACTOR.md.
- */
-function withClock<T extends NamedLayerConfig>(items: T[], overrides: MarkerLayerOverride[]): T[] {
-  return items.map(item => ({
-    ...item,
-    animationClock: overrideFor(overrides, item)?.duration !== undefined ? 'immediate' : 'scroll'
-  }));
-}
-
-/**
- * Overlays a marker's on/off, colour, camera and base/labels/minimap overrides onto a
- * base DecodedObject, producing what the marker should visually look like on `CustomGlobe`,
+ * Applies a marker's on/off, colour, camera and base/labels/minimap overrides onto a
+ * base blob, producing what the marker should visually look like on `CustomGlobe`,
  * including scroll-tied/immediate animation timing for the camera and per layer.
+ *
+ * Layer order is preserved: overrides only drop layers and rewrite their fields, so the
+ * stack a panel renders is always a subsequence of the master blob's.
  */
-export function applyMarkerOverrides(base: DecodedObject, config: MarkerConfig): DecodedObject {
+export function applyMarkerOverrides(base: GlobeJsonBlob, config: MarkerConfig): GlobeJsonBlob {
   const overrides = config.layers ?? [];
-  const result: DecodedObject = { ...base };
 
-  result.geoJson = withClock(
-    filterLayers<GeoJsonConfig>(base.geoJson ?? [], overrides).map(layer => {
-      const colour = overrideFor(overrides, layer)?.colour;
-      if (!colour) return layer;
-      return {
-        ...layer,
+  const layers = base.layers.flatMap((layer): GlobeLayer[] => {
+    if (!OVERRIDABLE_KINDS.includes(layer.type)) {
+      // Built-in kinds aren't addressable by LAYER tokens; `labels` below handles mapLabels.
+      if (layer.type === 'mapLabels' && config.labels === false) return [];
+      return [layer];
+    }
+
+    const override = overrideFor(overrides, layer);
+    // Every overridable layer is off by default — the ACTO spec requires an explicit "on".
+    if (override?.state !== 'on') return [];
+
+    // Only the *presence* of a duration matters: the actual fade length always comes from
+    // the panel-level `animationDuration` (set from `CAM` below), not a per-layer number.
+    const withClock = {
+      ...layer,
+      animationClock: override.duration !== undefined ? ('immediate' as const) : ('scroll' as const)
+    };
+
+    if (withClock.type !== 'geojson' || !override.colour) return [withClock];
+
+    return [
+      {
+        ...withClock,
         colourMode: 'basic',
-        colourConfig: { ...layer.colourConfig, basic: `#${colour}`, basicType: undefined }
-      };
-    }),
-    overrides
-  );
+        // `basicType: undefined` is load-bearing: `resolveSchemeColour` treats it the same
+        // as 'custom' and uses the hex. Writing 'normal' here would discard the override.
+        colourConfig: { ...withClock.colourConfig, basic: `#${override.colour}`, basicType: undefined }
+      }
+    ];
+  });
 
-
-  result.icons = withClock(filterLayers<IconConfig>(base.icons ?? [], overrides), overrides);
-  result.imageSources = withClock(filterLayers<ImageSourceConfig>(base.imageSources ?? [], overrides), overrides);
-  result.rasterLayers = withClock(filterLayers<RasterLayerConfig>(base.rasterLayers ?? [], overrides), overrides);
+  const map = { ...base.map };
 
   // Camera: presence of `cam` means an immediate fly-to over that duration on arrival;
   // absence means scroll-tied tracking, matching REFACTOR.md's CAM<duration>ms spec.
   if (config.cam !== undefined) {
-    result.animationMode = 'immediate';
-    result.animationDuration = config.cam;
+    map.animationMode = 'immediate';
+    map.animationDuration = config.cam;
   } else {
-    result.animationMode = 'scroll';
+    map.animationMode = 'scroll';
   }
 
   if (config.bbox && config.bbox.length > 0) {
-    result.bounds = config.bbox;
+    map.bounds = config.bbox;
   }
 
   // Fit-globe takes priority over BBOX (matches PanZoomHandler's own precedence), so drop
   // bounds here too rather than leaving a stale BBOX sitting unused in the preview state.
   if (config.fitGlobe !== undefined) {
-    result.fitGlobe = config.fitGlobe;
+    map.fitGlobe = config.fitGlobe;
     if (config.fitGlobe) {
-      result.bounds = [];
+      map.bounds = [];
     }
   }
 
   // Fit vs Fill for the BBOX zoom calculation — only meaningful alongside bbox/bounds,
   // but harmless to apply unconditionally since it's ignored otherwise.
   if (config.constrainView !== undefined) {
-    result.constrainView = config.constrainView;
+    map.constrainView = config.constrainView;
   }
 
   // The globe's rotation while fit-globe is active comes from `coords`, not from BBOX
   // (which has no extents to derive a centre from) — apply the captured centre so the
   // globe faces the side the marker was set up to show, not the master config's default.
   if (config.center) {
-    result.coords = config.center;
+    map.coords = config.center;
   }
 
-  // DecodedObject only understands 'street' | 'dark' — 'satellite' comes from a dark
-  // raster layer being present, not a base flag, so it can't be applied here.
+  // The blob only understands 'street' | 'dark' — 'satellite' comes from a dark raster
+  // layer being present, not a base flag, so it can't be applied here.
   if (config.base === 'street' || config.base === 'dark') {
-    result.base = config.base;
-  }
-
-  if (config.labels !== undefined) {
-    result.mapLabels = config.labels ? base.mapLabels : undefined;
+    map.base = config.base;
   }
 
   if (config.minimap !== undefined) {
-    result.minimap = config.minimap
-      ? { enabled: true, bounds: base.minimap?.bounds ?? [] }
-      : base.minimap
-        ? { ...base.minimap, enabled: false }
+    map.minimap = config.minimap
+      ? { enabled: true, bounds: base.map.minimap?.bounds ?? [] }
+      : base.map.minimap
+        ? { ...base.map.minimap, enabled: false }
         : undefined;
   }
 
-  return result;
+  return { ...base, map, layers };
 }

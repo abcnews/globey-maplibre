@@ -8,26 +8,26 @@ components, add/edit an entry here in the same turn. Skip routine fixes.
 
 ## Layer data flow
 
-Two schemas represent layers, bridged by an adapter — always update both when adding a layer field:
+**One representation.** `GlobeJsonBlob` (`src/lib/data/jsonBlob.ts`, Zod, stored in `src/lib/data/blobStore.ts`) is the internal *and* runtime shape, from the Builder through the feature registry to every MapLibre handler. There is no adapter and no second schema — `DecodedObject`, `markerSchema`, `src/lib/marker/` and `blobAdapter.ts` are gone.
 
-- `src/lib/data/jsonBlob.ts` — Zod schema for the persisted Builder blob (`GlobeJsonBlob`), stored in `src/lib/data/blobStore.ts` (`jsonBlob` store).
-- `src/lib/marker/schema.ts` — compact codec (`@abcnews/hash-codec`) for the published, URL-embeddable marker format (`DecodedObject`). Each field needs a short `.key('xx')` alias; item schemas are positional arrays (`.asArray()`), so add new fields at the end to avoid breaking existing encoded URLs.
-- `src/lib/data/blobAdapter.ts` — `blobToDecodedObject()` / `decodedObjectToBlob()` map every field between the two, per layer type. `LayerItemDescriptor.name`/`.animationClock` etc. all come from this bridge.
-- Every item schema needs an `id` field mapped through both adapter directions — Marker Mode's `overrideFor()` (`src/lib/data/markerPreview.ts`) matches overrides on `layer.name ?? layer.id`, so a layer kind missing `id` in its marker schema/adapter mapping (e.g. `rasterItemSchema` originally lacked it) can never be matched, making its on/off toggle a no-op regardless of state.
-- `rasterLayerSchema.bounds`/`rasterItemSchema.bounds` store the same TL/TR/BR/BL 4-corner format as `imageLayerSchema.coordinates` (optional, unset = whole world), but MapLibre's native raster source `bounds` is axis-aligned `[west, south, east, north]` — `MapRasterHandler.svelte` converts by taking min/max lng/lat across the 4 corners at `addSource()` time, discarding any implied rotation. Unlike ImageSource's `setCoordinates()`, raster sources have no live bounds update, so a change forces a source remove/re-add (same as `url`/`maxZoom`/`tileSize` changes already do).
-- When an item's `zIndex` is unset, `MapRasterHandler.svelte` doesn't fall back to the fixed `Z_INDEX_BASE_RASTER` tier constant — it computes `getHighestZIndexBelow(map, Z_INDEX_IMAGE_LAYERS)` (`layerManager.ts`) at add-time and stacks `+ Z_INDEX_STACK_STEP` above it, so a new raster tile layer always lands directly above whatever base raster/vector layer is currently topmost rather than always sorting to the bottom of that tier. `MapRastersHandler.svelte` relies on this (no longer applies its own `entry.index * 0.1` offset) — multiple raster entries without explicit `zIndex` stack in mount order via successive registry lookups.
-
-Runtime feature code (buttons, modals, `getItems`) only ever touches `DecodedObject`/`LayerItemDescriptor`, never the blob schema directly.
+- `blob.layers: GlobeLayer[]` is a single discriminated union (`type` = the feature `kind`). **Array order is stacking order**, index 0 at the bottom. Nothing stores a z-index.
+- `src/lib/data/stack.ts` derives one at the render boundary: `stackLayers(blob)` → `Stacked<GlobeLayer>[]` (`layer & { zIndex }`), then `layersOfKind` / `singletonOfKind`. `moveLayer()` is the one reorder primitive. Don't reintroduce a persisted `zIndex` field, and don't compute a z-index at MapLibre add-time — the derived one is authoritative.
+- Every layer has a required `id`, which is what Marker Mode's `overrideFor()` (`src/lib/data/markerPreview.ts`) falls back to when matching `LAYER` tokens on `layer.name ?? layer.id`. The old class of bug where a kind was unaddressable because its id wasn't mapped across can't recur.
+- `src/lib/data/layerHelpers.ts` holds the small shared bits that outlived the codec: `isValidUrl`, `DEFAULT_MAP_LABELS`, `MAP_LABEL_FLAG_KEYS`/`hasMapLabels` (which enumerates the flag keys rather than `Object.values`, so a truthy `id` can't read as "has labels").
+- Panel-level camera state lives on `blob.map` (`animationMode`, `animationDuration`, `coords`, `bounds`, `z`, `fitGlobe`, `constrainView`) — `resolvePanelTargetView()` (`PanZoom/utils.ts`) takes a `MapDefaults`, not a whole blob.
+- `rasterLayerSchema.bounds` stores the same TL/TR/BR/BL 4-corner format as `imageLayerSchema.coordinates` (optional, unset = whole world), but MapLibre's native raster source `bounds` is axis-aligned `[west, south, east, north]` — `MapRasterHandler.svelte` converts by taking min/max lng/lat across the 4 corners at `addSource()` time, discarding any implied rotation. Unlike ImageSource's `setCoordinates()`, raster sources have no live bounds update, so a change forces a source remove/re-add (same as `url`/`maxZoom`/`tileSize` changes already do).
+- `mapLabelsLayerSchema.enabled` is legacy: the Builder now deletes the layer outright rather than writing `enabled: false`, but `MapVectorHandler` still honours `false` for blobs that predate that.
 
 ## Layer feature registry
 
 `src/components/features/` — each layer kind (GeoJson, Icon, ImageSource, MapRaster, MapLabels, CustomLabels, MapVector) is a self-contained `LayerFeatureDefinition` (see `types.ts`), registered in `src/components/features/index.ts` (`layerFeatureRegistry`). See `src/components/features/README.md` for the template when adding a new one.
 
-- `getItems(options)` turns raw `DecodedObject` arrays into `LayerItemDescriptor[]` for the Builder's layer list. Prefer the item's own explicit `name` set by whoever creates it; fall back to `feature.label` — don't recompute clever names from other fields.
+- A feature declares only what's kind-specific: `kind`, `label`, `icon`, `isMultiItem`, `createDefault`, optional `isValid`/`canAdd`/`buttons`/`interactivePlacement`/`ConfigModal`/`MapRenderer`. Add/update/delete/reorder are **not** on the interface — they're generic array ops in `src/components/features/layerOps.ts` (`addLayer`, `updateLayer`, `deleteLayer`, `moveLayerTo`, `findLayer`), applied by the Builder. Don't add a per-feature `add`/`delete`/`setZIndex` back.
+- The layer-list row is built generically by `describeLayer()`: it prefers the layer's own explicit `name` and falls back to `feature.label` — don't recompute clever names from other fields. `canAddFeature()` handles the singleton rule from `isMultiItem`; a feature's own `canAdd` is an extra condition on top, not a replacement.
+- `layerAddMenuRegistry` is derived from `layerFeatureRegistry` (plus `highlightFeaturesMenuItem` after GeoJson) — adding a feature to the registry is enough to get it into the Add menu.
 - Buttons come from `buttonHelpers.ts` (`createEditButton`, `createDeleteButton`, `createGoToButton`) or a per-feature `buttons` factory.
 - `createGoToButton` flies/fits the map to a layer item via `getTarget(item)`, which resolves either a `{ type: 'point' }` or `{ type: 'bounds' }` `GoToTarget` — sync for GeoJson/Icon/ImageSource/MapRaster (they already store `coords`/`coordinates`/`bounds`), except GeoJson, which has no stored bounds at all and re-fetches (`fetchGeoJsonData` + `getGeoJsonCoordinatePairs`, `GeoJson/utils.ts`) and recomputes on every click. Only shown when the item actually has usable location data (e.g. MapRaster's optional `bounds` unset = whole world → button omitted). Bounds arrays get axis-aligned via `getBoundingBox()` (`PanZoom/utils.ts`) before `fitBounds` — same reduction `MapRasterHandler.svelte` uses for its own source `bounds`.
 - `LayerSettingsFields.svelte` (`src/components/features/`) is a generic, bindable `animationClock`/`name` field pair (two fieldsets, no `<Modal>` wrapper) embedded directly inside each of GeoJson/ImageSource/MapRaster/Icon's own `ConfigModal` — there is no longer a separate "clock" propList button/modal (`createClockButton`/`BuilderLayerClockConfigModal.svelte` were removed); editing a layer's timing and friendly name is folded into its own config modal, both on create (since `addLayer()` opens `ConfigModal` immediately after `createDefault()`) and on edit. Each host modal binds it to wherever that modal already tracks its draft (`config.x` directly for the two direct-bind modals, `draftConfig.x` for GeoJson, local `$state` vars for ImageSource/Icon) and is responsible for copying those fields onto `config` in its own save/commit step — `LayerSettingsFields` itself never touches `config`.
-- `src/components/Builder.legacy/` is dead code, not routed to anywhere active — don't extend it. A few standalone pieces (`GeoSearch`, `Favicon`) are directly reused by the active Builder rather than ported/duplicated; everything else there is off-limits.
 
 ## Modals
 
@@ -37,13 +37,13 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 - Per-item edit: `editingItem` state + `feature.ConfigModal`.
 - Add-menu custom modal: `activeCustomModal` / `customModalOptions`.
 
-`handleCloseLayerModal()` commits via `feature.update`/`feature.isValid` — reuse it rather than writing new commit logic.
+`handleCloseLayerModal()` commits via `updateLayer()`, or deletes the draft when `feature.isValid` rejects it — reuse it rather than writing new commit logic. `feature.isValid` is the only validity gate now that the codec's encode-time filters are gone.
 
 ## Top navigation / mode routing
 
 `Builder.svelte` routes between `Builder.firstrun.svelte` (New map), `Builder.layers.svelte` (Layers, internal mode id still `'layout'`), `Builder.markers.svelte` (Markers) and `Builder.pastedScrollyteller.svelte` (Preview) purely by reading `window.location.hash`: starts with `new` → New map, `mark` → Markers, `paste` → Preview, else Layers. No separate mode flag — the hash is the single source of truth (`!hasBlob` also forces New map regardless of hash, since Firstrun requires no active blob). `BuilderTopBar.svelte` is the single full-width control (rendered once, above all four mode components — they no longer render their own switcher) with four numbered, arrow-shaped step buttons; Markers/Preview are disabled while `!hasBlob`, New map/Layers are always enabled. `Builder.svelte`'s `setMode()` confirms before navigating to New map while a blob is active (the old "Exit session" behaviour), and an `$effect` forces the hash to New map whenever there's no blob, so a stale `#mark`/`#paste` hash from a previous session can't strand a newly created/restored blob on the wrong step and so New map's step is the one highlighted while Firstrun shows.
 
-`Builder.svelte` also owns a single `map = $state<MapLibreMap>()`, passed down as a bindable prop (`bind:map`) to whichever of `Builder.layers.svelte`/`Builder.markers.svelte` is mounted (each still owns its own `CustomGlobe` instance and writes into `map` via `onLoad`, just as a prop now instead of local `$state`) — this lets `BuilderTopBar`'s right-hand location search (reusing `Builder.legacy/GeoSearch`, same pattern as `PropMarkerPosition.svelte`'s own search) drive whichever map is currently active, via `safeFlyTo()` (`Builder/utils.ts`) so a search-driven pan in Layers mode persists into `jsonBlob.map` through the existing `moveend`/`builderInitiated` listener the same as a manual drag.
+`Builder.svelte` also owns a single `map = $state<MapLibreMap>()`, passed down as a bindable prop (`bind:map`) to whichever of `Builder.layers.svelte`/`Builder.markers.svelte` is mounted (each still owns its own `CustomGlobe` instance and writes into `map` via `onLoad`, just as a prop now instead of local `$state`) — this lets `BuilderTopBar`'s right-hand location search (reusing `src/components/shared/GeoSearch`, same pattern as `PropMarkerPosition.svelte`'s own search) drive whichever map is currently active, via `safeFlyTo()` (`Builder/utils.ts`) so a search-driven pan in Layers mode persists into `jsonBlob.map` through the existing `moveend`/`builderInitiated` listener the same as a manual drag.
 
 ## Marker Mode
 
@@ -52,15 +52,15 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 - `decodeMarker(raw: string)` expects a raw string; `markerConfigFromParsed(parsed)` expects an already `acto()`-parsed object (what `loadScrollyteller`/`parsePastedContent` panel data actually is) — passing a parsed object to `decodeMarker` breaks.
 - Markers live only in `window.location.hash`, never persisted. `Builder.markers.svelte` seeds `markerConfig` synchronously at setup, not `onMount` (avoids the hash-sync `$effect` stomping a real marker).
 - `MarkerAdmin` prefix must be `'#'` not `'#mark'` (our hash already starts with `mark`).
-- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) is the single "blob + marker → panel `DecodedObject`" function, shared by Builder preview and the runtime below — it also sets animation timing (`animationMode`/`animationDuration` from `CAM`, per-layer `animationClock` from a `LAYER` duration's presence/absence only, not its value — see `TweenController`).
+- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) is the single "blob + marker → panel blob" function — one pass over `base.layers` that drops un-switched-on layers, stamps `animationClock` and rewrites GeoJson colour, preserving stack order, shared by Builder preview and the runtime below — it also sets animation timing (`animationMode`/`animationDuration` from `CAM`, per-layer `animationClock` from a `LAYER` duration's presence/absence only, not its value — see `TweenController`).
 
 ## Scrollyteller / static runtime
 
 `src/index.ts` (CM bootstrap) resolves each mount's CMID via `getMountCmid()` (`src/lib/mountCmid.ts`) and loads the blob via `loadGlobeJsonBlobByCmid()` (`src/lib/data/loadBlobByCmid.ts`, shared with `Builder.firstrun.svelte`).
 
-- `ScrollytellerGlobe.svelte` takes `jsonBlob` + `panels: PanelDefinition<Record<string, any>>[]` (parsed marker objects) and derives per-panel `DecodedObject`s itself. `CustomGlobe` is unchanged.
+- `ScrollytellerGlobe.svelte` takes `jsonBlob` + `panels: PanelDefinition<Record<string, any>>[]` (parsed marker objects) and derives one `GlobeJsonBlob` per panel itself. `CustomGlobe` takes `options: GlobeJsonBlob` and stacks each panel once (`perPanelStacked`) for every handler to read.
 - `#staticglobey` mount = the real "iframe mode" (`CustomGlobeIframe.svelte` was dead, deleted).
-- `PastedScrollytellerGlobe.svelte` (dev paste tool) still runs the old `markerSchema` codec, bypassing `ScrollytellerGlobe`. `Builder.pastedScrollyteller.svelte` (`#paste` hash, reachable via `BuilderTopBar`'s "Preview scrollyteller" step) is the blob-aware equivalent, using the live `jsonBlob` store.
+- `Builder.pastedScrollyteller.svelte` (`#paste` hash, reachable via `BuilderTopBar`'s "Preview scrollyteller" step) is the dev paste tool, using the live `jsonBlob` store via `ScrollytellerGlobe` + `parsePastedContent.ts`. The old `markerSchema`-based `PastedScrollytellerGlobe` is deleted — stories published in the pre-blob format no longer render.
 
 ## GeoJson cross-panel fades
 
@@ -86,4 +86,4 @@ overrides only store a hex on the wire, so the scheme name is a best-effort gues
 ## Conventions
 
 - Friendly layer names (`name` field) are lowercase-alphanumeric only (`a-z0-9`, no separators) — sanitize on input (`toLowerCase().replace(/[^a-z0-9]/g, '')`), don't just validate-and-reject.
-- `mutateDecoded()` in `Builder.layers.svelte` is the standard clone→mutate→commit wrapper for any options change; button `onclick` handlers run inside it automatically.
+- `mutateBlob()` in `Builder.layers.svelte` is the standard clone→mutate→commit wrapper for any blob change (`structuredClone` → mutate → `jsonBlob.set`); button `onclick` handlers run inside it automatically. The Builder's layer list is `blob.layers` reversed (top-first), so `handleReorder` reverses back before storing.

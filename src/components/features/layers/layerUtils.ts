@@ -1,5 +1,5 @@
 import type * as maplibregl from 'maplibre-gl';
-import type { ImageSourceConfig, GeoJsonConfig } from '../../../lib/marker';
+import type { ImageLayer, GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
 
 export * from './layerManager.ts';
 
@@ -12,11 +12,11 @@ export function generateGeoJsonSourceId(idOrCmid: number | string | undefined): 
 }
 
 /**
- * Returns the layer IDs associated with a GeoJsonConfig.
+ * Returns the layer IDs associated with a GeoJsonLayer.
  */
-export function getGeoJsonLayerIds(config: GeoJsonConfig): string[] {
-  const sourceId = generateGeoJsonSourceId(config.id || config.cmid || config.url);
-  switch (config.type) {
+export function getGeoJsonLayerIds(config: GeoJsonLayer): string[] {
+  const sourceId = generateGeoJsonSourceId(config.id);
+  switch (config.geometryType) {
     case 'areas':
       return [`${sourceId}-fill`, `${sourceId}-outline`];
     case 'lines':
@@ -29,9 +29,9 @@ export function getGeoJsonLayerIds(config: GeoJsonConfig): string[] {
 }
 
 /**
- * Returns the layer ID associated with an ImageSourceConfig.
+ * Returns the layer ID associated with an ImageLayer.
  */
-export function getImageLayerId(config: ImageSourceConfig): string {
+export function getImageLayerId(config: ImageLayer): string {
   return `image-layer-${config.id}`;
 }
 
@@ -68,8 +68,8 @@ export function stackLayers(map: maplibregl.Map, layerIds: string[], beforeId?: 
 
   // We iterate backwards through the IDs because moveLayer(id, beforeId)
   // places 'id' directly below 'beforeId'.
-  // If we want [A, B] below [Label], we move B below Label, then A below Label.
-  // Result: [Label, A, B]
+  // If we want [A, B] below [LabelItem], we move B below LabelItem, then A below LabelItem.
+  // Result: [LabelItem, A, B]
   for (let i = layerIds.length - 1; i >= 0; i--) {
     const lid = layerIds[i];
     if (map.getLayer(lid)) {

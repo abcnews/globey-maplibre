@@ -3,10 +3,10 @@
   import {
     safeParseGlobeJsonBlob,
     formatGlobeJsonBlob,
+    globeJsonBlobSchema,
     type GlobeJsonBlob,
     type GlobeLayer
   } from '../../lib/data/jsonBlob.ts';
-  import { blobToDecodedObject, decodedObjectToBlob } from '../../lib/data/blobAdapter.ts';
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import { BuilderFrame, Loader, Modal } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
@@ -14,8 +14,14 @@
   import {
     layerFeatureRegistry,
     layerAddMenuRegistry,
-    Z_INDEX_IMAGE_LAYERS,
+    featureForKind,
     getDefaultLayerButtons,
+    addLayer as addLayerToBlob,
+    updateLayer,
+    deleteLayer,
+    describeLayer,
+    canAddFeature,
+    findLayer,
     type LayerItemDescriptor,
     type LayerFeatureDefinition,
     type LayerButton,
@@ -34,8 +40,11 @@
 
   let { map = $bindable() }: Props = $props();
 
-  // Reactive DecodedObject derived from $jsonBlob
-  const currentOptions = $derived(blobToDecodedObject($jsonBlob));
+  // The blob is the working representation — no adapter, no re-derivation.
+  // Falls back to an empty blob before one is loaded, so the panel can render its
+  // (empty) layer list rather than every read having to null-check. `mutateBlob`
+  // refuses to commit against that placeholder.
+  const currentOptions = $derived($jsonBlob ?? globeJsonBlobSchema.parse({}));
 
   // Editing state for layer items
   let editingItem = $state<{
@@ -99,49 +108,49 @@
     return () => map?.off('moveend', onMoveEnd);
   });
 
-  // Derived layer stack ordered from top (highest zIndex) to bottom
-  const layers = $derived.by(() => {
-    const list: (LayerItemDescriptor<any> & {
-      feature: LayerFeatureDefinition<any>;
-      resolvedButtons: LayerButton<any>[];
-    })[] = [];
+  /**
+   * The blob's layer stack, presented top-first (the list reads like the map looks, and
+   * `blob.layers` index 0 is the bottom). Layers whose `type` has no registered feature
+   * are skipped rather than rendered without controls.
+   */
+  const layers = $derived.by(() =>
+    currentOptions.layers
+      .map((layer, index) => {
+        const feature = featureForKind(layer.type);
+        if (!feature) return undefined;
 
-    layerFeatureRegistry.forEach(feature => {
-      const items = feature.getItems(currentOptions);
-      items.forEach((item: LayerItemDescriptor<any>) => {
-        const itemDescriptorWithFeature = { ...item, feature };
-        const rawButtons =
+        const item = describeLayer(feature, layer, index);
+        const resolvedButtons =
           item.buttons ||
           (typeof feature.buttons === 'function' ? feature.buttons(item, currentOptions) : feature.buttons) ||
           getDefaultLayerButtons(feature, item, currentOptions);
 
-        list.push({
-          ...itemDescriptorWithFeature,
-          resolvedButtons: rawButtons
-        });
-      });
-    });
+        return { ...item, feature, resolvedButtons };
+      })
+      .filter(
+        (
+          item
+        ): item is LayerItemDescriptor<any> & {
+          feature: LayerFeatureDefinition<any>;
+          resolvedButtons: LayerButton<any>[];
+        } => item !== undefined
+      )
+      .toReversed()
+  );
 
-    return list.sort((a, b) => b.zIndex - a.zIndex);
-  });
-
-  function mutateDecoded(fn: (draftOptions: typeof currentOptions) => void) {
+  /** Standard clone→mutate→commit wrapper for any change to the blob. */
+  function mutateBlob(fn: (draft: GlobeJsonBlob) => void) {
     if (!$jsonBlob) return;
-    const cloned = JSON.parse(JSON.stringify(currentOptions));
-    fn(cloned);
-    const updated = decodedObjectToBlob($jsonBlob, cloned);
-    jsonBlob.set(updated);
+    const draft = structuredClone($jsonBlob);
+    fn(draft);
+    jsonBlob.set(draft);
   }
 
+  /** PropList hands back the list in its new top-first order; the blob stores bottom-first. */
   function handleReorder(newItems: typeof layers) {
-    const total = newItems.length;
-    const baseZ = Z_INDEX_IMAGE_LAYERS;
-
-    mutateDecoded(draft => {
-      newItems.forEach((item, idx) => {
-        const assignedZ = baseZ + (total - 1 - idx) * 10;
-        item.feature.setZIndex(draft, item, assignedZ);
-      });
+    const reordered = newItems.toReversed().map(item => item.data as GlobeLayer);
+    mutateBlob(draft => {
+      draft.layers = reordered;
     });
   }
 
@@ -156,7 +165,7 @@
 
   function startInteractivePlacement(placement: {
     prompt: string;
-    onMapClick: (coords: [number, number], item?: any) => void;
+    onMapClick: (coords: [number, number], item: any, options: GlobeJsonBlob) => void;
   }) {
     editingItem = null;
     activePlacement = {
@@ -170,7 +179,7 @@
     editingItem = null;
 
     if (menuItem.CustomModal) {
-      customModalOptions = JSON.parse(JSON.stringify(currentOptions));
+      customModalOptions = structuredClone($state.snapshot(currentOptions));
       activeCustomModal = menuItem.CustomModal;
     } else if (menuItem.onSelect) {
       menuItem.onSelect({
@@ -189,8 +198,7 @@
     showAddMenu = false;
     editingItem = null;
 
-    const maxZ = layers.length > 0 ? Math.max(...layers.map(l => l.zIndex)) + 10 : feature.defaultZIndex;
-    const newItem = feature.createDefault({ maxZIndex: maxZ, map });
+    const newItem = feature.createDefault({ map });
 
     if (feature.interactivePlacement) {
       activePlacement = {
@@ -198,20 +206,14 @@
         prompt: feature.interactivePlacement.prompt,
         item: newItem
       };
-    } else {
-      mutateDecoded(draft => {
-        feature.add(draft, newItem);
-      });
+      return;
+    }
 
-      if (feature.ConfigModal) {
-        openEditModal(feature, {
-          id: `${feature.kind}-${Date.now()}`,
-          kind: feature.kind,
-          name: feature.label,
-          zIndex: maxZ,
-          data: newItem
-        });
-      }
+    mutateBlob(draft => addLayerToBlob(draft, newItem));
+    // Opened straight away so the layer's own settings (timing, friendly name) are
+    // editable on create, not just on a later edit.
+    if (feature.ConfigModal) {
+      openEditModal(feature, describeLayer(feature, newItem, currentOptions.layers.length - 1));
     }
   }
 
@@ -223,10 +225,10 @@
       const handler = activePlacement.customHandler;
       const item = activePlacement.item;
       activePlacement = null;
-      // Re-enter mutateDecoded here (at actual click time) rather than relying on the
+      // Re-enter mutateBlob here (at actual click time) rather than relying on the
       // draft passed to the button's onclick — that draft is already discarded by the
       // time an async map click fires, so mutating it silently loses the change.
-      mutateDecoded(draft => {
+      mutateBlob(draft => {
         handler(coords, item, draft);
       });
       return;
@@ -236,21 +238,11 @@
       const { feature, item } = activePlacement;
       feature.interactivePlacement?.onMapClick(coords, item);
 
-      mutateDecoded(draft => {
-        feature.add(draft, item);
-      });
-
-      const placementMaxZ = layers.length > 0 ? Math.max(...layers.map(l => l.zIndex)) + 10 : feature.defaultZIndex;
+      mutateBlob(draft => addLayerToBlob(draft, item));
       activePlacement = null;
 
       if (feature.ConfigModal) {
-        openEditModal(feature, {
-          id: `${feature.kind}-${Date.now()}`,
-          kind: feature.kind,
-          name: feature.label,
-          zIndex: placementMaxZ,
-          data: item
-        });
+        openEditModal(feature, describeLayer(feature, item, currentOptions.layers.length - 1));
       }
     }
   }
@@ -283,13 +275,12 @@
       const currentData = editingItem.data ?? data;
       console.log('[Builder.layers] Closing layer modal for:', descriptor.name, { descriptor, currentData });
 
-      mutateDecoded(draft => {
+      mutateBlob(draft => {
         if (feature.isValid && !feature.isValid(currentData, draft)) {
           console.warn('[Builder.layers] Layer invalid on close, deleting:', descriptor.name);
-          feature.delete(draft, descriptor);
-        } else if (feature.update) {
-          console.log('[Builder.layers] Updating layer on close:', descriptor.name, currentData);
-          feature.update(draft, descriptor, currentData);
+          deleteLayer(draft, descriptor.id);
+        } else {
+          updateLayer(draft, descriptor.id, currentData);
         }
       });
     }
@@ -351,7 +342,7 @@
 
 {#snippet Viz()}
   <div class="frame">
-    {#if currentOptions.coords}
+    {#if $jsonBlob}
       <CustomGlobe
         interactive={true}
         options={currentOptions}
@@ -488,7 +479,7 @@
           {#if showAddMenu}
             <div class="add-menu">
               {#each layerAddMenuRegistry as menuItem (menuItem.id)}
-                {#if !menuItem.canAdd || menuItem.canAdd(currentOptions)}
+                {#if menuItem.feature ? canAddFeature(menuItem.feature, currentOptions) : (menuItem.canAdd?.(currentOptions) ?? true)}
                   <button type="button" onclick={() => handleAddMenuItem(menuItem)}>
                     <menuItem.icon />
                     {menuItem.label}
@@ -527,27 +518,23 @@
                 aria-label={btn.ariaLabel || btn.title}
                 title={btn.title}
                 onclick={() => {
-                  mutateDecoded(draft => {
-                    const draftItems = item.feature.getItems(draft);
-                    const draftItem = {
-                      ...(draftItems.find(i => i.id === item.id) || draftItems[0] || item),
-                      feature: item.feature
-                    };
+                  mutateBlob(draft => {
+                    const draftLayer = findLayer(draft, item.id);
+                    const draftItem = draftLayer ? describeLayer(item.feature, draftLayer, item.index) : item;
 
                     btn.onclick({
                       options: draft,
                       item: draftItem,
                       map,
                       startInteractivePlacement,
-                      openModal: (overrideOptions?: typeof currentOptions) => {
+                      openModal: (overrideOptions?: GlobeJsonBlob) => {
                         // Interactive-placement handlers (e.g. CustomLabels' "add label")
-                        // call this from inside the current mutateDecoded's fn, before
+                        // call this from inside the current mutateBlob's fn, before
                         // jsonBlob.set() commits — currentOptions is still stale at that
                         // point, so prefer the caller's own mutated draft when given one.
                         const source = overrideOptions ?? currentOptions;
-                        const currentItems = item.feature.getItems(source);
-                        const matchingItem = currentItems.find(i => i.id === item.id) || currentItems[0] || item;
-                        openEditModal(item.feature, matchingItem);
+                        const layer = findLayer(source, item.id);
+                        openEditModal(item.feature, layer ? describeLayer(item.feature, layer, item.index) : item);
                       }
                     });
                   });
@@ -614,7 +601,7 @@
       if (bounds && map) {
         safeFitBounds(map, bounds, { padding: 50 });
       }
-      mutateDecoded(draft => {
+      mutateBlob(draft => {
         Object.assign(draft, customModalOptions);
       });
       activeCustomModal = null;

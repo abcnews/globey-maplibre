@@ -1,9 +1,10 @@
 export * from './types.ts';
+export * from './layerOps.ts';
 export * from './buttonHelpers.ts';
 export * from './layers/layerManager.ts';
 export * from './layers/layerUtils.ts';
 
-import type { LayerFeatureDefinition } from './types.ts';
+import type { LayerAddMenuItem, LayerFeatureDefinition } from './types.ts';
 
 import { geoJsonFeature } from './GeoJson/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
@@ -24,58 +25,26 @@ export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
   rasterFeature
 ];
 
-export const layerAddMenuRegistry = [
-  {
-    id: geoJsonFeature.kind,
-    label: geoJsonFeature.label,
-    icon: geoJsonFeature.icon,
-    feature: geoJsonFeature,
-    canAdd: geoJsonFeature.canAdd
-  },
-  highlightFeaturesMenuItem,
-  {
-    id: iconFeature.kind,
-    label: iconFeature.label,
-    icon: iconFeature.icon,
-    feature: iconFeature,
-    canAdd: iconFeature.canAdd
-  },
-  {
-    id: imageSourceFeature.kind,
-    label: imageSourceFeature.label,
-    icon: imageSourceFeature.icon,
-    feature: imageSourceFeature,
-    canAdd: imageSourceFeature.canAdd
-  },
-  {
-    id: mapLabelsFeature.kind,
-    label: mapLabelsFeature.label,
-    icon: mapLabelsFeature.icon,
-    feature: mapLabelsFeature,
-    canAdd: mapLabelsFeature.canAdd
-  },
-  {
-    id: customLabelsFeature.kind,
-    label: customLabelsFeature.label,
-    icon: customLabelsFeature.icon,
-    feature: customLabelsFeature,
-    canAdd: customLabelsFeature.canAdd
-  },
-  {
-    id: streetMapFeature.kind,
-    label: streetMapFeature.label,
-    icon: streetMapFeature.icon,
-    feature: streetMapFeature,
-    canAdd: streetMapFeature.canAdd
-  },
-  {
-    id: rasterFeature.kind,
-    label: rasterFeature.label,
-    icon: rasterFeature.icon,
-    feature: rasterFeature,
-    canAdd: rasterFeature.canAdd
-  }
-];
+/** Looks up the feature that owns a blob layer's `type`. */
+export function featureForKind(kind: string): LayerFeatureDefinition<any> | undefined {
+  return layerFeatureRegistry.find(feature => feature.kind === kind);
+}
+
+const menuItemFor = (feature: LayerFeatureDefinition<any>): LayerAddMenuItem => ({
+  id: feature.kind,
+  label: feature.label,
+  icon: feature.icon,
+  feature
+});
+
+/**
+ * The Add Layer menu is the feature registry, in registry order, plus the one entry that
+ * generates layers rather than adding a blank one. Whether an entry is currently selectable
+ * is `canAddFeature()`'s call, not a per-entry `canAdd`.
+ */
+export const layerAddMenuRegistry: LayerAddMenuItem[] = layerFeatureRegistry.flatMap(feature =>
+  feature === geoJsonFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
+);
 
 export * from './GeoJson/index.ts';
 export * from './HighlightFeatures/index.ts';
@@ -89,4 +58,3 @@ export * from './MapVector/index.ts';
 export * from './Minimap/index.ts';
 export * from './Attribution/index.ts';
 export * from './Projection/index.ts';
-

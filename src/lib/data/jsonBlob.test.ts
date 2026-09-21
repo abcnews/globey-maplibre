@@ -90,7 +90,7 @@ describe('globeJsonBlobSchema (Zod)', () => {
         },
         {
           id: 'layer-map-labels',
-          name: 'builtInLabels',
+          name: 'builtinlabels',
           type: 'mapLabels',
           countriesMajor: true,
           cities: true

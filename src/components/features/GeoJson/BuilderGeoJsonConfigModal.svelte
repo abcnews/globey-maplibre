@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
-  import type { GeoJsonConfig } from '../../../lib/marker';
+  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
   import { fetchGeoJsonData } from './utils.ts';
-  import { isValidUrl } from '../../../lib/marker/utils.ts';
+  import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import BuilderPropGeoJsonFilter from './BuilderPropGeoJsonFilter.svelte';
   import BuilderPropGeoJsonColour from './BuilderPropGeoJsonColour.svelte';
   import BuilderPropGeoJsonSize from './BuilderPropGeoJsonSize.svelte';
@@ -11,8 +11,8 @@
   import { untrack } from 'svelte';
 
   interface Props {
-    /** The GeoJsonConfig object being edited or drafted */
-    config: GeoJsonConfig;
+    /** The GeoJsonLayer object being edited or drafted */
+    config: GeoJsonLayer;
     /** Callback fired when the modal requests to close */
     onclose?: () => void;
   }
@@ -24,16 +24,16 @@
   let rawSourceInput = $state<string>(
     untrack(() => {
       const snap = $state.snapshot(config);
-      return snap?.url ? snap.url : (snap?.cmid ? String(snap.cmid) : '');
+      return snap?.url ? snap.url : snap?.cmid ? String(snap.cmid) : '';
     })
   );
 
-  let draftConfig = $state<GeoJsonConfig>(
+  let draftConfig = $state<GeoJsonLayer>(
     untrack(() => {
       const snap = $state.snapshot(config) || ({} as any);
       return {
         ...snap,
-        type: snap.type ?? 'areas',
+        geometryType: snap.geometryType ?? 'areas',
         colourMode: snap.colourMode ?? 'simple',
         cmid: snap.cmid ? snap.cmid : undefined,
         url: snap.url ?? undefined
@@ -155,11 +155,10 @@
 
   function commitDraft() {
     config.id = draftConfig.id || config.id;
-    config.type = draftConfig.type;
+    config.geometryType = draftConfig.geometryType;
     config.colourMode = draftConfig.colourMode;
     config.colourProp = draftConfig.colourProp;
     config.colourConfig = $state.snapshot(draftConfig.colourConfig);
-    config.opacity = draftConfig.opacity;
     config.isOpaque = draftConfig.isOpaque;
     config.filter = $state.snapshot(draftConfig.filter);
     config.pointSize = $state.snapshot(draftConfig.pointSize);
@@ -167,9 +166,6 @@
     config.lineAnimationStyle = draftConfig.lineAnimationStyle;
     config.animationClock = draftConfig.animationClock;
     config.name = draftConfig.name;
-    if (draftConfig.zIndex !== undefined) {
-      config.zIndex = draftConfig.zIndex;
-    }
   }
 
   function handleSave() {
@@ -232,12 +228,7 @@
         <div class="field-group">
           <label for="gj-source">CMID or GeoJSON / TopoJSON URL</label>
           <div class="source-input-row">
-            <input
-              id="gj-source"
-              type="text"
-              placeholder="e.g. 106753230 or https://..."
-              bind:value={rawSourceInput}
-            />
+            <input id="gj-source" type="text" placeholder="e.g. 106753230 or https://..." bind:value={rawSourceInput} />
             {#if status === 'loading'}
               <span class="source-loading-badge">Loading...</span>
             {/if}
@@ -267,18 +258,18 @@
                 style:cursor="pointer"
                 style:text-transform="capitalize"
               >
-                <input type="radio" name="gj-type" value={type} bind:group={draftConfig.type} />
+                <input type="radio" name="gj-type" value={type} bind:group={draftConfig.geometryType} />
                 {type}
               </label>
             {/each}
           </div>
         </fieldset>
 
-        {#if draftConfig.type === 'points'}
+        {#if draftConfig.geometryType === 'points'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="pointSize" legend="Point Size" />
         {/if}
 
-        {#if draftConfig.type === 'lines'}
+        {#if draftConfig.geometryType === 'lines'}
           <BuilderPropGeoJsonSize bind:config={draftConfig} prop="lineWidth" legend="Line Width" />
 
           <fieldset>

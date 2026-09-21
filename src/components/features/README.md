@@ -2,7 +2,7 @@
 
 Features are self-contained modules located in subdirectories of `src/components/features/`. Each feature encapsulates its map rendering logic, builder UI components, state codecs, and registration hooks.
 
-> This guide covers `LayerFeatureDefinition` — layers editable in the Builder and encoded in the URL-hash marker schema. If you're consuming `CustomGlobe`/`ScrollytellerGlobe` from outside this repo and want to add a layer in code, use the `CustomLayerPlugin` contract in [`src/lib/plugins/types.ts`](../../lib/plugins/types.ts) instead — see [`src/plugins/GeoJsonSpikes/`](../../plugins/GeoJsonSpikes/README.md) for a worked example.
+> This guide covers `LayerFeatureDefinition` — layers editable in the Builder and stored in the `GlobeJsonBlob`. If you're consuming `CustomGlobe`/`ScrollytellerGlobe` from outside this repo and want to add a layer in code, use the `CustomLayerPlugin` contract in [`src/lib/plugins/types.ts`](../../lib/plugins/types.ts) instead — see [`src/plugins/GeoJsonSpikes/`](../../plugins/GeoJsonSpikes/README.md) for a worked example.
 
 ---
 
@@ -17,16 +17,18 @@ Features are self-contained modules located in subdirectories of `src/components
 
 ---
 
-## 1. Define Schema and Types
+## 1. Define the Layer Schema
 
-Define the data shape in the marker schema to ensure URL encoding/decoding and type safety.
+There is one representation: the Zod schema in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
 
-- Add schema definitions in [../../lib/marker/schema.ts](../../lib/marker/schema.ts).
-- Export derived TypeScript types from [../../lib/marker/types.ts](../../lib/marker/types.ts).
+- Add a layer schema built on `baseLayerObject` (which supplies `id`, `name`, `animationClock`) with a `type` literal that is your feature's `kind`.
+- Add it to the `globeLayerSchema` discriminated union.
+- Do **not** add a `zIndex` field. Stacking order is the layer's position in `GlobeJsonBlob.layers`; `stackLayers()` ([../../lib/data/stack.ts](../../lib/data/stack.ts)) derives a render z-index from that at the render boundary only.
+- Every non-optional field needs a `.default()` or your `createDefault()` must supply it, or the blob won't reparse.
 
 ### Example Reference
 
-See [iconItemSchema in schema.ts](../../lib/marker/schema.ts) and `IconConfig` in [../../lib/marker/types.ts](../../lib/marker/types.ts).
+See `iconLayerSchema` and its inferred `IconLayer` type in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
 
 ---
 
@@ -74,70 +76,37 @@ If the feature is configurable by the user in the builder interface, create a mo
 
 ## 4. Define the Feature Specification
 
-The `LayerFeatureDefinition<T>` specification acts as a standardized adapter for [../Builder/Layers/PropLayers.svelte](../Builder/Layers/PropLayers.svelte).
+The `LayerFeatureDefinition<T>` specification tells [../Builder/Builder.layers.svelte](../Builder/Builder.layers.svelte) how to present and create your layer kind.
 
-Instead of hardcoding layer-specific logic (e.g. list rendering, modal dialogs, addition, deletion, and z-index restacking) inside `PropLayers.svelte`, the builder iterates dynamically over all registered features. Defining this specification provides `PropLayers` with everything it needs to manage the layer in the builder UI without modifying `PropLayers.svelte` itself.
+It covers only what is genuinely kind-specific. Adding, updating, deleting and reordering are **not** part of it: every kind lives in the same `GlobeJsonBlob.layers` array, so those are generic array operations in [./layerOps.ts](./layerOps.ts) that the Builder applies for you. Likewise the layer list row is built generically by `describeLayer()`, and whether a kind can be added again is `canAddFeature()`'s call, driven by `isMultiItem`.
 
 Create an `index.ts` file in your feature directory exporting an object that implements `LayerFeatureDefinition<T>` from [./types.ts](./types.ts).
 
 ### Structure
 
 ```ts
-import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
-import type { MyFeatureConfig, DecodedObject } from '../../../lib/marker';
-import { Z_INDEX_GEOJSON } from '../layers/layerUtils.ts';
+import type { LayerFeatureDefinition } from '../types.ts';
+import type { MyFeatureLayer } from '../../../lib/data/jsonBlob.ts';
+import { newLayerId } from '../layerOps.ts';
 import { MyIcon } from 'svelte-bootstrap-icons';
 import BuilderMyFeatureModal from './BuilderMyFeatureModal.svelte';
 import MyFeatureHandler from './MyFeatureHandler.svelte';
 
-export const myFeature: LayerFeatureDefinition<MyFeatureConfig> = {
+export const myFeature: LayerFeatureDefinition<MyFeatureLayer> = {
   kind: 'myFeature',
   label: 'My Feature',
   icon: MyIcon,
-  defaultZIndex: Z_INDEX_GEOJSON,
   isMultiItem: true,
 
-  createDefault({ maxZIndex, map }) {
+  createDefault({ map }) {
     return {
-      id: Date.now().toString(),
-      zIndex: maxZIndex
+      id: newLayerId('myFeature'),
+      type: 'myFeature'
     };
   },
 
-  getItems(options: DecodedObject): LayerItemDescriptor<MyFeatureConfig>[] {
-    return (options.myFeatures || []).map((item, idx) => ({
-      id: `myfeature-${item.id || idx}`,
-      kind: 'myFeature',
-      name: item.name || 'My Feature',
-      zIndex: item.zIndex ?? Z_INDEX_GEOJSON + idx * 0.1,
-      data: item
-    }));
-  },
-
-  setZIndex(options: DecodedObject, item: LayerItemDescriptor<MyFeatureConfig>, newZIndex: number) {
-    if (item.data) {
-      item.data.zIndex = newZIndex;
-    }
-  },
-
-  add(options: DecodedObject, item: MyFeatureConfig) {
-    options.myFeatures = [...(options.myFeatures || []), item];
-  },
-
-  isValid(data: MyFeatureConfig) {
-    return Boolean(data?.id && data?.url);
-  },
-
-  update(options: DecodedObject, descriptor: LayerItemDescriptor<MyFeatureConfig>, data: MyFeatureConfig) {
-    if (options.myFeatures) {
-      options.myFeatures = options.myFeatures.map(item =>
-        item === descriptor.data || (item.id && item.id === data.id) ? data : item
-      );
-    }
-  },
-
-  delete(options: DecodedObject, item: LayerItemDescriptor<MyFeatureConfig>) {
-    options.myFeatures = (options.myFeatures || []).filter(entry => entry !== item.data);
+  isValid(data: MyFeatureLayer) {
+    return Boolean(data?.url);
   },
 
   ConfigModal: BuilderMyFeatureModal,
@@ -145,15 +114,14 @@ export const myFeature: LayerFeatureDefinition<MyFeatureConfig> = {
 };
 ```
 
-### Validation & Updates (`isValid` and `update`)
+### Validation (`isValid`)
 
-- **`isValid(data, options)`**: Checks whether a layer item is populated with required fields (e.g. valid CMID or URL). If the user closes the config modal without configuring required fields, `PropLayers` calls `feature.delete()` automatically to remove empty drafts.
-- **`update(options, descriptor, data)`**: Synchronizes modified item data back into the `DecodedObject` options upon modal closure or inline edits.
+**`isValid(data, options)`** checks whether a layer is populated with its required fields (e.g. a valid CMID or URL). If the user closes the config modal without configuring them, the Builder deletes the empty draft rather than persisting it. This is the only validity gate — nothing downstream filters unconfigured layers out.
 
 
 ### Action Buttons (Optional)
 
-Layer action buttons displayed in `PropLayers` (e.g. edit modal, delete, or custom actions like adding items) are defined via `buttons` or generated using standard helpers from [./buttonHelpers.ts](./buttonHelpers.ts):
+Layer action buttons displayed in the Builder's layer list (e.g. edit modal, delete, or custom actions like adding items) are defined via `buttons` or generated using standard helpers from [./buttonHelpers.ts](./buttonHelpers.ts):
 
 ```ts
 import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
@@ -175,7 +143,10 @@ buttons: [
         // `options` here is a fresh draft supplied at actual click time — don't close
         // over the outer `options`/`draft`, which is discarded before the map is clicked.
         onMapClick: (coords, _item, options) => {
-          options.labels = [...(options.labels || []), { name: 'Label', coords, style: 'country-large', number: 0 }];
+          const layer = findLayer(options, item.id);
+          if (layer?.type === 'customLabels') {
+            layer.labels = [...layer.labels, { name: 'Label', coords, style: 'country-large', number: 0 }];
+          }
         }
       });
     }
@@ -236,7 +207,7 @@ export const layerFeatureRegistry = [
 Adding to `layerFeatureRegistry` automatically enables:
 
 - Appearance in the Builder "Add Layer" menu.
-- Visual items in [../Builder/Layers/PropLayers.svelte](../Builder/Layers/PropLayers.svelte).
+- Visual items in [../Builder/PropList.svelte](../Builder/PropList.svelte), driven by [../Builder/Builder.layers.svelte](../Builder/Builder.layers.svelte).
 - Drag-and-drop layer restacking.
 - Config modal opening on edit.
 

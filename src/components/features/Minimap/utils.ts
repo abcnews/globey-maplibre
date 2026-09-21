@@ -29,13 +29,8 @@ export function normaliseLongitude(lng: number): number {
  * maplibre accepts longitudes outside [-180, 180] and renders them in the correct world copy,
  * so the outline wraps the short way across the date line.
  */
-export function buildViewportRing(
-  corners: [number, number][],
-  centreLng: number
-): [number, number][] {
-  const ring = corners.map(
-    ([lng, lat]) => [unwrapLongitude(lng, centreLng), lat] as [number, number]
-  );
+export function buildViewportRing(corners: [number, number][], centreLng: number): [number, number][] {
+  const ring = corners.map(([lng, lat]) => [unwrapLongitude(lng, centreLng), lat] as [number, number]);
   return [...ring, ring[0]];
 }
 

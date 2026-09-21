@@ -1,14 +1,7 @@
 <script lang="ts">
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import {
-    removeLayerWithZIndex,
-    setLayerZIndex,
-    getHighestZIndexBelow,
-    Z_INDEX_BASE_RASTER,
-    Z_INDEX_IMAGE_LAYERS,
-    Z_INDEX_STACK_STEP
-  } from '../layers/layerUtils.ts';
+  import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_BASE_RASTER } from '../layers/layerUtils.ts';
   import { addFadingLayer } from '../layers/tweenedLayers.ts';
   import { layerClockKey } from '../Tween/utils.ts';
   import type { AnimationMode } from '../Tween/types.ts';
@@ -16,22 +9,13 @@
 
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
 
-  /**
-   * Falls back to stacking directly above whatever base raster/vector layer is
-   * currently topmost, rather than a fixed tier constant, so a new raster layer
-   * never lands underneath an already-present base layer.
-   */
-  function defaultZIndex(map: maplibregl.Map): number {
-    const highestBase = getHighestZIndexBelow(map, Z_INDEX_IMAGE_LAYERS);
-    return highestBase !== undefined ? highestBase + Z_INDEX_STACK_STEP : Z_INDEX_BASE_RASTER;
-  }
-
   let {
     url,
     id = 'raster-base',
     maxZoom = 7,
     tileSize = 256,
-    zIndex,
+    /** Derived from the layer's position in `blob.layers` (see `stackLayers`). */
+    zIndex = Z_INDEX_BASE_RASTER,
     /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
     opacityStops = [1],
     animationClock,
@@ -97,7 +81,7 @@
             opacityStops: s_opacityStops,
             posKey: untrack(() => posKey)
           },
-          untrack(() => zIndex ?? defaultZIndex(map))
+          untrack(() => zIndex)
         );
       } catch (e) {
         // Handled during style loads

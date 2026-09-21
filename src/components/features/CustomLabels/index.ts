@@ -1,40 +1,38 @@
-import type { LayerFeatureDefinition, LayerItemDescriptor } from '../types.ts';
-import type { Label, DecodedObject } from '../../../lib/marker';
-import { Z_INDEX_CUSTOM_LABELS } from '../layers/layerUtils.ts';
+import type { LayerFeatureDefinition } from '../types.ts';
+import type { CustomLabelsLayer, LabelItem } from '../../../lib/data/jsonBlob.ts';
+import { newLayerId, findLayer } from '../layerOps.ts';
 import { Fonts as TypeIcon, Plus } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
 import MapCustomLabelHandler from './MapCustomLabelHandler.svelte';
 import BuilderCustomLabelsConfigModal from './BuilderCustomLabelsConfigModal.svelte';
 
-export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
+/** A label pinned at `coords`, with the defaults a freshly-placed one gets. */
+const defaultLabel = (coords: [number, number]): LabelItem => ({
+  name: 'Label',
+  coords,
+  style: 'country-large',
+  number: 0
+});
+
+export const customLabelsFeature: LayerFeatureDefinition<CustomLabelsLayer> = {
   kind: 'customLabels',
   label: 'Custom Labels',
   icon: TypeIcon,
-  defaultZIndex: Z_INDEX_CUSTOM_LABELS,
   isMultiItem: false,
-
-  canAdd(options: DecodedObject) {
-    return !options.labels || options.labels.length === 0;
-  },
 
   createDefault({ map }) {
     const center = map?.getCenter() || { lng: 133.7751, lat: -25.2744 };
-    return [
-      {
-        name: 'Label',
-        coords: [center.lng, center.lat],
-        style: 'country-large',
-        number: 0
-      }
-    ];
+    return {
+      id: newLayerId('customLabels'),
+      type: 'customLabels',
+      labels: [defaultLabel([center.lng, center.lat])]
+    };
   },
 
   interactivePlacement: {
     prompt: 'Click on the map to place a label',
     onMapClick: (coords, item) => {
-      if (item && item.length > 0) {
-        item[0].coords = coords;
-      }
+      if (item.labels.length > 0) item.labels[0].coords = coords;
     }
   },
 
@@ -44,59 +42,27 @@ export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
       title: 'Add label',
       ariaLabel: 'Add label',
       icon: Plus,
-      onclick: ({ startInteractivePlacement, openModal }) => {
+      onclick: ({ item, startInteractivePlacement, openModal }) => {
         startInteractivePlacement({
           prompt: 'Click on the map to place a label',
+          // `freshOptions` is a new draft, so re-find the layer by id rather than
+          // mutating the stale `item.data` captured at button-click time.
           onMapClick: (coords, _item, freshOptions) => {
-            const newLabel: Label = {
-              name: 'Label',
-              coords,
-              style: 'country-large',
-              number: 0
-            };
-            freshOptions.labels = [...(freshOptions.labels || []), newLabel];
+            const layer = findLayer(freshOptions, item.id);
+            if (layer?.type !== 'customLabels') return;
+            layer.labels = [...layer.labels, defaultLabel(coords)];
             openModal(freshOptions);
           }
         });
       }
     },
-    createEditButton<Label[]>({ title: 'Edit custom labels' }),
-    createDeleteButton<Label[]>({ title: 'Delete custom labels' })
+    createEditButton<CustomLabelsLayer>({ title: 'Edit custom labels' }),
+    createDeleteButton<CustomLabelsLayer>({ title: 'Delete custom labels' })
   ],
 
-  getItems(options: DecodedObject): LayerItemDescriptor<Label[]>[] {
-    if (!options.labels || options.labels.length === 0) return [];
-    return [
-      {
-        id: 'custom-labels',
-        kind: 'customLabels',
-        name: 'Custom Labels',
-        zIndex: options.labelsZIndex ?? Z_INDEX_CUSTOM_LABELS,
-        data: options.labels
-      }
-    ];
+  isValid(data: CustomLabelsLayer) {
+    return Boolean(data?.labels?.length);
   },
-
-  setZIndex(options: DecodedObject, _item: LayerItemDescriptor<Label[]>, newZIndex: number) {
-    options.labelsZIndex = newZIndex;
-  },
-
-  add(options: DecodedObject, item: Label[]) {
-    options.labels = item;
-  },
-
-  isValid(data: Label[]) {
-    return Boolean(data && data.length > 0);
-  },
-
-  update(options: DecodedObject, _descriptor: LayerItemDescriptor<Label[]>, data: Label[]) {
-    options.labels = data;
-  },
-
-  delete(options: DecodedObject) {
-    options.labels = [];
-  },
-
 
   ConfigModal: BuilderCustomLabelsConfigModal,
   MapRenderer: MapCustomLabelHandler
@@ -104,4 +70,3 @@ export const customLabelsFeature: LayerFeatureDefinition<Label[]> = {
 
 export { default as MapCustomLabelHandler } from './MapCustomLabelHandler.svelte';
 export { default as BuilderCustomLabelsConfigModal } from './BuilderCustomLabelsConfigModal.svelte';
-

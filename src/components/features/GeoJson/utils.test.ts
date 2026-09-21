@@ -182,10 +182,22 @@ describe('GeoJSON paint expressions – numeric fallback bug regression', () => 
       expect(expr[8]).toBe(buildColourExpression(highlighted, 'fill'));
     });
 
-    it('does not tween scale/simple mode — falls back to the representative expression', () => {
+    it('falls back to the representative expression when no panel has a literal colour', () => {
+      const scale = { colourMode: 'scale' as const, colourProp: 'x' };
+      const simple = { colourMode: 'simple' as const };
+      const expr = buildTweenedColourExpression([scale, simple], scale, 'fill', 'tweenPosScroll');
+      expect(expr).toEqual(buildColourExpression(scale, 'fill'));
+    });
+
+    it('fills a scale/simple panel with the nearest literal rather than suppressing the tween', () => {
+      // A scale-mode panel has no single colour of its own to show, so it takes the
+      // neighbouring literal — gating on `representative`'s mode alone would instead
+      // skip every colour override the other panels carry.
       const scale = { colourMode: 'scale' as const, colourProp: 'x' };
       const expr = buildTweenedColourExpression([scale, highlighted], scale, 'fill', 'tweenPosScroll');
-      expect(expr).toBe(buildColourExpression(scale, 'fill'));
+      expect(expr[0]).toBe('interpolate');
+      expect(expr[4]).toBe(buildColourExpression(highlighted, 'fill'));
+      expect(expr[6]).toBe(buildColourExpression(highlighted, 'fill'));
     });
   });
 });

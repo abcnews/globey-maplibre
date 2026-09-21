@@ -1,13 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-import type { DecodedObject } from '../../../lib/marker';
+import type { GlobeJsonBlob } from '../../../lib/data/jsonBlob.ts';
 import { TweenController } from './TweenController.svelte.ts';
 
-const makePanels = (): PanelDefinition<DecodedObject>[] =>
+const panelBlob = () => ({ map: {}, layers: [{ id: 'a', type: 'geojson', geometryType: 'lines' }] });
+
+const makePanels = (): PanelDefinition<GlobeJsonBlob>[] =>
   [
-    { nodes: [], data: { geoJson: [{ id: 'a', type: 'lines' }] } },
-    { nodes: [], data: { geoJson: [{ id: 'a', type: 'lines' }] } }
-  ] as unknown as PanelDefinition<DecodedObject>[];
+    { nodes: [], data: panelBlob() },
+    { nodes: [], data: panelBlob() }
+  ] as unknown as PanelDefinition<GlobeJsonBlob>[];
 
 describe('TweenController.sync', () => {
   // `sync()` runs on every scroll tick. If `#panels` were a deep `$state`, each

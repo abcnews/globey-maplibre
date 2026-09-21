@@ -1,4 +1,4 @@
-import type { Label, LabelStyle } from '../../../lib/marker';
+import type { LabelItem, LabelStyle } from '../../../lib/data/jsonBlob.ts';
 
 /** One resolved custom-label feature for a given point in the tween. */
 export interface LabelFeatureState {
@@ -10,7 +10,7 @@ export interface LabelFeatureState {
 }
 
 /** Index labels by name, dropping entries with no name or no coordinates. */
-function byName(labels: Label[]): Map<string, Label> {
+function byName(labels: LabelItem[]): Map<string, LabelItem> {
   return new Map(
     labels.filter(label => Boolean(label?.name) && Boolean(label?.coords)).map(label => [label.name, label])
   );
@@ -29,8 +29,8 @@ function byName(labels: Label[]): Map<string, Label> {
  * Duplicate names within a single panel collide — the last one wins.
  */
 export function resolveLabelTransition(
-  fromLabels: Label[] = [],
-  toLabels: Label[] = [],
+  fromLabels: LabelItem[] = [],
+  toLabels: LabelItem[] = [],
   easedT: number
 ): LabelFeatureState[] {
   const from = byName(fromLabels);

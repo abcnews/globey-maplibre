@@ -1,12 +1,12 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import { untrack } from 'svelte';
-  import type { ImageSourceConfig } from '../../../lib/marker';
+  import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
   import KmlImportButton from './KmlImportButton.svelte';
   import NearmapImportButton from './NearmapImportButton.svelte';
   import GeoTiffImportButton from './GeoTiffImportButton.svelte';
   import FilenameImportButton from './FilenameImportButton.svelte';
-  import { isValidUrl } from '../../../lib/marker';
+  import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils.ts';
   import LayerSettingsFields from '../LayerSettingsFields.svelte';
 
@@ -14,12 +14,11 @@
     config = $bindable(),
     onclose
   }: {
-    config: ImageSourceConfig;
+    config: ImageLayer;
     onclose?: (bounds?: [number, number][]) => void;
   } = $props();
 
   let url = $state(untrack(() => $state.snapshot(config)?.url || ''));
-  let opacity = $state(untrack(() => $state.snapshot(config)?.opacity ?? 1));
   let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config)?.coordinates || [])));
   let animationClock = $state(untrack(() => $state.snapshot(config)?.animationClock));
   let name = $state(untrack(() => $state.snapshot(config)?.name));
@@ -53,7 +52,6 @@
     Object.assign(config, {
       id: config?.id || Date.now().toString(),
       url,
-      opacity,
       coordinates,
       animationClock,
       name
@@ -125,12 +123,6 @@
         <p style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
           Use <code>live-production</code> or <code>res/sites</code> URLs. <code>preview</code> is not supported.
         </p>
-      </fieldset>
-
-      <fieldset>
-        <legend>Appearance</legend>
-        <label for="img-opacity">Opacity ({Math.round(opacity * 100)}%)</label>
-        <input id="img-opacity" type="range" min="0" max="1" step="0.01" bind:value={opacity} />
       </fieldset>
 
       <fieldset>

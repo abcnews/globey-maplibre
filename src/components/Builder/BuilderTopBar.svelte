@@ -2,7 +2,7 @@
   import type { Map as MapLibreMap } from 'maplibre-gl';
   import { Search } from 'svelte-bootstrap-icons';
   import { Modal, BuilderStyleRoot } from '@abcnews/components-builder';
-  import GeoSearch from '../Builder.legacy/GeoSearch/GeoSearch.svelte';
+  import GeoSearch from '../shared/GeoSearch/GeoSearch.svelte';
   import { safeFlyTo } from './utils.ts';
 
   type Mode = 'newmap' | 'layout' | 'markers' | 'paste';

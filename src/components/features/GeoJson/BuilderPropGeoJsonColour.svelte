@@ -1,7 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import { SequentialPalette, DivergentPalette } from '@abcnews/palette';
-  import type { GeoJsonConfig } from '../../../lib/marker';
+  import type { GeoJsonLayer } from '../../../lib/data/jsonBlob.ts';
   import ColourSchemePicker from '../../shared/ColourSchemePicker.svelte';
   import ColourLegendPreview from './ColourLegendPreview.svelte';
   import DistributionInput from './DistributionInput.svelte';
@@ -11,7 +11,7 @@
     properties,
     features
   } = $props<{
-    style: GeoJsonConfig;
+    style: GeoJsonLayer;
     properties: string[];
     features: any[];
   }>();

@@ -65,13 +65,15 @@
     <fieldset class="builder__spacious">
       <legend>Pasted Scrollyteller (test harness)</legend>
       <p>
-        Paste the marker text of a scrollyteller below to preview it against the currently loaded JSON blob
-        (<strong>{$jsonBlob.title || 'untitled'}</strong>).
+        Paste the marker text of a scrollyteller below to preview it against the currently loaded JSON blob (<strong
+          >{$jsonBlob.title || 'untitled'}</strong
+        >).
       </p>
       <p>
         <small>
-          Ensure your text includes an opener marker (e.g. <code>#scrollytellerNAME{MARKER_NAME}1</code>), one or
-          more <code>#mark...</code> tags, and an <code>#endscrollyteller</code> tag.
+          Ensure your text includes an opener marker (e.g. <code>#scrollytellerNAME{MARKER_NAME}1</code>), one or more
+          <code>#mark...</code>
+          tags, and an <code>#endscrollyteller</code> tag.
         </small>
       </p>
 

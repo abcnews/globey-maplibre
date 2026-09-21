@@ -3,9 +3,7 @@
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import { onMount } from 'svelte';
   import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
-  import type { DecodedObject } from '../../lib/marker';
   import type { GlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
-  import { blobToDecodedObject } from '../../lib/data/blobAdapter.ts';
   import { applyMarkerOverrides } from '../../lib/data/markerPreview.ts';
   import { markerConfigFromParsed } from '../../lib/data/marker.ts';
   import type { Map } from 'maplibre-gl';
@@ -18,7 +16,7 @@
      *  already an ACTO-parsed marker object (see `markerConfigFromParsed`), not a raw string. */
     panels: PanelDefinition<Record<string, any>>[];
     /** Optional callback invoked when active marker changes */
-    onMarker?: (marker: DecodedObject) => void;
+    onMarker?: (marker: GlobeJsonBlob) => void;
     /** Called with the MapLibre map instance as soon as it's constructed, before its style has loaded. */
     onmap?: (map: Map) => void;
     /** Consumer-defined custom layers, mounted once the map is ready. */
@@ -32,12 +30,11 @@
   let scrollPct = $state(0);
   let scrollDelta = $state(-6);
 
-  // Derived state: master blob + each panel's parsed marker object -> one DecodedObject
+  // Derived state: master blob + each panel's parsed marker object -> one GlobeJsonBlob
   // per panel. Computed once here so every consumer (CM, Storybook, pasted content) can
   // just hand over a blob and marker panels without knowing how they combine.
-  const baseOptions = $derived(blobToDecodedObject(jsonBlob));
   const decodedPanels = $derived(
-    panels.map(panel => ({ ...panel, data: applyMarkerOverrides(baseOptions, markerConfigFromParsed(panel.data)) }))
+    panels.map(panel => ({ ...panel, data: applyMarkerOverrides(jsonBlob, markerConfigFromParsed(panel.data)) }))
   );
 
   let options = $derived(decodedPanels[currentPanel]?.data || decodedPanels[0]?.data);
@@ -56,7 +53,6 @@
     }, 1200);
     return () => clearTimeout(timer);
   });
-  console.log('component mountising');
 </script>
 
 {#if options}

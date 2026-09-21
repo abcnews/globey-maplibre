@@ -9,12 +9,7 @@
     children: Snippet;
   }
 
-  let {
-    open = $bindable(false),
-    header,
-    actions,
-    children
-  }: Props = $props();
+  let { open = $bindable(false), header, actions, children }: Props = $props();
 </script>
 
 <details bind:open class="collapsible-root">

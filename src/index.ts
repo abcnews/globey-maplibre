@@ -7,7 +7,6 @@ import { loadScrollyteller } from '@abcnews/svelte-scrollyteller';
 import acto from '@abcnews/alternating-case-to-object';
 
 import { loadGlobeJsonBlobByCmid } from './lib/data/loadBlobByCmid.ts';
-import { blobToDecodedObject } from './lib/data/blobAdapter.ts';
 import { applyMarkerOverrides } from './lib/data/markerPreview.ts';
 import { decodeMarker } from './lib/data/marker.ts';
 import { getMountCmid } from './lib/mountCmid.ts';
@@ -64,7 +63,7 @@ if (staticMountEl) {
   } else {
     const jsonBlob = await loadGlobeJsonBlobByCmid(cmid);
     const markerConfig = decodeMarker(window.location.hash.slice(1));
-    const staticMountProps = applyMarkerOverrides(blobToDecodedObject(jsonBlob), markerConfig);
+    const staticMountProps = applyMarkerOverrides(jsonBlob, markerConfig);
     mount(CustomGlobe, {
       target: staticMountEl,
       props: { options: staticMountProps, interactive: false, rootElStyle: 'height: 100dvh; width: 100%;' }
