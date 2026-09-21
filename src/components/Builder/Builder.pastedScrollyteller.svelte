@@ -4,6 +4,7 @@
   import ScrollytellerGlobe from '../ScrollytellerGlobe/ScrollytellerGlobe.svelte';
   import { MARKER_NAME } from '../../lib/constants.ts';
   import { onMount } from 'svelte';
+  import { buildSampleScrollyteller } from './sampleScrollyteller.ts';
   import type { ScrollytellerDefinition } from '@abcnews/svelte-scrollyteller';
 
   const STORAGE_KEY = 'GLOBEY_PASTED_SCROLLYTELLER_CONTENT';
@@ -38,12 +39,20 @@
     loadFromText(pastedContent);
   }
 
+  let isGeneratingSample = $state(false);
+
+  /** Fills the textarea with a generated story for the current blob; the user previews it themselves. */
+  async function handleCreateSample() {
+    if (!$jsonBlob) return;
+    isGeneratingSample = true;
+    pastedContent = await buildSampleScrollyteller($jsonBlob).finally(() => (isGeneratingSample = false));
+    error = '';
+    sessionStorage.setItem(STORAGE_KEY, pastedContent);
+  }
+
+  // Form-first: restore the last text into the textarea, but don't jump straight into the preview.
   onMount(() => {
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      pastedContent = saved;
-      loadFromText(saved);
-    }
+    pastedContent = sessionStorage.getItem(STORAGE_KEY) ?? '';
   });
 </script>
 
@@ -92,6 +101,9 @@
       </label>
 
       <div class="builder__submit-row">
+        <button type="button" onclick={handleCreateSample} disabled={isGeneratingSample}>
+          {isGeneratingSample ? 'Generating…' : 'Create sample scrollyteller'}
+        </button>
         <button type="submit">Preview scrollyteller</button>
       </div>
     </fieldset>

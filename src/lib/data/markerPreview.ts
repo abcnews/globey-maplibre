@@ -1,8 +1,12 @@
 import { GEOJSON_LAYER_KINDS, isGeoJsonLayer, type GlobeJsonBlob, type GlobeLayer } from './jsonBlob.ts';
 import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
 
-/** Layer kinds a marker's `LAYER<name>` tokens can switch on and off. */
-const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [...GEOJSON_LAYER_KINDS, 'icon', 'image', 'raster'];
+/**
+ * Layer kinds a marker's `LAYER<name>` tokens can switch on and off. Custom labels are included
+ * so they fade in/out per panel (`MapCustomLabelHandler` cross-fades whatever each panel keeps);
+ * left out, they were always visible.
+ */
+const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [...GEOJSON_LAYER_KINDS, 'icon', 'image', 'raster', 'customLabels'];
 
 /**
  * The `LAYER<name>` token matches a layer's `id` exactly — ids are already constrained to

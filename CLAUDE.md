@@ -53,7 +53,7 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 - `decodeMarker(raw: string)` expects a raw string; `markerConfigFromParsed(parsed)` expects an already `acto()`-parsed object (what `loadScrollyteller`/`parsePastedContent` panel data actually is) — passing a parsed object to `decodeMarker` breaks.
 - Markers live only in `window.location.hash`, never persisted. `Builder.markers.svelte` seeds `markerConfig` synchronously at setup, not `onMount` (avoids the hash-sync `$effect` stomping a real marker).
 - `MarkerAdmin` prefix must be `'#'` not `'#mark'` (our hash already starts with `mark`).
-- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) is the single "blob + marker → panel blob" function — one pass over `base.layers` that drops un-switched-on layers, stamps `animationClock` and rewrites GeoJson colour, preserving stack order, shared by Builder preview and the runtime below — it also sets animation timing (`animationMode`/`animationDuration` from `CAM`, per-layer `animationClock` from a `LAYER` duration's presence/absence only, not its value — see `TweenController`).
+- `applyMarkerOverrides()` (`src/lib/data/markerPreview.ts`) is the single "blob + marker → panel blob" function — one pass over `base.layers` that drops un-switched-on layers (incl. `customLabels`, which must be `LAYER<id>on` to show), stamps `animationClock` and rewrites GeoJson colour, preserving stack order, shared by Builder preview and the runtime below — it also sets animation timing (`animationMode`/`animationDuration` from `CAM`, per-layer `animationClock` from a `LAYER` duration's presence/absence only, not its value — see `TweenController`).
 
 ## Scrollyteller / static runtime
 
@@ -106,3 +106,8 @@ Import direction is `lib` ← `shared` ← `features` ← `globe` ← `builder`,
 
 - Layer ids are lowercase-alphanumeric only — sanitise on input with `toLayerIdSlug()` (`layerOps.ts`), don't just validate-and-reject. Generate with `newLayerId(kind, takenIds)` or `uniqueLayerId(text, kind, takenIds)`.
 - `mutateBlob()` in `Builder.layers.svelte` is the standard clone→mutate→commit wrapper for any blob change (`structuredClone($state.snapshot(...))` → mutate → `jsonBlob.set`; the snapshot matters because a `$state` proxy in the store makes `structuredClone` throw — `handleCloseLayerModal()` also snapshots the modal's `editingItem.data` before storing it); button `onclick` handlers run inside it automatically. The Builder's layer list is `blob.layers` reversed (top-first), so `handleReorder` reverses back before storing.
+
+## Demo / sample content
+
+- `createKitchenSinkBlob()` (`src/lib/data/sampleBlobs.ts`) backs Firstrun's "Kitchen Sink Demo"; uses `public/` test files.
+- `generateSampleScrollyteller()` (`src/lib/data/`) is pure; GeoJSON extents are fetched by `buildSampleScrollyteller()` (`Builder/sampleScrollyteller.ts`) since `lib` can't import `features/`. The Preview tab restores saved text into the form but never auto-previews.
