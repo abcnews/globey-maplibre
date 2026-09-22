@@ -64,6 +64,7 @@
     "@abcnews/terminus-fetch": "^7.1.0",
     "d3-interpolate": "^3.0.1",
     "geojson": "^0.5.0",
+    "workiq": "^1.0.0",
     "zod": "^4.6.2"
   },
   "contributors": [

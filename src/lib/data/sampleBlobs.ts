@@ -2,7 +2,7 @@ import { parseGlobeJsonBlob, type GlobeJsonBlob } from './jsonBlob.ts';
 
 /**
  * A pre-configured blob exercising every major layer kind, for demos and manual testing.
- * Uses local `public/` test data (`/test-topojson.json`, the Copernicus image) plus NASA tiles.
+ * Uses local `public/` test data (`/test-topojson.json`, the Copernicus image, two GeoTIFFs) plus NASA tiles.
  * Parsed through the schema so every default is filled in.
  */
 export function createKitchenSinkBlob(): GlobeJsonBlob {
@@ -64,6 +64,23 @@ export function createKitchenSinkBlob(): GlobeJsonBlob {
           [149.540405, -43.675818],
           [143.195801, -43.675818]
         ]
+      },
+      {
+        id: 'sstanomaly',
+        type: 'gridded',
+        // Global sea-surface temperature anomaly (°C), 1° cells. Diverging: blue cold, red warm.
+        url: '/ee-sst-anomaly-month-1.tif',
+        colourConfig: { paletteType: 'divergent', paletteVariant: 'RedBlue', min: -3, max: 3 },
+        opacity: 0.85
+      },
+      {
+        id: 'indosmoke',
+        type: 'gridded',
+        // Forecast PM2.5 (kg/m³) over Indonesia, 0.4° cells. Most of the grid is faint background, so
+        // everything below `min` is transparent and only the plume is coloured.
+        url: '/indo-smoke-aug30-0800.tif',
+        colourConfig: { paletteType: 'sequential', paletteVariant: 'red', min: 2e-8, max: 2e-7 },
+        hideBelowMin: true
       },
       {
         id: 'states',

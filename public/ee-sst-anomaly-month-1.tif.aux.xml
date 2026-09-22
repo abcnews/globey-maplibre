@@ -1,0 +1,12 @@
+<PAMDataset>
+  <PAMRasterBand band="1">
+    <Description>Sea surface temperature</Description>
+    <Metadata>
+      <MDI key="STATISTICS_MINIMUM">-5.2783203125</MDI>
+      <MDI key="STATISTICS_MAXIMUM">6.814453125</MDI>
+      <MDI key="STATISTICS_MEAN">0.49241759317885</MDI>
+      <MDI key="STATISTICS_STDDEV">0.75204556464604</MDI>
+      <MDI key="STATISTICS_VALID_PERCENT">66.11</MDI>
+    </Metadata>
+  </PAMRasterBand>
+</PAMDataset>

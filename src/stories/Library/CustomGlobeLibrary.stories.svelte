@@ -17,3 +17,7 @@
 
 <!-- Custom labels over night imagery -->
 <Story name="Custom labels" args={{ initialLayerIds: ['night', 'states'] }} />
+
+<!-- Gridded sea surface temperature anomaly -->
+<Story name="Gridded data" args={{ initialLayerIds: ['sstanomaly'] }} />
+

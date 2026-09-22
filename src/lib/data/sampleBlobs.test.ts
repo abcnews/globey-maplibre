@@ -5,11 +5,11 @@ import { generateSampleScrollyteller } from './generateSampleScrollyteller.ts';
 import { MARKER_NAME } from '../constants.ts';
 
 describe('createKitchenSinkBlob', () => {
-  it('is a valid blob with 7 uniquely-named layers', () => {
+  it('is a valid blob with 9 uniquely-named layers', () => {
     const blob = createKitchenSinkBlob();
     expect(safeParseGlobeJsonBlob(blob).success).toBe(true);
-    expect(blob.layers).toHaveLength(7);
-    expect(new Set(blob.layers.map(({ id }) => id)).size).toBe(7);
+    expect(blob.layers).toHaveLength(9);
+    expect(new Set(blob.layers.map(({ id }) => id)).size).toBe(9);
   });
 });
 
@@ -29,7 +29,7 @@ describe('generateSampleScrollyteller', () => {
     expect(marks[0]).toContain('LAYERbluemarbleon');
     expect(marks[1]).toContain('LAYERblackmarbleon');
     expect(marks[1]).not.toContain('bluemarble');
-    expect(marks).toHaveLength(7);
+    expect(marks).toHaveLength(9);
     expect(marks.at(-1)).toContain('LAYERstateson');
   });
 });

@@ -6,7 +6,14 @@ import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
  * so they fade in/out per panel (`MapCustomLabelHandler` cross-fades whatever each panel keeps);
  * left out, they were always visible.
  */
-const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [...GEOJSON_LAYER_KINDS, 'icon', 'image', 'raster', 'customLabels'];
+const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [
+  ...GEOJSON_LAYER_KINDS,
+  'icon',
+  'image',
+  'gridded',
+  'raster',
+  'customLabels'
+];
 
 /**
  * The `LAYER<name>` token matches a layer's `id` exactly — ids are already constrained to

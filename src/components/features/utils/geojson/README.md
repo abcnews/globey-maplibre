@@ -10,7 +10,7 @@ Shared code for the three GeoJSON layer features: `GeoJsonAreas/`, `GeoJsonLines
 - `feature.ts`: `hasValidGeoJsonSource` and `geoJsonLayerButtons`, shared by the three feature definitions.
 - `GeoJsonLoader.svelte`: fetches one layer's data and renders its `children` snippet with `{ data, sourceId, posKey }`. Used by each `GeoJson*Handler.svelte`.
 - `BuilderGeoJsonModal.svelte`: the shared config modal (source, name/clock, filter, colour). Kind-specific fields come in via the `kindFields` snippet.
-- `BuilderPropGeoJsonFilter.svelte`, `BuilderPropGeoJsonColour.svelte`, `BuilderPropGeoJsonSize.svelte`, `ColourLegendPreview.svelte`, `DistributionInput.svelte`: controls used by the modals.
+- `BuilderPropGeoJsonFilter.svelte`, `BuilderPropGeoJsonColour.svelte`, `BuilderPropGeoJsonSize.svelte`: controls used by the modals. Scale mode uses the shared `BuilderPropColourScale` from `../colourScale/`.
 
 ## Styling
 

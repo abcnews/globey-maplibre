@@ -9,6 +9,7 @@ function baseOptions(): GlobeJsonBlob {
     layers: [
       { type: 'geojsonAreas', id: 'fires', cmid: 1, colourMode: 'simple' },
       { type: 'icon', id: 'city', cmid: 2, coords: [0, 0] },
+      { type: 'gridded', id: 'temps', url: '/t.tif' },
       { type: 'mapLabels', id: 'builtinmaplabels', countriesMajor: true }
     ]
   });
@@ -23,6 +24,14 @@ describe('applyMarkerOverrides', () => {
     const result = applyMarkerOverrides(baseOptions(), {});
     assert.deepStrictEqual(kept(result, 'geojsonAreas'), []);
     assert.deepStrictEqual(kept(result, 'icon'), []);
+  });
+
+  it('switches gridded layers on and off like other overridable kinds, so they can fade', () => {
+    assert.deepStrictEqual(kept(applyMarkerOverrides(baseOptions(), {}), 'gridded'), []);
+
+    const [layer] = kept(applyMarkerOverrides(baseOptions(), { layers: [{ name: 'temps', state: 'on' }] }), 'gridded');
+    assert.strictEqual(layer?.id, 'temps');
+    assert.strictEqual(layer?.animationClock, 'scroll');
   });
 
   it('keeps a layer with an "on" override', () => {
@@ -103,7 +112,7 @@ describe('applyMarkerOverrides', () => {
     const base = baseOptions();
     applyMarkerOverrides(base, { base: 'dark', layers: [{ name: 'fires', state: 'on', colour: 'ff3300' }] });
     assert.strictEqual(base.map.base, 'street');
-    assert.strictEqual(base.layers.length, 3);
+    assert.strictEqual(base.layers.length, 4);
     assert.strictEqual((base.layers[0] as GeoJsonAreasLayer).colourMode, 'simple');
   });
 

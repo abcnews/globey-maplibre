@@ -1,15 +1,9 @@
-import {
-  getDivergentContinuousPaletteInterpolator,
-  SequentialPalette,
-  DivergentPalette,
-  ColourMode
-} from '@abcnews/palette';
-import { interpolateColour, getCustomPaletteInterpolator } from '../../../../lib/colours.ts';
+import { interpolateColour } from '../../../../lib/colours.ts';
 import type { GeoJsonAnyLayer, GeoJsonFilter, Size } from '../../../../lib/data/jsonBlob.ts';
-import { getSequentialInterpolator } from '../../../../lib/sequentialPalette.ts';
 import { resolveSchemeColour, type ColourSchemeName } from '../../../../lib/colourScheme.ts';
 import { tweenStopsExpression } from '../../Tween/utils.ts';
 import { THEMES, type GeoJsonTheme } from './themes.ts';
+import { getPaletteInterpolator } from '../colourScale/palette.ts';
 
 /**
  * The styling fields every GeoJSON kind shares, plus the kind-specific ones as optional.
@@ -58,34 +52,6 @@ interface GeoJsonFeatureState {
 }
 
 /**
- * Creates a colour interpolation function based on the builder's configuration.
- * This serves as the single source of truth for colour scaling across 2D layers
- * and 3D spikes.
- *
- * @param config The GeoJSON layer configuration
- * @returns An interpolator function for mapping 0-1 values to CSS colours
- */
-function getPaletteInterpolator(config: GeoJsonStyle): ((t: number) => string) | null {
-  const { paletteType, paletteVariant, customPalette } = config.colourConfig || {};
-  if (!paletteType) return null;
-
-  if (paletteType === 'sequential' && paletteVariant) {
-    if (Object.values(SequentialPalette).includes(paletteVariant as any)) {
-      return getSequentialInterpolator(paletteVariant as SequentialPalette, ColourMode.Light);
-    }
-  } else if (paletteType === 'divergent' && paletteVariant) {
-    const variant = DivergentPalette[paletteVariant as keyof typeof DivergentPalette];
-    if (variant) {
-      return getDivergentContinuousPaletteInterpolator(variant, ColourMode.Light);
-    }
-  } else if (paletteType === 'custom' && customPalette) {
-    return getCustomPaletteInterpolator(customPalette);
-  }
-
-  return null;
-}
-
-/**
  * Returns a function that calculates the styling (colours, opacities, sizes) for a single GeoJSON
  * feature, using this layer's single colour mode/filter. Features that don't match the configured
  * filter are hidden (fully transparent) — a layer only ever shows one filtered subset at a time.
@@ -100,7 +66,7 @@ function getFeatureStateEvaluator(config: GeoJsonStyle): (feature: any, index: n
   const colourProp = config.colourProp;
   const filter = config.filter;
 
-  const interpolator = colourMode === 'scale' ? getPaletteInterpolator(config) : null;
+  const interpolator = colourMode === 'scale' ? getPaletteInterpolator(config.colourConfig) : null;
   const min = colourConfig?.min ?? 0;
   const max = colourConfig?.max ?? 100;
   const range = max - min || 1;
@@ -236,7 +202,7 @@ function buildScaleColourExpression(config: GeoJsonStyle): any {
   // that as a successful conversion, so a bare fallback arg is never actually used.
   const propExpr = numericPropExpression(colourProp || '', min);
 
-  const interpolator = getPaletteInterpolator(config);
+  const interpolator = getPaletteInterpolator(config.colourConfig);
   if (!interpolator) {
     return ['interpolate', ['linear'], propExpr, min, minColour, max, maxColour];
   }

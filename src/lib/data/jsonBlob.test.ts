@@ -23,6 +23,23 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.strictEqual(result.sourceCmid, 106753230);
   });
 
+  it('should fill gridded layer defaults and round-trip', () => {
+    const result = parseGlobeJsonBlob({ layers: [{ id: 'temps', type: 'gridded', url: 'https://example.com/t.tif' }] });
+    const [layer] = result.layers;
+    assert.deepStrictEqual(layer, {
+      id: 'temps',
+      type: 'gridded',
+      url: 'https://example.com/t.tif',
+      band: 0,
+      colourConfig: { paletteType: 'sequential', paletteVariant: 'blue' },
+      hideBelowMin: false,
+      hideAboveMax: false,
+      opacity: 1,
+      resampling: 'linear'
+    });
+    assert.deepStrictEqual(parseGlobeJsonBlob(formatGlobeJsonBlob(result)), result);
+  });
+
   it('should validate and parse complete JSON blob with multiple layer types', () => {
     const rawBlob = {
       version: 1,

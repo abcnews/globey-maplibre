@@ -73,6 +73,16 @@ Fading layer kinds (raster/image/icon/geojson) are all mounted by `LayerManager.
 - `buildTweenedColourExpression` decides whether to tween per-panel, not off `representative` alone — `representative` is just "first panel with the item on" and may have no colour override itself (e.g. a layer switched on before its colour is ever changed), so gating on its mode alone silently skipped every override on other panels.
 - GeoJson line layers have a second reveal style, `lineAnimationStyle: 'fade' | 'draw'` (`RenderLine.svelte`), using `line-gradient` + `['line-progress']` instead of opacity. MapLibre rejects a `step` expression whose *threshold* (not just its output) is a computed expression — `tweenFactor`/`global-state` can't drive it directly, so `TweenController.positionFor(mode, reducedMotion)` + `tweenStopsValue()` (`Tween/utils.ts`) recompute the same position as a literal JS number every frame instead, read via `getTween()`. `line-gradient` also flatly rejects data-driven (`['get', ...]`) colour output, unlike every other paint property here — draw-mode colour always falls back to `resolveSchemeColour()`, ignoring `simple`/`scale` per-feature colours.
 
+## Gridded data
+
+`features/Gridded/` (`type: 'gridded'`): GeoTIFF from a URL (no CMID), decoded client-side. See `features/README.md` (Gridded).
+
+- Only config is stored; the file is fetched at render time. `fetchGridBuffer()` (`data/loadGrid.ts`) caches downloads per URL, so colour edits and every panel reuse one buffer.
+- MapLibre stretches image sources linearly in Mercator, so `renderGridPixels()` (`render/gridToImage.ts`) resamples EPSG:4326 rows onto even Mercator steps and clips at ±85.0511°. Other CRSs are rejected with a gdalwarp hint.
+- `GriddedHandler.svelte` hands MapLibre raw pixels with `ImageSource.updateImage({ image: ImageData })` — no PNG encode/decode. `addSource` still needs a `url`, so it gets a 1×1 GIF placeholder that `updateImage` immediately replaces (and aborts). The image is the file's own resolution (`renderGridPixels`, capped at 2048 px); MapLibre stretches it over the corner coordinates.
+- Colour is baked into the image, so there's no per-panel colour cross-fade or marker colour override — only `LAYER<id>on` and opacity fades.
+- The palette picker + histogram is `features/utils/colourScale/BuilderPropColourScale.svelte`, shared with GeoJSON scale mode; `getPaletteInterpolator` lives in `colourScale/palette.ts`.
+
 ## Colour scheme
 
 `src/lib/colourScheme.ts` is the shared normal/highlighted/custom colour concept — currently

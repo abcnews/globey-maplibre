@@ -48,6 +48,7 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 - Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte)
 - Renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
+- Renderer that decodes and colours data client-side: [Gridded/GriddedHandler.svelte](./Gridded/GriddedHandler.svelte)
 - Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte)
 
 ---
@@ -239,7 +240,15 @@ If the feature renders visual elements on the map, import its handler component 
 
 ## Shared code
 
-Code used by more than one feature lives in [utils/](./utils/), not in a feature folder: `layerOps.ts`, `buttonHelpers.ts`, `LayerSettingsFields.svelte` and [utils/geojson/](./utils/geojson/README.md). Folders directly under `features/` are features only.
+Code used by more than one feature lives in [utils/](./utils/), not in a feature folder: `layerOps.ts`, `buttonHelpers.ts`, `LayerSettingsFields.svelte`, [utils/geojson/](./utils/geojson/README.md) and `utils/colourScale/` (palette picker, histogram, `getPaletteInterpolator`, shared by GeoJSON scale mode and Gridded). Folders directly under `features/` are features only.
+
+### Gridded
+
+`Gridded/` shows a GeoTIFF from a URL, coloured by a palette and min/max.
+
+- `data/`: `loadGrid` (cached download + `decodeGeoTiff` via `geotiff`) and `normaliseGrid` (longitudes within −180…180). Both return/take a `DecodedGrid`.
+- `render/`: `renderGridPixels` colours the grid into an image laid out in Web Mercator; `sampleGridValues` feeds the histogram.
+- `GriddedHandler.svelte`: MapLibre `image` source; style changes call `updateImage({ image })`.
 
 ### GeoJSON
 

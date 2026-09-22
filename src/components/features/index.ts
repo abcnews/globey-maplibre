@@ -12,6 +12,7 @@ import { geoJsonPointsFeature } from './GeoJsonPoints/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
 import { iconFeature } from './Icon/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
+import { griddedFeature } from './Gridded/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
 import { customLabelsFeature } from './CustomLabels/index.ts';
 import { streetMapFeature } from './MapVector/index.ts';
@@ -23,6 +24,7 @@ export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
   geoJsonPointsFeature,
   iconFeature,
   imageSourceFeature,
+  griddedFeature,
   mapLabelsFeature,
   customLabelsFeature,
   streetMapFeature,

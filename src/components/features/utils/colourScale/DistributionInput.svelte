@@ -8,15 +8,18 @@
   import { LayerCake, Svg, bin } from 'layercake';
   import { scaleLinear, scaleSqrt } from 'd3-scale';
 
-  let {
-    values = [],
-    min = $bindable(),
-    max = $bindable()
-  } = $props<{
+  interface Props {
+    /** Values to bin. Pass a sample for large datasets (e.g. `sampleGridValues()`). */
     values: number[];
     min: number | undefined;
     max: number | undefined;
-  }>();
+    /** Drag/arrow-key increment; defaults to 1/100th of the data range */
+    step?: number;
+    /** Optional CSS background (e.g. the palette gradient) drawn behind the bars */
+    background?: string;
+  }
+
+  let { values = [], min = $bindable(), max = $bindable(), step, background }: Props = $props();
 
   // Create histogram bins with fixed granularity
   let binnedData = $derived.by(() => {
@@ -24,11 +27,24 @@
     return b;
   });
 
-  // Calculate the bounds of the actual data
+  // Bounds of the actual data. `reduce` rather than `Math.min(...values)`, which overflows
+  // the call stack on large arrays.
   let dataDomain = $derived.by(() => {
     if (values.length === 0) return [0, 0];
-    return [Math.min(...values), Math.max(...values)];
+    return values.reduce(
+      ([lowest, highest]: number[], value: number) => [Math.min(lowest, value), Math.max(highest, value)],
+      [Infinity, -Infinity]
+    );
   });
+
+  /** Rounds to a "nice" power of ten a hundredth of the range, so 0–1 data isn't snapped to integers. */
+  let effectiveStep = $derived.by(() => {
+    if (step) return step;
+    const range = dataDomain[1] - dataDomain[0];
+    return range > 0 ? Math.pow(10, Math.floor(Math.log10(range / 100))) : 1;
+  });
+
+  const snap = (value: number) => Number((Math.round(value / effectiveStep) * effectiveStep).toPrecision(12));
 
   // Helper to get bar width
   const getWidth = (d: any, xScale: any) => {
@@ -59,7 +75,7 @@
     const val = currentXScale.invert(x);
 
     const clampedVal = Math.max(dataDomain[0], Math.min(dataDomain[1], val));
-    const roundedVal = Math.round(clampedVal);
+    const roundedVal = snap(clampedVal);
 
     if (dragging === 'min') {
       min = Math.min(roundedVal, max ?? Infinity);
@@ -83,27 +99,27 @@
   }
 
   function onHandleKeyDown(e: KeyboardEvent, type: 'min' | 'max') {
-    const step = 1;
+    const increment = effectiveStep;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
       e.preventDefault();
       if (type === 'min' && min !== undefined) {
-        min = Math.max(dataDomain[0], min - step);
+        min = snap(Math.max(dataDomain[0], min - increment));
       } else if (type === 'max' && max !== undefined) {
-        max = Math.max(min ?? dataDomain[0], max - step);
+        max = snap(Math.max(min ?? dataDomain[0], max - increment));
       }
     } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
       e.preventDefault();
       if (type === 'min' && min !== undefined) {
-        min = Math.min(max ?? dataDomain[1], min + step);
+        min = snap(Math.min(max ?? dataDomain[1], min + increment));
       } else if (type === 'max' && max !== undefined) {
-        max = Math.min(dataDomain[1], max + step);
+        max = snap(Math.min(dataDomain[1], max + increment));
       }
     }
   }
 </script>
 
 <div class="distribution-container" style="touch-action: none">
-  <div class="chart-wrapper" bind:this={container}>
+  <div class="chart-wrapper" bind:this={container} style:background>
     {#if values.length > 0}
       <LayerCake
         data={binnedData}
@@ -119,7 +135,7 @@
       >
         <Svg>
           <g class="bars">
-            {#each cakeData as any[] as d}
+            {#each cakeData as any[] as d (d.x0)}
               <rect
                 x={xScale(d.x0)}
                 y={height - getHeight(d, yScale, height)}

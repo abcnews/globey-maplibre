@@ -23,9 +23,10 @@ const paddedBbox = (points: LngLat[]): LngLat[] | undefined => {
   if (!points.length) return undefined;
   const lngs = points.map(([lng]) => lng);
   const lats = points.map(([, lat]) => lat);
+  // Clamped so a world-sized layer (e.g. a global grid) doesn't ask for latitudes past the poles.
   return [
-    [Math.min(...lngs) - BBOX_PADDING_DEGREES, Math.max(...lats) + BBOX_PADDING_DEGREES],
-    [Math.max(...lngs) + BBOX_PADDING_DEGREES, Math.min(...lats) - BBOX_PADDING_DEGREES]
+    [Math.max(-180, Math.min(...lngs) - BBOX_PADDING_DEGREES), Math.min(90, Math.max(...lats) + BBOX_PADDING_DEGREES)],
+    [Math.min(180, Math.max(...lngs) + BBOX_PADDING_DEGREES), Math.max(-90, Math.min(...lats) - BBOX_PADDING_DEGREES)]
   ];
 };
 
@@ -43,7 +44,7 @@ const storedPointsOf = (layer: GlobeLayer): LngLat[] => {
  * everything else fades in immediately on arrival. A `LAYER` duration's presence is what makes
  * a layer immediate (see `applyMarkerOverrides`).
  */
-const SCROLL_TIED_KINDS: GlobeLayer['type'][] = ['raster', 'image', 'geojsonLines'];
+const SCROLL_TIED_KINDS: GlobeLayer['type'][] = ['raster', 'image', 'gridded', 'geojsonLines'];
 
 const layerOverride = (layer: GlobeLayer): MarkerLayerOverride =>
   SCROLL_TIED_KINDS.includes(layer.type)

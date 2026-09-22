@@ -57,6 +57,23 @@ export const demoBlob: GlobeJsonBlob = parseGlobeJsonBlob({
       pointSize: { value: 8, unit: 'p' }
     },
 
+    // ---- Gridded data (GeoTIFF) ----
+    {
+      id: 'sstanomaly',
+      type: 'gridded',
+      url: '/ee-sst-anomaly-month-1.tif',
+      colourConfig: { paletteType: 'divergent', paletteVariant: 'RedBlue', min: -3, max: 3 },
+      opacity: 0.85
+    },
+    {
+      id: 'indosmoke',
+      type: 'gridded',
+      url: '/indo-smoke-aug30-0800.tif',
+      colourConfig: { paletteType: 'sequential', paletteVariant: 'red', min: 2e-8, max: 2e-7 },
+      hideBelowMin: true,
+      opacity: 0.9
+    },
+
     // ---- Custom labels ----
     {
       id: 'states',

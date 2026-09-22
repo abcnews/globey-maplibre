@@ -167,6 +167,30 @@ export const imageLayerSchema = z.object({
 export type ImageLayer = z.infer<typeof imageLayerSchema>;
 
 /**
+ * Gridded data layer (GeoTIFF). Only the styling config is stored — the file is fetched from
+ * `url` and decoded in the browser at render time.
+ */
+export const griddedLayerSchema = z.object({
+  ...baseLayerObject,
+  type: z.literal('gridded'),
+  url: z.string().default(''),
+  /** Band (sample) index */
+  band: z.number().default(0),
+  colourConfig: geoJsonColourConfigSchema.default({ paletteType: 'sequential', paletteVariant: 'blue' }),
+  /** Overrides the file's own nodata / `_FillValue` */
+  noData: z.number().optional(),
+  /** Values below `colourConfig.min` are transparent, instead of taking the lowest colour */
+  hideBelowMin: z.boolean().default(false),
+  /** Values above `colourConfig.max` are transparent, instead of taking the highest colour */
+  hideAboveMax: z.boolean().default(false),
+  /** Number of stepped colour classes; unset = continuous */
+  classes: z.number().optional(),
+  opacity: z.number().min(0).max(1).default(1),
+  resampling: z.enum(['linear', 'nearest']).default('linear')
+});
+export type GriddedLayer = z.infer<typeof griddedLayerSchema>;
+
+/**
  * Raster map tile layer schema
  */
 export const rasterLayerSchema = z.object({
@@ -225,6 +249,7 @@ export const globeLayerSchema = z.discriminatedUnion('type', [
   customLabelsLayerSchema,
   iconLayerSchema,
   imageLayerSchema,
+  griddedLayerSchema,
   rasterLayerSchema,
   mapLabelsLayerSchema,
   streetMapLayerSchema
