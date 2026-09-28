@@ -1,4 +1,4 @@
-import { writable, type Writable } from 'svelte/store';
+import { get, writable, type Writable } from 'svelte/store';
 import {
   globeJsonBlobSchema,
   parseGlobeJsonBlob,
@@ -55,7 +55,7 @@ export function hasStoredSession(): boolean {
 /**
  * Clears the stored draft JSON blob from localStorage.
  */
-export function clearStoredJsonBlob(): void {
+function clearStoredJsonBlob(): void {
   const storage = getLocalStorage();
   if (storage) {
     try {
@@ -84,7 +84,28 @@ function createBlobStore(): Writable<GlobeJsonBlob | null> & {
   clear: () => void;
 } {
   const initial = loadStoredJsonBlob();
-  const { subscribe, set, update } = writable<GlobeJsonBlob | null>(initial);
+  const store = writable<GlobeJsonBlob | null>(initial);
+  const { subscribe } = store;
+
+  /**
+   * Every write is validated against the schema before it reaches the store (and so
+   * localStorage). Builder mutations bypass Zod otherwise, and a blob that fails to parse —
+   * e.g. a duplicate or non-`[a-z0-9]` layer id — would persist, then be discarded as an
+   * invalid draft on the next load. Rejected writes keep the last valid blob.
+   */
+  function set(blob: GlobeJsonBlob | null): void {
+    if (!blob) return store.set(null);
+    const res = safeParseGlobeJsonBlob(blob);
+    if (!res.success) {
+      console.error('[blobStore] Rejected invalid JSON blob write:', res.error);
+      return;
+    }
+    store.set(res.data);
+  }
+
+  function update(updater: (blob: GlobeJsonBlob | null) => GlobeJsonBlob | null): void {
+    set(updater(get(store)));
+  }
 
   // Sync mutations to localStorage
   subscribe(blob => {

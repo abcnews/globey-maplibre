@@ -3,7 +3,7 @@ import type { PanelDefinition } from '@abcnews/svelte-scrollyteller';
 import type { GlobeJsonBlob } from '../../../lib/data/jsonBlob.ts';
 import { TweenController } from './TweenController.svelte.ts';
 
-const panelBlob = () => ({ map: {}, layers: [{ id: 'a', type: 'geojson', geometryType: 'lines' }] });
+const panelBlob = () => ({ map: {}, layers: [{ id: 'a', type: 'geojsonLines' }] });
 
 const makePanels = (): PanelDefinition<GlobeJsonBlob>[] =>
   [
@@ -71,5 +71,35 @@ describe('TweenController.sync', () => {
 
     controller.sync({ panels, currentPanel: 0, virtualPanel: 0, panelPct: 0.9, isTouch: false });
     expect(controller.immediate.target).toBe(0);
+  });
+
+  // Scroll-tied panel followed by an immediate (`CAM`) one: the camera should sit on the
+  // current panel, not read the immediate clock (still on the previous panel) and jump back.
+  it('holds the camera on the current panel when the next panel is immediate', () => {
+    const controller = new TweenController(1);
+    const panels = [
+      { nodes: [], data: { map: { animationMode: 'scroll' }, layers: [] } },
+      { nodes: [], data: { map: { animationMode: 'scroll' }, layers: [] } },
+      { nodes: [], data: { map: { animationMode: 'immediate' }, layers: [] } }
+    ] as unknown as PanelDefinition<GlobeJsonBlob>[];
+
+    controller.sync({ panels, currentPanel: 1, virtualPanel: 1, panelPct: 0.8, isTouch: true });
+
+    expect(controller.fromPanel).toBe(1);
+    expect(controller.t).toBe(0);
+  });
+
+  it('flies back (follows the immediate clock) when scrolling up out of an immediate panel', () => {
+    const controller = new TweenController(2);
+    const panels = [
+      { nodes: [], data: { map: { animationMode: 'scroll' }, layers: [] } },
+      { nodes: [], data: { map: { animationMode: 'scroll' }, layers: [] } },
+      { nodes: [], data: { map: { animationMode: 'immediate', animationDuration: 1500 }, layers: [] } }
+    ] as unknown as PanelDefinition<GlobeJsonBlob>[];
+
+    controller.sync({ panels, currentPanel: 1, virtualPanel: 1, panelPct: 0.9, isTouch: true });
+
+    // Immediate clock has only just started reversing from panel 2, so the camera is still there.
+    expect(controller.position).toBeGreaterThan(1);
   });
 });

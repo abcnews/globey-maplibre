@@ -1,39 +1,48 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert';
 import { applyMarkerOverrides } from './markerPreview.ts';
-import { parseGlobeJsonBlob, type GlobeJsonBlob, type GeoJsonLayer } from './jsonBlob.ts';
+import { parseGlobeJsonBlob, type GlobeJsonBlob, type GeoJsonAreasLayer } from './jsonBlob.ts';
 
 function baseOptions(): GlobeJsonBlob {
   return parseGlobeJsonBlob({
     map: { coords: [0, 0], z: 2, base: 'street', projection: 'globe', minimap: { enabled: true, bounds: [] } },
     layers: [
-      { type: 'geojson', name: 'fires', id: 'fires', cmid: 1, geometryType: 'areas', colourMode: 'simple' },
-      { type: 'icon', name: 'city', id: 'city', cmid: 2, coords: [0, 0] },
-      { type: 'mapLabels', id: 'builtin-map-labels', countriesMajor: true }
+      { type: 'geojsonAreas', id: 'fires', cmid: 1, colourMode: 'simple' },
+      { type: 'icon', id: 'city', cmid: 2, coords: [0, 0] },
+      { type: 'gridded', id: 'temps', url: '/t.tif' },
+      { type: 'mapLabels', id: 'builtinmaplabels', countriesMajor: true }
     ]
   });
 }
 
 /** The layers of one kind left in the result, in stack order. */
 const kept = (result: GlobeJsonBlob, type: string) => result.layers.filter(l => l.type === type);
-const firstGeoJson = (result: GlobeJsonBlob) => kept(result, 'geojson')[0] as GeoJsonLayer | undefined;
+const firstGeoJson = (result: GlobeJsonBlob) => kept(result, 'geojsonAreas')[0] as GeoJsonAreasLayer | undefined;
 
 describe('applyMarkerOverrides', () => {
   it('excludes a layer with no override (off by default)', () => {
     const result = applyMarkerOverrides(baseOptions(), {});
-    assert.deepStrictEqual(kept(result, 'geojson'), []);
+    assert.deepStrictEqual(kept(result, 'geojsonAreas'), []);
     assert.deepStrictEqual(kept(result, 'icon'), []);
+  });
+
+  it('switches gridded layers on and off like other overridable kinds, so they can fade', () => {
+    assert.deepStrictEqual(kept(applyMarkerOverrides(baseOptions(), {}), 'gridded'), []);
+
+    const [layer] = kept(applyMarkerOverrides(baseOptions(), { layers: [{ name: 'temps', state: 'on' }] }), 'gridded');
+    assert.strictEqual(layer?.id, 'temps');
+    assert.strictEqual(layer?.animationClock, 'scroll');
   });
 
   it('keeps a layer with an "on" override', () => {
     const result = applyMarkerOverrides(baseOptions(), { layers: [{ name: 'fires', state: 'on' }] });
-    assert.strictEqual(kept(result, 'geojson').length, 1);
+    assert.strictEqual(kept(result, 'geojsonAreas').length, 1);
     assert.strictEqual(firstGeoJson(result)?.id, 'fires');
   });
 
-  it('matches an unnamed layer by its sanitised id', () => {
+  it('matches a layer by its id', () => {
     const base = parseGlobeJsonBlob({
-      layers: [{ type: 'raster', id: 'raster-ab12', url: 'https://example.com/{z}/{x}/{y}.png' }]
+      layers: [{ type: 'raster', id: 'rasterab12', url: 'https://example.com/{z}/{x}/{y}.png' }]
     });
     const result = applyMarkerOverrides(base, { layers: [{ name: 'rasterab12', state: 'on' }] });
     assert.strictEqual(kept(result, 'raster').length, 1);
@@ -42,9 +51,9 @@ describe('applyMarkerOverrides', () => {
   it('preserves the master blob stack order among the layers it keeps', () => {
     const base = parseGlobeJsonBlob({
       layers: [
-        { type: 'geojson', id: 'bottom', name: 'bottom', cmid: 1 },
-        { type: 'geojson', id: 'middle', name: 'middle', cmid: 2 },
-        { type: 'geojson', id: 'top', name: 'top', cmid: 3 }
+        { type: 'geojsonAreas', id: 'bottom', cmid: 1 },
+        { type: 'geojsonAreas', id: 'middle', cmid: 2 },
+        { type: 'geojsonAreas', id: 'top', cmid: 3 }
       ]
     });
     const result = applyMarkerOverrides(base, {
@@ -103,8 +112,8 @@ describe('applyMarkerOverrides', () => {
     const base = baseOptions();
     applyMarkerOverrides(base, { base: 'dark', layers: [{ name: 'fires', state: 'on', colour: 'ff3300' }] });
     assert.strictEqual(base.map.base, 'street');
-    assert.strictEqual(base.layers.length, 3);
-    assert.strictEqual((base.layers[0] as GeoJsonLayer).colourMode, 'simple');
+    assert.strictEqual(base.layers.length, 4);
+    assert.strictEqual((base.layers[0] as GeoJsonAreasLayer).colourMode, 'simple');
   });
 
   it('sets scroll-tied camera animation when cam is absent', () => {

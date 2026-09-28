@@ -1,4 +1,4 @@
-function parseColor(color: string): [number, number, number] {
+export function parseColor(color: string): [number, number, number] {
   if (color.startsWith('#')) {
     return hexToRgb(color);
   }

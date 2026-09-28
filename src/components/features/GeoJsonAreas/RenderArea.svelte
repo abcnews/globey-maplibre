@@ -1,0 +1,111 @@
+<script lang="ts">
+  import { getContext, untrack } from 'svelte';
+  import type { Map } from 'maplibre-gl';
+  import type { GeoJsonAreasLayer } from '../../../lib/data/jsonBlob.ts';
+  import {
+    buildTweenedColourExpression,
+    buildOpacityExpression,
+    buildStrokeWidthExpression,
+    buildFilterExpression
+  } from '../utils/geojson/expressions.ts';
+  import { filterFeaturesType } from '../utils/geojson/data.ts';
+  import {
+    addLayerWithZIndex,
+    removeLayerWithZIndex,
+    setLayerZIndex,
+    Z_INDEX_GEOJSON,
+    SUB_LAYER_OUTLINE_OFFSET
+  } from '../layers/layerUtils.ts';
+  import { tweenStopsExpression, MAPLIBRE_TWEEN_SCROLL_STATE_KEY } from '../Tween/utils.ts';
+
+  const mapRoot = getContext<{ map: Map }>('mapInstance');
+
+  let {
+    data,
+    config,
+    sourceId,
+    /** One opacity per panel (1 present / 0 absent), multiplied into every opacity paint property. */
+    opacityStops = [1],
+    /** This item's own config per panel — lets colour cross-fade panel to panel. */
+    configStops,
+    /** Global-state key this layer's fade follows. */
+    posKey = MAPLIBRE_TWEEN_SCROLL_STATE_KEY,
+    zIndex = Z_INDEX_GEOJSON
+  }: {
+    data: any;
+    config: GeoJsonAreasLayer;
+    sourceId: string;
+    opacityStops?: number[];
+    configStops?: (GeoJsonAreasLayer | undefined)[];
+    posKey?: string;
+    zIndex?: number;
+  } = $props();
+
+  const tweenFactor = $derived(tweenStopsExpression(opacityStops, posKey));
+
+  const fillLayerId = $derived(`${sourceId}-fill`);
+  const outlineLayerId = $derived(`${sourceId}-outline`);
+
+  // Add the source and the fill + outline layer once, on mount. Paint/filter are
+  // then kept in sync with `config` by the effect below, in place, so builder
+  // edits update live without tearing down and re-adding the layers (no flash).
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map) return;
+
+    // zIndex is read untracked: tracking it tore down and re-added the layers (a visible
+    // flash) whenever another layer's toggle shifted this one's stack position. The
+    // restack effect below moves them in place instead.
+    untrack(() => {
+      const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, {
+          type: 'geojson',
+          data: filterFeaturesType(data, ['Polygon', 'MultiPolygon']) || { type: 'FeatureCollection', features: [] }
+        });
+      }
+      if (!map.getLayer(fillLayerId)) {
+        addLayerWithZIndex(map, { id: fillLayerId, type: 'fill', source: sourceId, paint: {} }, outlineZ);
+      }
+      if (!map.getLayer(outlineLayerId)) {
+        addLayerWithZIndex(map, { id: outlineLayerId, type: 'line', source: sourceId, paint: {} }, zIndex);
+      }
+    });
+
+    return () => {
+      removeLayerWithZIndex(map, fillLayerId);
+      removeLayerWithZIndex(map, outlineLayerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+    };
+  });
+
+  // Restack in place when this layer's position in `blob.layers` shifts.
+  $effect(() => {
+    const map = mapRoot.map;
+    const outlineZ = zIndex - SUB_LAYER_OUTLINE_OFFSET;
+    if (!map || !map.getLayer(fillLayerId) || !map.getLayer(outlineLayerId)) return;
+
+    setLayerZIndex(map, fillLayerId, outlineZ);
+    setLayerZIndex(map, outlineLayerId, zIndex);
+  });
+
+  $effect(() => {
+    const map = mapRoot.map;
+    if (!map || !map.getLayer(fillLayerId)) return;
+
+    const filter = buildFilterExpression(config.filter) ?? null;
+    map.setFilter(fillLayerId, filter);
+    map.setFilter(outlineLayerId, filter);
+
+    map.setPaintProperty(fillLayerId, 'fill-color', buildTweenedColourExpression(configStops, config, 'fill', posKey));
+    map.setPaintProperty(fillLayerId, 'fill-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'fill')]);
+
+    map.setPaintProperty(
+      outlineLayerId,
+      'line-color',
+      buildTweenedColourExpression(configStops, config, 'stroke', posKey)
+    );
+    map.setPaintProperty(outlineLayerId, 'line-width', buildStrokeWidthExpression(config));
+    map.setPaintProperty(outlineLayerId, 'line-opacity', ['*', tweenFactor, buildOpacityExpression(config, 'stroke')]);
+  });
+</script>

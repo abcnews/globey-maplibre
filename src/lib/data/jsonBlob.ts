@@ -47,60 +47,80 @@ export const geoJsonColourConfigSchema = z.object({
 export type GeoJsonColourConfig = z.infer<typeof geoJsonColourConfigSchema>;
 
 /**
- * 3D spike configuration schema
- */
-export const geoJsonSpikeSchema = z.object({
-  heightProp: z.string().optional(),
-  scalar: z.number().optional(),
-  maxHeight: z.number().optional(),
-  radius: z.number().optional(),
-  min: z.number().optional(),
-  max: z.number().optional()
-});
-export type GeoJsonSpike = z.infer<typeof geoJsonSpikeSchema>;
-
-/**
  * Animation clock transition mode for an individual layer
  */
 export const animationClockSchema = z.enum(['scroll', 'immediate']);
 export type AnimationClock = z.infer<typeof animationClockSchema>;
 
 /**
- * Base layer definition schema with common properties: UUID and user-facing label/name.
+ * Base layer definition schema with common properties: the layer's unique `id` and animation clock.
  * Rendering stack order comes from each layer's position in `GlobeJsonBlob.layers`, not a stored field.
  */
+/** Valid layer id: lowercase letters and numbers only (ACTO-safe). */
+export const LAYER_ID_PATTERN = /^[a-z0-9]+$/;
+
 const baseLayerObject = {
-  /** Unique identifier / UUID for the layer */
-  id: z.string(),
-  /** Friendly, lowercase-alphanumeric name for identifying the layer in the Builder */
-  name: z
+  /**
+   * Unique, user-editable, lowercase-alphanumeric id. It is at once the MapLibre source/layer
+   * key, the Builder's display title, and the marker token key (`LAYER<id>on`) — hence ACTO's
+   * `[a-z0-9]` alphabet.
+   */
+  id: z
     .string()
-    .regex(/^[a-z0-9]*$/, 'Lowercase letters and numbers only')
-    .optional(),
+    .min(1, 'Layer ID cannot be empty')
+    .regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
 
 /**
- * GeoJSON Layer schema
+ * Fields shared by every GeoJSON layer kind (Areas, Lines, Points): the data source plus
+ * filter and colour styling.
  */
-export const geoJsonLayerSchema = z.object({
+const geoJsonCommonObject = {
   ...baseLayerObject,
-  type: z.literal('geojson'),
   cmid: z.number().optional(),
   url: z.string().optional(),
-  geometryType: z.enum(['areas', 'lines', 'points', 'spikes']).default('areas'),
   colourMode: z.enum(['scale', 'simple', 'basic']).default('simple'),
   colourProp: z.string().optional(),
   colourConfig: geoJsonColourConfigSchema.optional(),
-  isOpaque: z.boolean().default(false),
-  filter: geoJsonFilterSchema.optional(),
-  pointSize: sizeSchema.optional(),
-  lineWidth: sizeSchema.optional(),
-  lineAnimationStyle: z.enum(['fade', 'draw']).default('fade'),
-  spike: geoJsonSpikeSchema.optional()
+  filter: geoJsonFilterSchema.optional()
+};
+
+/** GeoJSON polygon layer (Polygon / MultiPolygon features) */
+export const geoJsonAreasLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonAreas'),
+  isOpaque: z.boolean().default(false)
 });
-export type GeoJsonLayer = z.infer<typeof geoJsonLayerSchema>;
+export type GeoJsonAreasLayer = z.infer<typeof geoJsonAreasLayerSchema>;
+
+/** GeoJSON line layer (LineString / MultiLineString features) */
+export const geoJsonLinesLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonLines'),
+  lineWidth: sizeSchema.optional(),
+  lineAnimationStyle: z.enum(['fade', 'draw']).default('fade')
+});
+export type GeoJsonLinesLayer = z.infer<typeof geoJsonLinesLayerSchema>;
+
+/** GeoJSON point layer (Point / MultiPoint features) */
+export const geoJsonPointsLayerSchema = z.object({
+  ...geoJsonCommonObject,
+  type: z.literal('geojsonPoints'),
+  isOpaque: z.boolean().default(false),
+  pointSize: sizeSchema.optional()
+});
+export type GeoJsonPointsLayer = z.infer<typeof geoJsonPointsLayerSchema>;
+
+export type GeoJsonAnyLayer = GeoJsonAreasLayer | GeoJsonLinesLayer | GeoJsonPointsLayer;
+type GeoJsonLayerKind = GeoJsonAnyLayer['type'];
+
+/** Every GeoJSON layer kind, e.g. for marker colour overrides that apply to all three. */
+export const GEOJSON_LAYER_KINDS: GeoJsonLayerKind[] = ['geojsonAreas', 'geojsonLines', 'geojsonPoints'];
+
+export const isGeoJsonLayer = (layer: { type: string }): layer is GeoJsonAnyLayer =>
+  (GEOJSON_LAYER_KINDS as string[]).includes(layer.type);
 
 /**
  * Custom text label item schema
@@ -145,6 +165,30 @@ export const imageLayerSchema = z.object({
   coordinates: boundsSchema
 });
 export type ImageLayer = z.infer<typeof imageLayerSchema>;
+
+/**
+ * Gridded data layer (GeoTIFF). Only the styling config is stored — the file is fetched from
+ * `url` and decoded in the browser at render time.
+ */
+export const griddedLayerSchema = z.object({
+  ...baseLayerObject,
+  type: z.literal('gridded'),
+  url: z.string().default(''),
+  /** Band (sample) index */
+  band: z.number().default(0),
+  colourConfig: geoJsonColourConfigSchema.default({ paletteType: 'sequential', paletteVariant: 'blue' }),
+  /** Overrides the file's own nodata / `_FillValue` */
+  noData: z.number().optional(),
+  /** Values below `colourConfig.min` are transparent, instead of taking the lowest colour */
+  hideBelowMin: z.boolean().default(false),
+  /** Values above `colourConfig.max` are transparent, instead of taking the highest colour */
+  hideAboveMax: z.boolean().default(false),
+  /** Number of stepped colour classes; unset = continuous */
+  classes: z.number().optional(),
+  opacity: z.number().min(0).max(1).default(1),
+  resampling: z.enum(['linear', 'nearest']).default('linear')
+});
+export type GriddedLayer = z.infer<typeof griddedLayerSchema>;
 
 /**
  * Raster map tile layer schema
@@ -199,10 +243,13 @@ export type StreetMapLayer = z.infer<typeof streetMapLayerSchema>;
  * Discriminated union of all supported globe layers
  */
 export const globeLayerSchema = z.discriminatedUnion('type', [
-  geoJsonLayerSchema,
+  geoJsonAreasLayerSchema,
+  geoJsonLinesLayerSchema,
+  geoJsonPointsLayerSchema,
   customLabelsLayerSchema,
   iconLayerSchema,
   imageLayerSchema,
+  griddedLayerSchema,
   rasterLayerSchema,
   mapLabelsLayerSchema,
   streetMapLayerSchema
@@ -253,7 +300,12 @@ export const globeJsonBlobSchema = z.object({
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
   /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */
-  layers: z.array(globeLayerSchema).default([])
+  layers: z
+    .array(globeLayerSchema)
+    .default([])
+    .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
+      message: 'Layer IDs must be unique within the globe'
+    })
 });
 export type GlobeJsonBlob = z.infer<typeof globeJsonBlobSchema>;
 

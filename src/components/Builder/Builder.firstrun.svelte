@@ -1,8 +1,9 @@
 <script lang="ts">
   import { jsonBlob, hasStoredSession, loadStoredJsonBlob } from '../../lib/data/blobStore.ts';
   import { safeParseGlobeJsonBlob } from '../../lib/data/jsonBlob.ts';
+  import { createKitchenSinkBlob } from '../../lib/data/sampleBlobs.ts';
   import { loadGlobeJsonBlobByCmid } from '../../lib/data/loadBlobByCmid.ts';
-  import { parseCmid, isValidCmid } from './CmidInput/utils.ts';
+  import { parseCmid, isValidCmid } from '../shared/CmidInput/utils.ts';
   import { Modal, Loader } from '@abcnews/components-builder';
 
   interface Props {
@@ -36,6 +37,11 @@
 
   function handleNewSession() {
     jsonBlob.initNew();
+    onsuccess?.();
+  }
+
+  function handleLoadKitchenSink() {
+    jsonBlob.loadJson(createKitchenSinkBlob());
     onsuccess?.();
   }
 
@@ -95,6 +101,13 @@
           </span>
         </button>
       {/if}
+
+      <button type="button" class="firstrun-action-btn firstrun-action-btn--highlight" onclick={handleLoadKitchenSink}>
+        <strong>Load Kitchen Sink Demo</strong>
+        <span class="btn-subtext">
+          Pre-configured globe with Blue &amp; Black Marble, GeoJSON areas/lines/points, satellite overlay &amp; labels
+        </span>
+      </button>
 
       <button type="button" class="firstrun-action-btn" onclick={handleNewSession}>
         <strong>Create new session</strong>
@@ -230,6 +243,11 @@
     padding: 0.6rem 0.75rem;
     text-align: left;
     width: 100%;
+  }
+
+  .firstrun-action-btn--highlight {
+    border-color: var(--accent, #0058cc);
+    border-width: 2px;
   }
 
   .btn-subtext {

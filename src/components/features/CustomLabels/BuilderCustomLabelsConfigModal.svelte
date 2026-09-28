@@ -3,7 +3,7 @@
   import type * as maplibregl from 'maplibre-gl';
   import type { LabelItem } from '../../../lib/data/jsonBlob.ts';
   import { GeoAlt } from 'svelte-bootstrap-icons';
-  import { safeFlyTo } from '../../Builder/utils';
+  import { safeFlyTo } from '../PanZoom/utils.ts';
 
   interface Props {
     /** The array of Custom Labels being configured */

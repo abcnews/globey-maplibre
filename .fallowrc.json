@@ -1,0 +1,56 @@
+{
+  "$schema": "./node_modules/fallow/schema.json",
+  "ignoreDependencies": [
+    "@maplibre/maplibre-gl-style-spec",
+    "@abcnews/palette",
+    "d3-scale",
+    "geotiff",
+    "latlon-geohash",
+    "layercake",
+    "maplibre-gl",
+    "svelte",
+    "svelte-bootstrap-icons",
+    "svelte-check",
+    "throttle-debounce",
+    "topojson-client"
+  ],
+  "ignorePatterns": [
+    "scripts/storybook.js",
+    "src/lib/mocks/**",
+    "src/stories/**",
+    "svelte.config.js"
+  ],
+  "usedClassMembers": [
+    "easedT",
+    "fromConfig",
+    "toConfig"
+  ],
+  "rules": {
+    "boundary-violation": "error"
+  },
+  "boundaries": {
+    "zones": [
+      { "name": "lib", "patterns": ["src/lib/**"] },
+      { "name": "shared", "patterns": ["src/components/shared/**"] },
+      { "name": "features", "patterns": ["src/components/features/**"] },
+      {
+        "name": "globe",
+        "patterns": [
+          "src/components/CustomGlobe/**",
+          "src/components/ScrollytellerGlobe/**",
+          "src/components/PastedScrollyteller/**"
+        ]
+      },
+      { "name": "builder", "patterns": ["src/components/Builder/**"] },
+      { "name": "plugins", "patterns": ["src/plugins/**"] }
+    ],
+    "rules": [
+      { "from": "lib", "allow": [] },
+      { "from": "shared", "allow": ["lib"] },
+      { "from": "features", "allow": ["lib", "shared"] },
+      { "from": "globe", "allow": ["lib", "shared", "features"] },
+      { "from": "builder", "allow": ["lib", "shared", "features", "globe"] },
+      { "from": "plugins", "allow": ["lib"] }
+    ]
+  }
+}

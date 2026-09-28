@@ -1,6 +1,6 @@
 # Whole-layer fades
 
-How raster, image, and icon layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../GeoJson/README.md`](../GeoJson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
+How raster, image, and icon layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../utils/geojson/README.md`](../utils/geojson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
 
 ---
 
@@ -39,7 +39,7 @@ The satellite base map is handled by `CustomGlobe`, which folds the tile layer i
 
 ## Leaf handlers
 
-`MapRasterHandler`, `ImageSourceHandler`, and `IconHandler`:
+`LayerManager.svelte` runs `buildTweenedLayerEntries` per registered feature and mounts each feature's `LayerRenderer` (e.g. `MapRasterHandler`, `ImageSourceHandler`, `IconHandler`) with `LayerRendererProps` (`types.ts`). Leaf handlers:
 
 - Add their source and layer once on mount. The layer is added via `addFadingLayer` ([`./tweenedLayers.ts`](./tweenedLayers.ts)), passing `tweenStopsExpression(opacityStops, posKey)`.
 - Images and icons update coordinates on panel changes using `pickStop(coordStops, tween.fromPanel, ...)`. Coordinates snap at panel boundaries rather than animating.
@@ -59,7 +59,6 @@ The satellite base map is handled by `CustomGlobe`, which folds the tile layer i
 ## Adding a new whole-layer feature
 
 1. **Schema**: Add the layer schema to `globeLayerSchema` in [`../../../lib/data/jsonBlob.ts`](../../../lib/data/jsonBlob.ts).
-2. **Collection handler**: Model after `IconsHandler.svelte` using `buildTweenedLayerEntries`.
-3. **Leaf handler**: Model after `IconHandler.svelte` or `MapRasterHandler.svelte` using `addFadingLayer`.
-4. **Mounting**: Add the handler to [`CustomGlobe.svelte`](../../CustomGlobe/CustomGlobe.svelte), passing `perPanel={perPanel(d => d.myFeature ?? [])}`.
-5. **Builder modal**: Add configuration UI in `Builder*ConfigModal.svelte` if applicable.
+2. **Leaf handler**: Model after `IconHandler.svelte` or `MapRasterHandler.svelte` using `addFadingLayer`; take `LayerRendererProps<MyLayer>`.
+3. **Mounting**: Set `LayerRenderer` (and `coordsOf` if it snaps position) on the feature definition. `LayerManager` mounts it; no `CustomGlobe` change.
+4. **Builder modal**: Add configuration UI in `Builder*ConfigModal.svelte` if applicable.

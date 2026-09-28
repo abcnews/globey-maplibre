@@ -1,0 +1,270 @@
+<script lang="ts">
+  /**
+   * @file DistributionInput.svelte
+   *
+   * Visualises a dataset's distribution as a histogram and provides
+   * draggable handles to select a numeric range (min/max).
+   */
+  import { LayerCake, Svg, bin } from 'layercake';
+  import { scaleLinear, scaleSqrt } from 'd3-scale';
+
+  interface Props {
+    /** Values to bin. Pass a sample for large datasets (e.g. `sampleGridValues()`). */
+    values: number[];
+    min: number | undefined;
+    max: number | undefined;
+    /** Drag/arrow-key increment; defaults to 1/100th of the data range */
+    step?: number;
+    /** Optional CSS background (e.g. the palette gradient) drawn behind the bars */
+    background?: string;
+  }
+
+  let { values = [], min = $bindable(), max = $bindable(), step, background }: Props = $props();
+
+  // Create histogram bins with fixed granularity
+  let binnedData = $derived.by(() => {
+    const b = bin(values, (d: any) => d as number, { thresholds: 100 });
+    return b;
+  });
+
+  // Bounds of the actual data. `reduce` rather than `Math.min(...values)`, which overflows
+  // the call stack on large arrays.
+  let dataDomain = $derived.by(() => {
+    if (values.length === 0) return [0, 0];
+    return values.reduce(
+      ([lowest, highest]: number[], value: number) => [Math.min(lowest, value), Math.max(highest, value)],
+      [Infinity, -Infinity]
+    );
+  });
+
+  /** Rounds to a "nice" power of ten a hundredth of the range, so 0–1 data isn't snapped to integers. */
+  let effectiveStep = $derived.by(() => {
+    if (step) return step;
+    const range = dataDomain[1] - dataDomain[0];
+    return range > 0 ? Math.pow(10, Math.floor(Math.log10(range / 100))) : 1;
+  });
+
+  const snap = (value: number) => Number((Math.round(value / effectiveStep) * effectiveStep).toPrecision(12));
+
+  // Helper to get bar width
+  const getWidth = (d: any, xScale: any) => {
+    const w = xScale(d.x1) - xScale(d.x0);
+    return Math.max(0, w - 1); // 1px gap
+  };
+
+  /**
+   * Helper to get bar height.
+   * Ensures small non-zero values have a minimum visual height.
+   */
+  const getHeight = (d: any, yScale: any, totalHeight: number) => {
+    if (d.length === 0) return 0;
+    const h = totalHeight - yScale(d.length);
+    return Math.max(2, h); // Minimum 2px height for any non-zero bin
+  };
+
+  // Draggable logic
+  let container = $state<HTMLElement>();
+  let dragging = $state<'min' | 'max' | null>(null);
+  let currentXScale = $state<any>();
+
+  function onPointerMove(e: PointerEvent) {
+    if (!dragging || !container || !currentXScale) return;
+
+    const rect = container.getBoundingClientRect();
+    const x = e.clientX - rect.left - 10;
+    const val = currentXScale.invert(x);
+
+    const clampedVal = Math.max(dataDomain[0], Math.min(dataDomain[1], val));
+    const roundedVal = snap(clampedVal);
+
+    if (dragging === 'min') {
+      min = Math.min(roundedVal, max ?? Infinity);
+    } else if (dragging === 'max') {
+      max = Math.max(roundedVal, min ?? -Infinity);
+    }
+  }
+
+  function onPointerUp() {
+    dragging = null;
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+  }
+
+  function startDragging(e: PointerEvent, type: 'min' | 'max', xScale: any) {
+    e.preventDefault();
+    dragging = type;
+    currentXScale = xScale;
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }
+
+  function onHandleKeyDown(e: KeyboardEvent, type: 'min' | 'max') {
+    const increment = effectiveStep;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (type === 'min' && min !== undefined) {
+        min = snap(Math.max(dataDomain[0], min - increment));
+      } else if (type === 'max' && max !== undefined) {
+        max = snap(Math.max(min ?? dataDomain[0], max - increment));
+      }
+    } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (type === 'min' && min !== undefined) {
+        min = snap(Math.min(max ?? dataDomain[1], min + increment));
+      } else if (type === 'max' && max !== undefined) {
+        max = snap(Math.min(dataDomain[1], max + increment));
+      }
+    }
+  }
+</script>
+
+<div class="distribution-container" style="touch-action: none">
+  <div class="chart-wrapper" bind:this={container} style:background>
+    {#if values.length > 0}
+      <LayerCake
+        data={binnedData}
+        x={(d: any) => [d.x0, d.x1]}
+        y={(d: any) => d.length}
+        xScale={scaleLinear()}
+        yScale={scaleSqrt()}
+        padding={{ top: 5, right: 10, bottom: 0, left: 10 }}
+        let:data={cakeData}
+        let:xScale
+        let:yScale
+        let:height
+      >
+        <Svg>
+          <g class="bars">
+            {#each cakeData as any[] as d (d.x0)}
+              <rect
+                x={xScale(d.x0)}
+                y={height - getHeight(d, yScale, height)}
+                width={getWidth(d, xScale)}
+                height={getHeight(d, yScale, height)}
+                fill="var(--builder-color-primary, #0070c9)"
+                fill-opacity="0.5"
+              />
+            {/each}
+          </g>
+
+          {#if min !== undefined && max !== undefined}
+            {@const x1 = xScale(min)}
+            {@const x2 = xScale(max)}
+            <rect
+              x={Math.min(x1, x2)}
+              y="0"
+              width={Math.abs(x2 - x1)}
+              {height}
+              fill="var(--builder-color-primary, #0070c9)"
+              fill-opacity="0.1"
+            />
+
+            <!-- Min handle -->
+            <g
+              class="handle-group"
+              role="slider"
+              tabindex="0"
+              aria-label="Minimum value"
+              aria-valuenow={min}
+              aria-valuemin={dataDomain[0]}
+              aria-valuemax={max ?? dataDomain[1]}
+              onpointerdown={e => startDragging(e, 'min', xScale)}
+              onkeydown={e => onHandleKeyDown(e, 'min')}
+            >
+              <line {x1} y1="0" x2={x1} y2={height} class="handle-line" />
+              <line {x1} y1="0" x2={x1} y2={height} class="hit-area" />
+            </g>
+
+            <!-- Max handle -->
+            <g
+              class="handle-group"
+              role="slider"
+              tabindex="0"
+              aria-label="Maximum value"
+              aria-valuenow={max}
+              aria-valuemin={min ?? dataDomain[0]}
+              aria-valuemax={dataDomain[1]}
+              onpointerdown={e => startDragging(e, 'max', xScale)}
+              onkeydown={e => onHandleKeyDown(e, 'max')}
+            >
+              <line x1={x2} y1="0" {x2} y2={height} class="handle-line" />
+              <line x1={x2} y1="0" {x2} y2={height} class="hit-area" />
+            </g>
+          {/if}
+        </Svg>
+      </LayerCake>
+    {:else}
+      <div class="no-data">No numeric data to display</div>
+    {/if}
+  </div>
+
+  <div class="inputs">
+    <div class="input-group">
+      <label for="dist-min">Min</label>
+      <input id="dist-min" type="number" bind:value={min} step="any" />
+    </div>
+    <div class="input-group">
+      <label for="dist-max">Max</label>
+      <input id="dist-max" type="number" bind:value={max} step="any" />
+    </div>
+  </div>
+</div>
+
+<style>
+  .distribution-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-block: 0.5rem;
+    width: 100%;
+  }
+  .chart-wrapper {
+    height: 60px;
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid var(--border, rgba(122, 123, 135, 0.5));
+    opacity: 0.8;
+    overflow: hidden;
+    padding-bottom: 5px;
+  }
+  .no-data {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .handle-group {
+    cursor: col-resize;
+  }
+  .handle-line {
+    stroke: currentColor;
+    stroke-width: 1.5;
+    stroke-dasharray: 2, 2;
+    transition:
+      stroke-width 0.2s,
+      stroke-dasharray 0.2s;
+  }
+  .hit-area {
+    stroke: transparent;
+    stroke-width: 16;
+  }
+  .handle-group:hover .handle-line {
+    stroke-width: 2.5;
+    stroke-dasharray: none;
+  }
+  .inputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+  }
+  .input-group label {
+    margin-bottom: 2px;
+  }
+  .input-group input {
+    width: 100%;
+  }
+</style>

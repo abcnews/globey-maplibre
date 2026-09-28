@@ -9,7 +9,7 @@ const blobWith = (layers: GlobeLayer[]) => parseGlobeJsonBlob({ layers });
 
 describe('stackLayers', () => {
   it('derives z-indices that increase with array order', () => {
-    const stacked = stackLayers(blobWith([layer('a', 'streetMap'), layer('b', 'geojson'), layer('c', 'customLabels')]));
+    const stacked = stackLayers(blobWith([layer('a', 'streetMap'), layer('b', 'geojsonAreas'), layer('c', 'customLabels')]));
 
     expect(stacked.map(l => l.id)).toEqual(['a', 'b', 'c']);
     expect(stacked[1].zIndex - stacked[0].zIndex).toBe(STACK_SPACING);
@@ -25,7 +25,7 @@ describe('layersOfKind / singletonOfKind', () => {
   const stacked = stackLayers(
     blobWith([
       layer('r1', 'raster', { url: 'https://example.com/{z}/{x}/{y}.png' }),
-      layer('g1', 'geojson'),
+      layer('g1', 'geojsonAreas'),
       layer('r2', 'raster', { url: 'https://example.com/b/{z}/{x}/{y}.png' })
     ])
   );
@@ -46,7 +46,7 @@ describe('layersOfKind / singletonOfKind', () => {
 });
 
 describe('moveLayer', () => {
-  const layers = [layer('a', 'geojson'), layer('b', 'geojson'), layer('c', 'geojson')];
+  const layers = [layer('a', 'geojsonAreas'), layer('b', 'geojsonAreas'), layer('c', 'geojsonAreas')];
   const ids = (result: GlobeLayer[]) => result.map(l => l.id);
 
   it('moves a layer up and down', () => {

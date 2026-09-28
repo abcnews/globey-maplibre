@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
-  import type { Stacked } from '../../../lib/data/stack.ts';
+  import type { LayerRendererProps } from '../types.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
@@ -21,21 +21,12 @@
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const tween = getTween();
 
-  let {
-    config,
-    id = config.id,
-    zIndex = config.zIndex,
-    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
-    opacityStops = [1],
-    /** One `[lng, lat]` per panel; null where the icon is absent. */
-    coordStops = [config.coords ?? null]
-  }: {
-    config: Stacked<IconLayer>;
-    id?: string;
-    zIndex?: number;
-    opacityStops?: number[];
-    coordStops?: ([number, number] | null)[];
-  } = $props();
+  let { config, opacityStops, coordStops: rawCoordStops }: LayerRendererProps<IconLayer> = $props();
+
+  const id = $derived(config.id);
+  const zIndex = $derived(config.zIndex);
+  /** One `[lng, lat]` per panel (via `iconFeature.coordsOf`); null where the icon is absent. */
+  const coordStops = $derived(rawCoordStops as ([number, number] | null)[]);
 
   // The fade reads this clock's uniform; the coordinate snap reads the same
   // clock's panel index, so position and opacity stay in step.

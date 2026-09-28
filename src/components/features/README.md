@@ -41,14 +41,15 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 - Use `addLayerWithZIndex` and `removeLayerWithZIndex` from [./layers/layerUtils.ts](./layers/layerUtils.ts). Never call `map.addLayer()` or `map.removeLayer()` directly.
 - Separate layer lifecycle (adding/removing layers on mount/unmount) from data updates. Combining both in one effect tears down the layer each time it updates, resulting in a visual flash of that layer.
 - Update data in place (e.g. `source.setData()`, `source.setCoordinates()`, `map.setPaintProperty()`, `map.setLayoutProperty()`) rather than re-creating layers whenever possible.
-- For collections, use stable keys in `{#each}` loops (`item.id || index`).
+- The renderer handles one layer, taking `LayerRendererProps<T>` (`types.ts`). `LayerManager` (`layers/LayerManager.svelte`) mounts one per layer id across all panels.
 
 ### Example Reference
 
-- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte) and [Icon/IconsHandler.svelte](./Icon/IconsHandler.svelte)
-- Single/Collection map renderer: [GeoJson/GeoJsonHandler.svelte](./GeoJson/GeoJsonHandler.svelte) and [GeoJson/GeoJsonsHandler.svelte](./GeoJson/GeoJsonsHandler.svelte)
+- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte)
+- Renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
-- Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte) and [MapRaster/MapRastersHandler.svelte](./MapRaster/MapRastersHandler.svelte)
+- Renderer that decodes and colours data client-side: [Gridded/GriddedHandler.svelte](./Gridded/GriddedHandler.svelte)
+- Raster tile renderer: [MapRaster/MapRasterHandler.svelte](./MapRaster/MapRasterHandler.svelte)
 
 ---
 
@@ -63,13 +64,13 @@ If the feature is configurable by the user in the builder interface, create a mo
 - **Real-time Live Editing**: Bind form inputs directly to `config` (e.g. `bind:value={config.field}`, `bind:checked={config.field}`) so the user sees changes update live on the map as they interact.
 - Provide a single **OK** dismissal button in `footerChildren` (`<button type="button" onclick={() => onclose?.()}>OK</button>`).
 - For string attributes containing literal curly braces (such as tile URL templates `{z}/{x}/{y}`), pass them as JavaScript string expressions (`placeholder={'https://example.com/{z}/{x}/{y}.png'}`) to avoid Svelte template expression parsing errors.
-- For CMID inputs, use [../Builder/CmidInput/CmidInput.svelte](../Builder/CmidInput/CmidInput.svelte) with `type="text"`, `inputmode="numeric"`, and `pattern="[0-9]*"`.
+- For CMID inputs, use [../shared/CmidInput/CmidInput.svelte](../shared/CmidInput/CmidInput.svelte) with `type="text"`, `inputmode="numeric"`, and `pattern="[0-9]*"`.
 
 ### Example Reference
 
 - Live Toggle Modal: [MapLabels/BuilderMapLabelsConfigModal.svelte](./MapLabels/BuilderMapLabelsConfigModal.svelte)
 - Live Preset & URL Modal: [MapRaster/BuilderRasterConfigModal.svelte](./MapRaster/BuilderRasterConfigModal.svelte)
-- Multi-Tab Modal: [GeoJson/BuilderGeoJsonConfigModal.svelte](./GeoJson/BuilderGeoJsonConfigModal.svelte)
+- Shared Multi-Tab Modal: [utils/geojson/BuilderGeoJsonModal.svelte](./utils/geojson/BuilderGeoJsonModal.svelte), wrapped by [GeoJsonLines/BuilderGeoJsonLinesModal.svelte](./GeoJsonLines/BuilderGeoJsonLinesModal.svelte)
 - Import-driven Modal: [ImageSource/BuilderImageSourceConfigModal.svelte](./ImageSource/BuilderImageSourceConfigModal.svelte)
 
 ---
@@ -87,7 +88,7 @@ Create an `index.ts` file in your feature directory exporting an object that imp
 ```ts
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { MyFeatureLayer } from '../../../lib/data/jsonBlob.ts';
-import { newLayerId } from '../layerOps.ts';
+import { newLayerId } from '../utils/layerOps.ts';
 import { MyIcon } from 'svelte-bootstrap-icons';
 import BuilderMyFeatureModal from './BuilderMyFeatureModal.svelte';
 import MyFeatureHandler from './MyFeatureHandler.svelte';
@@ -110,7 +111,7 @@ export const myFeature: LayerFeatureDefinition<MyFeatureLayer> = {
   },
 
   ConfigModal: BuilderMyFeatureModal,
-  MapRenderer: MyFeatureHandler
+  LayerRenderer: MyFeatureHandler
 };
 ```
 
@@ -124,7 +125,7 @@ export const myFeature: LayerFeatureDefinition<MyFeatureLayer> = {
 Layer action buttons displayed in the Builder's layer list (e.g. edit modal, delete, or custom actions like adding items) are defined via `buttons` or generated using standard helpers from [./buttonHelpers.ts](./buttonHelpers.ts):
 
 ```ts
-import { createEditButton, createDeleteButton } from '../buttonHelpers.ts';
+import { createEditButton, createDeleteButton } from '../utils/buttonHelpers.ts';
 import { Plus } from 'svelte-bootstrap-icons';
 
 // Standard edit and delete buttons:
@@ -172,7 +173,7 @@ interactivePlacement: {
 ### Example Reference
 
 - Multi-Item Feature: [Icon/index.ts](./Icon/index.ts)
-- Complex Multi-Rule Feature: [GeoJson/index.ts](./GeoJson/index.ts)
+- Feature using shared helpers: [GeoJsonPoints/index.ts](./GeoJsonPoints/index.ts)
 - Single-Toggle Feature: [MapLabels/index.ts](./MapLabels/index.ts)
 - Custom Button Feature: [CustomLabels/index.ts](./CustomLabels/index.ts)
 - Base Layer Feature: [MapVector/index.ts](./MapVector/index.ts)
@@ -185,7 +186,7 @@ interactivePlacement: {
 Add your feature definition to `layerFeatureRegistry` in [./index.ts](./index.ts).
 
 ```ts
-import { geoJsonFeature } from './GeoJson/index.ts';
+import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
 import { iconFeature } from './Icon/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
@@ -194,7 +195,7 @@ import { streetMapFeature } from './MapVector/index.ts';
 import { rasterFeature } from './MapRaster/index.ts';
 
 export const layerFeatureRegistry = [
-  geoJsonFeature,
+  geoJsonAreasFeature,
   iconFeature,
   imageSourceFeature,
   mapLabelsFeature,
@@ -236,3 +237,26 @@ If the feature renders visual elements on the map, import its handler component 
 - [ ] Feature exported and added to `layerFeatureRegistry` in [./index.ts](./index.ts).
 - [ ] Map handler mounted in [../CustomGlobe/CustomGlobe.svelte](../CustomGlobe/CustomGlobe.svelte).
 - [ ] Unit tests added (`index.test.ts`).
+
+## Shared code
+
+Code used by more than one feature lives in [utils/](./utils/), not in a feature folder: `layerOps.ts`, `buttonHelpers.ts`, `LayerSettingsFields.svelte`, [utils/geojson/](./utils/geojson/README.md) and `utils/colourScale/` (palette picker, histogram, `getPaletteInterpolator`, shared by GeoJSON scale mode and Gridded). Folders directly under `features/` are features only.
+
+### Gridded
+
+`Gridded/` shows a GeoTIFF from a URL, coloured by a palette and min/max.
+
+- `data/`: `loadGrid` (cached download + `decodeGeoTiff` via `geotiff`) and `normaliseGrid` (longitudes within −180…180). Both return/take a `DecodedGrid`.
+- `render/`: `renderGridPixels` colours the grid into an image laid out in Web Mercator; `sampleGridValues` feeds the histogram.
+- `GriddedHandler.svelte`: MapLibre `image` source; style changes call `updateImage({ image })`.
+
+### GeoJSON
+
+GeoJSON is three separate features: `GeoJsonAreas/`, `GeoJsonLines/`, `GeoJsonPoints/` (blob types `geojsonAreas`, `geojsonLines`, `geojsonPoints`). There is no `geometryType`. They share [utils/geojson/](./utils/geojson/README.md):
+
+- `BuilderGeoJsonModal.svelte`: one config modal. Each feature's modal wraps it and adds its own fields via the `kindFields` snippet.
+- `GeoJsonLoader.svelte`: fetches the data for each `GeoJson*Handler.svelte`.
+- `expressions.ts`: paint builders typed on `GeoJsonStyle`, which all three layer types satisfy.
+- `feature.ts`: shared `buttons` and `isValid`.
+
+Use `isGeoJsonLayer()` / `GEOJSON_LAYER_KINDS` (`src/lib/data/jsonBlob.ts`) for code that applies to all three, e.g. marker colour overrides.

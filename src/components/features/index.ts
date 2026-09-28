@@ -1,24 +1,30 @@
 export * from './types.ts';
-export * from './layerOps.ts';
-export * from './buttonHelpers.ts';
+export * from './utils/layerOps.ts';
+export * from './utils/buttonHelpers.ts';
 export * from './layers/layerManager.ts';
 export * from './layers/layerUtils.ts';
 
 import type { LayerAddMenuItem, LayerFeatureDefinition } from './types.ts';
 
-import { geoJsonFeature } from './GeoJson/index.ts';
+import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
+import { geoJsonLinesFeature } from './GeoJsonLines/index.ts';
+import { geoJsonPointsFeature } from './GeoJsonPoints/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
 import { iconFeature } from './Icon/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
+import { griddedFeature } from './Gridded/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
 import { customLabelsFeature } from './CustomLabels/index.ts';
 import { streetMapFeature } from './MapVector/index.ts';
 import { rasterFeature } from './MapRaster/index.ts';
 
 export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
-  geoJsonFeature,
+  geoJsonAreasFeature,
+  geoJsonLinesFeature,
+  geoJsonPointsFeature,
   iconFeature,
   imageSourceFeature,
+  griddedFeature,
   mapLabelsFeature,
   customLabelsFeature,
   streetMapFeature,
@@ -39,22 +45,9 @@ const menuItemFor = (feature: LayerFeatureDefinition<any>): LayerAddMenuItem => 
 
 /**
  * The Add Layer menu is the feature registry, in registry order, plus the one entry that
- * generates layers rather than adding a blank one. Whether an entry is currently selectable
+ * generates (Areas) layers rather than adding a blank one. Whether an entry is currently selectable
  * is `canAddFeature()`'s call, not a per-entry `canAdd`.
  */
 export const layerAddMenuRegistry: LayerAddMenuItem[] = layerFeatureRegistry.flatMap(feature =>
-  feature === geoJsonFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
+  feature === geoJsonPointsFeature ? [menuItemFor(feature), highlightFeaturesMenuItem] : [menuItemFor(feature)]
 );
-
-export * from './GeoJson/index.ts';
-export * from './HighlightFeatures/index.ts';
-export * from './Icon/index.ts';
-export * from './ImageSource/index.ts';
-export * from './MapLabels/index.ts';
-export * from './CustomLabels/index.ts';
-export * from './PanZoom/index.ts';
-export * from './MapRaster/index.ts';
-export * from './MapVector/index.ts';
-export * from './Minimap/index.ts';
-export * from './Attribution/index.ts';
-export * from './Projection/index.ts';

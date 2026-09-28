@@ -1,10 +1,8 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { GlobeJsonBlob, StreetMapLayer } from '../../../lib/data/jsonBlob.ts';
-import { newLayerId } from '../layerOps.ts';
+import { newLayerId } from '../utils/layerOps.ts';
 import { Map as MapIcon } from 'svelte-bootstrap-icons';
-import { createDeleteButton } from '../buttonHelpers.ts';
-import MapVectorHandler from './MapVectorHandler.svelte';
-
+import { createDeleteButton } from '../utils/buttonHelpers.ts';
 
 export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
   kind: 'streetMap',
@@ -20,9 +18,5 @@ export const streetMapFeature: LayerFeatureDefinition<StreetMapLayer> = {
       type: 'streetMap',
       hideOsm: false
     };
-  },
-
-  MapRenderer: MapVectorHandler
+  }
 };
-
-export { default as MapVectorHandler } from './MapVectorHandler.svelte';

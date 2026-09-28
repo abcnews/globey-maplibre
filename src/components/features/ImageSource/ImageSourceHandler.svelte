@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ImageLayer } from '../../../lib/data/jsonBlob.ts';
-  import type { Stacked } from '../../../lib/data/stack.ts';
+  import type { LayerRendererProps } from '../types.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
   import { removeLayerWithZIndex, setLayerZIndex, Z_INDEX_IMAGE_LAYERS } from '../layers/layerUtils.ts';
@@ -11,19 +11,11 @@
   const mapRoot = getContext<{ map: maplibregl.Map }>('mapInstance');
   const tween = getTween();
 
-  let {
-    config,
-    zIndex = config.zIndex,
-    /** One opacity per panel (1 present / 0 absent). `[1]` = always visible. */
-    opacityStops = [1],
-    /** One coordinate set per panel; null where the image is absent. */
-    coordStops = [config.coordinates ?? null]
-  }: {
-    config: Stacked<ImageLayer>;
-    zIndex?: number;
-    opacityStops?: number[];
-    coordStops?: (number[][] | null)[];
-  } = $props();
+  let { config, opacityStops, coordStops: rawCoordStops }: LayerRendererProps<ImageLayer> = $props();
+
+  const zIndex = $derived(config.zIndex);
+  /** One coordinate set per panel (via `imageSourceFeature.coordsOf`); null where the image is absent. */
+  const coordStops = $derived(rawCoordStops as (number[][] | null)[]);
 
   const DEFAULT_COORDS: number[][] = [
     [0, 0],

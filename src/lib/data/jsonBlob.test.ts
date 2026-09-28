@@ -23,6 +23,23 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.strictEqual(result.sourceCmid, 106753230);
   });
 
+  it('should fill gridded layer defaults and round-trip', () => {
+    const result = parseGlobeJsonBlob({ layers: [{ id: 'temps', type: 'gridded', url: 'https://example.com/t.tif' }] });
+    const [layer] = result.layers;
+    assert.deepStrictEqual(layer, {
+      id: 'temps',
+      type: 'gridded',
+      url: 'https://example.com/t.tif',
+      band: 0,
+      colourConfig: { paletteType: 'sequential', paletteVariant: 'blue' },
+      hideBelowMin: false,
+      hideAboveMax: false,
+      opacity: 1,
+      resampling: 'linear'
+    });
+    assert.deepStrictEqual(parseGlobeJsonBlob(formatGlobeJsonBlob(result)), result);
+  });
+
   it('should validate and parse complete JSON blob with multiple layer types', () => {
     const rawBlob = {
       version: 1,
@@ -43,22 +60,18 @@ describe('globeJsonBlobSchema (Zod)', () => {
       },
       layers: [
         {
-          id: 'layer-raster-1',
-          name: 'satellite',
+          id: 'satellite',
           type: 'raster',
           url: 'https://example.com/raster/{z}/{x}/{y}.png'
         },
         {
-          id: 'layer-geojson-fires',
-          name: 'fires',
-          type: 'geojson',
+          id: 'fires',
+          type: 'geojsonPoints',
           cmid: 123456,
-          geometryType: 'points',
           colourMode: 'simple'
         },
         {
-          id: 'layer-custom-labels',
-          name: 'labels',
+          id: 'labels',
           type: 'customLabels',
           labels: [
             {
@@ -70,15 +83,13 @@ describe('globeJsonBlobSchema (Zod)', () => {
           ]
         },
         {
-          id: 'layer-icon-1',
-          name: 'evac',
+          id: 'evac',
           type: 'icon',
           cmid: 998877,
           coords: [150.5, -34.2]
         },
         {
-          id: 'layer-image-1',
-          name: 'radar',
+          id: 'radar',
           type: 'image',
           url: 'https://example.com/radar.png',
           coordinates: [
@@ -89,15 +100,13 @@ describe('globeJsonBlobSchema (Zod)', () => {
           ]
         },
         {
-          id: 'layer-map-labels',
-          name: 'builtinlabels',
+          id: 'builtinlabels',
           type: 'mapLabels',
           countriesMajor: true,
           cities: true
         },
         {
-          id: 'layer-osm',
-          name: 'osm',
+          id: 'osm',
           type: 'streetMap',
           hideOsm: false
         }
@@ -107,10 +116,9 @@ describe('globeJsonBlobSchema (Zod)', () => {
     const parsed = parseGlobeJsonBlob(rawBlob);
     assert.strictEqual(parsed.title, 'Bushfire Scrollyteller 2026');
     assert.strictEqual(parsed.layers.length, 7);
-    assert.strictEqual(parsed.layers[1].type, 'geojson');
-    if (parsed.layers[1].type === 'geojson') {
+    assert.strictEqual(parsed.layers[1].type, 'geojsonPoints');
+    if (parsed.layers[1].type === 'geojsonPoints') {
       assert.strictEqual(parsed.layers[1].cmid, 123456);
-      assert.strictEqual(parsed.layers[1].geometryType, 'points');
     }
   });
 
@@ -128,10 +136,8 @@ describe('globeJsonBlobSchema (Zod)', () => {
       },
       layers: [
         {
-          id: 'fires-layer',
-          name: 'fires',
-          type: 'geojson',
-          geometryType: 'areas',
+          id: 'fires',
+          type: 'geojsonAreas',
           colourMode: 'scale',
           isOpaque: false
         }
@@ -143,6 +149,23 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.strictEqual(parsed.title, 'Test');
     assert.strictEqual(parsed.map.base, 'dark');
     assert.strictEqual(parsed.layers.length, 1);
+  });
+
+  it('rejects duplicate layer ids', () => {
+    assert.throws(() =>
+      parseGlobeJsonBlob({
+        layers: [
+          { id: 'fires', type: 'raster', url: 'https://example.com/{z}/{x}/{y}.png' },
+          { id: 'fires', type: 'raster', url: 'https://example.com/{z}/{x}/{y}.png' }
+        ]
+      })
+    );
+  });
+
+  it('rejects non-alphanumeric layer ids', () => {
+    assert.throws(() =>
+      parseGlobeJsonBlob({ layers: [{ id: 'fire-layer', type: 'raster', url: 'https://example.com/{z}/{x}/{y}.png' }] })
+    );
   });
 
   it('safeParseGlobeJsonBlob should handle invalid layer structures gracefully', () => {

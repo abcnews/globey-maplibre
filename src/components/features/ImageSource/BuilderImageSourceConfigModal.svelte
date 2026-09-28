@@ -8,7 +8,7 @@
   import FilenameImportButton from './FilenameImportButton.svelte';
   import { isValidUrl } from '../../../lib/data/layerHelpers.ts';
   import { parseFilenameCoords, parseCoordinates, calculateBoundsFromWidth } from './utils.ts';
-  import LayerSettingsFields from '../LayerSettingsFields.svelte';
+  import LayerSettingsFields from '../utils/LayerSettingsFields.svelte';
 
   let {
     config = $bindable(),
@@ -21,7 +21,7 @@
   let url = $state(untrack(() => $state.snapshot(config)?.url || ''));
   let coordsString = $state(untrack(() => JSON.stringify($state.snapshot(config)?.coordinates || [])));
   let animationClock = $state(untrack(() => $state.snapshot(config)?.animationClock));
-  let name = $state(untrack(() => $state.snapshot(config)?.name));
+  let id = $state(untrack(() => $state.snapshot(config).id));
 
   $effect(() => {
     if (url) {
@@ -50,11 +50,10 @@
     }
 
     Object.assign(config, {
-      id: config?.id || Date.now().toString(),
+      id,
       url,
       coordinates,
-      animationClock,
-      name
+      animationClock
     });
     onclose?.();
   }
@@ -139,7 +138,7 @@
         </div>
       </fieldset>
 
-      <LayerSettingsFields bind:animationClock bind:name />
+      <LayerSettingsFields bind:animationClock bind:id />
     </div>
 
     <div class="modal-preview">

@@ -3,8 +3,8 @@
   import { untrack } from 'svelte';
   import type { IconLayer } from '../../../lib/data/jsonBlob.ts';
   import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
-  import CmidInput from '../../Builder/CmidInput/CmidInput.svelte';
-  import LayerSettingsFields from '../LayerSettingsFields.svelte';
+  import CmidInput from '../../shared/CmidInput/CmidInput.svelte';
+  import LayerSettingsFields from '../utils/LayerSettingsFields.svelte';
 
   interface Props {
     /** The IconLayer object being edited or drafted */
@@ -19,7 +19,7 @@
   let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
   let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
   let animationClock = $state(untrack(() => config.animationClock));
-  let name = $state(untrack(() => config.name));
+  let id = $state(untrack(() => config.id));
 
   let imageState = $state<ImageState>({ status: 'loading' });
 
@@ -43,7 +43,7 @@
     config.cmid = committedCmid;
     config.coords = [lng, lat];
     config.animationClock = animationClock;
-    config.name = name;
+    config.id = id;
     onclose?.();
   }
 
@@ -85,7 +85,7 @@
       </div>
     </div>
 
-    <LayerSettingsFields bind:animationClock bind:name />
+    <LayerSettingsFields bind:animationClock bind:id />
   </div>
 
   {#snippet footerChildren()}
