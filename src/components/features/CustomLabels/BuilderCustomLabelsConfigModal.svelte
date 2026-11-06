@@ -1,20 +1,41 @@
 <script lang="ts">
   import { Modal } from '@abcnews/components-builder';
   import type * as maplibregl from 'maplibre-gl';
-  import type { LabelItem } from '../../../lib/data/jsonBlob.ts';
+  import { untrack } from 'svelte';
+  import { get } from 'svelte/store';
+  import { jsonBlob } from '../../../lib/data/blobStore.ts';
+  import { updateLayer } from '../utils/layerOps.ts';
+  import type { CustomLabelsLayer, LabelItem } from '../../../lib/data/jsonBlob.ts';
   import { GeoAlt } from 'svelte-bootstrap-icons';
   import { safeFlyTo } from '../PanZoom/utils.ts';
 
   interface Props {
-    /** The array of Custom Labels being configured */
-    config: LabelItem[];
+    /** The custom labels layer being edited; its `labels` are the items listed here */
+    config: CustomLabelsLayer;
     /** MapLibre map instance for zooming */
     map?: maplibregl.Map;
     /** Callback fired when closing the modal */
     onclose?: (bounds?: [number, number][]) => void;
   }
 
-  let { config = $bindable([]), map, onclose }: Props = $props();
+  let { config = $bindable(), map, onclose }: Props = $props();
+
+  const labels = $derived(config?.labels ?? []);
+
+  /** The layer's id when the modal opened. This modal doesn't rename, so it stays the key into the blob. */
+  const layerId = untrack(() => config.id);
+
+  /**
+   * Writes the labels into the blob straight away so the map shows each edit. With no labels left
+   * the write is skipped: the layer is invalid, and `handleCloseLayerModal` deletes it on close.
+   */
+  function applyToMap() {
+    const current = get(jsonBlob);
+    if (!current || labels.length === 0) return;
+    const updated = structuredClone($state.snapshot(current));
+    updateLayer(updated, layerId, $state.snapshot(config));
+    jsonBlob.set(updated);
+  }
 
   function autoFocusLast(node: HTMLInputElement, isLast: boolean) {
     if (isLast) {
@@ -26,13 +47,15 @@
   }
 
   function updateLabel(index: number, key: keyof LabelItem, value: any) {
-    const updated = [...(config || [])];
+    const updated = [...labels];
     updated[index] = { ...updated[index], [key]: value };
-    config = updated;
+    config.labels = updated;
+    applyToMap();
   }
 
   function removeLabel(index: number) {
-    config = (config || []).filter((_, i) => i !== index);
+    config.labels = labels.filter((_, i) => i !== index);
+    applyToMap();
   }
 
   function zoomToLabel(label: LabelItem) {
@@ -47,17 +70,17 @@
 <Modal title="Custom Labels" onClose={() => onclose?.()} position="right">
   <div class="custom-labels-modal">
     <div class="label-list">
-      {#if !config || config.length === 0}
+      {#if labels.length === 0}
         <div class="empty-state">
           No custom labels placed yet. Use the + button on the Custom Labels layer to place labels on the map.
         </div>
       {:else}
-        {#each config as label, i (label.coords ? `${label.coords[0]}_${label.coords[1]}_${i}` : i)}
+        {#each labels as label, i (label.coords ? `${label.coords[0]}_${label.coords[1]}_${i}` : i)}
           <div class="label-item">
             <input
               type="text"
               value={label.name}
-              use:autoFocusLast={i === config.length - 1}
+              use:autoFocusLast={i === labels.length - 1}
               oninput={e => updateLabel(i, 'name', e.currentTarget.value)}
               placeholder="LabelItem text"
             />
