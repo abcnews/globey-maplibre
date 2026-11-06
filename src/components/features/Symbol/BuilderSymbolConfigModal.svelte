@@ -3,7 +3,6 @@
   import { SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
   import type { SymbolLayer } from '../../../lib/data/jsonBlob.ts';
-  import { UPLOADED_IMAGE_SIZE } from '../../../lib/symbolImage.ts';
   import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
@@ -139,7 +138,7 @@
       <ImageUpload
         bind:value={() => symbolImage, setCustomImage}
         accept={CUSTOM_SYMBOL_TYPES}
-        prompt={`Drag and drop an SVG or WebP image, or choose a file. It is shown ${UPLOADED_IMAGE_SIZE}px wide at most, so make it at least ${UPLOADED_IMAGE_SIZE * 2}px (@2x) to stay sharp on high-density screens:`}
+        prompt="Drag and drop an SVG or WebP image, or choose a file. It is shown at half its pixel size (@2x), and the size setting doesn't apply to it:"
       />
     </fieldset>
   </div>

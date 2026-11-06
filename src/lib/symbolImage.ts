@@ -12,15 +12,11 @@ const resolvedColour = (style: SymbolStyle) => resolveColour({ colour: style.col
 export const symbolImageId = (style: SymbolStyle, pixelRatio: number) =>
   `vector-${style.name}-${style.variant}-${style.scheme}-${resolvedColour(style).replace(/[^a-z0-9]/gi, '')}-${style.size}@${pixelRatio}`;
 
-/** Longest edge, in CSS px, an uploaded image is shown at on the map. */
-export const UPLOADED_IMAGE_SIZE = 40;
-
 /** The size `decodeUploadedImage` assumes for an image (e.g. an SVG) that has none of its own. */
 const FALLBACK_IMAGE_SIZE = 256;
 
-/** MapLibre `icon-size` that shows an uploaded image's longest edge at `UPLOADED_IMAGE_SIZE`. */
-export const uploadedImageScale = (image?: { width?: number; height?: number }) =>
-  UPLOADED_IMAGE_SIZE / Math.max(image?.width || FALLBACK_IMAGE_SIZE, image?.height || FALLBACK_IMAGE_SIZE);
+/** Uploaded images are @2x: shown at half their pixel size, so they stay sharp on high-density screens. */
+export const UPLOADED_IMAGE_SCALE = 0.5;
 
 /** Sprite id for an uploaded image: a short hash, since the data URI itself is far too long to use. */
 export const uploadedImageId = (dataUri: string) => {

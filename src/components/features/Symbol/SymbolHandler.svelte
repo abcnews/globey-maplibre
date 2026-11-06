@@ -3,7 +3,13 @@
   import type { LayerRendererProps } from '../types.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import { decodeUploadedImage, rasteriseSymbol, symbolImageId, uploadedImageId, uploadedImageScale } from '../../../lib/symbolImage.ts';
+  import {
+    decodeUploadedImage,
+    rasteriseSymbol,
+    symbolImageId,
+    UPLOADED_IMAGE_SCALE,
+    uploadedImageId
+  } from '../../../lib/symbolImage.ts';
   import {
     removeLayerWithZIndex,
     setLayerZIndex,
@@ -43,7 +49,6 @@
   // the lifecycle effect, because `config` is a fresh object on every blob change.
   const usesSymbol = $derived(Boolean(config.symbol));
   const uploadedDataUri = $derived(usesSymbol ? undefined : config.image?.dataUri);
-  const uploadedScale = $derived(uploadedImageScale(config.image));
   /** Pixels per CSS px for vector symbols, so strokes stay sharp on high density screens. */
   const pixelRatio = window.devicePixelRatio || 1;
   const symbolImageKey = $derived(
@@ -62,7 +67,6 @@
     const sid = currentSid;
     const lid = currentLid;
     const imgId = symbolImageKey;
-    const imageScale = uploadedScale;
     const dataUri = uploadedDataUri;
     const isVector = usesSymbol;
 
@@ -130,9 +134,8 @@
               type: 'symbol',
               layout: {
                 'icon-image': imgId,
-                // Vector symbols are already drawn at their final size; an uploaded image is
-                // scaled so its longest edge is `UPLOADED_IMAGE_SIZE`.
-                'icon-size': isVector ? 1 : imageScale,
+                // Vector symbols are already drawn at their final size; an uploaded image is @2x.
+                'icon-size': isVector ? 1 : UPLOADED_IMAGE_SCALE,
                 'icon-allow-overlap': true,
                 'icon-ignore-placement': true
               },
