@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { FilePicker } from '@abcnews/components-builder';
   import { X } from 'svelte-bootstrap-icons';
   import type { EmbeddedImage } from '../../../lib/data/jsonBlob.ts';
   import { DEFAULT_IMAGE_TYPES, DEFAULT_MAX_IMAGE_BYTES, readEmbeddedImage } from '../../../lib/embeddedImage.ts';
@@ -6,8 +7,10 @@
   interface Props {
     /** The stored image, or undefined when none is set. */
     value?: EmbeddedImage;
-    /** Text for the field's label. */
+    /** Text for the field's label. No label is shown when it's empty. */
     label?: string;
+    /** Message in the drop zone, e.g. to say which file types are accepted. */
+    prompt?: string;
     /** Largest file accepted, in bytes. */
     maxBytes?: number;
     /** Accepted MIME types. */
@@ -16,7 +19,8 @@
 
   let {
     value = $bindable(),
-    label = 'Image',
+    label = '',
+    prompt = 'Drag and drop an image, or choose a file:',
     maxBytes = DEFAULT_MAX_IMAGE_BYTES,
     accept = DEFAULT_IMAGE_TYPES
   }: Props = $props();
@@ -24,9 +28,8 @@
   let errorMessage = $state('');
   let isReading = $state(false);
 
-  async function handleFileChange(event: Event & { currentTarget: HTMLInputElement }) {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
+  /** Called by `FilePicker` for a chosen or dropped file. Rejected files leave the current value as it was. */
+  async function handleFile(file: File | undefined) {
     if (!file) return;
 
     errorMessage = '';
@@ -36,8 +39,6 @@
       return value;
     });
     isReading = false;
-    // Cleared so choosing the same file again after resetting still fires `change`.
-    input.value = '';
   }
 
   function reset() {
@@ -47,17 +48,22 @@
 </script>
 
 <div class="image-upload">
-  <span class="label">{label}</span>
+  {#if label}
+    <span class="label">{label}</span>
+  {/if}
 
   {#if value}
     <div class="preview">
-      <img src={value.dataUri} alt={value.name ?? label} />
+      <img src={value.dataUri} alt={value.name ?? (label || 'Uploaded image')} />
       <button type="button" class="reset" onclick={reset} aria-label="Remove image" title="Remove image">
         <X />
       </button>
     </div>
   {:else}
-    <input type="file" accept={accept.join(',')} onchange={handleFileChange} disabled={isReading} />
+    <!-- FilePicker only hands back the File (readAsText off); `readEmbeddedImage` does the reading and checks. -->
+    <FilePicker types={accept.join(',')} readAsText={false} bind:file={() => undefined, handleFile}>
+      <p>{isReading ? 'Reading image…' : prompt}</p>
+    </FilePicker>
   {/if}
 
   {#if errorMessage}

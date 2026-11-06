@@ -32,7 +32,7 @@ export const symbolFeature: LayerFeatureDefinition<SymbolLayer> = {
       id: newLayerId('symbol'),
       type: 'symbol',
       // A built-in symbol needs no upload, so a new marker is usable straight away.
-      symbol: { name: 'circle', variant: 'fill', colour: 'blue', scheme: 'light' },
+      symbol: { name: 'circle', variant: 'fill', colour: 'blue', scheme: 'light', size: 18 },
       coords: [center.lng, center.lat]
     };
   },

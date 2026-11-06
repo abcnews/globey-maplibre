@@ -207,7 +207,8 @@ describe('globeJsonBlobSchema (Zod)', () => {
       name: 'torus',
       variant: 'fill',
       colour: 'blue',
-      scheme: 'light'
+      scheme: 'light',
+      size: 18
     });
   });
 });

@@ -155,7 +155,9 @@ export const symbolStyleSchema = z.object({
   variant: z.enum(['fill', 'stroke']).default('fill'),
   colour: z.string().default('blue'),
   /** Palette and outline colour: `'light'` (white outline) or `'dark'` (black outline). Chosen per symbol to suit a light or dark base map. */
-  scheme: z.enum(['light', 'dark']).default('light')
+  scheme: z.enum(['light', 'dark']).default('light'),
+  /** Width on the map in CSS px, 1 to 99. */
+  size: z.number().int().min(1).max(99).default(18)
 });
 export type SymbolStyle = z.infer<typeof symbolStyleSchema>;
 
