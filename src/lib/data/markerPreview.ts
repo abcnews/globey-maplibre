@@ -8,7 +8,7 @@ import type { MarkerConfig, MarkerLayerOverride } from './marker.ts';
  */
 const OVERRIDABLE_KINDS: GlobeLayer['type'][] = [
   ...GEOJSON_LAYER_KINDS,
-  'icon',
+  'symbol',
   'image',
   'gridded',
   'raster',

@@ -1,12 +1,12 @@
 # Whole-layer fades
 
-How raster, image, and icon layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../utils/geojson/README.md`](../utils/geojson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
+How raster, image, and symbol layers cross-fade between scrollyteller panels. GeoJSON layers fade individually per feature (see [`../utils/geojson/README.md`](../utils/geojson/README.md)). MapVector (the base street map) does not fade; it switches instantly at panel boundaries.
 
 ---
 
 ## How it works
 
-Each item draws one MapLibre layer (one per raster tile source, georeferenced image, or icon symbol):
+Each item draws one MapLibre layer (one per raster tile source, georeferenced image, or symbol marker):
 
 1. **Calculate opacity per panel**: normal opacity when present, `0` when absent.
 2. **Add the layer once at load**: layer opacity uses an interpolation expression reading MapLibre's `global-state`:
@@ -22,14 +22,14 @@ Layers are never added or removed during scrolling. Items missing from a panel f
 
 ## Collection handlers
 
-`MapRastersHandler`, `ImageSourcesHandler`, and `IconsHandler` share the same pattern:
+`MapRastersHandler`, `ImageSourcesHandler`, and `SymbolHandler` share the same pattern:
 
 1. Receive `perPanel: Config[][]` from `CustomGlobe` (one config array per panel).
 2. Call `buildTweenedLayerEntries` ([`./tweenedLayers.ts`](./tweenedLayers.ts)) to build unique entries across all panels:
    - `key`: unique identifier (`url`, `id || url`, or `id || cmid`).
    - `representative`: the item config from its first appearance (used for type, URL, and z-index).
    - `opacityStops`: target opacity in each panel (`0` when absent).
-   - `coordStops`: coordinate positions across panels (snaps at boundaries for images and icons).
+   - `coordStops`: coordinate positions across panels (snaps at boundaries for images and symbols).
    - `sig`: stable key for Svelte's `{#each}` block to prevent remounting.
 3. Render one leaf component per unique entry.
 
@@ -39,10 +39,10 @@ The satellite base map is handled by `CustomGlobe`, which folds the tile layer i
 
 ## Leaf handlers
 
-`LayerManager.svelte` runs `buildTweenedLayerEntries` per registered feature and mounts each feature's `LayerRenderer` (e.g. `MapRasterHandler`, `ImageSourceHandler`, `IconHandler`) with `LayerRendererProps` (`types.ts`). Leaf handlers:
+`LayerManager.svelte` runs `buildTweenedLayerEntries` per registered feature and mounts each feature's `LayerRenderer` (e.g. `MapRasterHandler`, `ImageSourceHandler`, `SymbolHandler`) with `LayerRendererProps` (`types.ts`). Leaf handlers:
 
 - Add their source and layer once on mount. The layer is added via `addFadingLayer` ([`./tweenedLayers.ts`](./tweenedLayers.ts)), passing `tweenStopsExpression(opacityStops, posKey)`.
-- Images and icons update coordinates on panel changes using `pickStop(coordStops, tween.fromPanel, ...)`. Coordinates snap at panel boundaries rather than animating.
+- Images and symbols update coordinates on panel changes using `pickStop(coordStops, tween.fromPanel, ...)`. Coordinates snap at panel boundaries rather than animating.
 - Clean up sources and layers on unmount.
 
 ---
@@ -59,6 +59,6 @@ The satellite base map is handled by `CustomGlobe`, which folds the tile layer i
 ## Adding a new whole-layer feature
 
 1. **Schema**: Add the layer schema to `globeLayerSchema` in [`../../../lib/data/jsonBlob.ts`](../../../lib/data/jsonBlob.ts).
-2. **Leaf handler**: Model after `IconHandler.svelte` or `MapRasterHandler.svelte` using `addFadingLayer`; take `LayerRendererProps<MyLayer>`.
+2. **Leaf handler**: Model after `SymbolHandler.svelte` or `MapRasterHandler.svelte` using `addFadingLayer`; take `LayerRendererProps<MyLayer>`.
 3. **Mounting**: Set `LayerRenderer` (and `coordsOf` if it snaps position) on the feature definition. `LayerManager` mounts it; no `CustomGlobe` change.
 4. **Builder modal**: Add configuration UI in `Builder*ConfigModal.svelte` if applicable.

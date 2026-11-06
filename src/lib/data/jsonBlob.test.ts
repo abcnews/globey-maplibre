@@ -84,7 +84,7 @@ describe('globeJsonBlobSchema (Zod)', () => {
         },
         {
           id: 'evac',
-          type: 'icon',
+          type: 'symbol',
           cmid: 998877,
           coords: [150.5, -34.2]
         },
@@ -181,5 +181,26 @@ describe('globeJsonBlobSchema (Zod)', () => {
 
     const result = safeParseGlobeJsonBlob(invalidBlob);
     assert.strictEqual(result.success, false);
+  });
+
+  it('should read a legacy `icon` layer as a `symbol` layer, keeping its CMID', () => {
+    const blob = parseGlobeJsonBlob({
+      layers: [{ id: 'old', type: 'icon', cmid: 5, coords: [1, 2] }]
+    });
+
+    assert.deepStrictEqual(blob.layers[0], { id: 'old', type: 'symbol', cmid: 5, coords: [1, 2] });
+  });
+
+  it('should fill in symbol defaults for a vector symbol layer', () => {
+    const blob = parseGlobeJsonBlob({
+      layers: [{ id: 'vec', type: 'symbol', symbol: { name: 'torus' }, coords: [3, 4] }]
+    });
+
+    assert.deepStrictEqual((blob.layers[0] as { symbol?: unknown }).symbol, {
+      name: 'torus',
+      variant: 'fill',
+      colour: 'blue',
+      scheme: 'light'
+    });
   });
 });

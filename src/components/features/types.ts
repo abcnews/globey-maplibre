@@ -86,10 +86,10 @@ export interface LayerItemDescriptor<T extends GlobeLayer = GlobeLayer> {
  * in `layerOps.ts`. A feature only describes what is genuinely kind-specific.
  */
 export interface LayerFeatureDefinition<T extends GlobeLayer = GlobeLayer> {
-  /** The blob layer `type` this feature owns (e.g. 'geojsonAreas', 'icon', 'image') */
+  /** The blob layer `type` this feature owns (e.g. 'geojsonAreas', 'symbol', 'image') */
   kind: T['type'];
 
-  /** Human-readable name for Add menus and builder headers (e.g. 'GeoJSON', 'Icon', 'Image Overlay') */
+  /** Human-readable name for Add menus and builder headers (e.g. 'GeoJSON', 'Symbol Marker', 'Image Overlay') */
   label: string;
 
   /** Display icon component */

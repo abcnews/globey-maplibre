@@ -8,7 +8,7 @@ function baseOptions(): GlobeJsonBlob {
     map: { coords: [0, 0], z: 2, base: 'street', projection: 'globe', minimap: { enabled: true, bounds: [] } },
     layers: [
       { type: 'geojsonAreas', id: 'fires', cmid: 1, colourMode: 'simple' },
-      { type: 'icon', id: 'city', cmid: 2, coords: [0, 0] },
+      { type: 'symbol', id: 'city', cmid: 2, coords: [0, 0] },
       { type: 'gridded', id: 'temps', url: '/t.tif' },
       { type: 'mapLabels', id: 'builtinmaplabels', countriesMajor: true }
     ]
@@ -23,7 +23,7 @@ describe('applyMarkerOverrides', () => {
   it('excludes a layer with no override (off by default)', () => {
     const result = applyMarkerOverrides(baseOptions(), {});
     assert.deepStrictEqual(kept(result, 'geojsonAreas'), []);
-    assert.deepStrictEqual(kept(result, 'icon'), []);
+    assert.deepStrictEqual(kept(result, 'symbol'), []);
   });
 
   it('switches gridded layers on and off like other overridable kinds, so they can fade', () => {

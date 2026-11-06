@@ -10,7 +10,7 @@ import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
 import { geoJsonLinesFeature } from './GeoJsonLines/index.ts';
 import { geoJsonPointsFeature } from './GeoJsonPoints/index.ts';
 import { highlightFeaturesMenuItem } from './HighlightFeatures/index.ts';
-import { iconFeature } from './Icon/index.ts';
+import { symbolFeature } from './Symbol/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
 import { griddedFeature } from './Gridded/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
@@ -22,7 +22,7 @@ export const layerFeatureRegistry: LayerFeatureDefinition<any>[] = [
   geoJsonAreasFeature,
   geoJsonLinesFeature,
   geoJsonPointsFeature,
-  iconFeature,
+  symbolFeature,
   imageSourceFeature,
   griddedFeature,
   mapLabelsFeature,

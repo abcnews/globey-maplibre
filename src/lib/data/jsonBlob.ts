@@ -145,15 +145,36 @@ export const customLabelsLayerSchema = z.object({
 export type CustomLabelsLayer = z.infer<typeof customLabelsLayerSchema>;
 
 /**
- * Icon symbol marker layer schema
+ * A built-in vector symbol from `@abcnews/components-dataviz`. `colour` is a palette name
+ * (e.g. `'blue'`) or a custom hex code; palette names are stored, not hex, so they can follow
+ * the palette's light/dark values.
  */
-export const iconLayerSchema = z.object({
+export const symbolStyleSchema = z.object({
+  /** One of `SYMBOL_NAMES`. Not an enum here so this schema doesn't import the component library. */
+  name: z.string(),
+  variant: z.enum(['fill', 'stroke']).default('fill'),
+  colour: z.string().default('blue'),
+  /** Palette and outline colour: `'light'` (white outline) or `'dark'` (black outline). Chosen per symbol to suit a light or dark base map. */
+  scheme: z.enum(['light', 'dark']).default('light')
+});
+export type SymbolStyle = z.infer<typeof symbolStyleSchema>;
+
+/**
+ * Symbol marker layer schema. The marker's image is either a CoreMedia image (`cmid`) or a
+ * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of them.
+ */
+export const symbolLayerSchema = z.object({
   ...baseLayerObject,
-  type: z.literal('icon'),
-  cmid: z.number(),
+  type: z.literal('symbol'),
+  cmid: z.number().optional(),
+  symbol: symbolStyleSchema.optional(),
   coords: coordinatesSchema
 });
-export type IconLayer = z.infer<typeof iconLayerSchema>;
+export type SymbolLayer = z.infer<typeof symbolLayerSchema>;
+
+/** Symbol layers were called `icon` layers (CoreMedia image only) before symbols were added. */
+const renameLegacyIconLayers = (layers: unknown) =>
+  Array.isArray(layers) ? layers.map(layer => (layer?.type === 'icon' ? { ...layer, type: 'symbol' } : layer)) : layers;
 
 /**
  * Image overlay layer schema
@@ -247,7 +268,7 @@ export const globeLayerSchema = z.discriminatedUnion('type', [
   geoJsonLinesLayerSchema,
   geoJsonPointsLayerSchema,
   customLabelsLayerSchema,
-  iconLayerSchema,
+  symbolLayerSchema,
   imageLayerSchema,
   griddedLayerSchema,
   rasterLayerSchema,
@@ -300,12 +321,15 @@ export const globeJsonBlobSchema = z.object({
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
   /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */
-  layers: z
-    .array(globeLayerSchema)
-    .default([])
-    .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
-      message: 'Layer IDs must be unique within the globe'
-    })
+  layers: z.preprocess(
+    renameLegacyIconLayers,
+    z
+      .array(globeLayerSchema)
+      .default([])
+      .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
+        message: 'Layer IDs must be unique within the globe'
+      })
+  )
 });
 export type GlobeJsonBlob = z.infer<typeof globeJsonBlobSchema>;
 

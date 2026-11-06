@@ -28,7 +28,7 @@ There is one representation: the Zod schema in [../../lib/data/jsonBlob.ts](../.
 
 ### Example Reference
 
-See `iconLayerSchema` and its inferred `IconLayer` type in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
+See `symbolLayerSchema` and its inferred `SymbolLayer` type in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
 
 ---
 
@@ -45,7 +45,7 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 
 ### Example Reference
 
-- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte)
+- Single/Collection map renderer: [Symbol/SymbolHandler.svelte](./Symbol/SymbolHandler.svelte)
 - Renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
 - Renderer that decodes and colours data client-side: [Gridded/GriddedHandler.svelte](./Gridded/GriddedHandler.svelte)
@@ -172,7 +172,7 @@ interactivePlacement: {
 
 ### Example Reference
 
-- Multi-Item Feature: [Icon/index.ts](./Icon/index.ts)
+- Multi-Item Feature: [Symbol/index.ts](./Symbol/index.ts)
 - Feature using shared helpers: [GeoJsonPoints/index.ts](./GeoJsonPoints/index.ts)
 - Single-Toggle Feature: [MapLabels/index.ts](./MapLabels/index.ts)
 - Custom Button Feature: [CustomLabels/index.ts](./CustomLabels/index.ts)
@@ -187,7 +187,7 @@ Add your feature definition to `layerFeatureRegistry` in [./index.ts](./index.ts
 
 ```ts
 import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
-import { iconFeature } from './Icon/index.ts';
+import { symbolFeature } from './Symbol/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
 import { customLabelsFeature } from './CustomLabels/index.ts';
@@ -196,7 +196,7 @@ import { rasterFeature } from './MapRaster/index.ts';
 
 export const layerFeatureRegistry = [
   geoJsonAreasFeature,
-  iconFeature,
+  symbolFeature,
   imageSourceFeature,
   mapLabelsFeature,
   customLabelsFeature,

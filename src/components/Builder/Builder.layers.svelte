@@ -746,7 +746,7 @@
     display: flex;
     flex-direction: column;
     z-index: 100;
-    min-width: 140px;
+    min-width: 180px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
