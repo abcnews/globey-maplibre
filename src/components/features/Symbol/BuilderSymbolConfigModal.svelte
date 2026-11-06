@@ -3,8 +3,7 @@
   import { SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
   import type { SymbolLayer } from '../../../lib/data/jsonBlob.ts';
-  import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
-  import CmidInput from '../../shared/CmidInput/CmidInput.svelte';
+  import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
 
@@ -19,12 +18,12 @@
 
   let { config = $bindable(), onclose }: Props = $props();
 
-  /** Which tab is open: 'symbol' or 'image'. A layer that only has a CoreMedia image opens on its image. */
-  let source = $state<string>(untrack(() => (config.cmid && !config.symbol ? 'image' : 'symbol')));
+  /** Which tab is open: 'symbol' or 'image'. A layer that only has an uploaded image opens on its image. */
+  let source = $state<string>(untrack(() => (config.image && !config.symbol ? 'image' : 'symbol')));
 
   const tabs = [
     { id: 'symbol', label: 'Symbol', content: symbolTab },
-    { id: 'image', label: 'CoreMedia image', content: imageTab }
+    { id: 'image', label: 'Image', content: imageTab }
   ];
 
   let symbolName = $state<NonNullable<PickerProps['name']>>(
@@ -34,38 +33,19 @@
   let symbolColour = $state<string>(untrack(() => config.symbol?.colour ?? 'blue'));
   let symbolScheme = $state<NonNullable<PickerProps['scheme']>>(untrack(() => config.symbol?.scheme ?? 'light'));
 
-  let committedCmid = $state<number>(untrack(() => config.cmid || 0));
+  let symbolImage = $state<SymbolLayer['image']>(untrack(() => $state.snapshot(config.image)));
   let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
   let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
   let animationClock = $state(untrack(() => config.animationClock));
   let id = $state(untrack(() => config.id));
 
-  let imageState = $state<ImageState>({ status: 'loading' });
-
-  // Only fetch the CoreMedia image while its tab is open.
-  $effect(() => {
-    if (source !== 'image' || !committedCmid || isNaN(committedCmid)) {
-      imageState = { status: 'loading' };
-      return;
-    }
-
-    const store = loadImage(committedCmid, { targetWidth: 256, includeAlt: true });
-    const unsub = store.subscribe(val => {
-      imageState = val;
-    });
-
-    return () => {
-      unsub();
-    };
-  });
-
   function handleSave() {
     // Only the open tab's source is kept, so a layer never has both.
     if (source === 'symbol') {
       config.symbol = { name: symbolName, variant: symbolVariant, colour: symbolColour, scheme: symbolScheme };
-      config.cmid = undefined;
+      config.image = undefined;
     } else {
-      config.cmid = committedCmid;
+      config.image = $state.snapshot(symbolImage);
       config.symbol = undefined;
     }
     config.coords = [lng, lat];
@@ -123,27 +103,7 @@
 {/snippet}
 
 {#snippet imageTab()}
-  <div class="image-tab">
-    <CmidInput
-      id="symbol-cmid"
-      label="CoreMedia ID (CMID)"
-      bind:value={committedCmid}
-      loading={imageState.status === 'loading' && Boolean(committedCmid)}
-    />
-
-    {#if imageState.status === 'loaded' && imageState.url}
-      <div class="preview-container">
-        <span class="label">Preview</span>
-        <div class="preview-box">
-          <img src={imageState.url} alt={imageState.alt || 'Symbol preview'} />
-        </div>
-      </div>
-    {:else if imageState.status === 'error'}
-      <div class="preview-error">
-        <small>Failed to load image: {imageState.error?.message}</small>
-      </div>
-    {/if}
-  </div>
+  <ImageUpload bind:value={symbolImage} label="Marker image" />
 {/snippet}
 
 <style>
@@ -187,19 +147,6 @@
     font-weight: 500;
   }
 
-  .image-tab {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .label {
-    font-size: 0.75rem;
-    color: var(--text-light, #888);
-    font-weight: bold;
-    text-transform: uppercase;
-  }
-
   input {
     background: var(--background, #1a1a1a);
     border: 1px solid var(--border, rgba(122, 123, 135, 0.5));
@@ -209,30 +156,4 @@
     font-size: 0.85rem;
   }
 
-  .preview-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .preview-box {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px dashed var(--border, rgba(122, 123, 135, 0.5));
-    border-radius: 4px;
-  }
-
-  .preview-box img {
-    max-width: 120px;
-    max-height: 120px;
-    object-fit: contain;
-  }
-
-  .preview-error {
-    color: #e57373;
-    font-size: 0.8rem;
-  }
 </style>

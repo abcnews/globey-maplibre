@@ -13,7 +13,8 @@
 
 <fieldset>
   <legend>Animation Clock</legend>
-  <div style:display="flex" style:gap="1rem">
+  <!-- Stacked, so the field is narrow enough to sit beside the Symbol fieldset. -->
+  <div style:display="flex" style:flex-direction="column" style:gap="0.25rem">
     <label style:display="flex" style:align-items="center" style:gap="0.5rem" style:cursor="pointer">
       <input
         type="radio"

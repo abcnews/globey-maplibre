@@ -85,7 +85,7 @@ describe('globeJsonBlobSchema (Zod)', () => {
         {
           id: 'evac',
           type: 'symbol',
-          cmid: 998877,
+          image: { dataUri: 'data:image/png;base64,AAAA', name: 'evac.png' },
           coords: [150.5, -34.2]
         },
         {
@@ -183,12 +183,19 @@ describe('globeJsonBlobSchema (Zod)', () => {
     assert.strictEqual(result.success, false);
   });
 
-  it('should read a legacy `icon` layer as a `symbol` layer, keeping its CMID', () => {
-    const blob = parseGlobeJsonBlob({
-      layers: [{ id: 'old', type: 'icon', cmid: 5, coords: [1, 2] }]
+  it('should keep an embedded image on a symbol layer', () => {
+    const image = { dataUri: 'data:image/svg+xml;base64,PHN2Zy8+', name: 'pin.svg', width: 10, height: 12 };
+    const blob = parseGlobeJsonBlob({ layers: [{ id: 'pin', type: 'symbol', image, coords: [1, 2] }] });
+
+    assert.deepStrictEqual((blob.layers[0] as { image?: unknown }).image, image);
+  });
+
+  it('should reject an embedded image that is not a data URI', () => {
+    const result = safeParseGlobeJsonBlob({
+      layers: [{ id: 'pin', type: 'symbol', image: { dataUri: 'https://example.com/pin.png' }, coords: [1, 2] }]
     });
 
-    assert.deepStrictEqual(blob.layers[0], { id: 'old', type: 'symbol', cmid: 5, coords: [1, 2] });
+    assert.strictEqual(result.success, false);
   });
 
   it('should fill in symbol defaults for a vector symbol layer', () => {

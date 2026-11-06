@@ -85,7 +85,7 @@ Fading layer kinds (raster/image/symbol/geojson) are all mounted by `LayerManage
 
 ## Symbol markers
 
-`features/Symbol/` (`type: 'symbol'`, was `icon`): a marker's image is a CoreMedia image (`cmid`) *or* a vector `symbol` from `@abcnews/components-dataviz` (the modal's tabs keep only one). Blobs saved as `type: 'icon'` are renamed on parse (`renameLegacyIconLayers`, `jsonBlob.ts`).
+`features/Symbol/` (`type: 'symbol'`): a marker's image is an uploaded `image` (`EmbeddedImage`, a base64 data URI stored in the blob; `lib/embeddedImage.ts` reads and size-checks it, `shared/ImageUpload` is the reusable field) *or* a vector `symbol` from `@abcnews/components-dataviz` (the modal's tabs keep only one). No CMIDs and no legacy `icon` layers: old blobs aren't migrated.
 
 - MapLibre can't load SVG, so `lib/symbolImage.ts` rasterises `getSymbol({ pixelRatio })` at `devicePixelRatio` and `SymbolHandler` registers it with `addImage(..., { pixelRatio })`. `colour` is stored as a palette name and resolved with the symbol's own `scheme` (`'light'` default, or `'dark'`), which is also saved per symbol so light and dark symbols can share a map over a light or dark base. The ratio is read once, so a moved window isn't re-rasterised.
 

@@ -160,21 +160,33 @@ export const symbolStyleSchema = z.object({
 export type SymbolStyle = z.infer<typeof symbolStyleSchema>;
 
 /**
- * Symbol marker layer schema. The marker's image is either a CoreMedia image (`cmid`) or a
+ * An image stored inside the blob as a base64 data URI, so the blob is self-contained and
+ * needs no upload service. Any feature that embeds an image uses this shape; the file is
+ * read and size-checked by `readEmbeddedImage` (`lib/embeddedImage.ts`).
+ */
+export const embeddedImageSchema = z.object({
+  /** The whole file as a `data:image/...;base64,...` URI. */
+  dataUri: z.string().startsWith('data:image/'),
+  /** Original file name, shown in the Builder. */
+  name: z.string().optional(),
+  /** Pixel size, when the browser could measure it. */
+  width: z.number().optional(),
+  height: z.number().optional()
+});
+export type EmbeddedImage = z.infer<typeof embeddedImageSchema>;
+
+/**
+ * Symbol marker layer schema. The marker's image is either an uploaded `image` or a
  * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of them.
  */
 export const symbolLayerSchema = z.object({
   ...baseLayerObject,
   type: z.literal('symbol'),
-  cmid: z.number().optional(),
+  image: embeddedImageSchema.optional(),
   symbol: symbolStyleSchema.optional(),
   coords: coordinatesSchema
 });
 export type SymbolLayer = z.infer<typeof symbolLayerSchema>;
-
-/** Symbol layers were called `icon` layers (CoreMedia image only) before symbols were added. */
-const renameLegacyIconLayers = (layers: unknown) =>
-  Array.isArray(layers) ? layers.map(layer => (layer?.type === 'icon' ? { ...layer, type: 'symbol' } : layer)) : layers;
 
 /**
  * Image overlay layer schema
@@ -321,15 +333,12 @@ export const globeJsonBlobSchema = z.object({
   /** Global map settings and defaults */
   map: mapDefaultsSchema.default(() => mapDefaultsSchema.parse({})),
   /** All layers available in the presentation; array order defines rendering stack order (index 0 = bottom) */
-  layers: z.preprocess(
-    renameLegacyIconLayers,
-    z
-      .array(globeLayerSchema)
-      .default([])
-      .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
-        message: 'Layer IDs must be unique within the globe'
-      })
-  )
+  layers: z
+    .array(globeLayerSchema)
+    .default([])
+    .refine(layers => new Set(layers.map(({ id }) => id)).size === layers.length, {
+      message: 'Layer IDs must be unique within the globe'
+    })
 });
 export type GlobeJsonBlob = z.infer<typeof globeJsonBlobSchema>;
 

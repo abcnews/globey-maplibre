@@ -14,13 +14,13 @@ export function generateGeoJsonSourceId(idOrCmid: number | string | undefined): 
 /**
  * Generates a source ID for a symbol marker.
  */
-export function getSymbolSourceId(idOrCmid: number | string | undefined): string {
-  return `symbol-source-${idOrCmid || 'unknown'}`;
+export function getSymbolSourceId(id: string | undefined): string {
+  return `symbol-source-${id || 'unknown'}`;
 }
 
 /**
  * Generates a layer ID for a symbol marker's MapLibre symbol layer.
  */
-export function getSymbolLayerId(idOrCmid: number | string | undefined): string {
-  return `symbol-layer-${idOrCmid || 'unknown'}`;
+export function getSymbolLayerId(id: string | undefined): string {
+  return `symbol-layer-${id || 'unknown'}`;
 }

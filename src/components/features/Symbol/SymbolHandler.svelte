@@ -3,8 +3,7 @@
   import type { LayerRendererProps } from '../types.ts';
   import type * as maplibregl from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import { loadImage, type ImageState } from '../../../lib/loadImage.ts';
-  import { rasteriseSymbol, symbolImageId } from '../../../lib/symbolImage.ts';
+  import { decodeUploadedImage, rasteriseSymbol, symbolImageId, uploadedImageId, uploadedImageScale } from '../../../lib/symbolImage.ts';
   import {
     removeLayerWithZIndex,
     setLayerZIndex,
@@ -37,55 +36,37 @@
   const symbolCoords = (): [number, number] =>
     pickStop(coordStops, tween.clock(clock).fromPanel, config.coords ?? [0, 0]);
 
-  const currentCmid = $derived(config.cmid);
-  const currentSid = $derived(getSymbolSourceId(id || config.cmid));
-  const currentLid = $derived(getSymbolLayerId(id || config.cmid));
+  const currentSid = $derived(getSymbolSourceId(id));
+  const currentLid = $derived(getSymbolLayerId(id));
 
-  // A vector symbol wins over a CoreMedia image. Only these primitives are tracked by the
-  // lifecycle effect, because `config` is a fresh object on every blob change.
+  // A built-in vector symbol wins over an uploaded image. Only these primitives are tracked by
+  // the lifecycle effect, because `config` is a fresh object on every blob change.
   const usesSymbol = $derived(Boolean(config.symbol));
+  const uploadedDataUri = $derived(usesSymbol ? undefined : config.image?.dataUri);
+  const uploadedScale = $derived(uploadedImageScale(config.image));
   /** Pixels per CSS px for vector symbols, so strokes stay sharp on high density screens. */
   const pixelRatio = window.devicePixelRatio || 1;
   const symbolImageKey = $derived(
-    config.symbol ? symbolImageId(config.symbol, pixelRatio) : `symbol-cmid-${config.cmid}`
+    config.symbol
+      ? symbolImageId(config.symbol, pixelRatio)
+      : uploadedDataUri
+        ? uploadedImageId(uploadedDataUri)
+        : ''
   );
-
-  let imageState = $state<ImageState>({ status: 'loading' });
-
-  // Subscribe to loadImage store for the CMID. Only used for CoreMedia images.
-  // Only re-subscribes if the numeric CMID itself changes.
-  $effect(() => {
-    const cmid = usesSymbol ? 0 : currentCmid;
-    if (!cmid) {
-      imageState = { status: 'loading' };
-      return;
-    }
-
-    const store = loadImage(cmid, { targetWidth: 256 });
-    const unsub = store.subscribe(val => {
-      imageState = val;
-    });
-
-    return () => {
-      unsub();
-    };
-  });
 
   // LIFECYCLE EFFECT: Manages adding/removing the symbol layer & source.
   // Only re-runs if the map, source/layer IDs, or resolved image changes.
   // Coordinates and z-index are untracked here and handled by dedicated effects.
   $effect(() => {
     const map = mapRoot.map;
-    const url = imageState.url;
-    const status = imageState.status;
     const sid = currentSid;
     const lid = currentLid;
     const imgId = symbolImageKey;
-    const cmid = currentCmid;
+    const imageScale = uploadedScale;
+    const dataUri = uploadedDataUri;
     const isVector = usesSymbol;
 
-    if (!map) return;
-    if (!isVector && (status !== 'loaded' || !url)) return;
+    if (!map || !imgId) return;
 
     let isDisposed = false;
 
@@ -96,15 +77,17 @@
         // Register image into map sprite atlas if not already present
         if (!map.hasImage(imgId)) {
           if (!inFlightMapImages.has(imgId)) {
-            // A vector symbol is rasterised at pixelRatio × its size, a CoreMedia image is fetched.
+            // A vector symbol is rasterised at pixelRatio × its size; an uploaded image is decoded as is.
             const symbolStyle = untrack(() => config.symbol);
             const promise = (
               symbolStyle
-                ? rasteriseSymbol(symbolStyle, pixelRatio).then(data => ({ data }))
-                : map.loadImage(url!)
-            ).finally(() => {
-              inFlightMapImages.delete(imgId);
-            });
+                ? rasteriseSymbol(symbolStyle, pixelRatio)
+                : decodeUploadedImage(dataUri!)
+            )
+              .then(data => ({ data }))
+              .finally(() => {
+                inFlightMapImages.delete(imgId);
+              });
             inFlightMapImages.set(imgId, promise);
           }
 
@@ -147,9 +130,9 @@
               type: 'symbol',
               layout: {
                 'icon-image': imgId,
-                // CoreMedia images are loaded at 256px and shown at half size. Vector
-                // symbols are already drawn at their final size.
-                'icon-size': isVector ? 1 : 0.5,
+                // Vector symbols are already drawn at their final size; an uploaded image is
+                // scaled so its longest edge is `UPLOADED_IMAGE_SIZE`.
+                'icon-size': isVector ? 1 : imageScale,
                 'icon-allow-overlap': true,
                 'icon-ignore-placement': true
               },
@@ -162,7 +145,7 @@
         }
       } catch (err) {
         console.error(
-          JSON.stringify({ message: `[SymbolHandler] Error setting up symbol marker`, cmid, imgId, error: String(err) })
+          JSON.stringify({ message: `[SymbolHandler] Error setting up symbol marker`, id: sid, imgId, error: String(err) })
         );
       }
     };

@@ -31,7 +31,7 @@ export const symbolFeature: LayerFeatureDefinition<SymbolLayer> = {
     return {
       id: newLayerId('symbol'),
       type: 'symbol',
-      // A built-in symbol needs no CMID, so a new marker is usable straight away.
+      // A built-in symbol needs no upload, so a new marker is usable straight away.
       symbol: { name: 'circle', variant: 'fill', colour: 'blue', scheme: 'light' },
       coords: [center.lng, center.lat]
     };
@@ -44,9 +44,9 @@ export const symbolFeature: LayerFeatureDefinition<SymbolLayer> = {
     }
   },
 
-  // A marker needs either a built-in symbol or a CoreMedia image.
+  // A marker needs either a built-in symbol or an uploaded image.
   isValid(data: SymbolLayer) {
-    return Boolean(data?.symbol?.name || (data?.cmid && Number(data.cmid) > 0));
+    return Boolean(data?.symbol?.name || data?.image?.dataUri);
   },
 
   ConfigModal: BuilderSymbolConfigModal,
