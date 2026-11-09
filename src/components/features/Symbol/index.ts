@@ -44,11 +44,12 @@ export const symbolFeature: LayerFeatureDefinition<SymbolLayer> = {
     }
   },
 
-  // A marker needs either a built-in symbol or an uploaded image.
+  // A marker needs a built-in symbol, an uploaded image or an annotation (the symbol may be hidden).
   isValid(data: SymbolLayer) {
-    return Boolean(data?.symbol?.name || data?.image?.dataUri);
+    return Boolean(data?.symbol?.name || data?.image?.dataUri || data?.annotation?.trim());
   },
 
+  liveEdit: true,
   ConfigModal: BuilderSymbolConfigModal,
   LayerRenderer: SymbolHandler,
   coordsOf: item => item.coords

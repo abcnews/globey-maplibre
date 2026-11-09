@@ -20,7 +20,9 @@
   );
 </script>
 
-<SymbolIcon {config} {opacityStops} {coords} />
+{#if !config.hideSymbol}
+  <SymbolIcon {config} {opacityStops} {coords} />
+{/if}
 
 {#if config.annotation?.trim()}
   <SymbolAnnotation {config} {opacityStops} {coords} />

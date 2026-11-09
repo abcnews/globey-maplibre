@@ -177,6 +177,38 @@ export const embeddedImageSchema = z.object({
 });
 export type EmbeddedImage = z.infer<typeof embeddedImageSchema>;
 
+/** The label point of a symbol annotation that sits on the symbol (`Annotation`'s `anchor`). */
+export const ANNOTATION_ANCHORS = [
+  'top-left',
+  'top',
+  'top-right',
+  'left',
+  'center',
+  'right',
+  'bottom-left',
+  'bottom',
+  'bottom-right'
+] as const;
+export type AnnotationAnchor = (typeof ANNOTATION_ANCHORS)[number];
+
+/** How a symbol's annotation looks. Unset fields fall back to the defaults noted here. */
+export const annotationStyleSchema = z.object({
+  /** Defaults to `bottom-left`, so the label sits up and to the right of the symbol. */
+  anchor: z.enum(ANNOTATION_ANCHORS).optional(),
+  /** Defaults to true. False draws bare outlined text with no filled background. */
+  showBackground: z.boolean().optional(),
+  /** Text colour: a palette name (resolved with the annotation's light/dark scheme) or a hex code. */
+  colour: z.string().optional(),
+  /** Dark scheme: light text on a dark background by default, and the dark colour palette. */
+  dark: z.boolean().optional(),
+  /**
+   * Where `colour` goes: `default` ignores it (the scheme's own text and background colours),
+   * `text` colours the text, `background` colours the background. Defaults to `default`.
+   */
+  colourMode: z.enum(['default', 'text', 'background']).optional()
+});
+export type AnnotationStyle = z.infer<typeof annotationStyleSchema>;
+
 /**
  * Symbol marker layer schema. The marker's image is either an uploaded `image` or a
  * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of them.
@@ -188,6 +220,9 @@ export const symbolLayerSchema = z.object({
   symbol: symbolStyleSchema.optional(),
   /** Text shown beside the marker as a DataViz `Annotation`. Any length, newlines kept; blank = none. */
   annotation: z.string().optional(),
+  annotationStyle: annotationStyleSchema.optional(),
+  /** Hides the symbol itself, leaving only the annotation. */
+  hideSymbol: z.boolean().optional(),
   coords: coordinatesSchema
 });
 export type SymbolLayer = z.infer<typeof symbolLayerSchema>;
