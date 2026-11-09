@@ -3,7 +3,7 @@
   import type { LayerRendererProps } from '../types.ts';
   import { pickStop } from '../layers/tweenedLayers.ts';
   import { getTween } from '../Tween/context.ts';
-  import SymbolAnnotation from './SymbolAnnotation.svelte';
+  import SymbolLabel from './SymbolLabel.svelte';
   import SymbolIcon from './SymbolIcon.svelte';
 
   let { config, opacityStops, coordStops }: LayerRendererProps<SymbolLayer> = $props();
@@ -25,5 +25,5 @@
 {/if}
 
 {#if config.annotation?.trim()}
-  <SymbolAnnotation {config} {opacityStops} {coords} />
+  <SymbolLabel {config} {opacityStops} {coords} />
 {/if}

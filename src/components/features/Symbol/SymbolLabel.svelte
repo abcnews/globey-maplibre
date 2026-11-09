@@ -2,14 +2,14 @@
   import { Annotation } from '@abcnews/components-dataviz';
   import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
-  import type { AnnotationAnchor, SymbolLayer } from '../../../lib/data/jsonBlob.ts';
+  import type { LabelAnchor, SymbolLayer } from '../../../lib/data/jsonBlob.ts';
   import type { Stacked } from '../../../lib/data/stack.ts';
   import { disableMapAnimation, prefersReducedMotion } from '../../../lib/stores';
   import { getTween } from '../Tween/context.ts';
   import { tweenStopsValue } from '../Tween/utils.ts';
   import { symbolExtents, type Extents } from '../../../lib/symbolImage.ts';
-  import { annotationShift } from './annotationPlacement.ts';
-  import { resolveAnnotationColours } from './annotationColours.ts';
+  import { labelShift } from './labelPlacement.ts';
+  import { resolveLabelColours } from './labelColours.ts';
 
   interface Props {
     /** First panel's copy of the symbol layer; its `annotation` is the label text */
@@ -32,10 +32,10 @@
   let anchorElement = $state<HTMLDivElement>();
   let marker = $state.raw<Marker>();
 
-  const style = $derived(config.annotationStyle);
-  const anchor = $derived<AnnotationAnchor>(style?.anchor ?? 'bottom-left');
+  const style = $derived(config.labelStyle);
+  const anchor = $derived<LabelAnchor>(style?.anchor ?? 'bottom-left');
   const showBackground = $derived(style?.showBackground ?? true);
-  const colours = $derived(resolveAnnotationColours(style, config.colour, config.scheme));
+  const colours = $derived(resolveLabelColours(style, config.colour, config.scheme));
   // The squared-off corner points at the symbol, so it only applies to a corner anchor.
   const pointer = $derived(
     (['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).find(corner => corner === anchor) ?? 'none'
@@ -46,7 +46,7 @@
   const extents = $derived<Extents>(
     config.hideSymbol ? NO_EXTENTS : config.symbol ? symbolExtents(config.symbol) : UPLOADED_IMAGE_EXTENTS
   );
-  const shift = $derived(annotationShift(anchor, extents));
+  const shift = $derived(labelShift(anchor, extents));
 
   // A DOM label can't read MapLibre's `global-state`, so the fade is worked out here each frame,
   // from the same clock position the symbol layer's own opacity follows.

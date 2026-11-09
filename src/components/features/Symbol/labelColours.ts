@@ -1,5 +1,5 @@
 import { resolveColour } from '@abcnews/components-dataviz';
-import type { AnnotationStyle } from '../../../lib/data/jsonBlob.ts';
+import type { SymbolLabelStyle } from '../../../lib/data/jsonBlob.ts';
 
 /** Filled annotations have no scheme-aware defaults of their own, so the scheme is set here. */
 const SCHEME_DEFAULTS = {
@@ -8,15 +8,16 @@ const SCHEME_DEFAULTS = {
 } as const;
 
 /**
- * The text and background colours for an annotation.
+ * The text and background colours for a symbol's label (an annotation or an inset).
  *
- * `colour` and `scheme` are the layer's. `colourMode` says where the colour goes: nowhere (`default`), the text, or the
- * background. With the colour on the background the text takes the scheme's background colour, so
- * the label reads as inverted. `background` is the fill of a filled label, or the 1px border of an
- * outline one (the caller decides which).
+ * `colour` and `scheme` are the layer's. `colourMode` says where the colour goes: nowhere
+ * (`default`), the text, or the background. With the colour on the background the text takes the
+ * scheme's background colour, so the label reads as inverted. `background` is the fill of a filled
+ * annotation, the 1px border of an outline one, or the border of an inset (`border` mode, which an
+ * inset uses instead of `background`). The caller decides which.
  */
-export function resolveAnnotationColours(
-  style: AnnotationStyle | undefined,
+export function resolveLabelColours(
+  style: SymbolLabelStyle | undefined,
   colour: string,
   scheme: 'light' | 'dark'
 ): { text: string; background: string } {
@@ -25,8 +26,10 @@ export function resolveAnnotationColours(
   if (mode === 'default') return { text: defaults.text, background: defaults.background };
 
   const accent = resolveColour({ colour, scheme });
+  if (mode === 'border') return { text: defaults.text, background: accent };
+
   // With no background there is nothing to colour but the text, so a saved "background" is ignored.
-  const isBackgroundColoured = mode === 'background' && style.showBackground !== false;
+  const isBackgroundColoured = mode === 'background' && style?.showBackground !== false;
 
   return isBackgroundColoured
     ? { text: defaults.background, background: accent }

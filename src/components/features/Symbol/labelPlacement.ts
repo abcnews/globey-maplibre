@@ -1,4 +1,4 @@
-import type { AnnotationAnchor } from '../../../lib/data/jsonBlob.ts';
+import type { LabelAnchor } from '../../../lib/data/jsonBlob.ts';
 import type { Extents } from '../../../lib/symbolImage.ts';
 
 /**
@@ -6,12 +6,12 @@ import type { Extents } from '../../../lib/symbolImage.ts';
  * stored anchor is the label's own point that sits on the symbol, so a label shown on one side of
  * the symbol is anchored by the opposite point.
  */
-export function oppositeAnchor(anchor: AnnotationAnchor): AnnotationAnchor {
+export function oppositeAnchor(anchor: LabelAnchor): LabelAnchor {
   const opposite: Record<string, string> = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' };
   return anchor
     .split('-')
     .map(side => opposite[side] ?? side)
-    .join('-') as AnnotationAnchor;
+    .join('-') as LabelAnchor;
 }
 
 /**
@@ -23,7 +23,7 @@ export function oppositeAnchor(anchor: AnnotationAnchor): AnnotationAnchor {
  * reach to the right. A pin reaches far up but only half its width sideways, so one shared offset
  * would leave the label too far from it. An axis the anchor centres on isn't moved.
  */
-export function annotationShift(anchor: AnnotationAnchor, extents: Extents): [number, number] {
+export function labelShift(anchor: LabelAnchor, extents: Extents): [number, number] {
   const right = anchor.includes('left') ? extents.right : anchor.includes('right') ? -extents.left : 0;
   const down = anchor.includes('top') ? extents.down : anchor.includes('bottom') ? -extents.up : 0;
   return [right, down];

@@ -2,13 +2,13 @@
   import { ColourPicker, colours, SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
   import { jsonBlob } from '../../../lib/data/blobStore.ts';
-  import { ANNOTATION_ANCHORS, type SymbolLayer, type SymbolStyle } from '../../../lib/data/jsonBlob.ts';
+  import { LABEL_ANCHORS, type SymbolLayer, type SymbolStyle } from '../../../lib/data/jsonBlob.ts';
   import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
   import TabbedModal, { type ModalTab } from '../../shared/TabbedModal/TabbedModal.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
   import { uniqueLayerId } from '../utils/layerOps.ts';
-  import { oppositeAnchor } from './annotationPlacement.ts';
+  import { oppositeAnchor } from './labelPlacement.ts';
 
   type PickerProps = ComponentProps<typeof SymbolPicker>;
 
@@ -47,14 +47,14 @@
   );
 
   // Filled in once, so the fields below can bind to them directly.
-  const annotationStyle = untrack(() => {
-    config.annotationStyle = {
+  const labelStyle = untrack(() => {
+    config.labelStyle = {
       anchor: 'bottom-left',
       showBackground: true,
       colourMode: 'default',
-      ...config.annotationStyle
+      ...config.labelStyle
     };
-    return config.annotationStyle!;
+    return config.labelStyle!;
   });
   // The one colour and light/dark choice, shared by the symbol and its annotation, live on the layer.
   untrack(() => {
@@ -91,7 +91,7 @@
   /** Resets the colour, and puts the annotation back on its scheme's own colours. */
   function useDefaultColour() {
     config.colour = DEFAULT_COLOUR;
-    annotationStyle.colourMode = 'default';
+    labelStyle.colourMode = 'default';
   }
 
   /** Picking a built-in symbol drops any custom image. */
@@ -172,7 +172,7 @@
   </fieldset>
 
   <label class="annotation-field">
-    <span>Annotation</span>
+    <span>Annotation (optional)</span>
     <textarea
       rows="4"
       bind:value={config.annotation}
@@ -189,11 +189,11 @@
     <!-- Where the chosen colour goes. Without a background there is nothing else to colour but the text. -->
     <div class="colour-target" role="radiogroup" aria-label="Annotation colours">
       <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="default" bind:group={annotationStyle.colourMode} />
+        <input type="radio" name="annotation-colour-mode" value="default" bind:group={labelStyle.colourMode} />
         Default colours
       </label>
       <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="text" bind:group={annotationStyle.colourMode} />
+        <input type="radio" name="annotation-colour-mode" value="text" bind:group={labelStyle.colourMode} />
         Coloured text
       </label>
       <label class="checkbox-field">
@@ -201,8 +201,8 @@
           type="radio"
           name="annotation-colour-mode"
           value="background"
-          disabled={!annotationStyle.showBackground}
-          bind:group={annotationStyle.colourMode}
+          disabled={!labelStyle.showBackground}
+          bind:group={labelStyle.colourMode}
         />
         Coloured background
       </label>
@@ -215,14 +215,14 @@
       <!-- Each radio is where the label appears around the symbol. The stored anchor is the opposite: the label's own
            point that sits on the symbol, so a label shown top-right is anchored bottom-left. -->
       <div class="anchor-grid" role="radiogroup" aria-label="Show label on">
-        {#each ANNOTATION_ANCHORS as labelPosition (labelPosition)}
+        {#each LABEL_ANCHORS as labelPosition (labelPosition)}
           <input
             type="radio"
             name="annotation-label-position"
             title={labelPosition}
             aria-label={labelPosition}
-            checked={annotationStyle.anchor === oppositeAnchor(labelPosition)}
-            onchange={() => (annotationStyle.anchor = oppositeAnchor(labelPosition))}
+            checked={labelStyle.anchor === oppositeAnchor(labelPosition)}
+            onchange={() => (labelStyle.anchor = oppositeAnchor(labelPosition))}
           />
         {/each}
       </div>
@@ -235,7 +235,7 @@
         Hide symbol
       </label>
       <label class="checkbox-field">
-        <input type="checkbox" bind:checked={annotationStyle.showBackground} />
+        <input type="checkbox" bind:checked={labelStyle.showBackground} />
         Show background
       </label>
     </fieldset>
