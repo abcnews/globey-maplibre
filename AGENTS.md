@@ -40,7 +40,7 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 `shared/TabbedModal` is a `Modal` with no visible title: its tabs sit in the title bar (via `Modal`'s `titleIcon` slot and `title=" "`) and the active panel renders in the body. Pass `tabs` with `content` snippets, `bind:activeId`, `footer`, and `minWidth`/`minHeight` to stop it resizing between tabs. The Symbol modal uses it.
 
-A feature with `liveEdit: true` (Symbol) has no Save/Cancel: its modal copies every change onto `config` in an `$effect`, `Builder.layers.svelte` commits that draft to the blob as it changes (keeping the original id), and closing just keeps it.
+A feature with `liveEdit: true` (Symbol) has no Save/Cancel: its modal binds its fields straight to `config` (no local copies; one small `$effect` writes `config.symbol`), `Builder.layers.svelte` commits that draft to the blob as it changes (keeping the original id), and closing just keeps it.
 
 `handleCloseLayerModal()` commits via `updateLayer()`, or deletes the draft when `feature.isValid` rejects it — reuse it rather than writing new commit logic. `feature.isValid` is the only validity gate now that the codec's encode-time filters are gone.
 

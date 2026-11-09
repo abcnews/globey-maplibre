@@ -2,12 +2,7 @@
   import { ColourPicker, colours, SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
   import { jsonBlob } from '../../../lib/data/blobStore.ts';
-  import {
-    ANNOTATION_ANCHORS,
-    type AnnotationAnchor,
-    type AnnotationStyle,
-    type SymbolLayer
-  } from '../../../lib/data/jsonBlob.ts';
+  import { ANNOTATION_ANCHORS, type SymbolLayer, type SymbolStyle } from '../../../lib/data/jsonBlob.ts';
   import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
   import TabbedModal, { type ModalTab } from '../../shared/TabbedModal/TabbedModal.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
@@ -38,33 +33,35 @@
   let activeTab = $state('symbol');
 
   /**
-   * The picked built-in symbol, or null while a custom image is in use. A marker is one or the
-   * other, so choosing one clears the other (see `selectSymbol` and `setCustomImage`).
+   * The symbol's own look, as edited by the symbol picker. It is written to `config.symbol` unless a
+   * custom image is in use (a marker is one or the other). Everything else binds straight to
+   * `config`, which the Builder commits to the blob as it changes (`liveEdit`).
    */
-  let symbolName = $state<PickerProps['name']>(
-    untrack(() => (config.image && !config.symbol ? null : ((config.symbol?.name as PickerProps['name']) ?? 'circle')))
+  let symbolStyle = $state<SymbolStyle>(
+    untrack(() => ({
+      name: config.symbol?.name ?? 'circle',
+      variant: config.symbol?.variant ?? 'fill',
+      colour: config.symbol?.colour ?? config.annotationStyle?.colour ?? DEFAULT_COLOUR,
+      // One light/dark choice for the symbol and its annotation, so both suit the map underneath.
+      scheme: config.symbol?.scheme ?? (config.annotationStyle?.dark ? 'dark' : 'light'),
+      size: config.symbol?.size ?? 18
+    }))
   );
-  let symbolVariant = $state<NonNullable<PickerProps['variant']>>(untrack(() => config.symbol?.variant ?? 'fill'));
-  let symbolColour = $state<string>(untrack(() => config.symbol?.colour ?? config.annotationStyle?.colour ?? DEFAULT_COLOUR));
-  /** One light/dark choice for the symbol and its annotation, so both suit the map underneath. */
-  let symbolScheme = $state<NonNullable<PickerProps['scheme']>>(
-    untrack(() => config.symbol?.scheme ?? (config.annotationStyle?.dark ? 'dark' : 'light'))
-  );
-  let symbolSize = $state<number>(untrack(() => config.symbol?.size ?? 18));
 
-  let symbolImage = $state<SymbolLayer['image']>(untrack(() => $state.snapshot(config.image)));
-  let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
-  let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
-  let annotation = $state(untrack(() => config.annotation ?? ''));
-  let hideSymbol = $state(untrack(() => config.hideSymbol ?? false));
-  let annotationAnchor = $state<AnnotationAnchor>(untrack(() => config.annotationStyle?.anchor ?? 'bottom-left'));
-  let showBackground = $state(untrack(() => config.annotationStyle?.showBackground ?? true));
-  /** Where the one chosen colour goes on the annotation (the symbol always takes it). */
-  let colourMode = $state<NonNullable<AnnotationStyle['colourMode']>>(
-    untrack(() => config.annotationStyle?.colourMode ?? 'default')
-  );
-  let animationClock = $state(untrack(() => config.animationClock));
-  let id = $state(untrack(() => config.id));
+  // Filled in once, so the fields below can bind to them directly.
+  const annotationStyle = untrack(() => {
+    config.annotationStyle = {
+      anchor: 'bottom-left',
+      showBackground: true,
+      colourMode: 'default',
+      ...config.annotationStyle
+    };
+    return config.annotationStyle!;
+  });
+  const coords = untrack(() => {
+    config.coords ??= [0, 0];
+    return config.coords!;
+  });
 
   /** The id this layer had when the modal opened, which doesn't count as taken by another layer. */
   const originalId = untrack(() => config.id);
@@ -77,66 +74,41 @@
 
   /** Typing in the id field takes it off automatic. */
   function setCustomId(value: string | undefined) {
-    id = value;
+    config.id = value;
     isIdAutomatic = false;
   }
 
   /** Keeps the id unique and in step with the annotation, until the author sets their own. */
   function handleAnnotationInput() {
-    if (!isIdAutomatic || !annotation.trim()) return;
+    if (!isIdAutomatic || !config.annotation?.trim()) return;
     const otherIds = ($jsonBlob?.layers ?? []).map(layer => layer.id).filter(layerId => layerId !== originalId);
-    id = uniqueLayerId(annotation, 'symbol', otherIds);
+    config.id = uniqueLayerId(config.annotation, 'symbol', otherIds);
   }
 
   /** Resets the symbol colour, and puts the annotation back on its scheme's own colours. */
   function useDefaultColour() {
-    symbolColour = DEFAULT_COLOUR;
-    colourMode = 'default';
+    symbolStyle.colour = DEFAULT_COLOUR;
+    annotationStyle.colourMode = 'default';
   }
 
   /** Picking a built-in symbol drops any custom image. */
   function selectSymbol(name: PickerProps['name']) {
-    symbolName = name;
-    if (name) symbolImage = undefined;
+    if (!name) return;
+    symbolStyle.name = name;
+    config.image = undefined;
   }
 
-  /** Choosing a custom image deselects the built-in symbol. Removing it brings back the default. */
+  /** Choosing a custom image replaces the built-in symbol. Removing it brings the symbol back. */
   function setCustomImage(image: SymbolLayer['image']) {
-    symbolImage = image;
-    if (image) symbolName = null;
-    else if (!symbolName) symbolName = 'circle';
+    config.image = image ? $state.snapshot(image) : undefined;
   }
 
-  // LIVE EDIT: every change is copied onto `config` straight away. The Builder commits it to the
-  // blob (`liveEdit` on the feature), so the map shows each change as it is made.
+  // The symbol is only stored without a custom image. Its colour and scheme are also kept on the
+  // annotation style, which has no symbol to read them from when an image is used.
   $effect(() => {
-    // A custom image wins; otherwise the picked symbol. The layer never keeps both.
-    if (symbolImage) {
-      config.image = $state.snapshot(symbolImage);
-      config.symbol = undefined;
-    } else {
-      config.symbol = {
-        name: symbolName ?? 'circle',
-        variant: symbolVariant,
-        colour: symbolColour,
-        scheme: symbolScheme,
-        size: symbolSize
-      };
-      config.image = undefined;
-    }
-    config.coords = [lng, lat];
-    // Kept exactly as typed (newlines and all); blank means no annotation.
-    config.annotation = annotation.trim() ? annotation : undefined;
-    config.hideSymbol = hideSymbol || undefined;
-    config.annotationStyle = {
-      anchor: annotationAnchor,
-      showBackground,
-      colour: symbolColour,
-      dark: symbolScheme === 'dark' || undefined,
-      colourMode
-    };
-    config.animationClock = animationClock;
-    config.id = id;
+    config.symbol = config.image ? undefined : { ...symbolStyle };
+    annotationStyle.colour = symbolStyle.colour;
+    annotationStyle.dark = symbolStyle.scheme === 'dark' || undefined;
   });
 
   /** Closing (OK, the close button or the backdrop) keeps the changes, which are already applied. */
@@ -166,36 +138,36 @@
       <legend>Symbol</legend>
       <div class="fields">
         <div class="name-field">
-          <LayerIdField bind:id={() => id, setCustomId} label="Name" showHelp={false} />
+          <LayerIdField bind:id={() => config.id, setCustomId} label="Name" showHelp={false} />
         </div>
         <label class="coord-field">
           <span>Longitude</span>
-          <input type="number" step="0.0001" bind:value={lng} />
+          <input type="number" step="0.0001" bind:value={coords[0]} />
         </label>
         <label class="coord-field">
           <span>Latitude</span>
-          <input type="number" step="0.0001" bind:value={lat} />
+          <input type="number" step="0.0001" bind:value={coords[1]} />
         </label>
       </div>
     </fieldset>
-    <AnimationClockField bind:animationClock />
+    <AnimationClockField bind:animationClock={config.animationClock} />
   </div>
 
   <fieldset>
     <legend>Light / dark</legend>
     <div class="scheme-toggle" role="radiogroup" aria-label="Light or dark">
       <label class="checkbox-field">
-        <input type="radio" name="symbol-scheme" value="light" bind:group={symbolScheme} />
+        <input type="radio" name="symbol-scheme" value="light" bind:group={symbolStyle.scheme} />
         Light
       </label>
       <label class="checkbox-field">
-        <input type="radio" name="symbol-scheme" value="dark" bind:group={symbolScheme} />
+        <input type="radio" name="symbol-scheme" value="dark" bind:group={symbolStyle.scheme} />
         Dark
       </label>
     </div>
     <small class="scheme-help">
-      Use light for light maps, like the street map, and dark for dark maps, like a satellite base. Pick whichever
-      suits what is on screen at the time. It sets the colours of the symbol and its annotation.
+      Use light for light maps, like the street map, and dark for dark maps, like a satellite base. Pick whichever suits
+      what is on screen at the time. It sets the colours of the symbol and its annotation.
     </small>
   </fieldset>
 
@@ -203,7 +175,7 @@
     <span>Annotation</span>
     <textarea
       rows="4"
-      bind:value={annotation}
+      bind:value={config.annotation}
       oninput={handleAnnotationInput}
       placeholder="Text shown beside the symbol"
     ></textarea>
@@ -217,11 +189,11 @@
     <!-- Where the chosen colour goes. Without a background there is nothing else to colour but the text. -->
     <div class="colour-target" role="radiogroup" aria-label="Annotation colours">
       <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="default" bind:group={colourMode} />
+        <input type="radio" name="annotation-colour-mode" value="default" bind:group={annotationStyle.colourMode} />
         Default colours
       </label>
       <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="text" bind:group={colourMode} />
+        <input type="radio" name="annotation-colour-mode" value="text" bind:group={annotationStyle.colourMode} />
         Coloured text
       </label>
       <label class="checkbox-field">
@@ -229,44 +201,44 @@
           type="radio"
           name="annotation-colour-mode"
           value="background"
-          disabled={!showBackground}
-          bind:group={colourMode}
+          disabled={!annotationStyle.showBackground}
+          bind:group={annotationStyle.colourMode}
         />
         Coloured background
       </label>
     </div>
   </fieldset>
 
-    <div class="annotation-options">
-      <fieldset>
-        <legend>Anchor point</legend>
-        <!-- The point on the label that sits on the symbol, so "bottom-left" puts the label up and right of it. -->
-        <div class="anchor-grid" role="radiogroup" aria-label="Anchor point">
-          {#each ANNOTATION_ANCHORS as anchorPoint (anchorPoint)}
-            <input
-              type="radio"
-              name="annotation-anchor"
-              value={anchorPoint}
-              title={anchorPoint}
-              aria-label={anchorPoint}
-              bind:group={annotationAnchor}
-            />
-          {/each}
-        </div>
-      </fieldset>
+  <div class="annotation-options">
+    <fieldset>
+      <legend>Anchor point</legend>
+      <!-- The point on the label that sits on the symbol, so "bottom-left" puts the label up and right of it. -->
+      <div class="anchor-grid" role="radiogroup" aria-label="Anchor point">
+        {#each ANNOTATION_ANCHORS as anchorPoint (anchorPoint)}
+          <input
+            type="radio"
+            name="annotation-anchor"
+            value={anchorPoint}
+            title={anchorPoint}
+            aria-label={anchorPoint}
+            bind:group={annotationStyle.anchor}
+          />
+        {/each}
+      </div>
+    </fieldset>
 
-      <fieldset class="annotation-toggles">
-        <legend>Display</legend>
-        <label class="checkbox-field">
-          <input type="checkbox" bind:checked={hideSymbol} />
-          Hide symbol
-        </label>
-        <label class="checkbox-field">
-          <input type="checkbox" bind:checked={showBackground} />
-          Show background
-        </label>
-      </fieldset>
-    </div>
+    <fieldset class="annotation-toggles">
+      <legend>Display</legend>
+      <label class="checkbox-field">
+        <input type="checkbox" bind:checked={config.hideSymbol} />
+        Hide symbol
+      </label>
+      <label class="checkbox-field">
+        <input type="checkbox" bind:checked={annotationStyle.showBackground} />
+        Show background
+      </label>
+    </fieldset>
+  </div>
 {/snippet}
 
 {#snippet advancedTab()}
@@ -275,8 +247,8 @@
     <!-- The one colour for the symbol, and for the annotation when its style uses it. -->
     <fieldset class="colour-section">
       <legend>Colour</legend>
-      <ColourPicker bind:colour={symbolColour} colours={colours[symbolScheme]} fullWidth />
-      {#if symbolColour !== DEFAULT_COLOUR}
+      <ColourPicker bind:colour={symbolStyle.colour} colours={colours[symbolStyle.scheme]} fullWidth />
+      {#if symbolStyle.colour !== DEFAULT_COLOUR}
         <button type="button" onclick={useDefaultColour}>Use default colour</button>
       {/if}
     </fieldset>
@@ -284,11 +256,11 @@
     <!-- The scheme is chosen on the Symbol tab and saved with the symbol (see lib/symbolImage.ts) -->
     <div class="picker-column">
       <SymbolPicker
-        bind:name={() => symbolName, selectSymbol}
-        bind:variant={symbolVariant}
-        bind:colour={symbolColour}
-        bind:scheme={symbolScheme}
-        bind:size={symbolSize}
+        bind:name={() => (config.image ? null : (symbolStyle.name as PickerProps['name'])), selectSymbol}
+        bind:variant={symbolStyle.variant}
+        bind:colour={symbolStyle.colour}
+        bind:scheme={symbolStyle.scheme}
+        bind:size={symbolStyle.size}
         show={{ colour: false, customColour: false }}
       />
     </div>
@@ -296,14 +268,14 @@
     <fieldset class="upload-column">
       <legend>Upload custom symbol</legend>
       <ImageUpload
-        bind:value={() => symbolImage, setCustomImage}
+        bind:value={() => config.image, setCustomImage}
         accept={CUSTOM_SYMBOL_TYPES}
         prompt="Drag and drop an SVG or WebP image, or choose a file. It is shown at half its pixel size (@2x):"
       />
     </fieldset>
 
     <!-- Nothing is drawn without annotation text, so its options (including hiding the symbol) wait for some. -->
-    {#if annotation.trim()}
+    {#if config.annotation?.trim()}
       {@render annotationOptions()}
     {/if}
   </div>
