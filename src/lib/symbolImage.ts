@@ -1,4 +1,4 @@
-import { getSymbol, resolveColour, type SYMBOL_NAMES } from '@abcnews/components-dataviz';
+import { getSymbol, getSymbolAnchor, resolveColour, type SYMBOL_NAMES } from '@abcnews/components-dataviz';
 import type { SymbolStyle } from './data/jsonBlob.ts';
 
 type SymbolName = (typeof SYMBOL_NAMES)[number];
@@ -11,6 +11,29 @@ const resolvedColour = (style: SymbolStyle) => resolveColour({ colour: style.col
  */
 export const symbolImageId = (style: SymbolStyle, pixelRatio: number) =>
   `vector-${style.name}-${style.variant}-${style.scheme}-${resolvedColour(style).replace(/[^a-z0-9]/gi, '')}-${style.size}@${pixelRatio}`;
+
+/** Where the symbol points, as fractions of its square image: the middle for most, the tip for a pin or arrow. */
+const symbolAnchor = (style: SymbolStyle) =>
+  getSymbolAnchor({ name: style.name as SymbolName, variant: style.variant, width: style.size });
+
+/**
+ * MapLibre's `icon-offset` (px at `icon-size` 1) that puts the symbol's anchor, not its middle, on
+ * the map coordinate. A pin's tip is below its middle, so the icon is moved up.
+ */
+export function symbolIconOffset(style: SymbolStyle): [number, number] {
+  const { x, y } = symbolAnchor(style);
+  return [(0.5 - x) * style.size, (0.5 - y) * style.size];
+}
+
+/**
+ * How far, in px, the symbol reaches from the map coordinate in any direction, plus a 1px gap.
+ * An annotation is offset by this much so it clears the symbol: about half the size for a circle,
+ * nearly the full size for a pin, whose body sits above the coordinate.
+ */
+export function symbolReach(style: SymbolStyle): number {
+  const { x, y } = symbolAnchor(style);
+  return Math.round(style.size * Math.max(x, 1 - x, y, 1 - y)) + 1;
+}
 
 /** The size `decodeUploadedImage` assumes for an image (e.g. an SVG) that has none of its own. */
 const FALLBACK_IMAGE_SIZE = 256;

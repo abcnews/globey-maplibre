@@ -6,6 +6,7 @@
   import {
     decodeUploadedImage,
     rasteriseSymbol,
+    symbolIconOffset,
     symbolImageId,
     UPLOADED_IMAGE_SCALE,
     uploadedImageId
@@ -69,6 +70,8 @@
     const imgId = symbolImageKey;
     const dataUri = uploadedDataUri;
     const isVector = usesSymbol;
+    // Name, variant and size are all in `imgId`, so the offset only changes when the layer is rebuilt.
+    const vectorOffset = untrack(() => (config.symbol ? symbolIconOffset(config.symbol) : [0, 0]));
 
     if (!map || !imgId) return;
 
@@ -118,6 +121,8 @@
                 'icon-image': imgId,
                 // Vector symbols are already drawn at their final size; an uploaded image is @2x.
                 'icon-size': isVector ? 1 : UPLOADED_IMAGE_SCALE,
+                // A pin or arrow points at the coordinate with its tip, not its middle.
+                'icon-offset': vectorOffset,
                 'icon-allow-overlap': true,
                 'icon-ignore-placement': true
               },
