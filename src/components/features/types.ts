@@ -137,6 +137,14 @@ export interface LayerFeatureDefinition<T extends GlobeLayer = GlobeLayer> {
   }>;
 
   /**
+   * When true, the Builder commits the `ConfigModal`'s draft to the blob on every change, so the map
+   * updates while the modal is open. The layer keeps its original id until the modal closes (a rename
+   * would remount its renderer on every keystroke), and validity is only checked on close.
+   * The modal then needs no Save/Cancel: closing keeps the changes.
+   */
+  liveEdit?: boolean;
+
+  /**
    * Renders one layer of this kind on the map. `LayerManager` mounts it once per layer id
    * across all panels. Singletons with blob-wide props (MapVector, MapLabels, CustomLabels)
    * omit this and are mounted directly by `CustomGlobe`.

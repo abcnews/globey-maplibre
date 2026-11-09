@@ -11,7 +11,7 @@
   import CustomGlobe from '../CustomGlobe/CustomGlobe.svelte';
   import { BuilderFrame, Loader, Modal } from '@abcnews/components-builder';
   import type { Map as MapLibreMap } from 'maplibre-gl';
-  import type { Component } from 'svelte';
+  import { untrack, type Component } from 'svelte';
   import {
     layerFeatureRegistry,
     layerAddMenuRegistry,
@@ -266,6 +266,24 @@
       mapInstance.off('click', handleMapClick);
       if (mapInstance.getCanvas()) mapInstance.getCanvas().style.cursor = '';
     };
+  });
+
+  // LIVE EDIT: for features that opt in, push the modal's draft into the blob on every change so the
+  // map shows it. The original id is kept (see `LayerFeatureDefinition.liveEdit`); the full id and
+  // validity checks still run in `handleCloseLayerModal`.
+  $effect(() => {
+    const editing = editingItem;
+    if (!editing?.feature.liveEdit) return;
+
+    const draftData = $state.snapshot(editing.data);
+    const originalId = editing.descriptor.id;
+
+    untrack(() =>
+      mutateBlob(draft => {
+        if (!findLayer(draft, originalId)) return;
+        updateLayer(draft, originalId, { ...draftData, id: originalId });
+      })
+    );
   });
 
   function handleCloseLayerModal(bounds?: [number, number][]) {
