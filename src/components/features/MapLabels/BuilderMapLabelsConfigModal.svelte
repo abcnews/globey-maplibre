@@ -42,8 +42,8 @@
 <Modal title="Map Labels" onClose={() => onclose?.()} position="right">
   <div class="map-labels-modal">
     <div class="preset-toolbar">
-      <button type="button" class="btn-preset" onclick={selectAll}>Select All</button>
-      <button type="button" class="btn-preset" onclick={deselectAll}>Deselect All</button>
+      <button type="button" class="btn-preset" onclick={selectAll}>Show All</button>
+      <button type="button" class="btn-preset" onclick={deselectAll}>Hide All</button>
     </div>
 
     <fieldset>
