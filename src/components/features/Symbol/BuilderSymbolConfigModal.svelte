@@ -8,6 +8,7 @@
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
   import { uniqueLayerId } from '../utils/layerOps.ts';
+  import { hasAnnotation, hasInset, hasLabel } from './label.ts';
   import { oppositeAnchor } from './labelPlacement.ts';
 
   type PickerProps = ComponentProps<typeof SymbolPicker>;
@@ -29,6 +30,7 @@
 
   const tabs: ModalTab[] = [
     { id: 'symbol', label: 'Symbol', content: basicsTab },
+    { id: 'inset', label: 'Inset image', content: insetTab },
     { id: 'advanced', label: 'Advanced', content: advancedTab }
   ];
   let activeTab = $state('symbol');
@@ -91,6 +93,24 @@
   /** Resets the colour, and puts the annotation back on its scheme's own colours. */
   function useDefaultColour() {
     config.colour = DEFAULT_COLOUR;
+    labelStyle.colourMode = 'default';
+  }
+
+  /** A symbol has an annotation or an inset, not both, so each can be removed to make way for the other. */
+  function removeAnnotation() {
+    config.annotation = undefined;
+    labelStyle.colourMode = 'default';
+  }
+
+  function removeInset() {
+    config.inset = undefined;
+    labelStyle.colourMode = 'default';
+  }
+
+  /** A new inset starts with the default look; removing the image removes the whole inset. */
+  function setInsetImage(image: SymbolLayer['image']) {
+    if (!image) return removeInset();
+    config.inset = { image: $state.snapshot(image), shape: config.inset?.shape ?? 'circle' };
     labelStyle.colourMode = 'default';
   }
 
@@ -167,45 +187,95 @@
     </div>
     <small class="scheme-help">
       Use light for light maps, like the street map, and dark for dark maps, like a satellite base. Pick whichever suits
-      what is on screen at the time. It sets the colours of the symbol and its annotation.
+      what is on screen at the time. It sets the colours of the symbol and its annotation or inset.
     </small>
   </fieldset>
 
-  <label class="annotation-field">
-    <span>Annotation (optional)</span>
-    <textarea
-      rows="4"
-      bind:value={config.annotation}
-      oninput={handleAnnotationInput}
-      placeholder="Text shown beside the symbol"
-    ></textarea>
-  </label>
+  {#if hasInset(config)}
+    <fieldset>
+      <legend>Annotation</legend>
+      <p class="note">This symbol has an inset image. Remove it to add an annotation.</p>
+      <button type="button" onclick={removeInset}>Remove inset</button>
+    </fieldset>
+  {:else}
+    <label class="annotation-field">
+      <span>Annotation (optional)</span>
+      <textarea
+        rows="4"
+        bind:value={config.annotation}
+        oninput={handleAnnotationInput}
+        placeholder="Text shown beside the symbol"
+      ></textarea>
+    </label>
+  {/if}
 {/snippet}
 
-{#snippet annotationOptions()}
-  <!-- Two grid cells: the style fieldset under the symbol picker, and anchor point + display under the upload. -->
+{#snippet insetTab()}
+  {#if hasAnnotation(config)}
+    <fieldset>
+      <legend>Inset image</legend>
+      <p class="note">This symbol already has an annotation. Remove it to add an inset image.</p>
+      <button type="button" onclick={removeAnnotation}>Remove annotation</button>
+    </fieldset>
+  {:else}
+    <fieldset>
+      <legend>Inset image</legend>
+      <ImageUpload
+        bind:value={() => config.inset?.image, setInsetImage}
+        prompt="Drag and drop an image, or choose a file. It should be @2x: it is shown at half its pixel size:"
+      />
+    </fieldset>
+
+    {#if config.inset}
+      <fieldset>
+        <legend>Shape</legend>
+        <div class="scheme-toggle" role="radiogroup" aria-label="Inset shape">
+          <label class="checkbox-field">
+            <input type="radio" name="inset-shape" value="circle" bind:group={config.inset.shape} />
+            Circle
+          </label>
+          <label class="checkbox-field">
+            <input type="radio" name="inset-shape" value="rounded" bind:group={config.inset.shape} />
+            Rounded square
+          </label>
+        </div>
+      </fieldset>
+    {/if}
+  {/if}
+{/snippet}
+
+{#snippet labelOptions()}
+  <!-- Two grid cells: the style fieldset under the symbol picker, and label position + display under the upload.
+       The position and display options are shared by annotations and insets; the style differs. -->
   <fieldset class="annotation-style">
-    <legend>Annotation style</legend>
-    <!-- Where the chosen colour goes. Without a background there is nothing else to colour but the text. -->
-    <div class="colour-target" role="radiogroup" aria-label="Annotation colours">
+    <legend>{hasInset(config) ? 'Inset style' : 'Annotation style'}</legend>
+    <!-- Where the chosen colour goes. An inset only has a border; an annotation without a background only has text. -->
+    <div class="colour-target" role="radiogroup" aria-label="Label colours">
       <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="default" bind:group={labelStyle.colourMode} />
+        <input type="radio" name="label-colour-mode" value="default" bind:group={labelStyle.colourMode} />
         Default colours
       </label>
-      <label class="checkbox-field">
-        <input type="radio" name="annotation-colour-mode" value="text" bind:group={labelStyle.colourMode} />
-        Coloured text
-      </label>
-      <label class="checkbox-field">
-        <input
-          type="radio"
-          name="annotation-colour-mode"
-          value="background"
-          disabled={!labelStyle.showBackground}
-          bind:group={labelStyle.colourMode}
-        />
-        Coloured background
-      </label>
+      {#if hasInset(config)}
+        <label class="checkbox-field">
+          <input type="radio" name="label-colour-mode" value="border" bind:group={labelStyle.colourMode} />
+          Coloured border
+        </label>
+      {:else}
+        <label class="checkbox-field">
+          <input type="radio" name="label-colour-mode" value="text" bind:group={labelStyle.colourMode} />
+          Coloured text
+        </label>
+        <label class="checkbox-field">
+          <input
+            type="radio"
+            name="label-colour-mode"
+            value="background"
+            disabled={!labelStyle.showBackground}
+            bind:group={labelStyle.colourMode}
+          />
+          Coloured background
+        </label>
+      {/if}
     </div>
   </fieldset>
 
@@ -234,10 +304,12 @@
         <input type="checkbox" bind:checked={config.hideSymbol} />
         Hide symbol
       </label>
-      <label class="checkbox-field">
-        <input type="checkbox" bind:checked={labelStyle.showBackground} />
-        Show background
-      </label>
+      {#if !hasInset(config)}
+        <label class="checkbox-field">
+          <input type="checkbox" bind:checked={labelStyle.showBackground} />
+          Show background
+        </label>
+      {/if}
     </fieldset>
   </div>
 {/snippet}
@@ -275,9 +347,9 @@
       />
     </fieldset>
 
-    <!-- Nothing is drawn without annotation text, so its options (including hiding the symbol) wait for some. -->
-    {#if config.annotation?.trim()}
-      {@render annotationOptions()}
+    <!-- Nothing is drawn without a label, so its options (including hiding the symbol) wait for one. -->
+    {#if hasLabel(config)}
+      {@render labelOptions()}
     {/if}
   </div>
 {/snippet}
@@ -376,6 +448,11 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .note {
+    margin: 0 0 0.5rem;
     font-size: 0.85rem;
   }
 

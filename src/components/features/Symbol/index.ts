@@ -3,6 +3,7 @@ import type { SymbolLayer } from '../../../lib/data/jsonBlob.ts';
 import { newLayerId } from '../utils/layerOps.ts';
 import { GeoAlt } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton, createGoToButton } from '../utils/buttonHelpers.ts';
+import { hasLabel } from './label.ts';
 import BuilderSymbolConfigModal from './BuilderSymbolConfigModal.svelte';
 import SymbolHandler from './SymbolHandler.svelte';
 
@@ -48,7 +49,7 @@ export const symbolFeature: LayerFeatureDefinition<SymbolLayer> = {
 
   // A marker needs a built-in symbol, an uploaded image or an annotation (the symbol may be hidden).
   isValid(data: SymbolLayer) {
-    return Boolean(data?.symbol?.name || data?.image?.dataUri || data?.annotation?.trim());
+    return Boolean(data?.symbol?.name || data?.image?.dataUri || hasLabel(data));
   },
 
   liveEdit: true,

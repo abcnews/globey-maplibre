@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Annotation } from '@abcnews/components-dataviz';
+  import { Annotation, Inset } from '@abcnews/components-dataviz';
   import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
   import { getContext, untrack } from 'svelte';
   import type { LabelAnchor, SymbolLayer } from '../../../lib/data/jsonBlob.ts';
@@ -8,6 +8,7 @@
   import { getTween } from '../Tween/context.ts';
   import { tweenStopsValue } from '../Tween/utils.ts';
   import { symbolExtents, type Extents } from '../../../lib/symbolImage.ts';
+  import { insetSize } from './label.ts';
   import { labelShift } from './labelPlacement.ts';
   import { resolveLabelColours } from './labelColours.ts';
 
@@ -36,6 +37,14 @@
   const anchor = $derived<LabelAnchor>(style?.anchor ?? 'bottom-left');
   const showBackground = $derived(style?.showBackground ?? true);
   const colours = $derived(resolveLabelColours(style, config.colour, config.scheme));
+  // An inset only has a border to colour, so a mode left over from an annotation is ignored.
+  const insetBorder = $derived(
+    resolveLabelColours(
+      { colourMode: style?.colourMode === 'border' ? 'border' : 'default' },
+      config.colour,
+      config.scheme
+    ).background
+  );
   // The squared-off corner points at the symbol, so it only applies to a corner anchor.
   const pointer = $derived(
     (['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).find(corner => corner === anchor) ?? 'none'
@@ -75,20 +84,31 @@
   });
 </script>
 
-<div bind:this={anchorElement} class="annotation-anchor">
+<div bind:this={anchorElement} class="label-anchor">
   <!-- Opacity is on this inner element: the Marker owns its own element's opacity (globe back-face). -->
-  <div class="annotation-fade" style:opacity style:transform="translate({shift[0]}px, {shift[1]}px)">
-    <!-- `pre` is on the text span only: on the whole label it also kept the markup's own indentation, adding a blank line at the top. -->
-    <Annotation
-      {anchor}
-      {pointer}
-      color={colours.text}
-      fill={showBackground ? colours.background : undefined}
-      stroke={showBackground ? undefined : colours.background}
-      variant={showBackground ? 'filled' : 'outline'}
-      gooey
-      style="text-align:left"><span class="annotation-text">{config.annotation}</span></Annotation
-    >
+  <div class="label-fade" style:opacity style:transform="translate({shift[0]}px, {shift[1]}px)">
+    {#if config.inset}
+      <Inset
+        src={config.inset.image.dataUri}
+        size={insetSize(config.inset.image)}
+        shape={config.inset.shape}
+        colour={insetBorder}
+        {anchor}
+        loading="eager"
+      />
+    {:else}
+      <!-- `pre` is on the text span only: on the whole label it also kept the markup's own indentation, adding a blank line at the top. -->
+      <Annotation
+        {anchor}
+        {pointer}
+        color={colours.text}
+        fill={showBackground ? colours.background : undefined}
+        stroke={showBackground ? undefined : colours.background}
+        variant={showBackground ? 'filled' : 'outline'}
+        gooey
+        style="text-align:left"><span class="annotation-text">{config.annotation}</span></Annotation
+      >
+    {/if}
   </div>
 </div>
 
@@ -98,7 +118,7 @@
     white-space: pre;
   }
 
-  .annotation-anchor {
+  .label-anchor {
     width: 0;
     height: 0;
     pointer-events: none;

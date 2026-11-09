@@ -199,9 +199,19 @@ export const symbolLabelStyleSchema = z.object({
 export type SymbolLabelStyle = z.infer<typeof symbolLabelStyleSchema>;
 
 /**
+ * A picture shown beside a symbol (the dataviz `Inset`), in place of an annotation. The image is
+ * expected to be @2x: it is shown at half its pixel size.
+ */
+export const insetSchema = z.object({
+  image: embeddedImageSchema,
+  shape: z.enum(['circle', 'rounded']).default('circle')
+});
+export type SymbolInset = z.infer<typeof insetSchema>;
+
+/**
  * Symbol marker layer schema. The marker's image is either an uploaded `image` or a
  * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of
- * them, or an `annotation`.
+ * them, or a label (an `annotation` or an `inset`).
  */
 export const symbolLayerSchema = z.object({
   ...baseLayerObject,
@@ -218,8 +228,10 @@ export const symbolLayerSchema = z.object({
   scheme: z.enum(['light', 'dark']).default('light'),
   /** Text shown beside the marker as a DataViz `Annotation`. Any length, newlines kept; blank = none. */
   annotation: z.string().optional(),
+  /** A picture shown beside the marker instead of an annotation. A marker has one or the other. */
+  inset: insetSchema.optional(),
   labelStyle: symbolLabelStyleSchema.optional(),
-  /** Hides the symbol itself, leaving only the annotation. */
+  /** Hides the symbol itself, leaving only its label (annotation or inset). */
   hideSymbol: z.boolean().optional(),
   coords: coordinatesSchema
 });
