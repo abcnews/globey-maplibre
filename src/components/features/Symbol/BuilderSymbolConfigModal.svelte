@@ -1,11 +1,13 @@
 <script lang="ts">
   import { SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
+  import { jsonBlob } from '../../../lib/data/blobStore.ts';
   import type { SymbolLayer } from '../../../lib/data/jsonBlob.ts';
   import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
   import TabbedModal, { type ModalTab } from '../../shared/TabbedModal/TabbedModal.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
+  import { uniqueLayerId } from '../utils/layerOps.ts';
 
   type PickerProps = ComponentProps<typeof SymbolPicker>;
 
@@ -42,8 +44,31 @@
   let symbolImage = $state<SymbolLayer['image']>(untrack(() => $state.snapshot(config.image)));
   let lng = $state<number>(untrack(() => config.coords?.[0] ?? 0));
   let lat = $state<number>(untrack(() => config.coords?.[1] ?? 0));
+  let annotation = $state(untrack(() => config.annotation ?? ''));
   let animationClock = $state(untrack(() => config.animationClock));
   let id = $state(untrack(() => config.id));
+
+  /** The id this layer had when the modal opened, which doesn't count as taken by another layer. */
+  const originalId = untrack(() => config.id);
+
+  /**
+   * Whether the id still follows the annotation text. True for a freshly generated id
+   * (`symbol` + 5 random characters), and false once the author types their own.
+   */
+  let isIdAutomatic = $state(untrack(() => /^symbol[a-z0-9]{5}$/.test(config.id ?? '')));
+
+  /** Typing in the id field takes it off automatic. */
+  function setCustomId(value: string | undefined) {
+    id = value;
+    isIdAutomatic = false;
+  }
+
+  /** Keeps the id unique and in step with the annotation, until the author sets their own. */
+  function handleAnnotationInput() {
+    if (!isIdAutomatic || !annotation.trim()) return;
+    const otherIds = ($jsonBlob?.layers ?? []).map(layer => layer.id).filter(layerId => layerId !== originalId);
+    id = uniqueLayerId(annotation, 'symbol', otherIds);
+  }
 
   /** Picking a built-in symbol drops any custom image. */
   function selectSymbol(name: PickerProps['name']) {
@@ -74,6 +99,8 @@
       config.image = undefined;
     }
     config.coords = [lng, lat];
+    // Kept exactly as typed (newlines and all); blank means no annotation.
+    config.annotation = annotation.trim() ? annotation : undefined;
     config.animationClock = animationClock;
     config.id = id;
     onclose?.();
@@ -105,7 +132,7 @@
       <legend>Symbol</legend>
       <div class="fields">
         <div class="name-field">
-          <LayerIdField bind:id label="Name" showHelp={false} />
+          <LayerIdField bind:id={() => id, setCustomId} label="Name" showHelp={false} />
         </div>
         <label class="coord-field">
           <span>Longitude</span>
@@ -116,6 +143,11 @@
           <input type="number" step="0.0001" bind:value={lat} />
         </label>
       </div>
+      <label class="annotation-field">
+        <span>Annotation</span>
+        <textarea rows="3" bind:value={annotation} oninput={handleAnnotationInput} placeholder="Text shown beside the symbol"
+        ></textarea>
+      </label>
     </fieldset>
     <AnimationClockField bind:animationClock />
   </div>
@@ -187,6 +219,22 @@
     width: 10em;
   }
 
+  .annotation-field {
+    display: block;
+    margin-top: 0.75rem;
+  }
+
+  .annotation-field span {
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+
+  .annotation-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+
   .coord-field {
     width: 7em;
     margin-bottom: 0;
@@ -202,7 +250,8 @@
     font-weight: 500;
   }
 
-  input {
+  input,
+  textarea {
     background: var(--background, #1a1a1a);
     border: 1px solid var(--border, rgba(122, 123, 135, 0.5));
     color: var(--text, #ccc);

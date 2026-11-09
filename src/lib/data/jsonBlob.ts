@@ -186,6 +186,8 @@ export const symbolLayerSchema = z.object({
   type: z.literal('symbol'),
   image: embeddedImageSchema.optional(),
   symbol: symbolStyleSchema.optional(),
+  /** Text shown beside the marker as a DataViz `Annotation`. Any length, newlines kept; blank = none. */
+  annotation: z.string().optional(),
   coords: coordinatesSchema
 });
 export type SymbolLayer = z.infer<typeof symbolLayerSchema>;
