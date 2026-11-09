@@ -7,7 +7,8 @@
   import { disableMapAnimation, prefersReducedMotion } from '../../../lib/stores';
   import { getTween } from '../Tween/context.ts';
   import { tweenStopsValue } from '../Tween/utils.ts';
-  import { symbolReach } from '../../../lib/symbolImage.ts';
+  import { symbolExtents, type Extents } from '../../../lib/symbolImage.ts';
+  import { annotationShift } from './annotationPlacement.ts';
   import { resolveAnnotationColours } from './annotationColours.ts';
 
   interface Props {
@@ -20,6 +21,9 @@
   }
 
   let { config, opacityStops, coords }: Props = $props();
+
+  const NO_EXTENTS: Extents = { up: 0, down: 0, left: 0, right: 0 };
+  const UPLOADED_IMAGE_EXTENTS: Extents = { up: 10, down: 10, left: 10, right: 10 };
 
   const mapRoot = getContext<{ map: MapLibreMap | null }>('mapInstance');
   const tween = getTween();
@@ -36,9 +40,13 @@
   const pointer = $derived(
     (['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).find(corner => corner === anchor) ?? 'none'
   );
-  // Clear of the symbol's edge (a pin reaches further than a circle), or exactly on the point when
-  // the symbol is hidden. An uploaded image has no known extent, so it keeps a fixed gap.
-  const offset = $derived(config.hideSymbol ? 0 : config.symbol ? symbolReach(config.symbol) : 10);
+  // Moved off the coordinate by how far the symbol reaches on the side the label sits (a pin reaches
+  // far up but only half its width sideways), or not at all when the symbol is hidden. An uploaded
+  // image has no known shape, so it keeps an even gap.
+  const extents = $derived<Extents>(
+    config.hideSymbol ? NO_EXTENTS : config.symbol ? symbolExtents(config.symbol) : UPLOADED_IMAGE_EXTENTS
+  );
+  const shift = $derived(annotationShift(anchor, extents));
 
   // A DOM label can't read MapLibre's `global-state`, so the fade is worked out here each frame,
   // from the same clock position the symbol layer's own opacity follows.
@@ -69,11 +77,10 @@
 
 <div bind:this={anchorElement} class="annotation-anchor">
   <!-- Opacity is on this inner element: the Marker owns its own element's opacity (globe back-face). -->
-  <div class="annotation-fade" style:opacity>
+  <div class="annotation-fade" style:opacity style:transform="translate({shift[0]}px, {shift[1]}px)">
     <!-- `pre` is on the text span only: on the whole label it also kept the markup's own indentation, adding a blank line at the top. -->
     <Annotation
       {anchor}
-      {offset}
       {pointer}
       color={colours.text}
       fill={showBackground ? colours.background : undefined}

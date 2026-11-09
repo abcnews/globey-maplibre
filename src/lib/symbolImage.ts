@@ -32,14 +32,25 @@ export function symbolIconOffset(style: SymbolStyle): [number, number] {
   return [(0.5 - x) * style.size, (0.5 - y) * style.size];
 }
 
+/** How far, in px, something reaches from the map coordinate on each side. */
+export interface Extents {
+  up: number;
+  down: number;
+  left: number;
+  right: number;
+}
+
 /**
- * How far, in px, the symbol reaches from the map coordinate in any direction, plus a 1px gap.
- * An annotation is offset by this much so it clears the symbol: about half the size for a circle,
- * nearly the full size for a pin, whose body sits above the coordinate.
+ * How far the symbol reaches from the map coordinate on each side, plus a 1px gap. A circle reaches
+ * about half its size every way. A pin's tip is on the coordinate, so it reaches nearly its full
+ * size up, a little down, and half its size left and right. An annotation is moved by these so it
+ * clears the symbol on whichever side it sits.
  */
-export function symbolReach(style: SymbolStyle): number {
+export function symbolExtents(style: SymbolStyle): Extents {
   const { x, y } = symbolAnchor(style);
-  return Math.round(style.size * Math.max(x, 1 - x, y, 1 - y)) + 1;
+  const gap = 1;
+  const reach = (fraction: number) => Math.round(style.size * fraction) + gap;
+  return { up: reach(y), down: reach(1 - y), left: reach(x), right: reach(1 - x) };
 }
 
 /** The size `decodeUploadedImage` assumes for an image (e.g. an SVG) that has none of its own. */
