@@ -24,7 +24,7 @@ const ids = (blob: GlobeJsonBlob) => blob.layers.map(l => l.id);
 describe('layerOps', () => {
   it('appends new layers to the top of the stack', () => {
     const blob = blobWith([layer('a', 'geojsonAreas')]);
-    addLayer(blob, layer('b', 'icon', { cmid: 1, coords: [0, 0] }));
+    addLayer(blob, layer('b', 'symbol', { coords: [0, 0] }));
     expect(ids(blob)).toEqual(['a', 'b']);
   });
 

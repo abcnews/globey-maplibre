@@ -36,7 +36,7 @@ export interface MarkerConfig {
   base?: BaseStyle;
   /** Base vector labels toggle */
   labels?: boolean;
-  /** Locator inset minimap toggle */
+  /** Locator minimap toggle */
   minimap?: boolean;
   /** Layer overrides for this marker */
   layers?: MarkerLayerOverride[];

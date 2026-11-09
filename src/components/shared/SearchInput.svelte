@@ -24,10 +24,13 @@
 
   let inputEl = $state<HTMLInputElement>();
 
+  // Focus is deferred a tick: inside a `Modal`, this runs before the parent calls `dialog.showModal()`,
+  // and a closed dialog can't take focus. `showModal()` would then focus its close button instead.
   $effect(() => {
-    if (autofocus && inputEl) {
-      inputEl.focus();
-    }
+    if (!autofocus || !inputEl) return;
+    const input = inputEl;
+    const timer = setTimeout(() => input.focus());
+    return () => clearTimeout(timer);
   });
 
   function handleInput(e: Event) {

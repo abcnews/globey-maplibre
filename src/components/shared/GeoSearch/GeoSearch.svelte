@@ -1,7 +1,10 @@
 <script lang="ts">
   import { debounce } from 'throttle-debounce';
-  import { searchGeoNames, type GeoNameResult } from './utils';
+  import { searchGeoNames, type GeoNameResult } from 'browser-geocoder-geonames';
+  import geonamesUrl from 'browser-geocoder-geonames/geonames.txt?url';
   import SearchInput from '../SearchInput.svelte';
+
+  const MAX_RESULTS = 15;
 
   interface Props {
     /** Callback fired when a location is selected */
@@ -20,33 +23,41 @@
   let isDropdownOpen = $state(false);
   let containerEl = $state<HTMLDivElement>();
 
+  /** Cancels the search in flight when a newer one starts, so a slow old query can't overwrite newer results. */
+  let searchController: AbortController | undefined;
+
   async function performSearch(keyword: string) {
+    searchController?.abort();
+
     if (!keyword.trim()) {
       results = [];
       isSearching = false;
       return;
     }
 
+    const controller = new AbortController();
+    searchController = controller;
     isSearching = true;
-    const currentSearchTerm = keyword;
 
-    try {
-      const searchResults = await searchGeoNames(keyword, progressResults => {
-        if (searchTerm !== currentSearchTerm) return;
-        results = progressResults.sort((a, b) => b.population - a.population).slice(0, 15);
-      });
-
-      if (searchTerm === currentSearchTerm) {
-        results = searchResults.sort((a, b) => b.population - a.population).slice(0, 15);
-        isSearching = false;
+    // The library ranks exact and name matches first, then by population, so the order is kept as returned.
+    const searchResults = await searchGeoNames({
+      keyword,
+      dataUrl: geonamesUrl,
+      signal: controller.signal,
+      onProgress: progressResults => {
+        if (!controller.signal.aborted) results = progressResults.slice(0, MAX_RESULTS);
       }
-    } catch (error) {
+    }).catch(error => {
       console.error('GeoSearch error:', error);
-      isSearching = false;
-    }
+      return undefined;
+    });
+
+    if (controller.signal.aborted) return;
+    if (searchResults) results = searchResults.slice(0, MAX_RESULTS);
+    isSearching = false;
   }
 
-  const debouncedPerformSearch = debounce(300, performSearch);
+  const debouncedPerformSearch = debounce(150, performSearch);
 
   function handleSearchInput(val: string) {
     if (val.trim()) {
@@ -60,7 +71,7 @@
 
   function handleSelect(row: GeoNameResult) {
     const value = {
-      coords: [Number(row.longitude), Number(row.latitude)] as [number, number],
+      coords: [row.longitude, row.latitude] as [number, number],
       name: row.name
     };
     searchTerm = '';
@@ -103,8 +114,11 @@
               <button type="button" class="result-item" onclick={() => handleSelect(row)}>
                 <div class="result-main">
                   <strong class="result-name">{row.name}</strong>
-                  {#if row.countrycode}
-                    <span class="result-country">{row.countrycode}</span>
+                  {#if row.state}
+                    <span class="result-state">{row.state}</span>
+                  {/if}
+                  {#if row.country}
+                    <span class="result-country">{row.country}</span>
                   {/if}
                 </div>
                 {#if row.population > 0}
@@ -193,6 +207,11 @@
     display: flex;
     align-items: center;
     gap: 0.4rem;
+  }
+
+  .result-state {
+    font-size: 0.75rem;
+    color: var(--text-light, #888);
   }
 
   .result-country {

@@ -154,8 +154,7 @@
 
           <Typeahead
             values={typeaheadOptions}
-            value={selectedFilenames}
-            onChange={vals => (selectedFilenames = vals)}
+            bind:value={selectedFilenames}
             disabled={isLoadingIndex}
           />
         </div>

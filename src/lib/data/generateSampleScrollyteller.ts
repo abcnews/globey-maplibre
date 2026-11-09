@@ -34,7 +34,7 @@ const paddedBbox = (points: LngLat[]): LngLat[] | undefined => {
 const storedPointsOf = (layer: GlobeLayer): LngLat[] => {
   if (layer.type === 'image') return layer.coordinates;
   if (layer.type === 'raster') return layer.bounds ?? [];
-  if (layer.type === 'icon') return [layer.coords];
+  if (layer.type === 'symbol') return [layer.coords];
   if (layer.type === 'customLabels') return layer.labels.map(({ coords }) => coords);
   return [];
 };

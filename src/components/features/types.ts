@@ -86,10 +86,10 @@ export interface LayerItemDescriptor<T extends GlobeLayer = GlobeLayer> {
  * in `layerOps.ts`. A feature only describes what is genuinely kind-specific.
  */
 export interface LayerFeatureDefinition<T extends GlobeLayer = GlobeLayer> {
-  /** The blob layer `type` this feature owns (e.g. 'geojsonAreas', 'icon', 'image') */
+  /** The blob layer `type` this feature owns (e.g. 'geojsonAreas', 'symbol', 'image') */
   kind: T['type'];
 
-  /** Human-readable name for Add menus and builder headers (e.g. 'GeoJSON', 'Icon', 'Image Overlay') */
+  /** Human-readable name for Add menus and builder headers (e.g. 'GeoJSON', 'Symbol Marker', 'Image Overlay') */
   label: string;
 
   /** Display icon component */
@@ -135,6 +135,14 @@ export interface LayerFeatureDefinition<T extends GlobeLayer = GlobeLayer> {
     map?: MapLibreMap;
     onclose?: (bounds?: [number, number][]) => void;
   }>;
+
+  /**
+   * When true, the Builder commits the `ConfigModal`'s draft to the blob on every change, so the map
+   * updates while the modal is open. The layer keeps its original id until the modal closes (a rename
+   * would remount its renderer on every keystroke), and validity is only checked on close.
+   * The modal then needs no Save/Cancel: closing keeps the changes.
+   */
+  liveEdit?: boolean;
 
   /**
    * Renders one layer of this kind on the map. `LayerManager` mounts it once per layer id

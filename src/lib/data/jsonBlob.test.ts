@@ -84,8 +84,8 @@ describe('globeJsonBlobSchema (Zod)', () => {
         },
         {
           id: 'evac',
-          type: 'icon',
-          cmid: 998877,
+          type: 'symbol',
+          image: { dataUri: 'data:image/png;base64,AAAA', name: 'evac.png' },
           coords: [150.5, -34.2]
         },
         {
@@ -181,5 +181,32 @@ describe('globeJsonBlobSchema (Zod)', () => {
 
     const result = safeParseGlobeJsonBlob(invalidBlob);
     assert.strictEqual(result.success, false);
+  });
+
+  it('should keep an embedded image on a symbol layer', () => {
+    const image = { dataUri: 'data:image/svg+xml;base64,PHN2Zy8+', name: 'pin.svg', width: 10, height: 12 };
+    const blob = parseGlobeJsonBlob({ layers: [{ id: 'pin', type: 'symbol', image, coords: [1, 2] }] });
+
+    assert.deepStrictEqual((blob.layers[0] as { image?: unknown }).image, image);
+  });
+
+  it('should reject an embedded image that is not a data URI', () => {
+    const result = safeParseGlobeJsonBlob({
+      layers: [{ id: 'pin', type: 'symbol', image: { dataUri: 'https://example.com/pin.png' }, coords: [1, 2] }]
+    });
+
+    assert.strictEqual(result.success, false);
+  });
+
+  it('should fill in symbol defaults for a vector symbol layer', () => {
+    const blob = parseGlobeJsonBlob({
+      layers: [{ id: 'vec', type: 'symbol', symbol: { name: 'torus' }, coords: [3, 4] }]
+    });
+
+    const layer = blob.layers[0] as { symbol?: unknown; colour?: string; scheme?: string };
+    assert.deepStrictEqual(layer.symbol, { name: 'torus', variant: 'fill', size: 18 });
+    // Colour and light/dark are on the layer, so an annotation shares them with the symbol.
+    assert.strictEqual(layer.colour, 'blue');
+    assert.strictEqual(layer.scheme, 'light');
   });
 });

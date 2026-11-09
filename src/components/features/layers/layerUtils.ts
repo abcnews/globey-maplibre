@@ -12,15 +12,15 @@ export function generateGeoJsonSourceId(idOrCmid: number | string | undefined): 
 }
 
 /**
- * Generates a source ID for an icon.
+ * Generates a source ID for a symbol marker.
  */
-export function getIconSourceId(idOrCmid: number | string | undefined): string {
-  return `icon-source-${idOrCmid || 'unknown'}`;
+export function getSymbolSourceId(id: string | undefined): string {
+  return `symbol-source-${id || 'unknown'}`;
 }
 
 /**
- * Generates a layer ID for an icon symbol layer.
+ * Generates a layer ID for a symbol marker's MapLibre symbol layer.
  */
-export function getIconLayerId(idOrCmid: number | string | undefined): string {
-  return `icon-layer-${idOrCmid || 'unknown'}`;
+export function getSymbolLayerId(id: string | undefined): string {
+  return `symbol-layer-${id || 'unknown'}`;
 }

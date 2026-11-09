@@ -65,10 +65,7 @@ const baseLayerObject = {
    * key, the Builder's display title, and the marker token key (`LAYER<id>on`) — hence ACTO's
    * `[a-z0-9]` alphabet.
    */
-  id: z
-    .string()
-    .min(1, 'Layer ID cannot be empty')
-    .regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
+  id: z.string().min(1, 'Layer ID cannot be empty').regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
@@ -145,15 +142,101 @@ export const customLabelsLayerSchema = z.object({
 export type CustomLabelsLayer = z.infer<typeof customLabelsLayerSchema>;
 
 /**
- * Icon symbol marker layer schema
+ * The shape of a built-in vector symbol from `@abcnews/components-dataviz`. Its colour and
+ * light/dark scheme are on the layer (`symbolLayerSchema`), so an annotation can share them.
  */
-export const iconLayerSchema = z.object({
+export const symbolStyleSchema = z.object({
+  /** One of `SYMBOL_NAMES`. Not an enum here so this schema doesn't import the component library. */
+  name: z.string(),
+  variant: z.enum(['fill', 'stroke']).default('fill'),
+  /** Width on the map in CSS px, 1 to 99. */
+  size: z.number().int().min(1).max(99).default(18)
+});
+export type SymbolStyle = z.infer<typeof symbolStyleSchema>;
+
+/**
+ * An image stored inside the blob as a base64 data URI, so the blob is self-contained and
+ * needs no upload service. Any feature that embeds an image uses this shape; the file is
+ * read and size-checked by `readEmbeddedImage` (`lib/embeddedImage.ts`).
+ */
+export const embeddedImageSchema = z.object({
+  /** The whole file as a `data:image/...;base64,...` URI. */
+  dataUri: z.string().startsWith('data:image/'),
+  /** Original file name, shown in the Builder. */
+  name: z.string().optional(),
+  /** Pixel size, when the browser could measure it. */
+  width: z.number().optional(),
+  height: z.number().optional()
+});
+export type EmbeddedImage = z.infer<typeof embeddedImageSchema>;
+
+/** The label point of a symbol's annotation or inset that sits on the symbol (their shared `anchor`). */
+export const LABEL_ANCHORS = [
+  'top-left',
+  'top',
+  'top-right',
+  'left',
+  'center',
+  'right',
+  'bottom-left',
+  'bottom',
+  'bottom-right'
+] as const;
+export type LabelAnchor = (typeof LABEL_ANCHORS)[number];
+
+/** How a symbol's label (annotation or inset) looks. Unset fields fall back to the defaults noted here. */
+export const symbolLabelStyleSchema = z.object({
+  /** Defaults to `bottom-left`, so the label sits up and to the right of the symbol. */
+  anchor: z.enum(LABEL_ANCHORS).optional(),
+  /** Annotation only. Defaults to true. False draws bare outlined text with no filled background. */
+  showBackground: z.boolean().optional(),
+  /**
+   * Where the layer's `colour` goes: `default` ignores it (the scheme's own colours). An annotation
+   * can use `text` or `background`; an inset uses `border`. Defaults to `default`.
+   */
+  colourMode: z.enum(['default', 'text', 'background', 'border']).optional()
+});
+export type SymbolLabelStyle = z.infer<typeof symbolLabelStyleSchema>;
+
+/**
+ * A picture shown beside a symbol (the dataviz `Inset`), in place of an annotation. The image is
+ * expected to be @2x: it is shown at half its pixel size.
+ */
+export const insetSchema = z.object({
+  image: embeddedImageSchema,
+  /** `source` keeps the image's own aspect ratio, so the inset can be a rectangle. */
+  shape: z.enum(['circle', 'rounded', 'source']).default('circle')
+});
+export type SymbolInset = z.infer<typeof insetSchema>;
+
+/**
+ * Symbol marker layer schema. The marker's image is either an uploaded `image` or a
+ * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of
+ * them, or a label (an `annotation` or an `inset`).
+ */
+export const symbolLayerSchema = z.object({
   ...baseLayerObject,
-  type: z.literal('icon'),
-  cmid: z.number(),
+  type: z.literal('symbol'),
+  image: embeddedImageSchema.optional(),
+  symbol: symbolStyleSchema.optional(),
+  /**
+   * The one colour for the symbol and its annotation: a palette name (e.g. `'blue'`, stored so it
+   * can follow the palette's light/dark values) or a custom hex code. Kept on the layer, not the
+   * symbol, because a layer with an uploaded image has no `symbol` but can still have an annotation.
+   */
+  colour: z.string().default('blue'),
+  /** `'light'` (white outline, light-map colours) or `'dark'` (black outline). Chosen to suit a light or dark base map. */
+  scheme: z.enum(['light', 'dark']).default('light'),
+  /** Text shown beside the marker as a DataViz `Annotation`. Any length, newlines kept; blank = none. */
+  annotation: z.string().optional(),
+  /** A picture shown beside the marker instead of an annotation. A marker has one or the other. */
+  inset: insetSchema.optional(),
+  labelStyle: symbolLabelStyleSchema.optional(),
+  /** Hides the symbol itself, leaving only its label (annotation or inset). */
+  hideSymbol: z.boolean().optional(),
   coords: coordinatesSchema
 });
-export type IconLayer = z.infer<typeof iconLayerSchema>;
+export type SymbolLayer = z.infer<typeof symbolLayerSchema>;
 
 /**
  * Image overlay layer schema
@@ -247,7 +330,7 @@ export const globeLayerSchema = z.discriminatedUnion('type', [
   geoJsonLinesLayerSchema,
   geoJsonPointsLayerSchema,
   customLabelsLayerSchema,
-  iconLayerSchema,
+  symbolLayerSchema,
   imageLayerSchema,
   griddedLayerSchema,
   rasterLayerSchema,
@@ -257,7 +340,7 @@ export const globeLayerSchema = z.discriminatedUnion('type', [
 export type GlobeLayer = z.infer<typeof globeLayerSchema>;
 
 /**
- * Minimap locator inset schema
+ * Minimap locator schema
  */
 export const minimapSchema = z.object({
   enabled: z.boolean().default(true),

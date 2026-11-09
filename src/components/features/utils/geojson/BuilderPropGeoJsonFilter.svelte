@@ -94,8 +94,7 @@
       </div>
       <Typeahead
         values={filterOptions}
-        value={style.filter.values}
-        onChange={vals => (style.filter!.values = vals)}
+        bind:value={style.filter.values}
         disabled={false}
       />
     {/if}

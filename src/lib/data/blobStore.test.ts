@@ -50,6 +50,14 @@ describe('blobStore', () => {
     assert.strictEqual(hasStoredSession(), true);
   });
 
+  it('initNew should seed a street map as the only layer', () => {
+    const newBlob = jsonBlob.initNew();
+    assert.deepStrictEqual(
+      newBlob.layers.map(({ type }) => type),
+      ['streetMap']
+    );
+  });
+
   it('restoreSession should restore valid stored data', () => {
     const original = createDefaultJsonBlob('Saved Project');
     mockStorage[JSON_BLOB_STORAGE_KEY] = formatGlobeJsonBlob(original);

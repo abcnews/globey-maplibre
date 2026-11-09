@@ -28,7 +28,7 @@ There is one representation: the Zod schema in [../../lib/data/jsonBlob.ts](../.
 
 ### Example Reference
 
-See `iconLayerSchema` and its inferred `IconLayer` type in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
+See `symbolLayerSchema` and its inferred `SymbolLayer` type in [../../lib/data/jsonBlob.ts](../../lib/data/jsonBlob.ts).
 
 ---
 
@@ -45,7 +45,7 @@ The Map Renderer is a Svelte component that mounts inside the MapLibre container
 
 ### Example Reference
 
-- Single/Collection map renderer: [Icon/IconHandler.svelte](./Icon/IconHandler.svelte)
+- Single/Collection map renderer: [Symbol/SymbolHandler.svelte](./Symbol/SymbolHandler.svelte)
 - Renderer with shared data loader: [GeoJsonAreas/GeoJsonAreasHandler.svelte](./GeoJsonAreas/GeoJsonAreasHandler.svelte)
 - Image overlay renderer: [ImageSource/ImageSourceHandler.svelte](./ImageSource/ImageSourceHandler.svelte)
 - Renderer that decodes and colours data client-side: [Gridded/GriddedHandler.svelte](./Gridded/GriddedHandler.svelte)
@@ -64,7 +64,7 @@ If the feature is configurable by the user in the builder interface, create a mo
 - **Real-time Live Editing**: Bind form inputs directly to `config` (e.g. `bind:value={config.field}`, `bind:checked={config.field}`) so the user sees changes update live on the map as they interact.
 - Provide a single **OK** dismissal button in `footerChildren` (`<button type="button" onclick={() => onclose?.()}>OK</button>`).
 - For string attributes containing literal curly braces (such as tile URL templates `{z}/{x}/{y}`), pass them as JavaScript string expressions (`placeholder={'https://example.com/{z}/{x}/{y}.png'}`) to avoid Svelte template expression parsing errors.
-- For CMID inputs, use [../shared/CmidInput/CmidInput.svelte](../shared/CmidInput/CmidInput.svelte) with `type="text"`, `inputmode="numeric"`, and `pattern="[0-9]*"`.
+- For an uploaded image stored in the blob, use [../shared/ImageUpload/ImageUpload.svelte](../shared/ImageUpload/ImageUpload.svelte) with `bind:value` on an `EmbeddedImage` (`embeddedImageSchema` in `lib/data/jsonBlob.ts`).
 
 ### Example Reference
 
@@ -172,7 +172,7 @@ interactivePlacement: {
 
 ### Example Reference
 
-- Multi-Item Feature: [Icon/index.ts](./Icon/index.ts)
+- Multi-Item Feature: [Symbol/index.ts](./Symbol/index.ts)
 - Feature using shared helpers: [GeoJsonPoints/index.ts](./GeoJsonPoints/index.ts)
 - Single-Toggle Feature: [MapLabels/index.ts](./MapLabels/index.ts)
 - Custom Button Feature: [CustomLabels/index.ts](./CustomLabels/index.ts)
@@ -187,7 +187,7 @@ Add your feature definition to `layerFeatureRegistry` in [./index.ts](./index.ts
 
 ```ts
 import { geoJsonAreasFeature } from './GeoJsonAreas/index.ts';
-import { iconFeature } from './Icon/index.ts';
+import { symbolFeature } from './Symbol/index.ts';
 import { imageSourceFeature } from './ImageSource/index.ts';
 import { mapLabelsFeature } from './MapLabels/index.ts';
 import { customLabelsFeature } from './CustomLabels/index.ts';
@@ -196,7 +196,7 @@ import { rasterFeature } from './MapRaster/index.ts';
 
 export const layerFeatureRegistry = [
   geoJsonAreasFeature,
-  iconFeature,
+  symbolFeature,
   imageSourceFeature,
   mapLabelsFeature,
   customLabelsFeature,
