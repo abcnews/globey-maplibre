@@ -1,5 +1,11 @@
 import type { MapLabelsLayer } from './jsonBlob.ts';
 
+/** The middle of Australia as `[lng, lat]`: where a new session starts and the fallback for a new layer's position. */
+export const AUSTRALIA_CENTRE: [number, number] = [133.7751, -25.2744];
+
+/** The zoom that shows most of Australia on the globe, used with `AUSTRALIA_CENTRE` for a new session. */
+export const AUSTRALIA_ZOOM = 3.5;
+
 /**
  * Validates if a URL is allowed (not a preview URL)
  */

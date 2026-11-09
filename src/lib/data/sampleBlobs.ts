@@ -1,4 +1,5 @@
 import { parseGlobeJsonBlob, type GlobeJsonBlob } from './jsonBlob.ts';
+import { AUSTRALIA_CENTRE, AUSTRALIA_ZOOM } from './layerHelpers.ts';
 
 /**
  * A pre-configured blob exercising every major layer kind, for demos and manual testing.
@@ -8,7 +9,7 @@ import { parseGlobeJsonBlob, type GlobeJsonBlob } from './jsonBlob.ts';
 export function createKitchenSinkBlob(): GlobeJsonBlob {
   return parseGlobeJsonBlob({
     title: 'Kitchen sink demo',
-    map: { projection: 'globe', coords: [133.7751, -25.2744], z: 3.5 },
+    map: { projection: 'globe', coords: AUSTRALIA_CENTRE, z: AUSTRALIA_ZOOM },
     layers: [
       {
         id: 'bluemarble',

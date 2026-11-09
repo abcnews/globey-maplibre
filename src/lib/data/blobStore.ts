@@ -1,4 +1,5 @@
 import { get, writable, type Writable } from 'svelte/store';
+import { AUSTRALIA_CENTRE, AUSTRALIA_ZOOM } from './layerHelpers.ts';
 import {
   globeJsonBlobSchema,
   parseGlobeJsonBlob,
@@ -133,6 +134,8 @@ function createBlobStore(): Writable<GlobeJsonBlob | null> & {
       // rather than in createDefaultJsonBlob, which other callers expect to be empty.
       const newBlob = createDefaultJsonBlob(title);
       newBlob.layers = [{ id: 'streetmap', type: 'streetMap', hideOsm: false }];
+      // ...and is centred on Australia, rather than wherever the map's own default happens to be.
+      newBlob.map = { ...newBlob.map, coords: AUSTRALIA_CENTRE, z: AUSTRALIA_ZOOM };
       set(newBlob);
       return newBlob;
     },

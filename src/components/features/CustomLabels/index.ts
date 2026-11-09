@@ -1,5 +1,6 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { CustomLabelsLayer, LabelItem } from '../../../lib/data/jsonBlob.ts';
+import { AUSTRALIA_CENTRE } from '../../../lib/data/layerHelpers.ts';
 import { newLayerId, findLayer } from '../utils/layerOps.ts';
 import { Fonts as TypeIcon, Plus } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton } from '../utils/buttonHelpers.ts';
@@ -20,7 +21,7 @@ export const customLabelsFeature: LayerFeatureDefinition<CustomLabelsLayer> = {
   isMultiItem: false,
 
   createDefault({ map }) {
-    const center = map?.getCenter() || { lng: 133.7751, lat: -25.2744 };
+    const center = map?.getCenter() || { lng: AUSTRALIA_CENTRE[0], lat: AUSTRALIA_CENTRE[1] };
     return {
       id: newLayerId('customLabels'),
       type: 'customLabels',
