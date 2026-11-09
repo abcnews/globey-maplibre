@@ -40,6 +40,8 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 
 `shared/TabbedModal` is a `Modal` with no visible title: its tabs sit in the title bar (via `Modal`'s `titleIcon` slot and `title=" "`) and the active panel renders in the body. Pass `tabs` with `content` snippets, `bind:activeId`, `footer`, and `minWidth`/`minHeight` to stop it resizing between tabs. The Symbol modal uses it.
 
+A feature with `liveEdit: true` (Symbol) has no Save/Cancel: its modal copies every change onto `config` in an `$effect`, `Builder.layers.svelte` commits that draft to the blob as it changes (keeping the original id), and closing just keeps it.
+
 `handleCloseLayerModal()` commits via `updateLayer()`, or deletes the draft when `feature.isValid` rejects it — reuse it rather than writing new commit logic. `feature.isValid` is the only validity gate now that the codec's encode-time filters are gone.
 
 ## Top navigation / mode routing
@@ -90,6 +92,7 @@ Fading layer kinds (raster/image/symbol/geojson) are all mounted by `LayerManage
 `features/Symbol/` (`type: 'symbol'`): a marker's image is an uploaded `image` (`EmbeddedImage`, a base64 data URI stored in the blob; `lib/embeddedImage.ts` reads and size-checks it, `shared/ImageUpload` is the reusable field) *or* a vector `symbol` from `@abcnews/components-dataviz` (the modal's tabs keep only one). No CMIDs and no legacy `icon` layers: old blobs aren't migrated.
 
 - MapLibre can't load SVG, so `lib/symbolImage.ts` rasterises `getSymbol({ pixelRatio })` at `devicePixelRatio` and `SymbolIcon` registers it with `addImage(..., { pixelRatio })`. `colour` is stored as a palette name and resolved with the symbol's own `scheme` (`'light'` default, or `'dark'`), which is also saved per symbol so light and dark symbols can share a map over a light or dark base. The ratio is read once, so a moved window isn't re-rasterised.
+- A pin or arrow points with its tip, not its middle: `getSymbolAnchor()` (dataviz) says where, `symbolIconOffset()` (`lib/symbolImage.ts`) turns that into `icon-offset` so the tip sits on the coordinate, and `symbolReach()` sets how far the annotation is pushed off the point.
 - `SymbolHandler` only picks the per-panel `coords` and renders `SymbolIcon` (GL layer) plus, when `annotation` (free multi-line text) is non-blank, `SymbolAnnotation` (DataViz `Annotation` in a `maplibregl.Marker`). The modal derives the layer `id` from the annotation text via `uniqueLayerId()` until the user edits the id themselves. The annotation is a DOM overlay: it sits above every GL layer (`zIndex` doesn't apply) and fades via `tweenStopsValue()` in JS, not `global-state`. Its zero-size wrapper div is required because Marker and `Anchored` both write `transform`.
 
 ## Colour scheme
