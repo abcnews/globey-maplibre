@@ -84,7 +84,9 @@
   });
 </script>
 
-<div bind:this={anchorElement} class="label-anchor">
+<!-- The Marker is a DOM element, so it can't join MapLibre's layer stack. Its CSS z-index is the layer's own derived
+     `zIndex`, so labels still stack in the order of the layer list among other DOM labels (see CustomGlobe). -->
+<div bind:this={anchorElement} class="label-anchor" style:z-index={config.zIndex}>
   <!-- Opacity is on this inner element: the Marker owns its own element's opacity (globe back-face). -->
   <div class="label-fade" style:opacity style:transform="translate({shift[0]}px, {shift[1]}px)">
     {#if config.inset}

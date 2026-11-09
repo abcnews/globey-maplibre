@@ -264,6 +264,13 @@
     position: absolute;
     inset: 0;
     transition: opacity 0.2s;
+
+    /* DOM overlays (symbol annotations and insets) are MapLibre markers, which sit in the canvas container.
+       They take their layer's derived `zIndex` (100+), so keep that numbering inside the container instead of
+       letting it outrank UI such as the minimap (z-index 10) and the attribution control. */
+    :global(.maplibregl-canvas-container) {
+      isolation: isolate;
+    }
   }
 
   .custom-globe--satellite {
