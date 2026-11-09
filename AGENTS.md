@@ -38,6 +38,8 @@ Two ways a modal gets opened from `Builder.layers.svelte`:
 - Per-item edit: `editingItem` state + `feature.ConfigModal`.
 - Add-menu custom modal: `activeCustomModal` / `customModalOptions`.
 
+`shared/TabbedModal` is a `Modal` with no visible title: its tabs sit in the title bar (via `Modal`'s `titleIcon` slot and `title=" "`) and the active panel renders in the body. Pass `tabs` with `content` snippets, `bind:activeId`, `footer`, and `minWidth`/`minHeight` to stop it resizing between tabs. The Symbol modal uses it.
+
 `handleCloseLayerModal()` commits via `updateLayer()`, or deletes the draft when `feature.isValid` rejects it — reuse it rather than writing new commit logic. `feature.isValid` is the only validity gate now that the codec's encode-time filters are gone.
 
 ## Top navigation / mode routing

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Modal, Tabs } from '@abcnews/components-builder';
   import { SymbolPicker } from '@abcnews/components-dataviz';
   import { untrack, type ComponentProps } from 'svelte';
   import type { SymbolLayer } from '../../../lib/data/jsonBlob.ts';
   import ImageUpload from '../../shared/ImageUpload/ImageUpload.svelte';
+  import TabbedModal, { type ModalTab } from '../../shared/TabbedModal/TabbedModal.svelte';
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
 
@@ -21,20 +21,18 @@
   /** Upload types the map can draw: the symbol library is SVG, and WebP keeps photos small. */
   const CUSTOM_SYMBOL_TYPES = ['image/svg+xml', 'image/webp'];
 
-  const tabs = [
-    { id: 'basics', label: 'Basics', content: basicsTab },
+  const tabs: ModalTab[] = [
+    { id: 'symbol', label: 'Symbol', content: basicsTab },
     { id: 'advanced', label: 'Advanced', content: advancedTab }
   ];
-  let activeTab = $state('basics');
+  let activeTab = $state('symbol');
 
   /**
    * The picked built-in symbol, or null while a custom image is in use. A marker is one or the
    * other, so choosing one clears the other (see `selectSymbol` and `setCustomImage`).
    */
   let symbolName = $state<PickerProps['name']>(
-    untrack(() =>
-      config.image && !config.symbol ? null : ((config.symbol?.name as PickerProps['name']) ?? 'circle')
-    )
+    untrack(() => (config.image && !config.symbol ? null : ((config.symbol?.name as PickerProps['name']) ?? 'circle')))
   );
   let symbolVariant = $state<NonNullable<PickerProps['variant']>>(untrack(() => config.symbol?.variant ?? 'fill'));
   let symbolColour = $state<string>(untrack(() => config.symbol?.colour ?? 'blue'));
@@ -86,16 +84,20 @@
   }
 </script>
 
-<Modal title="Symbol Configuration" onClose={handleCancel}>
-  <div class="symbol-modal">
-    <Tabs items={tabs} bind:activeId={activeTab} />
-  </div>
+<!-- A fixed minimum size, so the modal doesn't resize between tabs. It is capped to the viewport on small screens. -->
+<TabbedModal
+  {tabs}
+  bind:activeId={activeTab}
+  onClose={handleCancel}
+  minWidth="min(800px, 85vw)"
+  minHeight="min(600px, 70vh)"
+  {footer}
+/>
 
-  {#snippet footerChildren()}
-    <button type="button" onclick={handleSave}>Save</button>
-    <button type="button" onclick={handleCancel}>Cancel</button>
-  {/snippet}
-</Modal>
+{#snippet footer()}
+  <button type="button" onclick={handleSave}>Save</button>
+  <button type="button" onclick={handleCancel}>Cancel</button>
+{/snippet}
 
 {#snippet basicsTab()}
   <div class="top-row">
@@ -138,27 +140,13 @@
       <ImageUpload
         bind:value={() => symbolImage, setCustomImage}
         accept={CUSTOM_SYMBOL_TYPES}
-        prompt="Drag and drop an SVG or WebP image, or choose a file. It is shown at half its pixel size (@2x), and the size setting doesn't apply to it:"
+        prompt="Drag and drop an SVG or WebP image, or choose a file. It is shown at half its pixel size (@2x):"
       />
     </fieldset>
   </div>
 {/snippet}
 
 <style>
-  /* A fixed minimum size, so the modal doesn't resize when switching between tabs. It is capped to the viewport on small screens. */
-  .symbol-modal {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    min-width: min(800px, 85vw);
-    min-height: min(600px, 70vh);
-  }
-
-  /* `Modal` caps its body at 50vh, which would cut the minimum height short and scroll the content. */
-  :global(.modal-content:has(> .symbol-modal)) {
-    max-height: 85vh;
-  }
-
   /* The Symbol and Animation Clock fieldsets share a line, wrapping when the modal is too narrow. */
   .top-row {
     display: flex;
@@ -222,5 +210,4 @@
     border-radius: 4px;
     font-size: 0.85rem;
   }
-
 </style>
