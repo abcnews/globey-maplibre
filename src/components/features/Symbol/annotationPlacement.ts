@@ -2,6 +2,19 @@ import type { AnnotationAnchor } from '../../../lib/data/jsonBlob.ts';
 import type { Extents } from '../../../lib/symbolImage.ts';
 
 /**
+ * The other side of the symbol: `top-right` ↔ `bottom-left`, `left` ↔ `right`, `center` stays. The
+ * stored anchor is the label's own point that sits on the symbol, so a label shown on one side of
+ * the symbol is anchored by the opposite point.
+ */
+export function oppositeAnchor(anchor: AnnotationAnchor): AnnotationAnchor {
+  const opposite: Record<string, string> = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' };
+  return anchor
+    .split('-')
+    .map(side => opposite[side] ?? side)
+    .join('-') as AnnotationAnchor;
+}
+
+/**
  * How far to move an annotation, in px as `[right, down]`, so it clears the symbol.
  *
  * The label's `anchor` point sits on the map coordinate, so the label spreads away from it. It is

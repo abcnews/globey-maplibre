@@ -1,6 +1,17 @@
 import { describe, it } from 'vitest';
 import assert from 'node:assert';
-import { annotationShift } from './annotationPlacement.ts';
+import { annotationShift, oppositeAnchor } from './annotationPlacement.ts';
+
+describe('oppositeAnchor', () => {
+  it('flips corners, edges and keeps the centre', () => {
+    assert.strictEqual(oppositeAnchor('top-right'), 'bottom-left');
+    assert.strictEqual(oppositeAnchor('bottom-left'), 'top-right');
+    assert.strictEqual(oppositeAnchor('top-left'), 'bottom-right');
+    assert.strictEqual(oppositeAnchor('top'), 'bottom');
+    assert.strictEqual(oppositeAnchor('left'), 'right');
+    assert.strictEqual(oppositeAnchor('center'), 'center');
+  });
+});
 
 // A pin: the tip is on the coordinate, so it reaches far up, a little down, and half its width sideways.
 const pin = { up: 17, down: 3, left: 10, right: 10 };

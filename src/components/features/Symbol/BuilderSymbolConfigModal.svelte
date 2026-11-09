@@ -8,6 +8,7 @@
   import AnimationClockField from '../utils/AnimationClockField.svelte';
   import LayerIdField from '../utils/LayerIdField.svelte';
   import { uniqueLayerId } from '../utils/layerOps.ts';
+  import { oppositeAnchor } from './annotationPlacement.ts';
 
   type PickerProps = ComponentProps<typeof SymbolPicker>;
 
@@ -210,17 +211,18 @@
 
   <div class="annotation-options">
     <fieldset>
-      <legend>Anchor point</legend>
-      <!-- The point on the label that sits on the symbol, so "bottom-left" puts the label up and right of it. -->
-      <div class="anchor-grid" role="radiogroup" aria-label="Anchor point">
-        {#each ANNOTATION_ANCHORS as anchorPoint (anchorPoint)}
+      <legend>Show label on…</legend>
+      <!-- Each radio is where the label appears around the symbol. The stored anchor is the opposite: the label's own
+           point that sits on the symbol, so a label shown top-right is anchored bottom-left. -->
+      <div class="anchor-grid" role="radiogroup" aria-label="Show label on">
+        {#each ANNOTATION_ANCHORS as labelPosition (labelPosition)}
           <input
             type="radio"
-            name="annotation-anchor"
-            value={anchorPoint}
-            title={anchorPoint}
-            aria-label={anchorPoint}
-            bind:group={annotationStyle.anchor}
+            name="annotation-label-position"
+            title={labelPosition}
+            aria-label={labelPosition}
+            checked={annotationStyle.anchor === oppositeAnchor(labelPosition)}
+            onchange={() => (annotationStyle.anchor = oppositeAnchor(labelPosition))}
           />
         {/each}
       </div>
@@ -328,14 +330,14 @@
     width: 10em;
   }
 
-  /* Anchor point and display, stacked in the side column. */
+  /* Label position and display, stacked in the side column. */
   .annotation-options {
     display: flex;
     flex-direction: column;
     gap: 1rem;
   }
 
-  /* A 3×3 grid of radios laid out like the label's nine anchor points. */
+  /* A 3×3 grid of radios, one for each place the label can sit around the symbol. */
   .anchor-grid {
     display: grid;
     grid-template-columns: repeat(3, 1.5rem);
