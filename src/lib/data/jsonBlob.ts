@@ -204,7 +204,8 @@ export type SymbolLabelStyle = z.infer<typeof symbolLabelStyleSchema>;
  */
 export const insetSchema = z.object({
   image: embeddedImageSchema,
-  shape: z.enum(['circle', 'rounded']).default('circle')
+  /** `source` keeps the image's own aspect ratio, so the inset can be a rectangle. */
+  shape: z.enum(['circle', 'rounded', 'source']).default('circle')
 });
 export type SymbolInset = z.infer<typeof insetSchema>;
 

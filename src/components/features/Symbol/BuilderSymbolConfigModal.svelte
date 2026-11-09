@@ -238,6 +238,10 @@
             <input type="radio" name="inset-shape" value="rounded" bind:group={config.inset.shape} />
             Rounded square
           </label>
+          <label class="checkbox-field">
+            <input type="radio" name="inset-shape" value="source" bind:group={config.inset.shape} />
+            Same as source image
+          </label>
         </div>
       </fieldset>
     {/if}

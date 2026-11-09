@@ -90,7 +90,7 @@
     {#if config.inset}
       <Inset
         src={config.inset.image.dataUri}
-        size={insetSize(config.inset.image)}
+        size={insetSize(config.inset.image, config.inset.shape)}
         shape={config.inset.shape}
         colour={insetBorder}
         {anchor}

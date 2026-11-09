@@ -28,6 +28,11 @@ describe('insetSize', () => {
     assert.strictEqual(insetSize({ width: 300, height: 120 }), 60);
   });
 
+  it('uses the full width for a source-shaped inset, so the height follows the image', () => {
+    assert.strictEqual(insetSize({ width: 300, height: 120 }, 'source'), 150);
+    assert.strictEqual(insetSize({ width: 300, height: 120 }, 'rounded'), 60);
+  });
+
   it('falls back when the image size is unknown', () => {
     assert.strictEqual(insetSize({}), 48);
   });
