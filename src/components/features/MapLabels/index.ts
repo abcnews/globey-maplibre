@@ -1,7 +1,6 @@
 import type { LayerFeatureDefinition } from '../types.ts';
 import type { MapLabelsLayer } from '../../../lib/data/jsonBlob.ts';
 import { DEFAULT_MAP_LABELS } from '../../../lib/data/layerHelpers.ts';
-import { newLayerId } from '../utils/layerOps.ts';
 import { Tag as LabelIcon } from 'svelte-bootstrap-icons';
 import { createEditButton, createDeleteButton } from '../utils/buttonHelpers.ts';
 import BuilderMapLabelsConfigModal from './BuilderMapLabelsConfigModal.svelte';
@@ -21,7 +20,8 @@ export const mapLabelsFeature: LayerFeatureDefinition<MapLabelsLayer> = {
   // `DEFAULT_MAP_LABELS` is the narrower set the renderer falls back to.
   createDefault() {
     return {
-      id: newLayerId('mapLabels'),
+      // Singleton, so a fixed id can't collide and reads cleanly in marker tokens (`LAYERmaplabelson`).
+      id: 'maplabels',
       type: 'mapLabels',
       enabled: true,
       ...DEFAULT_MAP_LABELS,
