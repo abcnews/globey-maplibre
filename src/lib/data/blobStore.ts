@@ -129,7 +129,10 @@ function createBlobStore(): Writable<GlobeJsonBlob | null> & {
      * Initializes a brand new blob and saves to localStorage.
      */
     initNew(title?: string): GlobeJsonBlob {
+      // A new session starts on a street map only, so the globe isn't blank. Seeded here
+      // rather than in createDefaultJsonBlob, which other callers expect to be empty.
       const newBlob = createDefaultJsonBlob(title);
+      newBlob.layers = [{ id: 'streetmap', type: 'streetMap', hideOsm: false }];
       set(newBlob);
       return newBlob;
     },
