@@ -8,6 +8,7 @@
     rasteriseSymbol,
     symbolIconOffset,
     symbolImageId,
+    symbolLook,
     UPLOADED_IMAGE_SCALE,
     uploadedImageId
   } from '../../../lib/symbolImage.ts';
@@ -42,16 +43,13 @@
 
   // A built-in vector symbol wins over an uploaded image. Only these primitives are tracked by
   // the lifecycle effect, because `config` is a fresh object on every blob change.
-  const usesSymbol = $derived(Boolean(config.symbol));
+  const look = $derived(symbolLook(config));
+  const usesSymbol = $derived(Boolean(look));
   const uploadedDataUri = $derived(usesSymbol ? undefined : config.image?.dataUri);
   /** Pixels per CSS px for vector symbols, so strokes stay sharp on high density screens. */
   const pixelRatio = window.devicePixelRatio || 1;
   const symbolImageKey = $derived(
-    config.symbol
-      ? symbolImageId(config.symbol, pixelRatio)
-      : uploadedDataUri
-        ? uploadedImageId(uploadedDataUri)
-        : ''
+    look ? symbolImageId(look, pixelRatio) : uploadedDataUri ? uploadedImageId(uploadedDataUri) : ''
   );
 
   /** A one-point FeatureCollection at `position`, the symbol source's whole data. */
@@ -85,10 +83,8 @@
         if (!map.hasImage(imgId)) {
           if (!inFlightMapImages.has(imgId)) {
             // A vector symbol is rasterised at pixelRatio × its size; an uploaded image is decoded as is.
-            const symbolStyle = untrack(() => config.symbol);
-            const promise = (
-              symbolStyle ? rasteriseSymbol(symbolStyle, pixelRatio) : decodeUploadedImage(dataUri!)
-            )
+            const symbolToDraw = untrack(() => symbolLook(config));
+            const promise = (symbolToDraw ? rasteriseSymbol(symbolToDraw, pixelRatio) : decodeUploadedImage(dataUri!))
               .then(data => ({ data }))
               .finally(() => {
                 inFlightMapImages.delete(imgId);

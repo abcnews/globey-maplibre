@@ -33,7 +33,7 @@
   let activeTab = $state('symbol');
 
   /**
-   * The symbol's own look, as edited by the symbol picker. It is written to `config.symbol` unless a
+   * The symbol's own shape, as edited by the symbol picker. It is written to `config.symbol` unless a
    * custom image is in use (a marker is one or the other). Everything else binds straight to
    * `config`, which the Builder commits to the blob as it changes (`liveEdit`).
    */
@@ -41,9 +41,6 @@
     untrack(() => ({
       name: config.symbol?.name ?? 'circle',
       variant: config.symbol?.variant ?? 'fill',
-      colour: config.symbol?.colour ?? config.annotationStyle?.colour ?? DEFAULT_COLOUR,
-      // One light/dark choice for the symbol and its annotation, so both suit the map underneath.
-      scheme: config.symbol?.scheme ?? (config.annotationStyle?.dark ? 'dark' : 'light'),
       size: config.symbol?.size ?? 18
     }))
   );
@@ -57,6 +54,11 @@
       ...config.annotationStyle
     };
     return config.annotationStyle!;
+  });
+  // The one colour and light/dark choice, shared by the symbol and its annotation, live on the layer.
+  untrack(() => {
+    config.colour ??= DEFAULT_COLOUR;
+    config.scheme ??= 'light';
   });
   const coords = untrack(() => {
     config.coords ??= [0, 0];
@@ -85,9 +87,9 @@
     config.id = uniqueLayerId(config.annotation, 'symbol', otherIds);
   }
 
-  /** Resets the symbol colour, and puts the annotation back on its scheme's own colours. */
+  /** Resets the colour, and puts the annotation back on its scheme's own colours. */
   function useDefaultColour() {
-    symbolStyle.colour = DEFAULT_COLOUR;
+    config.colour = DEFAULT_COLOUR;
     annotationStyle.colourMode = 'default';
   }
 
@@ -103,12 +105,9 @@
     config.image = image ? $state.snapshot(image) : undefined;
   }
 
-  // The symbol is only stored without a custom image. Its colour and scheme are also kept on the
-  // annotation style, which has no symbol to read them from when an image is used.
+  // The symbol is only stored without a custom image.
   $effect(() => {
     config.symbol = config.image ? undefined : { ...symbolStyle };
-    annotationStyle.colour = symbolStyle.colour;
-    annotationStyle.dark = symbolStyle.scheme === 'dark' || undefined;
   });
 
   /** Closing (OK, the close button or the backdrop) keeps the changes, which are already applied. */
@@ -157,11 +156,11 @@
     <legend>Light / dark</legend>
     <div class="scheme-toggle" role="radiogroup" aria-label="Light or dark">
       <label class="checkbox-field">
-        <input type="radio" name="symbol-scheme" value="light" bind:group={symbolStyle.scheme} />
+        <input type="radio" name="symbol-scheme" value="light" bind:group={config.scheme} />
         Light
       </label>
       <label class="checkbox-field">
-        <input type="radio" name="symbol-scheme" value="dark" bind:group={symbolStyle.scheme} />
+        <input type="radio" name="symbol-scheme" value="dark" bind:group={config.scheme} />
         Dark
       </label>
     </div>
@@ -247,8 +246,8 @@
     <!-- The one colour for the symbol, and for the annotation when its style uses it. -->
     <fieldset class="colour-section">
       <legend>Colour</legend>
-      <ColourPicker bind:colour={symbolStyle.colour} colours={colours[symbolStyle.scheme]} fullWidth />
-      {#if symbolStyle.colour !== DEFAULT_COLOUR}
+      <ColourPicker bind:colour={config.colour} colours={colours[config.scheme ?? 'light']} fullWidth />
+      {#if config.colour !== DEFAULT_COLOUR}
         <button type="button" onclick={useDefaultColour}>Use default colour</button>
       {/if}
     </fieldset>
@@ -258,8 +257,8 @@
       <SymbolPicker
         bind:name={() => (config.image ? null : (symbolStyle.name as PickerProps['name'])), selectSymbol}
         bind:variant={symbolStyle.variant}
-        bind:colour={symbolStyle.colour}
-        bind:scheme={symbolStyle.scheme}
+        bind:colour={config.colour}
+        bind:scheme={config.scheme}
         bind:size={symbolStyle.size}
         show={{ colour: false, customColour: false }}
       />

@@ -1,16 +1,23 @@
 import { getSymbol, getSymbolAnchor, resolveColour, type SYMBOL_NAMES } from '@abcnews/components-dataviz';
-import type { SymbolStyle } from './data/jsonBlob.ts';
+import type { SymbolLayer, SymbolStyle } from './data/jsonBlob.ts';
 
 type SymbolName = (typeof SYMBOL_NAMES)[number];
 
-const resolvedColour = (style: SymbolStyle) => resolveColour({ colour: style.colour, scheme: style.scheme });
+/** A symbol's shape together with the colour and scheme that live on its layer: all `getSymbol` needs. */
+export type SymbolLook = SymbolStyle & Pick<SymbolLayer, 'colour' | 'scheme'>;
+
+/** The layer's symbol joined with its colour and scheme, or `undefined` when it has no vector symbol. */
+export const symbolLook = ({ symbol, colour, scheme }: Pick<SymbolLayer, 'symbol' | 'colour' | 'scheme'>) =>
+  symbol ? { ...symbol, colour, scheme } : undefined;
+
+const resolvedColour = (look: SymbolLook) => resolveColour({ colour: look.colour, scheme: look.scheme });
 
 /**
  * MapLibre sprite id for a symbol. It includes everything that changes the pixels
  * (including the device pixel ratio), so each variant is registered once and reused.
  */
-export const symbolImageId = (style: SymbolStyle, pixelRatio: number) =>
-  `vector-${style.name}-${style.variant}-${style.scheme}-${resolvedColour(style).replace(/[^a-z0-9]/gi, '')}-${style.size}@${pixelRatio}`;
+export const symbolImageId = (look: SymbolLook, pixelRatio: number) =>
+  `vector-${look.name}-${look.variant}-${look.scheme}-${resolvedColour(look).replace(/[^a-z0-9]/gi, '')}-${look.size}@${pixelRatio}`;
 
 /** Where the symbol points, as fractions of its square image: the middle for most, the tip for a pin or arrow. */
 const symbolAnchor = (style: SymbolStyle) =>
@@ -43,7 +50,10 @@ export const UPLOADED_IMAGE_SCALE = 0.5;
 
 /** Sprite id for an uploaded image: a short hash, since the data URI itself is far too long to use. */
 export const uploadedImageId = (dataUri: string) => {
-  const hash = Array.from(dataUri).reduce((running, character) => Math.imul(running ^ character.charCodeAt(0), 16777619), 2166136261);
+  const hash = Array.from(dataUri).reduce(
+    (running, character) => Math.imul(running ^ character.charCodeAt(0), 16777619),
+    2166136261
+  );
   return `uploaded-${(hash >>> 0).toString(36)}-${dataUri.length}`;
 };
 
@@ -65,17 +75,17 @@ export async function decodeUploadedImage(dataUri: string): Promise<ImageData> {
 
 /**
  * Draws a symbol's SVG as an image `map.addImage` accepts. MapLibre can't load SVGs itself, so
- * the SVG is rasterised by the browser at `style.size × pixelRatio` pixels. Pass the same
- * `pixelRatio` to `addImage` so it is shown at `style.size` CSS px. `getSymbol` multiplies the
+ * the SVG is rasterised by the browser at `look.size × pixelRatio` pixels. Pass the same
+ * `pixelRatio` to `addImage` so it is shown at `look.size` CSS px. `getSymbol` multiplies the
  * stroke widths by `pixelRatio`, so the lines stay the same CSS width at any density.
  */
-export async function rasteriseSymbol(style: SymbolStyle, pixelRatio: number): Promise<HTMLImageElement> {
+export async function rasteriseSymbol(look: SymbolLook, pixelRatio: number): Promise<HTMLImageElement> {
   const svg = getSymbol({
-    name: style.name as SymbolName,
-    variant: style.variant,
-    width: style.size,
-    scheme: style.scheme,
-    colour: resolvedColour(style),
+    name: look.name as SymbolName,
+    variant: look.variant,
+    width: look.size,
+    scheme: look.scheme,
+    colour: resolvedColour(look),
     pixelRatio
   });
   const image = new Image();

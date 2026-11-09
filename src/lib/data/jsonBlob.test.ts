@@ -203,12 +203,10 @@ describe('globeJsonBlobSchema (Zod)', () => {
       layers: [{ id: 'vec', type: 'symbol', symbol: { name: 'torus' }, coords: [3, 4] }]
     });
 
-    assert.deepStrictEqual((blob.layers[0] as { symbol?: unknown }).symbol, {
-      name: 'torus',
-      variant: 'fill',
-      colour: 'blue',
-      scheme: 'light',
-      size: 18
-    });
+    const layer = blob.layers[0] as { symbol?: unknown; colour?: string; scheme?: string };
+    assert.deepStrictEqual(layer.symbol, { name: 'torus', variant: 'fill', size: 18 });
+    // Colour and light/dark are on the layer, so an annotation shares them with the symbol.
+    assert.strictEqual(layer.colour, 'blue');
+    assert.strictEqual(layer.scheme, 'light');
   });
 });

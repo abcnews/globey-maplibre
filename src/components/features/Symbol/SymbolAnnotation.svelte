@@ -31,7 +31,7 @@
   const style = $derived(config.annotationStyle);
   const anchor = $derived<AnnotationAnchor>(style?.anchor ?? 'bottom-left');
   const showBackground = $derived(style?.showBackground ?? true);
-  const colours = $derived(resolveAnnotationColours(style));
+  const colours = $derived(resolveAnnotationColours(style, config.colour, config.scheme));
   // The squared-off corner points at the symbol, so it only applies to a corner anchor.
   const pointer = $derived(
     (['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).find(corner => corner === anchor) ?? 'none'
@@ -80,8 +80,7 @@
       stroke={showBackground ? undefined : colours.background}
       variant={showBackground ? 'filled' : 'outline'}
       gooey
-      style="text-align:left"
-      ><span class="annotation-text">{config.annotation}</span></Annotation
+      style="text-align:left"><span class="annotation-text">{config.annotation}</span></Annotation
     >
   </div>
 </div>

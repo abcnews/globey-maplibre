@@ -65,10 +65,7 @@ const baseLayerObject = {
    * key, the Builder's display title, and the marker token key (`LAYER<id>on`) — hence ACTO's
    * `[a-z0-9]` alphabet.
    */
-  id: z
-    .string()
-    .min(1, 'Layer ID cannot be empty')
-    .regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
+  id: z.string().min(1, 'Layer ID cannot be empty').regex(LAYER_ID_PATTERN, 'Lowercase letters and numbers only'),
   /** Per-layer animation clock override */
   animationClock: animationClockSchema.optional()
 };
@@ -145,17 +142,13 @@ export const customLabelsLayerSchema = z.object({
 export type CustomLabelsLayer = z.infer<typeof customLabelsLayerSchema>;
 
 /**
- * A built-in vector symbol from `@abcnews/components-dataviz`. `colour` is a palette name
- * (e.g. `'blue'`) or a custom hex code; palette names are stored, not hex, so they can follow
- * the palette's light/dark values.
+ * The shape of a built-in vector symbol from `@abcnews/components-dataviz`. Its colour and
+ * light/dark scheme are on the layer (`symbolLayerSchema`), so an annotation can share them.
  */
 export const symbolStyleSchema = z.object({
   /** One of `SYMBOL_NAMES`. Not an enum here so this schema doesn't import the component library. */
   name: z.string(),
   variant: z.enum(['fill', 'stroke']).default('fill'),
-  colour: z.string().default('blue'),
-  /** Palette and outline colour: `'light'` (white outline) or `'dark'` (black outline). Chosen per symbol to suit a light or dark base map. */
-  scheme: z.enum(['light', 'dark']).default('light'),
   /** Width on the map in CSS px, 1 to 99. */
   size: z.number().int().min(1).max(99).default(18)
 });
@@ -197,12 +190,8 @@ export const annotationStyleSchema = z.object({
   anchor: z.enum(ANNOTATION_ANCHORS).optional(),
   /** Defaults to true. False draws bare outlined text with no filled background. */
   showBackground: z.boolean().optional(),
-  /** Text colour: a palette name (resolved with the annotation's light/dark scheme) or a hex code. */
-  colour: z.string().optional(),
-  /** Dark scheme: light text on a dark background by default, and the dark colour palette. */
-  dark: z.boolean().optional(),
   /**
-   * Where `colour` goes: `default` ignores it (the scheme's own text and background colours),
+   * Where the layer's `colour` goes: `default` ignores it (the scheme's own text and background colours),
    * `text` colours the text, `background` colours the background. Defaults to `default`.
    */
   colourMode: z.enum(['default', 'text', 'background']).optional()
@@ -211,13 +200,22 @@ export type AnnotationStyle = z.infer<typeof annotationStyleSchema>;
 
 /**
  * Symbol marker layer schema. The marker's image is either an uploaded `image` or a
- * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of them.
+ * built-in vector `symbol`; `symbol` wins if both are set. `SymbolFeature.isValid` needs one of
+ * them, or an `annotation`.
  */
 export const symbolLayerSchema = z.object({
   ...baseLayerObject,
   type: z.literal('symbol'),
   image: embeddedImageSchema.optional(),
   symbol: symbolStyleSchema.optional(),
+  /**
+   * The one colour for the symbol and its annotation: a palette name (e.g. `'blue'`, stored so it
+   * can follow the palette's light/dark values) or a custom hex code. Kept on the layer, not the
+   * symbol, because a layer with an uploaded image has no `symbol` but can still have an annotation.
+   */
+  colour: z.string().default('blue'),
+  /** `'light'` (white outline, light-map colours) or `'dark'` (black outline). Chosen to suit a light or dark base map. */
+  scheme: z.enum(['light', 'dark']).default('light'),
   /** Text shown beside the marker as a DataViz `Annotation`. Any length, newlines kept; blank = none. */
   annotation: z.string().optional(),
   annotationStyle: annotationStyleSchema.optional(),
