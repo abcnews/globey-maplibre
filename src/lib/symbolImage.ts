@@ -91,7 +91,8 @@ export async function decodeUploadedImage(dataUri: string): Promise<ImageData> {
  * stroke widths by `pixelRatio`, so the lines stay the same CSS width at any density.
  */
 export async function rasteriseSymbol(look: SymbolLook, pixelRatio: number): Promise<HTMLImageElement> {
-  const svg = getSymbol({
+  // The library fetches each symbol's SVG on first use, so this resolves a moment later.
+  const svg = await getSymbol({
     name: look.name as SymbolName,
     variant: look.variant,
     width: look.size,
